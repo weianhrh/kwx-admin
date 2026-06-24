@@ -53,6 +53,17 @@ body {
   overflow-x: hidden;
 }
 
+body.embedded-admin {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+body.embedded-admin .card {
+  border: 0;
+  box-shadow: none;
+}
+
 /* 旧页面的 canvas 背景动画保留脚本，不改 JS，只用样式隐藏，避免和新模板风格冲突 */
 body > canvas {
   display: none !important;
@@ -614,6 +625,11 @@ select.form-input {
 </head>
 
 <body>
+<script>
+  if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+    document.body.classList.add('embedded-admin');
+  }
+</script>
 <div class="container">
   <div class="card">
     <div class="card-title">用户管理</div>

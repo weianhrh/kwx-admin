@@ -698,6 +698,24 @@
       font-size: 12px;
     }
 
+    .legacy-module {
+      min-height: calc(100vh - 128px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .legacy-module iframe {
+      width: 100%;
+      height: calc(100vh - 130px);
+      min-height: 720px;
+      display: block;
+      border: 0;
+      background: var(--bg);
+    }
+
     .workbench-head {
       display: flex;
       align-items: flex-start;
@@ -1869,6 +1887,10 @@
         renderDeviceSubpage(item);
         return;
       }
+      if (legacyModuleUrl(item)) {
+        renderLegacyModule(item);
+        return;
+      }
       renderModule(item);
     }
 
@@ -1893,6 +1915,23 @@
         '<span>name: ' + escapeHtml(item.name || '-') + '</span>' +
         '<span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span>' +
         '</div>' +
+        '</section>';
+    }
+
+    function legacyModuleUrl(item) {
+      const jump = String(item.jump || '').replace(/^\/+/, '').replace(/\/+$/, '');
+      if (jump === 'iframe/link/Balancerecharge') {
+        return './res/Balancerecharge.html?embed=dashboard';
+      }
+      return '';
+    }
+
+    function renderLegacyModule(item) {
+      const src = legacyModuleUrl(item);
+      document.querySelector('.crumb span').textContent = 'Menu / ' + item.name;
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="legacy-module">' +
+        '<iframe src="' + escapeHtml(src) + '" title="' + escapeHtml(item.title) + '"></iframe>' +
         '</section>';
     }
 
