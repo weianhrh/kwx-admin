@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询提现记录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> 
+    <style>
+:root {
+  --page-bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 34px;
+  color: var(--text);
+  background: var(--page-bg);
+  display: block;
+  overflow-x: hidden;
+}
+
+body > canvas,
+canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  margin: 0 auto 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 64px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title > span,
+.card-title:not(:has(span)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-title > span::before,
+.card-title:not(:has(span))::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.action-button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 8px 0 0;
+  padding: 8px 14px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+}
+
+.action-button:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.card > .action-button {
+  align-self: flex-start;
+  margin: 16px 18px 0;
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 18px;
+}
+
+.record-list > p {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.record-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: var(--panel-soft) !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  line-height: 1.55;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.record-item:hover {
+  border-color: rgba(15, 143, 140, .30) !important;
+  background: #fff !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.record-item span,
+.record-item p {
+  display: block;
+  min-width: 0;
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.record-item strong {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.record-item .record-title,
+.record-item h4 {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px !important;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text) !important;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.record-item .record-title::before,
+.record-item h4::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.record-item h4 span,
+.record-item h4 strong,
+.record-item h4 * {
+  color: var(--primary-dark) !important;
+  font-weight: 900;
+}
+
+.record-item > span[style*="007BFF"],
+.record-item span[style*="007BFF"] {
+  color: var(--primary-dark) !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+
+.record-item .action-button {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.input-group {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 0 18px 14px;
+}
+
+.card-title + .input-group {
+  padding-top: 18px;
+}
+
+.input-group input,
+.input-group select {
+  height: 38px;
+  min-width: 180px;
+  flex: 1 1 210px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.input-group select {
+  max-width: 360px;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.card > .input-group + .input-group {
+  padding-top: 0;
+}
+
+.card > .input-group + .action-button {
+  align-self: flex-start;
+  margin: 2px 18px 0;
+}
+
+#query-results {
+  padding-top: 18px;
+}
+
+@supports not selector(:has(*)) {
+  .card-title {
+    position: relative;
+    padding-left: 34px;
+  }
+
+  .card-title::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 8px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--primary);
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 980px) {
+  body {
+    padding: 18px 16px 28px;
+  }
+
+  .record-item {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 14px 12px 24px;
+  }
+
+  .card-title {
+    min-height: auto;
+    align-items: flex-start !important;
+    flex-direction: column;
+    padding: 14px;
+    font-size: 18px;
+  }
+
+  .card-title .action-button,
+  .card-title > button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .card > .action-button,
+  .card > .input-group + .action-button {
+    width: calc(100% - 28px);
+    margin: 14px 14px 0;
+  }
+
+  .input-group {
+    padding: 0 14px 12px;
+  }
+
+  .card-title + .input-group {
+    padding-top: 14px;
+  }
+
+  .input-group input,
+  .input-group select {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .record-list {
+    padding: 14px;
+  }
+
+  .record-item {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .record-item .action-button {
+    width: 100%;
+  }
+}
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-title">查询提现记录</div>
+            <div class="input-group">
+                <select id="venue_id">
+                    <option value="">选择场地</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="date" id="start-date" placeholder="开始日期">
+                <input type="date" id="end-date" placeholder="结束日期">
+            </div>
+            <button class="action-button" onclick="queryRecords()">查询</button>
+            <div id="query-results" class="record-list"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 获取场地信息
+            const venueSelect = document.getElementById('venue_id');  
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/operat/EnergyGift.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);  
+                    if (response.code === 0) {
+                        const data = response.data;  
+                        data.forEach(venue => {
+                            const option = document.createElement('option');  
+                            option.value = venue.id;  
+                            option.textContent = `${venue.id} - ${venue.venue_name}`;  
+                            venueSelect.appendChild(option);  
+                        });
+                        // 设置默认场地
+                        if (data.length > 0) {
+                            venueSelect.value = data[6].id; // 设置第一个场地为默认选项
+                        }
+                    }
+                }
+            };
+            const data = 'action=get_venues';
+            xhr.send(data);  
+
+            // 设置默认日期为近一周
+            const today = new Date();
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(today.getDate() - 31);
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            document.getElementById('start-date').value = formatDate(oneWeekAgo);
+            document.getElementById('end-date').value = formatDate(today);
+        });
+
+        function queryRecords() {
+            const venueId = document.getElementById('venue_id').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const url = `/api/pay/getWithdrawalRecords.php?venue_id=${venueId}&start_date=${startDate}&end_date=${endDate}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 0 && data.data && data.data.length > 0) {
+                        displayQueryResults(data.data);
+                    } else {
+                        document.getElementById('query-results').innerHTML = '<p style="text-align:center;">未找到记录</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('查询失败:', error);
+                });
+        }
+
+        function displayQueryResults(records) {
+            const container = document.getElementById('query-results');
+            container.innerHTML = '';
+            records.forEach(record => {
+                const item = document.createElement('div');
+                item.classList.add('record-item');
+                item.style.border = '1px solid #ddd';
+                item.style.borderRadius = '8px';
+                item.style.padding = '15px';
+                item.style.marginBottom = '10px';
+                item.style.backgroundColor = '#f9f9f9';
+                item.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+
+                item.innerHTML = `
+                    <h4 style="margin-bottom: 10px; color: #333;">提现编号：<span style="color: #5b8cff;">${record.id}</span></h4>
+                    <p style="margin: 5px 0;"><strong>账户姓名：</strong>${record.account_name}</p>
+                    <p style="margin: 5px 0;"><strong>提现金额：</strong>${record.withdrawal_amount} 元</p>
+                    <p style="margin: 5px 0;"><strong>技术服务费：</strong>${record.technical_service_fee} 元</p>
+                    <p style="margin: 5px 0;"><strong>提现手续费：</strong>${record.withdrawal_fee} 元</p>
+              
+                    <h4 style="margin-bottom: 10px; color: #333;">实际打款：<span style="color: #5b8cff;">${record.actual_amount} 元</span></h4>
+                    <p style="margin: 5px 0;"><strong>申请时间：</strong>${record.application_time}</p>
+                    <p style="margin: 5px 0;"><strong>打款状态：</strong>${record.payout_status === 0 ? '未打款' : '已打款'}</p>
+                    <p style="margin: 5px 0;"><strong>申请状态：</strong>${record.application_status === 0 ? '待处理' : (record.application_status === 1 ? '已处理' : '拒绝')}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+    </script>
+
+</body>
+
+</html> 

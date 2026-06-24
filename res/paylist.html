@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提现申请处理</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css"> 
+    <style>
+:root {
+  --page-bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 34px;
+  color: var(--text);
+  background: var(--page-bg);
+  display: block;
+  overflow-x: hidden;
+}
+
+body > canvas,
+canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  margin: 0 auto 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 64px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title > span,
+.card-title:not(:has(span)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-title > span::before,
+.card-title:not(:has(span))::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.action-button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 8px 0 0;
+  padding: 8px 14px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+}
+
+.action-button:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.card > .action-button {
+  align-self: flex-start;
+  margin: 16px 18px 0;
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 18px;
+}
+
+.record-list > p {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.record-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: var(--panel-soft) !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  line-height: 1.55;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.record-item:hover {
+  border-color: rgba(15, 143, 140, .30) !important;
+  background: #fff !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.record-item span,
+.record-item p {
+  display: block;
+  min-width: 0;
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.record-item strong {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.record-item .record-title,
+.record-item h4 {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px !important;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text) !important;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.record-item .record-title::before,
+.record-item h4::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.record-item h4 span,
+.record-item h4 strong,
+.record-item h4 * {
+  color: var(--primary-dark) !important;
+  font-weight: 900;
+}
+
+.record-item > span[style*="007BFF"],
+.record-item span[style*="007BFF"] {
+  color: var(--primary-dark) !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+
+.record-item .action-button {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.input-group {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 0 18px 14px;
+}
+
+.card-title + .input-group {
+  padding-top: 18px;
+}
+
+.input-group input,
+.input-group select {
+  height: 38px;
+  min-width: 180px;
+  flex: 1 1 210px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.input-group select {
+  max-width: 360px;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.card > .input-group + .input-group {
+  padding-top: 0;
+}
+
+.card > .input-group + .action-button {
+  align-self: flex-start;
+  margin: 2px 18px 0;
+}
+
+#query-results {
+  padding-top: 18px;
+}
+
+@supports not selector(:has(*)) {
+  .card-title {
+    position: relative;
+    padding-left: 34px;
+  }
+
+  .card-title::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 8px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--primary);
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 980px) {
+  body {
+    padding: 18px 16px 28px;
+  }
+
+  .record-item {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 14px 12px 24px;
+  }
+
+  .card-title {
+    min-height: auto;
+    align-items: flex-start !important;
+    flex-direction: column;
+    padding: 14px;
+    font-size: 18px;
+  }
+
+  .card-title .action-button,
+  .card-title > button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .card > .action-button,
+  .card > .input-group + .action-button {
+    width: calc(100% - 28px);
+    margin: 14px 14px 0;
+  }
+
+  .input-group {
+    padding: 0 14px 12px;
+  }
+
+  .card-title + .input-group {
+    padding-top: 14px;
+  }
+
+  .input-group input,
+  .input-group select {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .record-list {
+    padding: 14px;
+  }
+
+  .record-item {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .record-item .action-button {
+    width: 100%;
+  }
+}
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card">
+           <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>提现申请处理</span>
+                <!-- 添加查询按钮 -->
+                <button class="action-button" onclick="window.location.href='query_withdrawal.html'" style="margin-left: 20px;">查询提现记录</button>
+            </div>
+            
+            <!-- 导出按钮 -->
+            <button class="action-button" onclick="exportToExcel()">导出到 Excel</button>
+            <!-- 提现记录列表 -->
+            <div id="withdrawal-records" class="record-list"></div>
+        </div>
+    </div>
+
+    <script src="/res/assets/js/xlsx.full.min.js"></script> 
+    <script>
+        // 获取提现记录
+        function loadWithdrawalRecords() {
+            const url = '/api/pay/getpaylist.php'; 
+            fetch(url)
+               .then(response => response.json()) 
+               .then(data => {
+                    if (data.code  === 0 && data.data  && data.data.length  > 0) {
+                        displayWithdrawalRecords(data.data); 
+                    } else {
+                        document.getElementById('withdrawal-records').innerHTML  = '<p style="text-align:center;">暂无提现记录</p>';
+                    }
+                })
+               .catch(error => {
+                    console.error('   提现记录加载失败:', error);
+                });
+        }
+
+        // 显示提现记录列表
+        // function displayWithdrawalRecords(records) {
+        //     const container = document.getElementById('withdrawal-records'); 
+        //     container.innerHTML  = '';
+        //     records.forEach(record  => {
+        //         const item = document.createElement('div'); 
+        //         item.classList.add('record-item'); 
+        //         item.innerHTML  = `
+        //             <span class="record-title">提现编号：${record.id}</span> 
+        //             <span>账户姓名：${record.account_name}</span> 
+        //             <span>场地名称：${record.venue_name}(ID:${record.venue_id})</span> 
+        //             <span>账户类型：${record.account_type}</span> 
+        //             <span style="color: #007BFF; font-weight: 700; text-shadow: 0 0 2px rgba(0,123,255,0.3);">实际打款：${record.actual_amount}  元</span>
+        //             <span>提现账号 ：${record.withdrawal_account}</span> 
+        //             <span>提现金额：${record.withdrawal_amount}  元</span>
+        //             <span>技术服务费：${record.technical_service_fee}  元</span>
+        //             <span>提现手续费：${record.withdrawal_fee}  元</span>
+        //             <span>申请时间：${record.application_time}</span> 
+        //             <span>申请状态：${record.application_status  == 0 ? '待处理' : (record.application_status  == 1 ? '已处理' : (record.application_status  == 2 ? '已打款' : '拒绝'))}</span>
+        //             <span>打款状态：${record.payout_status  == 0 ? '未打款' : '已打款'}</span>
+        //             <button class="action-button" onclick="modifyApplicationStatus(${record.id},  ${record.application_status})">   修改申请状态</button>
+        //             <button class="action-button" onclick="modifyPayoutStatus(${record.id},  ${record.payout_status})">   修改打款状态</button>
+        //         `;
+        //         container.appendChild(item); 
+        //     });
+        // }
+// 显示提现记录列表
+function displayWithdrawalRecords(records) {
+    // 按账户姓名排序（升序）
+    records.sort((a, b) => {
+        const nameA = a.account_name || '';
+        const nameB = b.account_name || '';
+        return nameA.localeCompare(nameB, 'zh-Hans-CN'); // 支持中文拼音排序
+    });
+
+    const container = document.getElementById('withdrawal-records'); 
+    container.innerHTML = '';
+    records.forEach(record => {
+        const item = document.createElement('div'); 
+        item.classList.add('record-item'); 
+        item.innerHTML = `
+            <span class="record-title">提现编号：${record.id}</span> 
+            <span>账户姓名：${record.account_name}</span> 
+            <span>场地名称：${record.venue_name}(ID:${record.venue_id})</span> 
+            <span>账户类型：${record.account_type}</span> 
+            <span style="color: #007BFF; font-weight: 700; text-shadow: 0 0 2px rgba(0,123,255,0.3);">实际打款：${record.actual_amount} 元</span>
+            <span>提现账号 ：${record.withdrawal_account}</span> 
+            <span>提现金额：${record.withdrawal_amount} 元</span>
+            <span>技术服务费：${record.technical_service_fee} 元</span>
+            <span>提现手续费：${record.withdrawal_fee} 元</span>
+            <span>申请时间：${record.application_time}</span> 
+            <span>申请状态：${record.application_status == 0 ? '待处理' : (record.application_status == 1 ? '已处理' : (record.application_status == 2 ? '已打款' : '拒绝'))}</span>
+            <span>打款状态：${record.payout_status == 0 ? '未打款' : '已打款'}</span>
+            <button class="action-button" 
+                    onclick="modifyApplicationStatus(${record.id}, ${record.application_status}, '${encodeURIComponent(record.account_name)}')">
+                修改申请状态
+            </button>
+            
+            <button class="action-button" 
+                    onclick="modifyPayoutStatus(${record.id}, ${record.payout_status}, '${encodeURIComponent(record.account_name)}')">
+                修改打款状态
+            </button>
+
+        `;
+        container.appendChild(item); 
+    });
+}
+
+        // 修改申请状态
+        function modifyApplicationStatus(id, currentStatus,encodedName) {
+            const accountName = decodeURIComponent(encodedName); // 还原姓名
+            let newStatus;
+            if (currentStatus === 0) {
+                newStatus = 1; // 从待处理改为已处理
+            } else if (currentStatus === 1) {
+                newStatus = 2; // 从已处理改为已打款
+            } else {
+                newStatus = 0; // 其他状态重置为待处理
+            }
+            const url = '/api/pay/modifyApplicationStatus.php';  // 假设的修改状态接口
+            const data = { id: id, status: newStatus };
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: new URLSearchParams(data).toString()
+            })
+               .then(response => response.json()) 
+               .then(data => {
+                    if (data.code  === 0) {
+                        alert(accountName + "的申请状态修改成功");
+                        loadWithdrawalRecords(); // 刷新提现记录
+                    } else {
+                        alert('申请状态修改失败，请稍后重试');
+                    }
+                })
+               .catch(error => {
+                    console.error('   申请状态修改失败:', error);
+                    alert('申请状态修改失败，请重试');
+                });
+        }
+
+        // 修改打款状态
+        function modifyPayoutStatus(id, currentStatus,encodedName) {
+            const accountName = decodeURIComponent(encodedName); // 还原姓名
+            let newStatus = currentStatus === 0 ? 1 : 0;
+            const url = '/api/pay/modifyPayoutStatus.php';  // 假设的修改状态接口
+            const data = { id: id, status: newStatus };
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: new URLSearchParams(data).toString()
+            })
+               .then(response => response.json()) 
+               .then(data => {
+                    if (data.code  === 0) {
+                        alert(accountName + "的打款状态修改成功");
+                        loadWithdrawalRecords(); // 刷新提现记录
+                    } else {
+                        alert('打款状态修改失败，请稍后重试');
+                    }
+                })
+               .catch(error => {
+                    console.error('   打款状态修改失败:', error);
+                    alert('打款状态修改失败，请重试');
+                });
+        }
+
+        // 导出到 Excel
+        function exportToExcel() {
+            const url = '/api/pay/getpaylist.php';  
+            fetch(url)
+              .then(response => response.json())  
+              .then(data => {
+                    if (data.code === 0 && data.data && data.data.length > 0) {
+                        const records = data.data;  
+                           // ✅ 按账户姓名排序（支持中文）
+                        records.sort((a, b) => {
+                            const nameA = a.account_name || '';
+                            const nameB = b.account_name || '';
+                            return nameA.localeCompare(nameB, 'zh-Hans-CN');
+                        });
+                        // 计算"实际打款"的总计值
+                        const totalActualAmount = records.reduce((sum, record) => sum + parseFloat(record.actual_amount), 0).toFixed(2);
+
+                        const wsData = records.map(record => ({
+                            '提现编号': record.id,  
+                            '账户姓名': record.account_name,  
+                            '场地名称': `${record.venue_name}(ID:${record.venue_id})`,  
+                            '账户类型': record.account_type,  
+                            '实际打款': `${record.actual_amount}`, 
+                            '提现账号': record.withdrawal_account,  
+                            '提现金额': `${record.withdrawal_amount}`, 
+                            '技术服务费': `${record.technical_service_fee}`, 
+                            '提现手续费': `${record.withdrawal_fee}`, 
+                            '申请时间': record.application_time,  
+                            '申请状态': record.application_status == 0 ? '待处理' : (record.application_status == 1 ? '已处理' : (record.application_status == 2 ? '已打款' : '拒绝')),
+                            '打款状态': record.payout_status == 0 ? '未打款' : '已打款'
+                        }));
+
+                        // 添加"实际打款"总计行
+                        wsData.push({
+                            '提现编号': '',
+                            '账户姓名': '',
+                            '场地名称': '',
+                            '账户类型': '',
+                            '实际打款': `${totalActualAmount}`,
+                            '提现账号': '',
+                            '提现金额': '',
+                            '技术服务费': '',
+                            '提现手续费': '',
+                            '申请时间': '',
+                            '申请状态': '',
+                            '打款状态': ''
+                        });
+
+                        const ws = XLSX.utils.json_to_sheet(wsData);
+                        const wb = XLSX.utils.book_new();  
+                        XLSX.utils.book_append_sheet(wb, ws, '提现记录');
+
+                        // 获取当前时间戳
+                        const timestamp = new Date().toISOString().replace(/[:.-]/g, '');
+
+                        // 生成带有时间戳的文件名
+                        const fileName = `提现记录_${timestamp}.xlsx`;
+
+                        XLSX.writeFile(wb, fileName);
+                    } else {
+                        alert('暂无提现记录，无法导出');
+                    }
+                })
+              .catch(error => {
+                    console.error('  导出失败:', error);
+                    alert('导出失败，请重试');
+                });
+        }
+
+        // 页面加载时获取提现记录
+        loadWithdrawalRecords();
+    </script>
+
+</body>
+
+</html>
