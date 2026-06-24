@@ -96,22 +96,22 @@ function menu_group_key(array $menu): string
     if (menu_contains($text, ['dev', 'device', 'vehicle', 'vehicles', 'camera', 'fault', 'imgnumber', 'photol', 'stream', '设备', '摄像', '故障'])) {
         return 'device';
     }
-    if (menu_contains($text, ['venue', 'zone', 'reserva', '场地', '专区', '预约', '开播'])) {
+    if (menu_contains($text, [ 'zone', 'reserva', '场地', '专区', '预约', '开播'])) {
         return 'venue';
     }
     if (menu_contains($text, ['order', 'doll', 'shipping', 'driving', '订单', '抓中', '发货'])) {
         return 'order';
     }
-    if (menu_contains($text, ['pay', 'payment', 'withdraw', 'refund', 'recharge', 'comsum', 'amount', 'fund', 'funds', 'income', 'revenue', 'tariff', 'commodity', 'pricing', 'gold_package', '财务', '支付', '提现', '退款', '充值', '流水', '账户', '套餐'])) {
+    if (menu_contains($text, ['pay', 'payment', 'withdraw', 'refund',  'comsum', 'amount', 'fund', 'funds', 'income', 'revenue', 'tariff', 'commodity', 'pricing', 'gold_package', '财务', '支付', '提现', '退款', '充值', '流水', '账户', '套餐'])) {
         return 'finance';
     }
-    if (menu_contains($text, ['user', 'franchise', 'anchor', 'invitation', 'nickname', '用户', '加盟', '主播', '邀请'])) {
+    if (menu_contains($text, ['user', 'franchise', 'anchor', 'invitation', 'nickname', '用户','recharge', '加盟', '主播', '邀请'])) {
         return 'user';
     }
     if (menu_contains($text, ['report', 'patrol', 'violation', 'ban', 'audit', 'barrage', 'pid', 'complaint', '巡查', '审核', '违规', '投诉'])) {
         return 'audit';
     }
-    if (menu_contains($text, ['gift', 'energy', 'message', 'notify', 'redis', 'voice', 'global_config', 'config', 'kanban', 'kb', 'app_images', 'points', 'checkin', '运营', '消息', '礼物', '公告', '配置', '数据'])) {
+    if (menu_contains($text, ['gift', 'energy', 'message', 'notify', 'redis', 'voice', 'global_config', 'config', 'kanban', 'kb', 'app_images', 'points', 'checkin', '运营', '消息', '礼物', '公告','业绩', '配置', '数据'])) {
         return 'ops';
     }
     return 'tools';
