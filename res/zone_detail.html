@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>专区详情</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 22px 24px 32px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.page-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.hero-card,
+.content-card,
+.stat-card,
+.summary-card,
+.zone-card,
+.venue-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.hero-card {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.kicker {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.hero-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.hero-desc {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--primary);
+  box-shadow: none;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  transition: var(--transition);
+}
+
+.btn:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 6px 16px rgba(15, 143, 140, .16);
+}
+
+.btn:disabled {
+  opacity: .62;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn.secondary {
+  border-color: var(--line);
+  color: var(--muted);
+  background: #f7fafb;
+}
+
+.btn.secondary:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: #eef4f6;
+  box-shadow: none;
+}
+
+.btn.danger {
+  border-color: rgba(223, 91, 87, .22);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.btn.danger:hover {
+  border-color: var(--danger);
+  color: #fff;
+  background: var(--danger);
+  box-shadow: 0 6px 16px rgba(223, 91, 87, .14);
+}
+
+.btn.small {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+.stats-grid,
+.summary-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat-card,
+.summary-card {
+  min-width: 0;
+  padding: 15px 16px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.stat-card:hover,
+.zone-card:hover,
+.venue-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 14px 30px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+}
+
+.stat-card.active {
+  border-color: rgba(15, 143, 140, .38);
+  background: var(--primary-soft);
+}
+
+.stat-card.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+}
+
+.stat-card.active .stat-label,
+.stat-card.active .stat-value {
+  color: var(--primary-dark);
+}
+
+.stat-label,
+.summary-label {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.stat-value,
+.summary-value {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.summary-value {
+  font-size: 22px;
+}
+
+.content-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.section-head {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.section-title {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.section-subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.filter-wrap {
+  width: min(360px, 100%);
+  flex: 0 0 auto;
+}
+
+.filter-input,
+.form-control,
+.search-input,
+.zone-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.filter-input::placeholder,
+.form-control::placeholder,
+.search-input::placeholder {
+  color: #9aabb2;
+}
+
+.filter-input:focus,
+.form-control:focus,
+.search-input:focus,
+.zone-select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.zone-grid,
+.venue-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.zone-card,
+.venue-card {
+  min-width: 0;
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.zone-card {
+  min-height: 146px;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 14px;
+}
+
+.venue-card {
+  min-height: 140px;
+  display: grid;
+  grid-template-columns: 126px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.zone-cover,
+.venue-cover,
+.image-preview {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--subtle);
+  background: #f7fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.zone-cover {
+  width: 150px;
+  height: 118px;
+}
+
+.venue-cover {
+  width: 126px;
+  height: 112px;
+}
+
+.zone-cover img,
+.venue-cover img,
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.zone-main,
+.venue-main {
+  min-width: 0;
+}
+
+.venue-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zone-name-row,
+.venue-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.venue-title-row {
+  margin-bottom: 0;
+}
+
+.zone-name,
+.venue-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.pill,
+.venue-id,
+.zone-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pill.show,
+.zone-badge {
+  color: #0f7658;
+  background: var(--success-soft);
+}
+
+.pill.hide {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.pill.normal,
+.venue-id {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.pill.claw {
+  color: #8a5f0a;
+  background: var(--warning-soft);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.venue-main .meta-grid {
+  margin-top: 0;
+}
+
+.meta-item {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.meta-label {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.meta-value {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.time-line {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.zone-actions,
+.venue-actions,
+.modal-actions,
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.zone-actions {
+  min-width: 86px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.venue-actions {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.zone-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.zone-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.zone-badge {
+  min-height: 30px;
+  padding: 5px 10px;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.zone-select {
+  display: none;
+  width: min(360px, 100%);
+  height: 36px;
+  margin-top: 6px;
+  cursor: pointer;
+}
+
+.zone-select.show {
+  display: block;
+}
+
+.empty-state,
+.loading {
+  min-height: 150px;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfcfd;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px 22px 22px;
+}
+
+.form-item {
+  min-width: 0;
+}
+
+.form-item.full {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.image-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.image-preview {
+  width: 128px;
+  height: 86px;
+  margin-top: 10px;
+  background: #fbfcfd;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(11, 22, 26, .56);
+}
+
+.modal-panel,
+.confirm-panel {
+  width: min(640px, 96vw);
+  max-height: min(88vh, 760px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 64px rgba(16, 34, 38, .26);
+}
+
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head {
+  min-height: 62px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.modal-title,
+.confirm-title {
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.modal-desc,
+.confirm-desc {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.modal-close {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  background: #f7fafb;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: var(--transition);
+}
+
+.modal-close:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: #eef4f6;
+}
+
+.modal-body {
+  padding: 18px 22px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-actions,
+.confirm-actions {
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.confirm-panel {
+  width: min(420px, 94vw);
+  padding: 20px;
+}
+
+.venue-dropdown {
+  width: 100%;
+  max-height: 330px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.venue-option {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.venue-option:last-child {
+  border-bottom: none;
+}
+
+.venue-option:hover {
+  background: var(--primary-soft);
+}
+
+.venue-option-name {
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.venue-option-meta {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.selected-info {
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #34464e;
+  background: #fbfcfd;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.toast {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 2000;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #fff;
+  background: #102226;
+  box-shadow: 0 16px 32px rgba(16, 34, 38, .24);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: var(--transition);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success {
+  background: var(--success);
+}
+
+.toast.error {
+  background: var(--danger);
+}
+
+@media (max-width: 1180px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zone-grid,
+  .venue-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+
+  .hero-card,
+  .section-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-actions,
+  .modal-actions,
+  .confirm-actions {
+    justify-content: flex-start;
+  }
+
+  .hero-title {
+    font-size: 21px;
+  }
+
+  .stats-grid,
+  .summary-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-wrap {
+    width: 100%;
+  }
+
+  .zone-grid,
+  .venue-list {
+    padding: 12px;
+  }
+
+  .zone-card,
+  .venue-card {
+    grid-template-columns: 1fr;
+  }
+
+  .zone-cover,
+  .venue-cover {
+    width: 100%;
+    height: 170px;
+  }
+
+  .zone-actions {
+    min-width: 0;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .zone-actions .btn,
+  .venue-actions .btn,
+  .hero-actions .btn,
+  .modal-actions .btn,
+  .confirm-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .zone-row {
+    grid-template-columns: 1fr;
+  }
+
+  .image-row {
+    grid-template-columns: 1fr;
+  }
+
+  .image-preview {
+    width: 100%;
+    height: 160px;
+  }
+
+  .modal {
+    padding: 10px;
+  }
+
+  .modal-panel,
+  .confirm-panel {
+    width: 100%;
+    max-height: 92vh;
+  }
+
+  .modal-head,
+  .form-grid,
+  .modal-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .toast {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    min-width: 0;
+    max-width: none;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="page-shell">
+    <section class="hero-card">
+      <div>
+        <div class="kicker">专区详情</div>
+        <h1 class="hero-title" id="zoneTitle">专区详情</h1>
+        <div class="hero-desc" id="zoneDesc">查看该专区下的场地，并支持直接用专区下拉框调整场地归属。</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn secondary" type="button" onclick="location.href='zone.html'">返回列表</button>
+        <button class="btn" type="button" onclick="openAddVenueModal()">＋ 添加场地</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">当前专区 ID</div>
+        <div class="summary-value" id="summaryZoneId">-</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">当前专区名称</div>
+        <div class="summary-value" id="summaryZoneName">-</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">场地数量</div>
+        <div class="summary-value" id="summaryVenueCount">0</div>
+      </div>
+    </section>
+
+    <section class="content-card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">专区场地列表</div>
+          <div class="section-subtitle">点击“修改专区”后，直接选择专区并保存。</div>
+        </div>
+      </div>
+
+      <div id="venueList" class="venue-list">
+        <div class="loading">加载中...</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 添加场地弹窗 -->
+  <div class="modal" id="addVenueModal" onclick="closeAddVenueModal()">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">添加场地到当前专区</div>
+          <div class="modal-desc">可以输入场地名称或 ID 搜索，然后提交到当前专区。</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeAddVenueModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <input
+          class="search-input"
+          type="text"
+          id="venueSearchInput"
+          placeholder="输入场地名称或 ID 快速搜索，例如：朵朵、远程、1001"
+          autocomplete="off"
+          oninput="onVenueSearchInput()"
+        />
+
+        <div id="venueDropdown" class="venue-dropdown">
+          <div class="empty-state">请输入场地名称或 ID 搜索</div>
+        </div>
+
+        <input type="hidden" id="selectedVenueId" />
+
+        <div class="selected-info" id="selectedVenueText">
+          未选择场地
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn secondary" type="button" onclick="closeAddVenueModal()">取消</button>
+          <button class="btn" type="button" id="addVenueSubmitBtn" onclick="submitAddVenueToZone()">确认添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ZONE_API_BASE = '/api/zone';
+    const ZONES_API = '/api/venue/zones.php';
+
+    const params = new URLSearchParams(window.location.search);
+    const zoneId = params.get('zone_id');
+
+    let allZones = [];
+    let currentZone = null;
+    let currentVenues = [];
+    let venueSearchTimer = null;
+    let selectedVenue = null;
+    let toastTimer = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, function (m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[m];
+      });
+    }
+
+    function normalizeUrl(url) {
+      const value = String(url || '').trim();
+      if (!value) return '';
+      return value.replace(/^http:\/\//i, 'https://');
+    }
+
+    function showToast(message, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show' + (type ? ' ' + type : '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = 'toast';
+      }, 2200);
+    }
+
+    function renderImage(url) {
+      const imgUrl = normalizeUrl(url);
+      if (!imgUrl) return '<div>暂无图片</div>';
+      return `<img src="${escapeHtml(imgUrl)}" alt="场地图" onerror="handleImageError(this)" />`;
+    }
+
+    function handleImageError(img) {
+      const parent = img && img.parentElement;
+      if (!parent) return;
+      parent.innerHTML = '<div>图片加载失败</div>';
+    }
+
+    function getZoneById(id) {
+      return allZones.find(z => String(z.zone_id) === String(id));
+    }
+
+    function getZoneLabel(id) {
+      const normalized = String(id ?? '');
+      if (normalized === '' || normalized === '0' || normalized.toLowerCase() === 'null') {
+        return '0 - 未分区';
+      }
+
+      const zone = getZoneById(normalized);
+      if (!zone) return `${normalized} - 未知专区`;
+      return `${zone.zone_id} - ${zone.partition_name || '未命名专区'}`;
+    }
+
+    function buildZoneOptions(currentId) {
+      const selected = String(currentId ?? '0');
+      let html = `<option value="0" ${selected === '0' || selected === '' ? 'selected' : ''}>0 - 未分区</option>`;
+
+      allZones.forEach(zone => {
+        const value = String(zone.zone_id);
+        html += `<option value="${escapeHtml(value)}" ${value === selected ? 'selected' : ''}>${escapeHtml(value)} - ${escapeHtml(zone.partition_name || '未命名专区')}</option>`;
+      });
+
+      if (
+        selected &&
+        selected !== '0' &&
+        !allZones.some(zone => String(zone.zone_id) === selected)
+      ) {
+        html += `<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} - 当前未知专区</option>`;
+      }
+
+      return html;
+    }
+
+    async function loadZonesMeta() {
+      try {
+        const res = await fetch(ZONES_API);
+        const result = await res.json();
+
+        if (result.code === 0 && Array.isArray(result.data)) {
+          allZones = result.data.slice().sort((a, b) => {
+            const sa = Number(a.sort_order ?? 0);
+            const sb = Number(b.sort_order ?? 0);
+            if (sa !== sb) return sa - sb;
+            return Number(a.zone_id ?? 0) - Number(b.zone_id ?? 0);
+          });
+        } else {
+          allZones = [];
+          showToast('专区列表加载失败：' + (result.msg || '未知错误'), 'error');
+        }
+      } catch (e) {
+        allZones = [];
+        showToast('专区列表请求失败：' + e.message, 'error');
+      }
+
+      currentZone = getZoneById(zoneId);
+      updateHeader();
+    }
+
+    function updateHeader() {
+      document.getElementById('summaryZoneId').textContent = zoneId || '-';
+      document.getElementById('summaryVenueCount').textContent = currentVenues.length;
+
+      if (!zoneId) {
+        document.getElementById('zoneTitle').textContent = '专区详情：缺少 zone_id';
+        document.getElementById('summaryZoneName').textContent = '-';
+        document.getElementById('zoneDesc').textContent = '当前页面 URL 缺少 zone_id 参数。';
+        return;
+      }
+
+      const title = currentZone
+        ? `${currentZone.partition_name || '未命名专区'}`
+        : `专区 ${zoneId}`;
+
+      document.getElementById('zoneTitle').textContent = title;
+      document.getElementById('summaryZoneName').textContent = currentZone ? (currentZone.partition_name || '未命名专区') : '未匹配到专区名称';
+      document.getElementById('zoneDesc').textContent = `当前专区 ID：${zoneId}，可在列表里直接把场地移动到其他专区。`;
+    }
+
+    async function loadVenues() {
+      const venueList = document.getElementById('venueList');
+
+      if (!zoneId) {
+        venueList.innerHTML = '<div class="empty-state">缺少 zone_id</div>';
+        return;
+      }
+
+      venueList.innerHTML = '<div class="loading">加载中...</div>';
+
+      try {
+        const res = await fetch(`${ZONE_API_BASE}/get_venues_by_zone.php?zone_id=${encodeURIComponent(zoneId)}`);
+        const result = await res.json();
+
+        if (result.code !== 0) {
+          venueList.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(result.msg || '未知错误')}</div>`;
+          currentVenues = [];
+          updateHeader();
+          return;
+        }
+
+        currentVenues = Array.isArray(result.data) ? result.data : [];
+        updateHeader();
+        renderVenues();
+      } catch (e) {
+        currentVenues = [];
+        updateHeader();
+        venueList.innerHTML = `<div class="empty-state">请求失败：${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    function renderVenues() {
+      const venueList = document.getElementById('venueList');
+
+      if (!currentVenues.length) {
+        venueList.innerHTML = '<div class="empty-state">当前专区暂无场地数据</div>';
+        return;
+      }
+
+      venueList.innerHTML = '';
+
+      currentVenues.forEach(venue => {
+        const venueId = Number(venue.id);
+        const div = document.createElement('div');
+        div.className = 'venue-card';
+        div.id = `venue_card_${venueId}`;
+
+        div.innerHTML = `
+          <div class="venue-cover">
+            ${renderImage(venue.image_url)}
+          </div>
+
+          <div class="venue-main">
+            <div class="venue-title-row">
+              <div class="venue-name">${escapeHtml(venue.venue_name || '未命名场地')}</div>
+              <span class="venue-id">ID ${escapeHtml(venue.id)}</span>
+            </div>
+
+            <div class="meta-grid">
+              <div class="meta-item">
+                <div class="meta-label">开放时间</div>
+                <div class="meta-value">${escapeHtml(venue.start_time || '-')}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">排队人数</div>
+                <div class="meta-value">${escapeHtml(venue.queue_length || 0)}</div>
+              </div>
+            </div>
+
+            <div class="zone-row">
+              <div class="zone-label">当前专区</div>
+              <div>
+                <span class="zone-badge" id="current_zone_${venueId}">${escapeHtml(getZoneLabel(venue.zone_id))}</span>
+                <select class="zone-select" id="zone_select_${venueId}">
+                  ${buildZoneOptions(venue.zone_id)}
+                </select>
+              </div>
+            </div>
+
+            <div class="venue-actions">
+              <button class="btn small" id="edit_btn_${venueId}" type="button" onclick="toggleEdit(${venueId})">修改专区</button>
+              <button class="btn small secondary" id="cancel_btn_${venueId}" type="button" onclick="cancelEdit(${venueId})" style="display:none">取消</button>
+            </div>
+          </div>
+        `;
+
+        venueList.appendChild(div);
+      });
+    }
+
+    function closeOtherEditors(currentId) {
+      currentVenues.forEach(venue => {
+        const id = Number(venue.id);
+        if (id !== Number(currentId)) cancelEdit(id);
+      });
+    }
+
+    function toggleEdit(id) {
+      const select = document.getElementById(`zone_select_${id}`);
+      const badge = document.getElementById(`current_zone_${id}`);
+      const btn = document.getElementById(`edit_btn_${id}`);
+      const cancelBtn = document.getElementById(`cancel_btn_${id}`);
+
+      if (!select || !badge || !btn || !cancelBtn) return;
+
+      if (!select.classList.contains('show')) {
+        closeOtherEditors(id);
+        select.classList.add('show');
+        badge.style.display = 'none';
+        cancelBtn.style.display = 'inline-flex';
+        btn.textContent = '保存';
+        return;
+      }
+
+      updateVenueZone(id);
+    }
+
+    function cancelEdit(id) {
+      const select = document.getElementById(`zone_select_${id}`);
+      const badge = document.getElementById(`current_zone_${id}`);
+      const btn = document.getElementById(`edit_btn_${id}`);
+      const cancelBtn = document.getElementById(`cancel_btn_${id}`);
+
+      if (!select || !badge || !btn || !cancelBtn) return;
+
+      const venue = currentVenues.find(v => Number(v.id) === Number(id));
+      if (venue) select.value = String(venue.zone_id ?? '0');
+
+      select.classList.remove('show');
+      badge.style.display = 'inline-flex';
+      cancelBtn.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '修改专区';
+    }
+
+    async function updateVenueZone(venueId) {
+      const select = document.getElementById(`zone_select_${venueId}`);
+      const btn = document.getElementById(`edit_btn_${venueId}`);
+      if (!select || !btn) return;
+
+      const newZoneId = select.value;
+
+      const form = new URLSearchParams({
+        venue_id: venueId,
+        zone_id: newZoneId
+      });
+
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+
+      try {
+        const res = await fetch(`${ZONE_API_BASE}/update_venue_zone.php`, {
+          method: 'POST',
+          body: form
+        });
+
+        const result = await res.json();
+
+        if (result.code === 0) {
+          showToast(`修改成功，已移动到：${getZoneLabel(newZoneId)}`, 'success');
+          await loadZonesMeta();
+          await loadVenues();
+        } else {
+          showToast('修改失败：' + (result.msg || '未知错误'), 'error');
+          btn.disabled = false;
+          btn.textContent = '保存';
+        }
+      } catch (e) {
+        showToast('请求失败：' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '保存';
+      }
+    }
+
+    function openAddVenueModal() {
+      if (!zoneId) {
+        showToast('缺少当前专区 zone_id', 'error');
+        return;
+      }
+
+      selectedVenue = null;
+      document.getElementById('venueSearchInput').value = '';
+      document.getElementById('selectedVenueId').value = '';
+      document.getElementById('selectedVenueText').textContent = '未选择场地';
+      document.getElementById('venueDropdown').innerHTML = '<div class="empty-state">加载场地中...</div>';
+      document.getElementById('addVenueModal').style.display = 'flex';
+
+      searchVenues('');
+
+      setTimeout(() => {
+        document.getElementById('venueSearchInput').focus();
+      }, 50);
+    }
+
+    function closeAddVenueModal() {
+      document.getElementById('addVenueModal').style.display = 'none';
+    }
+
+    function onVenueSearchInput() {
+      selectedVenue = null;
+      document.getElementById('selectedVenueId').value = '';
+      document.getElementById('selectedVenueText').textContent = '未选择场地';
+
+      const keyword = document.getElementById('venueSearchInput').value.trim();
+
+      clearTimeout(venueSearchTimer);
+      venueSearchTimer = setTimeout(() => {
+        searchVenues(keyword);
+      }, 250);
+    }
+
+    async function searchVenues(keyword) {
+      const dropdown = document.getElementById('venueDropdown');
+      dropdown.innerHTML = '<div class="empty-state">搜索中...</div>';
+
+      try {
+        const res = await fetch(`${ZONE_API_BASE}/search_venues.php?keyword=${encodeURIComponent(keyword)}`);
+        const result = await res.json();
+
+        if (result.code !== 0) {
+          dropdown.innerHTML = `<div class="empty-state">搜索失败：${escapeHtml(result.msg || '未知错误')}</div>`;
+          return;
+        }
+
+        renderVenueOptions(result.data || []);
+      } catch (e) {
+        dropdown.innerHTML = `<div class="empty-state">请求失败：${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    function renderVenueOptions(venues) {
+      const dropdown = document.getElementById('venueDropdown');
+      dropdown.innerHTML = '';
+
+      if (!venues.length) {
+        dropdown.innerHTML = '<div class="empty-state">没有找到匹配的场地</div>';
+        return;
+      }
+
+      venues.forEach(venue => {
+        const item = document.createElement('div');
+        item.className = 'venue-option';
+
+        const inCurrentZone = String(venue.zone_id ?? '0') === String(zoneId);
+
+        item.innerHTML = `
+          <div class="venue-option-name">
+            ${escapeHtml(venue.id)} - ${escapeHtml(venue.venue_name || '未命名场地')}
+          </div>
+          <div class="venue-option-meta">
+            当前专区：${escapeHtml(getZoneLabel(venue.zone_id))}　
+            ${inCurrentZone ? '已在当前专区　' : ''}
+            开放时间：${escapeHtml(venue.start_time || '-')}　
+            排队人数：${escapeHtml(venue.queue_length || 0)}
+          </div>
+        `;
+
+        item.onclick = function () {
+          selectVenue(venue);
+        };
+
+        dropdown.appendChild(item);
+      });
+    }
+
+    function selectVenue(venue) {
+      selectedVenue = venue;
+
+      document.getElementById('selectedVenueId').value = venue.id;
+      document.getElementById('venueSearchInput').value = `${venue.id} - ${venue.venue_name || ''}`;
+
+      document.getElementById('selectedVenueText').textContent =
+        `已选择：${venue.id} - ${venue.venue_name || '未命名场地'}，当前专区：${getZoneLabel(venue.zone_id)}，将添加到：${getZoneLabel(zoneId)}`;
+
+      document.getElementById('venueDropdown').innerHTML =
+        '<div class="empty-state">已选择场地，点击下方“确认添加”即可</div>';
+    }
+
+    async function submitAddVenueToZone() {
+      if (!zoneId) {
+        showToast('缺少当前专区 zone_id', 'error');
+        return;
+      }
+
+      if (!selectedVenue || !selectedVenue.id) {
+        showToast('请先选择一个场地', 'error');
+        return;
+      }
+
+      if (String(selectedVenue.zone_id ?? '0') === String(zoneId)) {
+        showToast('该场地已经在当前专区，无需重复添加', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('addVenueSubmitBtn');
+      const form = new URLSearchParams({
+        venue_id: selectedVenue.id,
+        zone_id: zoneId
+      });
+
+      btn.disabled = true;
+      btn.textContent = '添加中...';
+
+      try {
+        const res = await fetch(`${ZONE_API_BASE}/update_venue_zone.php`, {
+          method: 'POST',
+          body: form
+        });
+
+        const result = await res.json();
+
+        if (result.code === 0) {
+          showToast('添加成功', 'success');
+          closeAddVenueModal();
+          await loadZonesMeta();
+          await loadVenues();
+        } else {
+          showToast('添加失败：' + (result.msg || '未知错误'), 'error');
+        }
+      } catch (e) {
+        showToast('请求失败：' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '确认添加';
+      }
+    }
+
+    async function initPage() {
+      await loadZonesMeta();
+      await loadVenues();
+    }
+
+    initPage();
+  </script>
+</body>
+</html>
