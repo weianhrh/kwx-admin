@@ -1919,11 +1919,22 @@
     }
 
     function legacyModuleUrl(item) {
-      const jump = String(item.jump || '').replace(/^\/+/, '').replace(/\/+$/, '');
-      if (jump === 'iframe/link/Balancerecharge') {
-        return './res/Balancerecharge.html?embed=dashboard';
+      const raw = String(item.jump || '').trim();
+      if (!raw || raw === '/' || /^https?:\/\//i.test(raw)) return '';
+
+      const jump = raw.split(/[?#]/)[0].replace(/^\/+/, '').replace(/\/+$/, '');
+      let pageName = '';
+
+      if (jump.startsWith('iframe/link/')) {
+        pageName = jump.slice('iframe/link/'.length);
+      } else if (jump.startsWith('res/') && /\.html$/i.test(jump)) {
+        pageName = jump.slice('res/'.length).replace(/\.html$/i, '');
       }
-      return '';
+
+      pageName = pageName.replace(/\/+$/, '').split('/').pop().replace(/\.html$/i, '');
+      if (!pageName || pageName.includes('..')) return '';
+
+      return './res/' + encodeURIComponent(pageName) + '.html?embed=dashboard';
     }
 
     function renderLegacyModule(item) {
