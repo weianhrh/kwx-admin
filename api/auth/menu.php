@@ -90,6 +90,9 @@ function menu_group_key(array $menu): string
 {
     $text = menu_text($menu);
 
+    if (menu_contains($text, ['admindrivingorders', 'order_report', 'reporthand', 'recharge_orders_api', '订单查询', '订单申诉', '订单投诉', '最新支付记录'])) {
+        return 'order';
+    }
     if (menu_contains($text, ['dev', 'device', 'vehicle', 'vehicles', 'camera', 'fault', 'imgnumber', 'photol', 'stream', '设备', '摄像', '故障'])) {
         return 'device';
     }

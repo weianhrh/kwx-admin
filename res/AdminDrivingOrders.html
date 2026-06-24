@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>驾驶记录查询</title>
     <!-- 引入Font Awesome图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">     
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
 
 <style>
 :root {
@@ -168,7 +168,7 @@ textarea {
 
 .form-container {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 12px;
   align-items: end;
   padding: 18px;
@@ -620,19 +620,12 @@ select.form-input,
 
     <div class="dashboard-card">
         <!--<h1 class="card-title">驾驶记录查询</h1>-->
-        <h1 class="card-title" id="pageTitle">订单记录查询</h1>
+        <h1 class="card-title" id="pageTitle">订单查询</h1>
         
         <div class="form-container">
             <div class="form-item">
                 <label class="form-label">用户ID</label>
                 <input type="text" id="uid" class="form-input" placeholder="请输入用户ID">
-            </div>
-            <div class="form-item">
-                <label class="form-label">订单类型</label>
-                <select id="orderType" class="form-input">
-                    <option value="drive">驾驶订单</option>
-                    <option value="gift">礼物订单</option>
-                </select>
             </div>
             <div class="form-item">
                 <label class="form-label">场地</label>
@@ -687,7 +680,7 @@ function searchOrders(resetPage = true) {
 
     const uid = document.getElementById('uid').value.trim();
     const orderNumber = document.getElementById('orderNumber').value.trim();
-    const orderType = document.getElementById('orderType').value || 'drive';
+    const orderType = 'drive';
     const venueId = document.getElementById('venue_id') ? document.getElementById('venue_id').value : '';
 
     const params = new URLSearchParams();
@@ -712,8 +705,7 @@ function searchOrders(resetPage = true) {
 
     const url = '/api/finance/getDrivOrder.php?' + params.toString();
 
-    document.getElementById('pageTitle').textContent =
-        orderType === 'gift' ? '礼物订单查询' : '驾驶订单查询';
+    document.getElementById('pageTitle').textContent = '订单查询';
 
     fetch(url, {
         credentials: 'include',
@@ -853,87 +845,6 @@ document.getElementById('nextPage').disabled = !hasMorePage;
                 card.className = 'order-card';
         
                 const statusClass = order.status === '已完成' ? 'status-completed' : 'status-pending';
-        // ==========================
-// 礼物订单卡片
-// ==========================
-if (order.order_type === 'gift') {
-  const giftGold = Number(order.payment_amount || 0);
-  const giftAmount = giftGold / 10;
-  const venueIncome = giftAmount * 0.6;
-
-  card.innerHTML = `
-    <div class="order-head">
-      <div class="order-no">
-        <span class="order-no-label">礼物订单编号</span>
-        <span class="order-no-value">${order.order_id || '-'}</span>
-      </div>
-
-      <span class="status-badge ${statusClass}">${order.status || '-'}</span>
-
-      <div class="order-money">
-        <span class="order-money-label">礼物金币</span>
-        <span class="order-money-value">${giftGold.toFixed(2)}</span>
-      </div>
-
-      <div class="order-actions"></div>
-    </div>
-
-    <div class="order-body">
-      <div class="order-field">
-        <span class="field-label">用户ID</span>
-        <span class="field-value">${order.uid || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">用户昵称</span>
-        <span class="field-value">${order.nickname || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">礼物ID</span>
-        <span class="field-value">${order.gift_id || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">礼物名称</span>
-        <span class="field-value">${order.gift_name || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">场地</span>
-        <span class="field-value">${order.venue_name || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">支付方式</span>
-        <span class="field-value">${order.pays_type || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">用户消费折算</span>
-        <span class="field-value money">¥ ${giftAmount.toFixed(2)}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">场地礼物收益</span>
-        <span class="field-value money">¥ ${venueIncome.toFixed(2)}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">赠送时间</span>
-        <span class="field-value mono">${order.send_time || '-'}</span>
-      </div>
-
-      <div class="order-field">
-        <span class="field-label">备注</span>
-        <span class="field-value">${order.note || '-'}</span>
-      </div>
-    </div>
-  `;
-
-  container.appendChild(card);
-  return;
-}
                 // === 根据 refund_status 设置按钮文字 ===
                // === 根据 refund_status 映射成两种按钮：退款 / 已退款 ===
                 // let refundBtnHtml = `
@@ -1373,18 +1284,6 @@ const matchedOrders = orderCache.filter(order => {
                 }
             });
         }
-        document.getElementById('orderType').addEventListener('change', () => {
-          currentPage = 1;
-          totalOrders = [];
-          orderCache = [];
-        
-          document.getElementById('orderNumber').value = '';
-          document.getElementById('orderCardsContainer').innerHTML =
-            '<div style="text-align:center;color:#7b8aa0;padding:20px;">加载中...</div>';
-          document.getElementById('pageInfo').textContent = '';
-        
-          searchOrders();
-        });
         // 添加分页事件处理
 document.getElementById('prevPage').addEventListener('click', () => {
     if (currentPage > 1) {
