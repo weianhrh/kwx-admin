@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>订单申诉处理历史</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+  transform: none;
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.card-title > span:first-child,
+h2.card-title {
+  color: var(--text);
+}
+
+.card-title a,
+.btn.link,
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--primary-dark) !important;
+  background: var(--primary-soft) !important;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.card-title a:hover,
+.btn.link:hover,
+.link:hover {
+  border-color: rgba(15, 143, 140, .35);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .10);
+  transform: translateY(-1px);
+}
+
+/* 顶部筛选 / 工具栏 */
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-soft);
+}
+
+.field,
+.form-group {
+  min-width: 0;
+}
+
+.field label,
+.form-group label,
+.report-label,
+.detail-label,
+.k {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.input,
+select,
+input[type="text"],
+input[type="datetime-local"],
+input[type="date"],
+textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: #fff !important;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+textarea {
+  min-height: 90px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.input:focus,
+select:focus,
+input[type="text"]:focus,
+input[type="datetime-local"]:focus,
+input[type="date"]:focus,
+textarea:focus {
+  border-color: rgba(15, 143, 140, .48) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+/* 按钮统一 */
+.btn,
+.action-button,
+.modify-btn,
+.back-button,
+button[type="submit"] {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid transparent !important;
+  border-radius: var(--radius) !important;
+  color: #fff !important;
+  background: var(--primary) !important;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease, opacity .16s ease;
+}
+
+.btn:hover,
+.action-button:hover,
+.modify-btn:hover,
+.back-button:hover,
+button[type="submit"]:hover {
+  background: var(--primary-dark) !important;
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .14);
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.btn:disabled,
+.action-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn.secondary,
+.action-button.gray,
+.pager .btn {
+  border-color: var(--line) !important;
+  color: var(--text) !important;
+  background: #fff !important;
+}
+
+.btn.secondary:hover,
+.action-button.gray:hover,
+.pager .btn:hover {
+  border-color: rgba(15, 143, 140, .35) !important;
+  color: var(--primary-dark) !important;
+  background: var(--primary-soft) !important;
+}
+
+.action-button.approve,
+.action-button.green,
+.badge.ok,
+.badge-green {
+  background: var(--success-soft) !important;
+  color: var(--success) !important;
+  border-color: rgba(32, 168, 118, .22) !important;
+}
+
+.action-button.approve:hover,
+.action-button.green:hover {
+  background: var(--success) !important;
+  color: #fff !important;
+}
+
+.action-button.reject,
+.action-button.red,
+.badge.reject,
+.badge-red {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-color: rgba(223, 91, 87, .22) !important;
+}
+
+.action-button.reject:hover,
+.action-button.red:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+}
+
+.action-button.compensate,
+.pager .btn.active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+/* 订单申诉 */
+#appeal-list,
+.complaint-list,
+.list,
+#report-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 18px;
+}
+
+.appeal-item,
+.complaint-item,
+.report-item,
+.appeal {
+  position: relative;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(30, 55, 66, .045);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.appeal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+}
+
+.appeal-item:hover,
+.complaint-item:hover,
+.report-item:hover,
+.appeal:hover {
+  border-color: rgba(15, 143, 140, .30);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.appeal-item span,
+.report-row,
+.row,
+.kv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.appeal-item strong,
+.report-label,
+.detail-label,
+.k {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.report-value,
+.detail-value,
+.v {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.appeal-item img,
+.image-thumb {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  margin: 12px auto 0;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7fafb;
+  cursor: zoom-in;
+}
+
+.image-thumb {
+  width: auto;
+  max-width: 180px;
+  max-height: 140px;
+  margin: 0;
+}
+
+.button-group,
+.action-row,
+.actions,
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.button-group {
+  justify-content: center;
+}
+
+/* 投诉处理 */
+.complaint-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.complaint-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge,
+.type-tag,
+.tag {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 9px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.badge-blue,
+.type-tag.battery {
+  background: var(--blue-soft) !important;
+  color: var(--blue) !important;
+  border-color: rgba(47, 125, 246, .18) !important;
+}
+
+.badge-orange {
+  background: var(--warning-soft) !important;
+  color: #c98022 !important;
+  border-color: rgba(255, 184, 77, .24) !important;
+}
+
+.type-tag.gold {
+  background: var(--warning-soft) !important;
+  color: #b87410 !important;
+  border-color: rgba(255, 184, 77, .24) !important;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.detail-item {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+
+.content-box,
+.details pre {
+  min-height: 40px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--panel-soft);
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.readonly-tip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 184, 77, .22);
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: #b87410;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* 处理记录 */
+#select-container {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+#select-container select {
+  max-width: 320px;
+}
+
+#report-list .card-title,
+#report-list.card .card-title {
+  margin: 0;
+}
+
+#report-list.card {
+  margin-bottom: 16px;
+}
+
+.back-button {
+  margin-top: 0;
+}
+
+/* 历史列表 */
+.details {
+  grid-column: 1 / -1;
+  display: none;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.muted,
+.loading,
+.empty {
+  color: var(--muted);
+}
+
+.loading,
+.empty,
+.error {
+  text-align: center;
+  padding: 18px;
+  font-size: 14px;
+}
+
+.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid rgba(223, 91, 87, .18);
+  border-radius: var(--radius);
+}
+
+/* 最新支付记录 */
+.meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+#rangeText,
+.info {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sum-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(15, 143, 140, .20);
+  border-radius: var(--radius);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#todaySum {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.table-wrap {
+  width: calc(100% - 36px);
+  margin: 18px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+}
+
+th,
+td {
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fbfc;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr:hover td {
+  background: #fbfdfd;
+}
+
+#loading.loading {
+  margin: 14px 18px 0;
+  border: 1px solid rgba(15, 143, 140, .16);
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+#errorBox.error {
+  margin: 14px 18px 0;
+}
+
+/* 弹窗 / 图片预览 */
+.modal,
+.ban-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 17, 22, .70);
+  backdrop-filter: blur(2px);
+}
+
+.modal.show {
+  display: flex;
+}
+
+#modalImage,
+#modalImg,
+.modal img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  background: #fff;
+}
+
+.close-btn,
+.ban-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ban-modal-content {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+}
+
+.ban-modal-content h2 {
+  margin: 0 0 18px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.ban-modal .ban-modal-close {
+  top: 12px;
+  right: 14px;
+  color: var(--muted);
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+}
+
+.ban-modal form .form-group,
+#imageDeviceSerialWrapper {
+  margin-bottom: 14px !important;
+}
+
+.ban-modal label,
+#imageDeviceSerialWrapper label {
+  color: var(--muted) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.ban-modal .modify-btn {
+  width: 100%;
+  min-height: 40px;
+}
+
+/* 文本溢出 */
+.v,
+.details pre,
+.muted,
+td,
+.report-value,
+.detail-value {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1080px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 18px 16px 26px;
+  }
+
+  .meta-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pager,
+  .button-group,
+  .action-row,
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .appeal {
+    grid-template-columns: 1fr;
+  }
+
+  .table-wrap {
+    width: calc(100% - 24px);
+    margin: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    padding: 12px;
+  }
+
+  .card-title {
+    min-height: auto;
+    padding: 14px;
+    font-size: 18px;
+    align-items: flex-start;
+  }
+
+  .toolbar,
+  #appeal-list,
+  .complaint-list,
+  .list,
+  #report-content {
+    padding: 12px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .appeal-item,
+  .complaint-item,
+  .report-item,
+  .appeal {
+    padding: 12px;
+  }
+
+  .complaint-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  .action-button,
+  .modify-btn,
+  .back-button,
+  button[type="submit"] {
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">订单申诉处理历史</div>
+
+      <div class="toolbar">
+        <select id="statusSelect">
+          <option value="">全部状态</option>
+          <option value="1">已处理</option>
+          <option value="2">驳回</option>
+        </select>
+        <input class="input" id="q" placeholder="订单号/用户id" />
+        <select id="pageSize">
+          <option value="10" selected>10 / 页</option>
+          <option value="20">20 / 页</option>
+          <option value="50">50 / 页</option>
+          <option value="100">100 / 页</option>
+        </select>
+        <button class="btn" id="refresh">刷新</button>
+        <span style="display:none;" id="meta"></span>
+      </div>
+
+      <div id="list" class="list">
+        <div class="loading">加载中…</div>
+      </div>
+
+      <div id="pager" class="pager" style="display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/orders/order_appeals_history.php';
+    const state = { raw: [], filtered: [], page: 1, size: 10, status: '', q: '' };
+
+    const $ = sel => document.querySelector(sel);
+    const listEl = $('#list'), pagerEl = $('#pager'), metaEl = $('#meta');
+
+    // 拉取数据（自动带 Cookie）
+    async function fetchData() {
+      listEl.innerHTML = '<div class="loading">加载中…</div>';
+      pagerEl.style.display = 'none';
+      try {
+        const res = await fetch(API, { credentials: 'include' });
+        const json = await res.json();
+        if (json.code !== 200) throw new Error(json.msg || '接口返回异常');
+        // 按 handled_at 倒序（后端已排过序，这里兜底）
+        state.raw = (json.data || []).sort((a,b)=> new Date(b.handled_at||0) - new Date(a.handled_at||0));
+        applyFilters(true);
+      } catch (e) {
+        listEl.innerHTML = `<div class="error">加载失败：${e.message}</div>`;
+      }
+    }
+
+    // 过滤 + 分页
+    function applyFilters(resetPage=false) {
+      let arr = state.raw.slice();
+      if (state.status) arr = arr.filter(x => String(x.status) === String(state.status));
+      if (state.q) {
+        const key = state.q.trim().toLowerCase();
+        arr = arr.filter(x => [
+          x.order_id, x.user_id, x.reason || '', x.result || ''
+        ].join(' ').toLowerCase().includes(key));
+      }
+      state.filtered = arr;
+      if (resetPage) state.page = 1;
+      render();
+    }
+
+    // 渲染
+    function render() {
+      const total = state.filtered.length;
+      const pages = Math.max(1, Math.ceil(total / state.size));
+      state.page = Math.min(state.page, pages);
+      const start = (state.page - 1) * state.size;
+      const pageData = state.filtered.slice(start, start + state.size);
+
+      metaEl.textContent = `共 ${total} 条，页 ${state.page}/${pages}`;
+
+      if (!total) {
+        listEl.innerHTML = '<div class="empty">没有符合条件的记录</div>';
+        pagerEl.style.display = 'none';
+        return;
+      }
+
+      listEl.innerHTML = pageData.map(row => cardHtml(row)).join('');
+      attachDetailToggles();
+
+      // 分页
+      pagerEl.innerHTML = '';
+      const mkBtn = (txt, on, disabled=false, active=false) => {
+        const b = document.createElement('button');
+        b.className = 'btn' + (active ? ' active' : '');
+        b.textContent = txt; b.disabled = disabled;
+        b.onclick = on; return b;
+      };
+      pagerEl.append(
+        mkBtn('«', ()=>{ state.page=1; render(); }, state.page===1),
+        mkBtn('‹', ()=>{ state.page--; render(); }, state.page===1)
+      );
+      // 页码（最多 7 个）
+      let nums = [];
+      const pagesToShow = 7;
+      let from = Math.max(1, state.page - Math.floor(pagesToShow/2));
+      let to = Math.min(pages, from + pagesToShow - 1);
+      from = Math.max(1, to - pagesToShow + 1);
+      for (let i=from;i<=to;i++){
+        pagerEl.append(mkBtn(i, ()=>{ state.page=i; render(); }, false, i===state.page));
+      }
+      pagerEl.append(
+        mkBtn('›', ()=>{ state.page++; render(); }, state.page===pages),
+        mkBtn('»', ()=>{ state.page=pages; render(); }, state.page===pages)
+      );
+      pagerEl.style.display = 'flex';
+    }
+
+    function badge(status_text) {
+      const ok = status_text === '已处理';
+      const cls = ok ? 'ok' : 'reject';
+      return `<span class="badge ${cls}">${status_text}</span>`;
+    }
+
+    function fmtTime(s){
+      if(!s) return '-';
+      const d = new Date(s.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return s;
+      const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function cardHtml(x){
+      const st = x.status_text || (x.status==1?'已处理':x.status==2?'驳回':'其他');
+      return `
+        <div class="appeal">
+          <div>
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <div class="row">
+                <div class="kv"><span class="k">订单</span><span class="v">${x.order_id}</span></div>
+                <div class="kv"><span class="k">用户</span><span class="v">${x.user_id}</span></div>
+                <div class="kv"><span class="k">处理人</span><span class="v">${x.handler_uid ?? '-'}</span></div>
+                <div class="kv"><span class="k">处理时间</span><span class="v">${fmtTime(x.handled_at)}</span></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="kv"><span class="k">状态</span><span>${badge(st)}</span></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn link js-toggle">详情</button>
+            <button class="btn link" onclick="navigator.clipboard.writeText('${x.order_id||''}').then(()=>alert('已复制订单号'));">复制订单号</button>
+          </div>
+          <div class="details">
+            <div class="muted">申诉原因（reason）</div>
+            <pre>${(x.reason||'').trim()||'无'}</pre>
+            <div class="muted">处理结果（result）</div>
+            <pre>${(x.result||'').trim()||'无'}</pre>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachDetailToggles(){
+      document.querySelectorAll('.appeal .js-toggle').forEach(btn=>{
+        btn.onclick = () => {
+          const details = btn.closest('.appeal').querySelector('.details');
+          details.style.display = (details.style.display==='block'?'none':'block');
+        };
+      });
+    }
+
+    // 事件绑定
+    $('#refresh').onclick = ()=> fetchData();
+    $('#statusSelect').onchange = e => { state.status = e.target.value; applyFilters(true); };
+    $('#pageSize').onchange = e => { state.size = +e.target.value; applyFilters(true); };
+    // 输入防抖
+    let t=null;
+    $('#q').oninput = e => { clearTimeout(t); t=setTimeout(()=>{ state.q=e.target.value; applyFilters(true); }, 250); };
+
+    // 首次加载
+    fetchData();
+  </script>
+</body>
+</html>
