@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>场地业绩排行榜</title>
+  <link rel="stylesheet" href="/res/fa/css/all.min.css"> 
+  <style>
+:root {
+  --page-bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --warning: #ffb84d;
+  --danger: #df5b57;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 34px;
+  color: var(--text);
+  background: var(--page-bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+canvas {
+  display: none !important;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  padding: 0;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title > span {
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+#ranking-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+#ranking-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+#total-income {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0 !important;
+  padding: 5px 10px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 13px !important;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.controls,
+.card-title > div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select-input,
+.search-input,
+select,
+input[type="text"] {
+  height: 38px;
+  min-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+#venue-search {
+  min-width: 220px;
+}
+
+.rank-type-select {
+  min-width: 140px;
+}
+
+.select-input:focus,
+.search-input:focus,
+select:focus,
+input[type="text"]:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.custom-select-wrapper {
+  position: relative;
+  min-width: 230px;
+}
+
+.custom-select {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.custom-select:hover,
+.custom-select.open {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.custom-select i {
+  font-size: 12px;
+  color: var(--subtle);
+  transition: transform .16s ease;
+}
+
+.custom-select.open i {
+  transform: rotate(180deg);
+}
+
+.selected-text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.custom-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 30;
+  display: none;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.custom-options.show {
+  display: block;
+}
+
+.custom-option {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .14s ease, color .14s ease;
+}
+
+.custom-option:hover {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.custom-option.active {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-weight: 900;
+}
+
+.date-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-button,
+button {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.date-button:hover,
+button:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .20);
+  transform: translateY(-1px);
+}
+
+#ranking-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  padding: 16px 18px 20px;
+  background: var(--panel-soft);
+}
+
+.venue-card {
+  position: relative;
+  min-height: 128px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: none;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.venue-card:hover {
+  border-color: rgba(15, 143, 140, .34);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.rank {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 14px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.venue-card:nth-child(1) .rank {
+  color: #8a5a00;
+  background: #fff5df;
+}
+
+.venue-card:nth-child(2) .rank {
+  color: #58636d;
+  background: #eef3f5;
+}
+
+.venue-card:nth-child(3) .rank {
+  color: #8a4a20;
+  background: #fff0e7;
+}
+
+.venue-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.venue-info span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.venue-info span:first-child {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.venue-info span strong {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.rank-metric {
+  color: var(--primary-dark) !important;
+  font-weight: 950 !important;
+}
+
+.rank-metric::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--primary);
+  opacity: .9;
+}
+
+
+/* 标题左侧竖条：兼容 top.html 与 topv2.html */
+.card-title > span::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+#ranking-title::before {
+  content: none;
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .card-title {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls,
+  .card-title > div {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    border-radius: 8px;
+  }
+
+  .card-title {
+    min-height: 0;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .card-title > span {
+    min-width: 0;
+    width: 100%;
+    display: block;
+  }
+
+  #ranking-title {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 18px;
+  }
+
+  #total-income {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .controls,
+  .card-title > div {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .controls .select-input,
+  .controls .search-input,
+  .controls .custom-select-wrapper,
+  .controls .date-button,
+  .card-title > div .date-button,
+  .card-title > div button,
+  #venue-search,
+  .rank-type-select,
+  select,
+  input[type="text"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .date-btn-group {
+    width: 100%;
+  }
+
+  .date-btn-group .date-button {
+    flex: 1;
+  }
+
+  #ranking-list {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .venue-card {
+    min-height: 0;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .rank {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+
+  .venue-info span {
+    font-size: 12px;
+  }
+
+  .venue-info span:first-child {
+    font-size: 14px;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">
+        <span>
+<span id="ranking-title">当日场地业绩排行榜</span>
+<span id="total-income" style="margin-left: 12px; font-size: 16px;">总收入: 0.00 元</span>
+        </span>
+
+        <div class="controls">
+          <!-- 搜索输入 -->
+         <input type="text"
+               id="venue-search"
+               class="select-input search-input"
+               placeholder="搜索场地名称或 ID">
+
+        
+          
+          <select id="rank-type" class="select-input rank-type-select" title="排行方式">
+            <option value="total">总收入排行</option>
+            <option value="drive">驾驶收入排行</option>
+            <option value="gift">礼物收入排行</option>
+          </select>
+
+<!-- 自定义下拉包装 -->
+          <div class="custom-select-wrapper">
+            <!-- 伪下拉显示区域 -->
+            <div class="custom-select" id="venue-select-display">
+              <span class="selected-text">全部场地</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+        
+            <!-- 下拉列表（我们自己渲染的）-->
+            <div class="custom-options" id="venue-options"></div>
+        
+            <!-- 原生 select：隐藏，用来复用原来的 JS change 事件 -->
+            <select id="venue-filter" class="select-input" style="display:none;">
+              <option value="all">全部场地</option>
+            </select>
+          </div>
+        
+<div class="date-btn-group">
+  <button class="date-button" id="yesterday-button">昨天</button>
+  <button class="date-button" id="today-button">今天</button>
+</div>
+
+        </div>
+      </div>
+
+      <div id="ranking-list"></div>
+    </div>
+  </div>
+
+  <script src="canvas-nest-colorful.js"></script>
+  <script>
+    // ====== 全局状态 ======
+    let allData = [];              // 当前日期的完整数据（数组）
+    let selectedVenueId = 'all';   // 当前筛选的 venue_id（字符串 or 'all'）
+let currentPeriod = 'day';     // 'day' | 'week' | 'month'
+let currentDateKey = 'today';  // today | yesterday | YYYY-MM-DD，单日用
+let currentStartDate = '';     // 区间开始日期
+let currentEndDate = '';       // 区间结束日期，开区间，不包含当天
+    let currentRankType = 'total'; // 'total' | 'drive' | 'gift'
+
+    const rankTypeConfig = {
+      total: {
+        field: 'totalPayment',
+        name: '总收入',
+        totalLabel: '总收入',
+        filterLabel: '筛选总收入'
+      },
+      drive: {
+        field: 'driveIncome',
+        name: '驾驶收入',
+        totalLabel: '总驾驶收入',
+        filterLabel: '筛选驾驶收入'
+      },
+      gift: {
+        field: 'giftIncome',
+        name: '礼物收入',
+        totalLabel: '总礼物收入',
+        filterLabel: '筛选礼物收入'
+      }
+    };
+
+    function normalizeRankType(value) {
+      return rankTypeConfig[value] ? value : 'total';
+    }
+
+    function getRankConfig() {
+      return rankTypeConfig[currentRankType] || rankTypeConfig.total;
+    }
+
+    function toNumber(value) {
+      const n = parseFloat(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+function isDateStr(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '').trim());
+}
+
+function normalizeDateKey(value) {
+  const v = String(value || '').trim();
+
+  if (v === 'today' || v === 'yesterday') return v;
+  if (isDateStr(v)) return v;
+
+  return 'today';
+}
+
+function normalizePeriod(value) {
+  return ['day', 'week', 'month'].includes(value) ? value : 'day';
+}
+
+function addDays(dateStr, days) {
+  const parts = String(dateStr).split('-').map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  d.setDate(d.getDate() + days);
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${y}-${m}-${day}`;
+}
+
+function setSingleDate(dateKey) {
+  currentPeriod = 'day';
+  currentDateKey = normalizeDateKey(dateKey);
+  currentStartDate = '';
+  currentEndDate = '';
+}
+
+function setRange(period, startDate, endDate) {
+  currentPeriod = normalizePeriod(period);
+  currentDateKey = '';
+  currentStartDate = startDate;
+  currentEndDate = endDate;
+}
+
+function getDateTitle() {
+  if (currentStartDate && currentEndDate) {
+    const showEnd = addDays(currentEndDate, -1);
+
+    if (currentPeriod === 'week') {
+      return `${currentStartDate} ~ ${showEnd} 场地业绩排行榜`;
+    }
+
+    if (currentPeriod === 'month') {
+      return `${currentStartDate.slice(0, 7)} 场地业绩排行榜`;
+    }
+
+    return `${currentStartDate} 场地业绩排行榜`;
+  }
+
+  if (currentDateKey === 'today') return '当日场地业绩排行榜';
+  if (currentDateKey === 'yesterday') return '昨日场地业绩排行榜';
+
+  return `${currentDateKey} 场地业绩排行榜`;
+}
+
+function updateDateTitle() {
+  const titleEl = document.getElementById('ranking-title');
+  if (titleEl) titleEl.textContent = getDateTitle();
+}
+    function normalizeVenueRow(v) {
+      const driveIncome = toNumber(v.driveIncome);
+      const giftIncome = toNumber(v.giftIncome);
+      const totalPayment = v.totalPayment === undefined || v.totalPayment === null
+        ? driveIncome + giftIncome
+        : toNumber(v.totalPayment);
+
+      return {
+        ...v,
+        driveIncome: driveIncome.toFixed(2),
+        giftIncome: giftIncome.toFixed(2),
+        totalPayment: totalPayment.toFixed(2)
+      };
+    }
+
+    function sortByCurrentRank(data) {
+      const cfg = getRankConfig();
+      const field = cfg.field;
+
+      return [...data].sort((a, b) => {
+        const rankDiff = toNumber(b[field]) - toNumber(a[field]);
+        if (rankDiff !== 0) return rankDiff;
+
+        // 金额相同时，用总收入做二级排序，最后用 venue_id 排序，避免顺序乱跳
+        const totalDiff = toNumber(b.totalPayment) - toNumber(a.totalPayment);
+        if (totalDiff !== 0) return totalDiff;
+
+        const aid = Number(a.venue_id);
+        const bid = Number(b.venue_id);
+        if (!Number.isNaN(aid) && !Number.isNaN(bid)) return aid - bid;
+        return String(a.venue_id).localeCompare(String(b.venue_id), 'zh-Hans-CN', { numeric: true });
+      });
+    }
+
+function updateURLState() {
+  const u = new URL(location.href);
+
+  if (selectedVenueId === 'all') {
+    u.searchParams.delete('venue_id');
+  } else {
+    u.searchParams.set('venue_id', selectedVenueId);
+  }
+
+  if (currentRankType === 'total') {
+    u.searchParams.delete('rank_type');
+  } else {
+    u.searchParams.set('rank_type', currentRankType);
+  }
+
+  if (currentStartDate && currentEndDate) {
+    u.searchParams.set('period', currentPeriod);
+    u.searchParams.set('start_date', currentStartDate);
+    u.searchParams.set('end_date', currentEndDate);
+    u.searchParams.delete('date');
+  } else {
+    u.searchParams.delete('period');
+    u.searchParams.delete('start_date');
+    u.searchParams.delete('end_date');
+
+    if (currentDateKey === 'today') {
+      u.searchParams.delete('date');
+    } else {
+      u.searchParams.set('date', currentDateKey);
+    }
+  }
+
+  history.replaceState({}, '', u.toString());
+}
+
+// URL 预选逻辑（支持 ?date=YYYY-MM-DD&venue_id=xxx&rank_type=drive|gift|total）
+(function presetFromURL() {
+  const params = new URLSearchParams(location.search);
+  const vid = params.get('venue_id');
+  const rt = params.get('rank_type');
+  const dt = params.get('date');
+
+  const period = normalizePeriod(params.get('period') || 'day');
+  const startDate = params.get('start_date') || '';
+  const endDate = params.get('end_date') || '';
+
+  if (vid) selectedVenueId = String(vid);
+  currentRankType = normalizeRankType(rt || 'total');
+
+  if (isDateStr(startDate) && isDateStr(endDate) && endDate > startDate) {
+    setRange(period, startDate, endDate);
+  } else {
+    setSingleDate(dt || 'today');
+  }
+
+  const rankSelect = document.getElementById('rank-type');
+  if (rankSelect) rankSelect.value = currentRankType;
+
+  updateDateTitle();
+})();
+
+// ====== 加载数据 ======
+function loadRankingData(dateKey) {
+  // 点击今天/昨天按钮时，切回单日模式
+  if (dateKey) {
+    setSingleDate(dateKey);
+  }
+
+  updateDateTitle();
+  updateURLState();
+
+  const params = new URLSearchParams();
+  params.set('rank_type', currentRankType);
+
+  if (currentStartDate && currentEndDate) {
+    params.set('period', currentPeriod);
+    params.set('start_date', currentStartDate);
+    params.set('end_date', currentEndDate);
+  } else {
+    params.set('date', currentDateKey);
+  }
+
+  const url = `/api/operat/topv2.php?${params.toString()}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.code !== 0 || !Array.isArray(data.data)) {
+        alert(data.msg || '未找到业绩数据');
+        allData = [];
+        populateVenueDropdown([]);
+        applyFilterAndRender();
+        return;
+      }
+
+      allData = data.data.map(normalizeVenueRow);
+
+      populateVenueDropdown(allData);
+      applyFilterAndRender();
+    })
+    .catch(err => {
+      console.error('数据加载失败:', err);
+      alert('数据加载失败，请稍后重试');
+    });
+}
+
+    // ====== 填充场地下拉 ======
+    function populateVenueDropdown(data) {
+      const sel = document.getElementById('venue-filter');
+      const prev = selectedVenueId;
+
+      // 去重并收集 (id, name)
+      const seen = new Set();
+      const list = [];
+      data.forEach(v => {
+        const id = String(v.venue_id);
+        if (!seen.has(id)) {
+          seen.add(id);
+          list.push({ id, name: v.venue_name });
+        }
+      });
+
+      // 按 id 排序（优先数值排序，退回自然字符串排序）
+      list.sort((a, b) => {
+        const ax = Number(a.id), bx = Number(b.id);
+        if (!Number.isNaN(ax) && !Number.isNaN(bx)) return ax - bx;
+        return a.id.localeCompare(b.id, 'zh-Hans-CN', { numeric: true });
+      });
+
+      // 生成下拉
+      const opts = ['<option value="all">全部场地</option>'];
+      for (const it of list) {
+        opts.push(`<option value="${it.id}">${it.id}-${escapeHTML(it.name)}</option>`);
+      }
+      sel.innerHTML = opts.join('');
+
+      // 新增：根据 list 构建自定义下拉选项
+      buildCustomOptions(list);
+
+      // 恢复选择（若仍存在）
+      if (prev !== 'all' && seen.has(prev)) {
+        sel.value = prev;
+        selectedVenueId = prev;
+      } else {
+        sel.value = 'all';
+        selectedVenueId = 'all';
+      }
+    }
+
+    // ====== 场地模糊搜索（过滤自定义下拉里的选项） ======
+    const venueSearchInput = document.getElementById('venue-search');
+
+    venueSearchInput.addEventListener('input', () => {
+      const keyword = venueSearchInput.value.trim().toLowerCase();
+      const options = document.querySelectorAll('#venue-options .custom-option');
+
+      options.forEach(opt => {
+        const text = opt.textContent.toLowerCase();
+        // 只要包含关键字就显示，否则隐藏
+        if (!keyword || text.includes(keyword)) {
+          opt.style.display = '';
+        } else {
+          opt.style.display = 'none';
+        }
+      });
+
+      // 输入时自动展开下拉，方便直接点
+      if (!venueOptionsBox.classList.contains('show')) {
+        venueOptionsBox.classList.add('show');
+        venueSelectDisplay.classList.add('open');
+      }
+    });
+
+    function buildCustomOptions(list) {
+      const box = document.getElementById('venue-options');
+      const displayText = document
+        .getElementById('venue-select-display')
+        .querySelector('.selected-text');
+      const realSelect = document.getElementById('venue-filter');
+
+      box.innerHTML = '';
+
+      // “全部场地”
+      const allDiv = document.createElement('div');
+      allDiv.className = 'custom-option';
+      allDiv.dataset.value = 'all';
+      allDiv.textContent = '全部场地';
+      box.appendChild(allDiv);
+
+      // 各个场地
+      list.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'custom-option';
+        div.dataset.value = it.id;
+        div.textContent = `${it.id}-${it.name}`;
+        box.appendChild(div);
+      });
+
+      // 绑定点击事件
+      box.querySelectorAll('.custom-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === selectedVenueId);
+
+        opt.addEventListener('click', () => {
+          const value = opt.dataset.value;
+
+          selectedVenueId = value;
+          displayText.textContent = opt.textContent;
+
+          box.querySelectorAll('.custom-option').forEach(item => {
+            item.classList.toggle('active', item.dataset.value === selectedVenueId);
+          });
+
+          // 同步隐藏的 select，并触发原来的 change 逻辑
+          realSelect.value = value;
+          realSelect.dispatchEvent(new Event('change'));
+
+          closeCustomDropdown();
+        });
+      });
+
+      // 初始显示当前选中（如果没有就“全部场地”）
+      let current = box.querySelector(
+        `.custom-option[data-value="${selectedVenueId}"]`
+      );
+      if (!current) current = allDiv;
+      displayText.textContent = current.textContent;
+    }
+
+    // ====== 应用筛选并渲染 ======
+    function applyFilterAndRender() {
+      let list = allData;
+      if (selectedVenueId !== 'all') {
+        list = allData.filter(v => String(v.venue_id) === selectedVenueId);
+      }
+
+      list = sortByCurrentRank(list);
+      displayRanking(list);
+
+      // 根据当前排行方式计算并显示合计
+      const cfg = getRankConfig();
+      const total = list.reduce((sum, v) => sum + toNumber(v[cfg.field]), 0);
+      const label = selectedVenueId === 'all' ? cfg.totalLabel : cfg.filterLabel;
+      document.getElementById('total-income').innerText = `${label}: ${total.toFixed(2)} 元`;
+    }
+
+    // ====== 排行榜渲染 ======
+    function displayRanking(venues) {
+      const rankingList = document.getElementById('ranking-list');
+      const cfg = getRankConfig();
+
+      rankingList.innerHTML = '';
+
+      venues.forEach((venue, index) => {
+        const card = document.createElement('div');
+        card.classList.add('venue-card');
+        card.style.cursor = 'pointer';
+        card.onclick = () => goToDetail(venue.venue_id);
+
+        const driveIncome = toNumber(venue.driveIncome);
+        const giftIncome = toNumber(venue.giftIncome);
+        const totalIncome = toNumber(venue.totalPayment);
+
+        const driveClass = currentRankType === 'drive' ? 'rank-metric' : '';
+        const giftClass = currentRankType === 'gift' ? 'rank-metric' : '';
+        const totalClass = currentRankType === 'total' ? 'rank-metric' : '';
+
+        card.innerHTML = `
+          <div class="rank">${index + 1}</div>
+          <div class="venue-info">
+            <span><strong>${venue.venue_id}-${escapeHTML(venue.venue_name)}</strong></span>
+            <span>订单数: ${venue.orderCount}</span>
+            <span>预约人数: ${venue.reservationCount}</span>
+            <span class="${driveClass}">驾驶收入: ${driveIncome.toFixed(2)} 元</span>
+            <span class="${giftClass}">礼物收入: ${giftIncome.toFixed(2)} 元</span>
+            <span class="${totalClass}">总收入: ${totalIncome.toFixed(2)} 元</span>
+          </div>
+        `;
+        rankingList.appendChild(card);
+      });
+    }
+
+    // ====== 事件绑定 ======
+    document.getElementById('rank-type').addEventListener('change', (e) => {
+      currentRankType = normalizeRankType(e.target.value);
+      e.target.value = currentRankType;
+      applyFilterAndRender();
+      updateURLState();
+
+      // 当前数据已经有三种收入，切换排行不需要重新请求；这里保持即时切换
+    });
+
+    document.getElementById('venue-filter').addEventListener('change', (e) => {
+      selectedVenueId = e.target.value;
+      applyFilterAndRender();
+      updateURLState();
+    });
+
+    const venueSelectDisplay = document.getElementById('venue-select-display');
+    const venueOptionsBox = document.getElementById('venue-options');
+
+    function closeCustomDropdown() {
+      venueSelectDisplay.classList.remove('open');
+      venueOptionsBox.classList.remove('show');
+    }
+
+    venueSelectDisplay.addEventListener('click', () => {
+      venueSelectDisplay.classList.toggle('open');
+      venueOptionsBox.classList.toggle('show');
+    });
+
+    // 点击外面关闭下拉
+    document.addEventListener('click', (e) => {
+      const wrapper = document.querySelector('.custom-select-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeCustomDropdown();
+      }
+    });
+
+    document.getElementById('yesterday-button').addEventListener('click', () => loadRankingData('yesterday'));
+    document.getElementById('today-button').addEventListener('click', () => loadRankingData('today'));
+
+    function goToDetail(venueId) {
+      window.location.href = `/api/venue/venue_detail.php?venue_id=${venueId}`;
+    }
+
+    // 简单转义，避免 XSS
+    function escapeHTML(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+// 初次加载：优先使用 URL 里的 date，没有就今天
+loadRankingData();
+  </script>
+</body>
+</html>
+

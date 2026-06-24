@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>场地业绩排行榜</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> 
+  <style>
+:root {
+  --page-bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --warning: #ffb84d;
+  --danger: #df5b57;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 34px;
+  color: var(--text);
+  background: var(--page-bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+canvas {
+  display: none !important;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  padding: 0;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title > span {
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+#ranking-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+#ranking-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+#total-income {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0 !important;
+  padding: 5px 10px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 13px !important;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.controls,
+.card-title > div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select-input,
+.search-input,
+select,
+input[type="text"] {
+  height: 38px;
+  min-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+#venue-search {
+  min-width: 220px;
+}
+
+.rank-type-select {
+  min-width: 140px;
+}
+
+.select-input:focus,
+.search-input:focus,
+select:focus,
+input[type="text"]:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.custom-select-wrapper {
+  position: relative;
+  min-width: 230px;
+}
+
+.custom-select {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.custom-select:hover,
+.custom-select.open {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.custom-select i {
+  font-size: 12px;
+  color: var(--subtle);
+  transition: transform .16s ease;
+}
+
+.custom-select.open i {
+  transform: rotate(180deg);
+}
+
+.selected-text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.custom-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 30;
+  display: none;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.custom-options.show {
+  display: block;
+}
+
+.custom-option {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .14s ease, color .14s ease;
+}
+
+.custom-option:hover {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.custom-option.active {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-weight: 900;
+}
+
+.date-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-button,
+button {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.date-button:hover,
+button:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .20);
+  transform: translateY(-1px);
+}
+
+#ranking-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  padding: 16px 18px 20px;
+  background: var(--panel-soft);
+}
+
+.venue-card {
+  position: relative;
+  min-height: 128px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: none;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.venue-card:hover {
+  border-color: rgba(15, 143, 140, .34);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.rank {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 14px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.venue-card:nth-child(1) .rank {
+  color: #8a5a00;
+  background: #fff5df;
+}
+
+.venue-card:nth-child(2) .rank {
+  color: #58636d;
+  background: #eef3f5;
+}
+
+.venue-card:nth-child(3) .rank {
+  color: #8a4a20;
+  background: #fff0e7;
+}
+
+.venue-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.venue-info span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.venue-info span:first-child {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.venue-info span strong {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.rank-metric {
+  color: var(--primary-dark) !important;
+  font-weight: 950 !important;
+}
+
+.rank-metric::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--primary);
+  opacity: .9;
+}
+
+
+/* 标题左侧竖条：兼容 top.html 与 topv2.html */
+.card-title > span::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+#ranking-title::before {
+  content: none;
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .card-title {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls,
+  .card-title > div {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    border-radius: 8px;
+  }
+
+  .card-title {
+    min-height: 0;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .card-title > span {
+    min-width: 0;
+    width: 100%;
+    display: block;
+  }
+
+  #ranking-title {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 18px;
+  }
+
+  #total-income {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .controls,
+  .card-title > div {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .controls .select-input,
+  .controls .search-input,
+  .controls .custom-select-wrapper,
+  .controls .date-button,
+  .card-title > div .date-button,
+  .card-title > div button,
+  #venue-search,
+  .rank-type-select,
+  select,
+  input[type="text"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .date-btn-group {
+    width: 100%;
+  }
+
+  .date-btn-group .date-button {
+    flex: 1;
+  }
+
+  #ranking-list {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .venue-card {
+    min-height: 0;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .rank {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+
+  .venue-info span {
+    font-size: 12px;
+  }
+
+  .venue-info span:first-child {
+    font-size: 14px;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <div  class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+     <span>
+          当日场地业绩排行榜
+          <span id="total-income" style="margin-left: 20px; font-size: 16px;">总收入: 0.00 元</span>
+        </span>
+        <div>
+          
+          <button class="date-button" id="yesterday-button">昨天</button>
+          <button class="date-button" id="today-button">今天</button>
+        </div>
+      </div>
+      <div id="ranking-list">
+        <!-- 排行榜列表 -->
+      </div>
+    </div>
+  </div>
+<script src="canvas-nest-colorful.js"></script>
+  <script>
+    // 获取数据并展示排行榜
+    function loadRankingData(date) {
+      let url = '/api/operat/topv2.php'; 
+      if (date === 'yesterday') {
+        // 这里需要后端支持根据日期查询，目前代码未实现，仅做示意
+        url += '?date=yesterday'; 
+      }
+      fetch(url)
+        .then(response => response.json()) 
+        .then(data => {
+          if (data.code === 0 && data.data && data.data.length > 0) {
+            // 更新总收入显示
+            document.getElementById('total-income').innerText = `总收入: ${data.totalIncome} 元`;
+            // 将数据按总收入降序排序，注意 totalPayment 为字符串
+            const sortedData = data.data.sort((a,  b) => parseFloat(b.totalPayment)  - parseFloat(a.totalPayment)); 
+            displayRanking(sortedData);
+          } else {
+            alert('未找到业绩数据');
+          }
+        })
+        .catch(error => {
+          console.error(' 数据加载失败:', error);
+        });
+    }
+
+    // 显示排行榜
+    function displayRanking(venues) {
+      const rankingList = document.getElementById('ranking-list'); 
+      rankingList.innerHTML  = '';
+
+      venues.forEach((venue,  index) => {
+        const card = document.createElement('div'); 
+        card.classList.add('venue-card'); 
+        card.style.cursor = 'pointer';
+        card.onclick = () => goToDetail(venue.venue_id);
+
+        card.innerHTML  = `
+          <div class="rank">${index + 1}</div>
+          <div class="venue-info">
+            <span><strong>${venue.venue_name}</strong></span> 
+            <span>订单数: ${venue.orderCount}</span> 
+            <span>预约人数: ${venue.reservationCount}</span> 
+            <span>排队人数: ${venue.queue_length}</span> 
+            <span>总收入: ${venue.totalPayment}  元</span>
+          </div>
+        `;
+        rankingList.appendChild(card); 
+      });
+    }
+
+    // 页面加载时默认显示今天的数据
+    loadRankingData('today');
+
+    // 为按钮添加点击事件
+    const yesterdayButton = document.getElementById('yesterday-button'); 
+    const todayButton = document.getElementById('today-button'); 
+
+    yesterdayButton.addEventListener('click',  () => {
+      loadRankingData('yesterday');
+    });
+
+    todayButton.addEventListener('click',  () => {
+      loadRankingData('today');
+    });
+    function goToDetail(venueId) {
+      window.location.href = `/api/venue/venue_detail.php?venue_id=${venueId}`;
+    }
+
+  </script>
+</body>
+</html>
