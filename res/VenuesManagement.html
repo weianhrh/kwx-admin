@@ -529,17 +529,12 @@ button.venue-pill:hover {
 }
 
 .venue-pill-cyan,
-.venue-pill-blue,
-.venue-pill-scene-indoor,
-.venue-pill-voice-room {
+.venue-pill-blue {
   color: var(--primary);
   background: var(--primary-soft);
   border-color: rgba(15, 143, 140, .18);
 }
 
-.venue-pill-scene-outdoor,
-.venue-pill-mic,
-.venue-pill-sound,
 .venue-pill-spending {
   border-color: rgba(47, 125, 246, .18);
 }
@@ -572,13 +567,7 @@ button.venue-pill:hover {
 .edit-btn,
 .unban-btn,
 .ban-btn,
-.sound-ban-btn,
-.sound-unban-btn,
-.voice-room-ban-btn,
-.voice-room-unban-btn,
 .live-btn,
-.spending-alert-off-btn,
-.spending-alert-on-btn,
 .ban-submit-btn,
 .form-group button,
 #unbanForm button[type="submit"] {
@@ -600,9 +589,6 @@ button.venue-pill:hover {
 
 .edit-btn,
 .live-btn,
-.spending-alert-on-btn,
-.sound-unban-btn,
-.voice-room-unban-btn,
 #unbanForm button[type="submit"] {
   color: #fff !important;
   background: var(--primary) !important;
@@ -611,9 +597,6 @@ button.venue-pill:hover {
 
 .edit-btn:hover,
 .live-btn:hover,
-.spending-alert-on-btn:hover,
-.sound-unban-btn:hover,
-.voice-room-unban-btn:hover,
 #unbanForm button[type="submit"]:hover {
   background: var(--primary-dark) !important;
   border-color: var(--primary-dark) !important;
@@ -621,31 +604,25 @@ button.venue-pill:hover {
   transform: translateY(-1px);
 }
 
-.live-btn.cancel,
-.spending-alert-off-btn {
+.live-btn.cancel {
   color: #486169 !important;
   background: #fff !important;
   border-color: var(--line) !important;
 }
 
-.live-btn.cancel:hover,
-.spending-alert-off-btn:hover {
+.live-btn.cancel:hover {
   color: var(--primary) !important;
   border-color: rgba(15, 143, 140, .28) !important;
   background: var(--primary-soft) !important;
 }
 
-.ban-btn,
-.sound-ban-btn,
-.voice-room-ban-btn {
+.ban-btn {
   color: #fff !important;
   background: var(--warning) !important;
   border-color: var(--warning) !important;
 }
 
-.ban-btn:hover,
-.sound-ban-btn:hover,
-.voice-room-ban-btn:hover {
+.ban-btn:hover {
   box-shadow: 0 10px 24px rgba(255, 184, 77, .20);
   transform: translateY(-1px);
 }
@@ -694,8 +671,7 @@ button.venue-pill:hover {
 }
 
 .modal-close,
-.unban-modal-close,
-.voice-room-ban-modal-close {
+.unban-modal-close {
   position: absolute !important;
   top: 12px !important;
   right: 14px !important;
@@ -712,8 +688,7 @@ button.venue-pill:hover {
 }
 
 .modal-close:hover,
-.unban-modal-close:hover,
-.voice-room-ban-modal-close:hover {
+.unban-modal-close:hover {
   color: var(--danger);
   background: var(--danger-soft);
 }
@@ -915,13 +890,7 @@ button.venue-pill:hover {
   .edit-btn,
   .unban-btn,
   .ban-btn,
-  .sound-ban-btn,
-  .sound-unban-btn,
-  .voice-room-ban-btn,
-  .voice-room-unban-btn,
-  .live-btn,
-  .spending-alert-off-btn,
-  .spending-alert-on-btn {
+  .live-btn {
     width: 100%;
     min-height: 38px;
   }
@@ -1013,11 +982,6 @@ button.venue-pill:hover {
             <!-- 新增：顶部统计筛选 -->
 <div class="venue-toolbar">
     <div class="venue-stats">
-        <div class="stat-card stat-live" data-status="直播中">
-            <span class="stat-label">直播中</span>
-            <span class="stat-value" id="live-count">0</span>
-        </div>
-
         <div class="stat-card stat-open" data-status="营业中">
             <span class="stat-label">营业中</span>
             <span class="stat-value" id="open-count">0</span>
@@ -1071,41 +1035,6 @@ function openBanModal(venueId) {
 
     document.getElementById('banModal').style.display = 'block';
 }
-function openVoiceRoomBanModal(venueId) {
-    document.getElementById('voiceRoomBanVenueId').value = venueId;
-    document.getElementById('voiceRoomBanDuration').value = '86400';
-    document.getElementById('voiceRoomBanReason').value = '直播内容存在违规，已关闭语音房功能';
-    document.getElementById('voiceRoomBanModal').style.display = 'block';
-}
-
-window.setVoiceRoomUnban = function (venueId) {
-    if (!confirm('确定要解除该场地语音房封禁吗？')) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'set_voice_room_unban');
-    formData.append('venue_id', venueId);
-
-    fetch('/api/venue/VenuesManagement.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0 || data.code === 200) {
-            alert(data.msg || '语音房已解除封禁');
-            window.loadVenues ? window.loadVenues() : location.reload();
-            // loadVenues();
-        } else {
-            alert(data.msg || '操作失败');
-        }
-    })
-    .catch(err => {
-        console.error('解除语音房封禁失败:', err);
-        alert('请求异常');
-    });
-};
         // 保存场地映射表（id -> name）
         const venueMap = new Map();
 
@@ -1171,22 +1100,6 @@ function renderVenueLevelOptions(currentLevel) {
         return `<option value="${level}" ${selected}>${level}</option>`;
     }).join('');
 }
-function getVoiceRoomSceneType(venue) {
-    return Number(venue.voice_room_scene_type) === 2 ? 2 : 1;
-}
-
-function getVoiceRoomSceneText(sceneType) {
-    return Number(sceneType) === 2 ? '户外' : '室内';
-}
-
-function getVoiceRoomSceneClass(sceneType) {
-    return Number(sceneType) === 2 ? 'venue-pill-scene-outdoor' : 'venue-pill-scene-indoor';
-}
-
-function canEditVoiceRoomSceneType() {
-    return Number(window.role || 0) === 1 || Number(window.role || 0) === 2;
-}
-            
 function isRecommendTop(venue) {
     return Number(venue.is_live || 0) === 1 && Number(venue.is_recommend || 0) === 1;
 }
@@ -1237,11 +1150,9 @@ function formatReviewTime(value) {
 function updateStats(venues) {
     const openCount = venues.filter(v => getVenueStatusGroup(v) === '营业中').length;
     const restCount = venues.filter(v => getVenueStatusGroup(v) === '休息中').length;
-    const liveCount = venues.filter(v => isVenueLive(v)).length;
 
     document.getElementById('open-count').textContent = openCount;
     document.getElementById('rest-count').textContent = restCount;
-    document.getElementById('live-count').textContent = liveCount;
 }
 function renderVenues(list) {
     if (!list.length) {
@@ -1253,27 +1164,13 @@ function renderVenues(list) {
         const status = (venue.venue_status || '').trim();
         const isOpen = status === '营业中';
         const isBuild = status === '建设中';
-        const venueTypeNum = Number(venue.venue_type);
         const isLive = isVenueLive(venue);
         const isPriorityReview = needPriorityReview(venue);
 
-        const isSoundDisabled = Number(venue.is_disabled_sound || 0) === 1;
-        const isVoiceRoomBanned = Number(venue.is_voice_room_banned || 0) === 1;
         const isSpendingAlert = Number(venue.is_spending_alert || 0) === 1;
         const venueLevel = normalizeVenueLevel(venue.venue_level);
-        const venueLevelRateText = getVenueLevelRateText(venueLevel);
         // const isDrSynced = String(venue.dr_venue_id || '').trim() !== '';
-        
-        const userMicValue = venue.is_user_mic_enabled === null || venue.is_user_mic_enabled === undefined
-            ? 1
-            : venue.is_user_mic_enabled;
-        const isUserMicEnabled = Number(userMicValue) === 1;
-        
-        const voiceRoomSceneType = getVoiceRoomSceneType(venue);
-        const nextVoiceRoomSceneType = voiceRoomSceneType === 1 ? 2 : 1;
-        const voiceRoomSceneText = getVoiceRoomSceneText(voiceRoomSceneType);
-        const nextVoiceRoomSceneText = getVoiceRoomSceneText(nextVoiceRoomSceneType);
-        const showVoiceRoomSceneBtn = canEditVoiceRoomSceneType();
+
         return `
             <div class="venue-card ${isOpen ? 'status-open' : (isBuild ? 'status-build' : 'status-rest')}">
                 <div class="venue-card-top">
@@ -1334,49 +1231,16 @@ ${isLive ? `
         开放时间：${escapeHtml(venue.start_time || '未设置')}
     </span>
 
-    <span class="venue-pill venue-pill-sound ${isSoundDisabled ? 'venue-pill-red' : 'venue-pill-green'}">
-        喇叭麦克风：${isSoundDisabled ? '已封禁' : '正常'}
-    </span>
-
     <span class="venue-pill venue-pill-spending ${isSpendingAlert ? 'venue-pill-orange' : 'venue-pill-gray'}">
         高消费：${isSpendingAlert ? '已开启' : '未开启'}
     </span>
-
-<button type="button"
-    class="venue-pill venue-pill-mic venue-pill-mic-switch ${isUserMicEnabled ? 'venue-pill-green' : 'venue-pill-red'}"
-    onclick="setVenueUserMicEnabled(${venue.id}, ${isUserMicEnabled ? 0 : 1})"
-    title="点击${isUserMicEnabled ? '关闭' : '开启'}用户上麦">
-    用户上麦：${isUserMicEnabled ? '已开启' : '已关闭'}
-</button>
-<span class="venue-pill venue-pill-voice-room ${isVoiceRoomBanned ? 'venue-pill-red' : 'venue-pill-green'}">
-    语音房：${isVoiceRoomBanned ? '已封禁' : '正常'}
-</span>
-
-${showVoiceRoomSceneBtn ? `
-    <button type="button"
-        class="venue-pill venue-pill-scene ${getVoiceRoomSceneClass(voiceRoomSceneType)}"
-        onclick="setVoiceRoomSceneType(${venue.id}, ${nextVoiceRoomSceneType})"
-        title="点击切换为${nextVoiceRoomSceneText}">
-        场景：${voiceRoomSceneText}
-    </button>
-` : ''}
 </div>
                     </div>
                 </div>
 
 <div class="venue-action-area">
     <div class="venue-actions venue-actions-main">
-        ${isLive
-            ? `<button class="live-btn cancel" onclick="setVenueLiveStream(${venue.id}, 0)">取消直播中</button>`
-            : `<button class="live-btn" onclick="setVenueLiveStream(${venue.id}, 1)">标记直播中</button>`
-        }
-
         <button class="edit-btn" onclick="editVenue(${venue.id})">修改场地信息</button>
-
-        ${Number(venue.is_spending_alert || 0) === 1
-            ? `<button class="spending-alert-off-btn" onclick="setVenueSpendingAlert(${venue.id}, 0)">关闭高消费提示</button>`
-            : `<button class="spending-alert-on-btn" onclick="setVenueSpendingAlert(${venue.id}, 1)">开启高消费提示</button>`
-        }
     </div>
 
     <div class="venue-actions venue-actions-ban">
@@ -1385,15 +1249,6 @@ ${showVoiceRoomSceneBtn ? `
             : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁场地</button>`
         }
 
-        ${isVoiceRoomBanned
-            ? `<button class="voice-room-unban-btn" onclick="setVoiceRoomUnban(${venue.id})">解除语音房封禁</button>`
-            : `<button class="voice-room-ban-btn" onclick="openVoiceRoomBanModal(${venue.id})">封禁语音房</button>`
-        }
-
-        ${Number(venue.is_disabled_sound || 0) === 1
-            ? `<button class="sound-unban-btn" onclick="setVenueSoundDisabled(${venue.id}, 0)">解封喇叭麦克风</button>`
-            : `<button class="sound-ban-btn" onclick="setVenueSoundDisabled(${venue.id}, 1)">封禁喇叭麦克风</button>`
-        }
     </div>
 </div>
             </div>
@@ -1415,11 +1270,7 @@ function applyFilters() {
     const selectedLevel = venueLevelFilter.value.trim().toUpperCase();
     let filtered = [...allVenues];
 
-    if (currentStatus === '直播中') {
-        filtered = filtered.filter(v => isVenueLive(v));
-    } else {
-        filtered = filtered.filter(v => getVenueStatusGroup(v) === currentStatus);
-    }
+    filtered = filtered.filter(v => getVenueStatusGroup(v) === currentStatus);
 
     if (keyword) {
         filtered = filtered.filter(v => {
@@ -1447,30 +1298,6 @@ statCards.forEach(card => {
 window.openVenueLiveLogs = function (venueId) {
     const url = `/res/venueLiveStatusLogs.html?venue_id=${encodeURIComponent(venueId)}`;
     window.open(url, '_blank');
-};
-window.setVenueLiveStream = function (venueId, showLiveStream) {
-    const formData = new FormData();
-    formData.append('action', 'set_live_stream_flag');
-    formData.append('venue_id', venueId);
-    formData.append('show_live_stream', showLiveStream);
-
-    fetch('/api/venue/VenuesManagement.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0) {
-            alert(showLiveStream === 1 ? '已标记为直播中' : '已取消直播中');
-            loadVenues();
-        } else {
-            alert(data.msg || '操作失败');
-        }
-    })
-    .catch(err => {
-        console.error('设置直播状态失败:', err);
-        alert('请求异常');
-    });
 };
 window.setVenueStatus = function (venueId, currentStatus) {
     const current = String(currentStatus || '').trim() === '营业中' ? '营业中' : '休息中';
@@ -1501,107 +1328,6 @@ window.setVenueStatus = function (venueId, currentStatus) {
     .catch(err => {
         console.error('设置场地状态失败:', err);
         alert('请求异常');
-    });
-};
-window.setVenueSoundDisabled = function (venueId, isDisabledSound) {
-    const actionText = isDisabledSound === 1 ? '封禁该场地喇叭麦克风' : '解除该场地喇叭麦克风封禁';
-
-    if (!confirm(`确定要${actionText}吗？`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'set_venue_sound_disabled');
-    formData.append('venue_id', venueId);
-    formData.append('is_disabled_sound', isDisabledSound);
-
-    fetch('/api/venue/VenuesManagement.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0 || data.code === 200) {
-            alert(data.msg || '操作成功');
-            loadVenues();
-        } else {
-            alert(data.msg || '操作失败');
-        }
-    })
-    .catch(err => {
-        console.error('设置场地声音封禁失败:', err);
-        alert('请求异常');
-    });
-};
-window.setVenueUserMicEnabled = function (venueId, isUserMicEnabled) {
-    isUserMicEnabled = Number(isUserMicEnabled);
-
-    if (![0, 1].includes(isUserMicEnabled)) {
-        alert('用户上麦参数错误');
-        return;
-    }
-
-    const actionText = isUserMicEnabled === 1 ? '开启该场地用户上麦' : '关闭该场地用户上麦';
-
-    if (!confirm(`确定要${actionText}吗？`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'set_user_mic_enabled');
-    formData.append('venue_id', venueId);
-    formData.append('is_user_mic_enabled', isUserMicEnabled);
-
-    fetch('/api/venue/VenuesManagement.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0 || data.code === 200) {
-            alert(data.msg || '用户上麦状态修改成功');
-            loadVenues();
-        } else {
-            alert(data.msg || '用户上麦状态修改失败');
-            loadVenues();
-        }
-    })
-    .catch(err => {
-        console.error('设置用户上麦失败:', err);
-        alert('请求异常');
-        loadVenues();
-    });
-};
-window.setVoiceRoomSceneType = function (venueId, sceneType) {
-    sceneType = Number(sceneType);
-
-    if (![1, 2].includes(sceneType)) {
-        alert('语音房场景参数错误');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'set_voice_room_scene_type');
-    formData.append('venue_id', venueId);
-    formData.append('voice_room_scene_type', sceneType);
-
-    fetch('/api/venue/VenuesManagement.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0 || data.code === 200) {
-            loadVenues();
-        } else {
-            alert(data.msg || '语音房场景修改失败');
-            loadVenues();
-        }
-    })
-    .catch(err => {
-        console.error('设置语音房场景失败:', err);
-        alert('请求异常');
-        loadVenues();
     });
 };
 
@@ -1637,35 +1363,6 @@ window.setVenueLevel = function (venueId, venueLevel) {
         console.error('设置场地评级失败:', err);
         alert('请求异常');
         loadVenues();
-    });
-};
-window.setVenueSpendingAlert = function (venueId, isSpendingAlert) {
-    const actionText = isSpendingAlert === 1 ? '开启该场地高消费提示' : '关闭该场地高消费提示';
-
-    if (!confirm(`确定要${actionText}吗？`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('venue_id', venueId);
-    formData.append('is_spending_alert', isSpendingAlert);
-
-    fetch('/api/venue/set_venue_spending_alert.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.code === 0 || data.code === 200) {
-            alert(data.msg || '操作成功');
-            loadVenues();
-        } else {
-            alert(data.msg || '操作失败');
-        }
-    })
-    .catch(err => {
-        console.error('设置高消费提示失败:', err);
-        alert('请求异常');
     });
 };
             function loadVenues() {
@@ -1942,70 +1639,6 @@ allVenues = venues.sort((a, b) => {
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const voiceRoomCloseBtn = document.querySelector('.voice-room-ban-modal-close');
-
-            if (voiceRoomCloseBtn) {
-                voiceRoomCloseBtn.addEventListener('click', () => {
-                    document.getElementById('voiceRoomBanModal').style.display = 'none';
-                });
-            }
-            
-            window.addEventListener('click', function (event) {
-                const modal = document.getElementById('voiceRoomBanModal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-            
-            document.getElementById('voiceRoomBanForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-            
-                const venueId = document.getElementById('voiceRoomBanVenueId').value;
-                const duration = document.getElementById('voiceRoomBanDuration').value;
-                const reason = document.getElementById('voiceRoomBanReason').value.trim();
-                const submitBtn = this.querySelector('button[type="submit"]');
-            
-                if (!reason) {
-                    alert('请填写语音房封禁原因');
-                    return;
-                }
-            
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = '封禁中...';
-                }
-            
-                const formData = new FormData();
-                formData.append('action', 'set_voice_room_ban');
-                formData.append('venue_id', venueId);
-                formData.append('ban_duration', duration);
-                formData.append('ban_reason', reason);
-            
-                fetch('/api/venue/VenuesManagement.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.code === 0 || data.code === 200) {
-                        alert(data.msg || '语音房已封禁');
-                        document.getElementById('voiceRoomBanModal').style.display = 'none';
-                        window.loadVenues ? window.loadVenues() : location.reload();
-                    } else {
-                        alert(data.msg || '封禁失败');
-                    }
-                })
-                .catch(err => {
-                    console.error('语音房封禁失败:', err);
-                    alert('请求异常');
-                })
-                .finally(() => {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = '确认封禁语音房';
-                    }
-                });
-            });
             const closeBtn = document.querySelector('.unban-modal-close');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
@@ -2143,45 +1776,6 @@ allVenues = venues.sort((a, b) => {
     </div>
 </div>
 
-<!-- 语音房封禁模态框 -->
-<div id="voiceRoomBanModal" class="modal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000;">
-
-    <div class="ban-modal-content">
-        <span class="voice-room-ban-modal-close"
-            style="position:absolute; top:14px; right:18px; font-size:24px; cursor:pointer;">&times;</span>
-
-        <div class="ban-modal-title">封禁语音房</div>
-
-        <form id="voiceRoomBanForm">
-            <input type="hidden" id="voiceRoomBanVenueId">
-
-            <div class="ban-form-group">
-                <label for="voiceRoomBanDuration">封禁时长</label>
-                <select id="voiceRoomBanDuration" required>
-                    <option value="600">10分钟</option>
-                    <option value="1800">30分钟</option>
-                    <option value="3600">1小时</option>
-                    <option value="10800">3小时</option>
-                    <option value="86400" selected>一天</option>
-                    <option value="259200">三天</option>
-                    <option value="604800">一周</option>
-                    <option value="1296000">半个月</option>
-                    <option value="2592000">1月</option>
-                    <option value="31536000">1年</option>
-                </select>
-            </div>
-
-            <div class="ban-form-group">
-                <label for="voiceRoomBanReason">封禁原因</label>
-                <textarea id="voiceRoomBanReason" style="width:100%; min-height:120px;"
-                    placeholder="请输入语音房封禁原因">直播内容存在违规，已关闭语音房功能</textarea>
-            </div>
-
-            <button type="submit" class="ban-submit-btn">确认封禁语音房</button>
-        </form>
-    </div>
-</div>
     <!-- 解封模态框 -->
     <div id="unbanModal" class="modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 1000;">
