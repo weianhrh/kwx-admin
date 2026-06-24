@@ -1,0 +1,1999 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>设备信息管理</title>
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  padding: 0;
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: #fff;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1 1 420px;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search input,
+.modal-content input,
+.textarea-wrap textarea,
+#controlModal .cmd-group input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.search input,
+.modal-content input,
+#controlModal .cmd-group input {
+  height: 38px;
+  padding: 0 12px;
+}
+
+.search input::placeholder,
+.modal-content input::placeholder,
+.textarea-wrap textarea::placeholder {
+  color: #9aabb2;
+}
+
+.search input:focus,
+.modal-content input:focus,
+.textarea-wrap textarea:focus,
+#controlModal .cmd-group input:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.right-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.muted {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.edit-btn {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.edit-btn:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .16);
+  transform: translateY(-1px);
+}
+
+.edit-btn.secondary {
+  border-color: rgba(15, 143, 140, .24);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.edit-btn.secondary:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.edit-btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  box-shadow: none;
+  transform: none;
+}
+
+#list {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  background: #fff;
+}
+
+.loading {
+  display: block;
+  padding: 28px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: #fbfcfd;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.venue-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.venue-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 12px 28px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+}
+
+.venue-img {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 143, 140, .20);
+  border-radius: var(--radius);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.venue-info {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.venue-info .venue-name {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.venue-info span {
+  min-width: 0;
+  display: block;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.venue-info b {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border: 1px solid rgba(15, 143, 140, .20);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.venue-actions {
+  min-width: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.st {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.st-online {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.st-offline {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.st-loading {
+  color: var(--muted);
+  background: #f2f5f6;
+}
+
+.input-master {
+  border-color: rgba(15, 143, 140, .55) !important;
+  background: var(--primary-soft) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10) !important;
+}
+
+.input-detached {
+  border-color: rgba(255, 184, 77, .70) !important;
+  background: var(--warning-soft) !important;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 32, 38, .58);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  width: 460px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(14, 28, 35, .24);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.modal-subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.row-1 {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1200;
+  display: none;
+  max-width: 520px;
+  padding: 11px 13px;
+  border-radius: var(--radius);
+  color: #fff;
+  background: #132328;
+  box-shadow: 0 16px 36px rgba(14, 28, 35, .22);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.textarea-wrap textarea {
+  min-height: 130px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+#batchModal .batch-modal-content {
+  width: 640px;
+  max-width: 95vw;
+}
+
+.batch-preview,
+.tip-box {
+  padding: 11px 12px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: #fbfcfd;
+  font-size: 13px;
+  line-height: 1.65;
+  font-weight: 700;
+}
+
+.batch-preview {
+  max-height: 170px;
+  overflow: auto;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.readonly-input {
+  color: var(--muted) !important;
+  background: #f5f8f9 !important;
+}
+
+.device-op-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#controlModal {
+  align-items: center;
+}
+
+#controlModal .control-modal-content {
+  width: 980px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#controlModal .control-header {
+  flex: 0 0 auto;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+#controlModal .control-subtitle {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+#controlModal .control-body {
+  overflow-y: auto;
+  padding: 18px 20px;
+  background: #fbfcfd;
+}
+
+#controlModal .control-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+#controlModal .control-common-card,
+#controlModal .cmd-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+#controlModal .control-common-card {
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+#controlModal .control-section-title,
+#controlModal .cmd-group-title {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+#controlModal .control-section-title {
+  margin-bottom: 10px;
+}
+
+#controlModal .cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+#controlModal .cmd-group {
+  min-width: 0;
+  padding: 14px;
+}
+
+#controlModal .cmd-group-top {
+  grid-column: span 2;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#controlModal .cmd-group-half {
+  grid-column: span 3;
+  min-height: 178px;
+  display: flex;
+  flex-direction: column;
+}
+
+#controlModal .cmd-group-full {
+  grid-column: 1 / -1;
+}
+
+#controlModal .cmd-group .row,
+#controlModal .cmd-group .row-1 {
+  margin-top: 10px;
+}
+
+#controlModal .cmd-group .actions,
+#controlModal .cmd-group-half .actions {
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+#controlModal .cmd-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#controlModal .cmd-actions .edit-btn,
+#controlModal .cmd-actions .edit-btn.secondary {
+  width: 100%;
+  min-width: 0;
+}
+
+#controlModal .actions .edit-btn {
+  min-width: 128px;
+}
+
+@media (max-width: 1180px) {
+  .venue-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .venue-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .venue-actions .edit-btn {
+    min-width: 86px;
+  }
+
+  #controlModal .cmd-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #controlModal .cmd-group-top,
+  #controlModal .cmd-group-half,
+  #controlModal .cmd-group-full {
+    grid-column: auto;
+    min-height: auto;
+  }
+
+  #controlModal .cmd-group-full {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+
+  .topbar,
+  #list {
+    padding: 12px;
+  }
+
+  .topbar,
+  .search,
+  .right-tools {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search input {
+    min-width: 0;
+  }
+
+  .edit-btn {
+    width: 100%;
+  }
+
+  .venue-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .venue-img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .venue-info {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-actions {
+    flex-direction: column;
+  }
+
+  .modal {
+    padding: 12px;
+  }
+
+  .modal-content,
+  #batchModal .batch-modal-content,
+  #controlModal .control-modal-content {
+    width: 100%;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+  }
+
+  .row,
+  #controlModal .cmd-grid,
+  #controlModal .cmd-actions {
+    grid-template-columns: 1fr;
+  }
+
+  #controlModal .control-header,
+  #controlModal .control-body,
+  #controlModal .control-footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  #controlModal .cmd-group-full {
+    grid-column: auto;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+}
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">设备信息（device_information）</div>
+
+      <div class="topbar">
+        <div class="search">
+<input id="keyword" placeholder="搜索：device_id / room_id / playing_stream_id / rtc_user_id" />
+          <button class="edit-btn secondary" id="btnRefresh">刷新</button>
+        </div>
+
+        <div class="right-tools">
+          <span class="muted" id="statText">—</span>
+          <button class="edit-btn secondary" id="btnBatchAdd">批量新增</button>
+          <button class="edit-btn" id="btnAdd">新增</button>
+        </div>
+      </div>
+
+      <div id="list" class="loading">正在加载...</div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span id="modalTitle">编辑设备信息</span>
+        <button class="edit-btn secondary" id="btnClose">关闭</button>
+      </div>
+
+      <div class="modal-subtitle" id="modalTip">
+        支持新增 / 修改
+      </div>
+
+      <input type="hidden" id="id" />
+
+      <div class="row">
+        <div class="row-1">
+          <label class="muted">device_id</label>
+          <input id="device_id" placeholder="例如：10002" />
+        </div>
+        <div class="row-1">
+          <label class="muted">room_id</label>
+          <input id="room_id" placeholder="例如：10002" />
+        </div>
+      </div>
+
+      <div class="row-1">
+        <label class="muted">playing_stream_id</label>
+        <input id="playing_stream_id" placeholder="例如：10002（或 01）" />
+      </div>
+    <div class="row-1">
+      <label class="muted">rtc_user_id</label>
+      <input id="rtc_user_id" placeholder="例如：user023968912_80037，前三项会自动填 80037" />
+    </div>
+      <div class="actions">
+        <button class="edit-btn secondary" id="btnCancel">取消</button>
+        <button class="edit-btn" id="btnSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="batchModal">
+    <div class="modal-content batch-modal-content">
+      <div class="modal-title">
+        <span>批量新增设备信息</span>
+        <button class="edit-btn secondary" id="btnBatchClose">关闭</button>
+      </div>
+
+      <div class="modal-subtitle">
+        每行填一个 rtc_user_id，例如：<b>user023968912_80037</b>。系统会自动把 device_id / room_id / playing_stream_id 解析为 <b>80037</b>。
+      </div>
+
+      <div class="textarea-wrap">
+        <textarea id="batch_rtc_user_ids" placeholder="user023968912_80037
+user023968912_80038
+user023968912_80039"></textarea>
+      </div>
+
+      <div class="tip-box batch-preview" id="batchPreview">
+        待解析
+      </div>
+
+      <div class="actions">
+        <button class="edit-btn secondary" id="btnBatchCancel">取消</button>
+        <button class="edit-btn" id="btnBatchSave">批量保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+<div class="modal" id="controlModal">
+  <div class="modal-content control-modal-content">
+    <div class="control-header">
+      <div class="modal-title">
+        <span id="controlModalTitle">设备控制</span>
+        <button class="edit-btn secondary" id="btnControlClose">关闭</button>
+      </div>
+      <div class="control-subtitle">请选择要执行的功能，每个功能独立设置并发送。</div>
+    </div>
+
+    <div class="control-body">
+      <div class="control-common-card">
+        <div class="control-section-title">公共参数</div>
+        <div class="row">
+          <div class="row-1">
+            <label class="muted">room_id</label>
+            <input id="cmd_room_id" class="readonly-input" readonly />
+          </div>
+          <div class="row-1">
+            <label class="muted">from_user_id</label>
+            <input id="cmd_from_user_id" value="server_bot_1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="cmd-grid">
+<div class="cmd-group cmd-group-top">
+  <div class="cmd-group-title">OSD</div>
+  <div class="cmd-actions">
+    <button class="edit-btn secondary" type="button" data-send="osd_on">OSD启用</button>
+    <button class="edit-btn secondary" type="button" data-send="osd_off">OSD禁用</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-top">
+  <div class="cmd-group-title">屏幕方向</div>
+  <div class="cmd-actions">
+    <button class="edit-btn secondary" type="button" data-send="rotate_on">竖屏显示</button>
+    <button class="edit-btn secondary" type="button" data-send="rotate_off">横屏显示</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-top">
+  <div class="cmd-group-title">推流码流</div>
+  <div class="cmd-actions">
+    <button class="edit-btn secondary" type="button" data-send="sub_on">推子码流</button>
+    <button class="edit-btn secondary" type="button" data-send="sub_off">推主码流</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-half">
+          <div class="cmd-group-title">抓图上传</div>
+          <div class="row">
+            <div class="row-1">
+              <label class="muted">抓图文件名</label>
+              <input id="cmd_capture_filename" value="snap.jpg" placeholder="例如：snap.jpg" />
+            </div>
+            <div class="row-1">
+              <label class="muted">抓图上传地址</label>
+              <input id="cmd_capture_upload_url" class="readonly-input" readonly />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="edit-btn" type="button" data-send="capture">发送抓图</button>
+          </div>
+        </div>
+
+<div class="cmd-group cmd-group-half">
+          <div class="cmd-group-title">WIFI 设置</div>
+          <div class="row">
+            <div class="row-1">
+              <label class="muted">WIFI 名称（ESSID）</label>
+              <input id="cmd_wifi_essid" value="srr1" />
+            </div>
+            <div class="row-1">
+              <label class="muted">WIFI 密码</label>
+              <input id="cmd_wifi_passwd" value="88888888" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="edit-btn" type="button" data-send="wifi">发送 WIFI 设置</button>
+          </div>
+        </div>
+<div class="cmd-group cmd-group-full">
+  <div class="cmd-group-title">电压回传地址变更</div>
+  <div class="tip-box">
+    该功能走 Zego 房间信令，给当前 room_id 发送：+VU#回传地址-；恢复默认发送：+VU#RESET-
+  </div>
+  <div class="row-1">
+    <label class="muted">电压回传地址</label>
+    <input id="cmd_voltage_upload_url" value="http://rcwulian.cn/app/dump/dump_post.php" />
+  </div>
+  <div class="actions">
+    <button class="edit-btn" type="button" data-send="voltage_url">发送电压回传地址</button>
+    <button class="edit-btn secondary" type="button" data-send="voltage_reset">恢复默认</button>
+  </div>
+</div>
+<div class="cmd-group cmd-group-full">
+  <div class="cmd-group-title">摄像头 OTA 升级</div>
+  <div class="row">
+    <div class="row-1">
+      <label class="muted">摄像头 OTA 版本号</label>
+      <input id="cmd_ota_ver" value="1.0.1" />
+    </div>
+    <div class="row-1">
+      <label class="muted">摄像头 OTA force</label>
+      <input id="cmd_ota_force" type="number" min="0" max="1" value="0" />
+    </div>
+  </div>
+  <div class="row-1">
+    <label class="muted">摄像头 OTA 固件地址</label>
+    <input id="cmd_ota_url" value="http://120.79.154.209/models/cv181x/firmware_CIVTEK-1811CA-SC4336-APP_1.0.1_20260129185732.bin" />
+  </div>
+  <div class="actions">
+    <button class="edit-btn" type="button" data-send="ota">发送摄像头 OTA 升级</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-full">
+  <div class="cmd-group-title">硬件 OTA 升级</div>
+  <div class="tip-box">
+    该功能走 Zego 房间信令，给当前 room_id 发送：+UP#固件地址-
+  </div>
+  <div class="row-1">
+    <label class="muted">硬件 OTA 固件地址</label>
+    <input id="cmd_hardware_ota_url" value="https://rcwulian.cn/OTA/zxb.bin" />
+  </div>
+  <div class="actions">
+    <button class="edit-btn" type="button" data-send="hardware_ota">发送硬件 OTA 升级</button>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="control-footer">
+      <button class="edit-btn secondary" id="btnControlCancel">关闭</button>
+    </div>
+  </div>
+</div>
+  <script>
+    const API = '/api/devMgr/device_information.php';
+    const STREAM_STATE_API = '/api/stream_state.php';
+    const CONTROL_API = '/api/devMgr/device_command.php';
+    // const HARDWARE_OTA_API = '/api/devMgr/send_hardware_ota_tcp.php';
+
+    const ZEGO_CODE_DESC = {
+      0: "流存在且活跃（在线）",
+      3000: "无效的 App（联系 ZEGO 技术支持）",
+      3001: "内部错误（联系 ZEGO 技术支持）",
+      30003: "内部错误（联系 ZEGO 技术支持）",
+      3002: "Timestamp 时间戳错误（重新生成 Timestamp）",
+      3003: "App 未配置 Token（联系 ZEGO 技术支持）",
+      30002: "接口调用频率过高（降低请求频率）",
+      30004: "参数 isTest 错误（检查 IsTest/测试环境参数）",
+      30005: "无效的 AppId（检查 AppId）",
+      30009: "无效的 StreamId（流名不规范）",
+      40005: "鉴权失败（检查签名 Signature）",
+      41004: "StreamId 不存在（流未推/流名不对/权限过期）",
+      41006: "流存在但已关闭（离线）",
+    };
+
+    let rows = [];
+    let permissions = { can_add: true, can_edit: true, can_delete: false };
+    let streamStatusMap = {};
+    let checkingAllStreams = false;
+    const STREAM_CHECK_CONCURRENCY = 3; // 批量查流并发数，建议 3，避免频率过高
+    
+    const elList = document.getElementById('list');
+    const elKeyword = document.getElementById('keyword');
+    const elStatText = document.getElementById('statText');
+
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalTip = document.getElementById('modalTip');
+
+    const fId = document.getElementById('id');
+    const fDeviceId = document.getElementById('device_id');
+    const fRoomId = document.getElementById('room_id');
+    const fStreamId = document.getElementById('playing_stream_id');
+    const fRtcUserId = document.getElementById('rtc_user_id');
+
+    const batchModal = document.getElementById('batchModal');
+    const fBatchRtcUserIds = document.getElementById('batch_rtc_user_ids');
+    const batchPreview = document.getElementById('batchPreview');
+    
+    const toast = document.getElementById('toast');
+    const controlModal = document.getElementById('controlModal');
+    const controlModalTitle = document.getElementById('controlModalTitle');
+    
+    const cRoomId = document.getElementById('cmd_room_id');
+    const cFromUserId = document.getElementById('cmd_from_user_id');
+    const cCaptureFilename = document.getElementById('cmd_capture_filename');
+    const cCaptureUploadUrl = document.getElementById('cmd_capture_upload_url');
+    const cWifiEssid = document.getElementById('cmd_wifi_essid');
+    const cWifiPasswd = document.getElementById('cmd_wifi_passwd');
+
+    const cOtaVer = document.getElementById('cmd_ota_ver');
+    const cOtaUrl = document.getElementById('cmd_ota_url');
+    const cOtaForce = document.getElementById('cmd_ota_force');
+    const cHardwareOtaUrl = document.getElementById('cmd_hardware_ota_url');
+    const cVoltageUploadUrl = document.getElementById('cmd_voltage_upload_url');
+    let currentControlRow = null;
+    
+    const syncFields = [fDeviceId, fRoomId, fStreamId];
+    let activeSyncSourceId = null;
+    let syncLock = false;
+    let syncEnabled = true;
+
+    function showToast(msg, ms = 2200) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => {
+        toast.style.display = 'none';
+      }, ms);
+    }
+function buildCaptureUploadUrl() {
+  const fileName = (cCaptureFilename.value || '').trim() || 'snap.jpg';
+  return `/?name=${encodeURIComponent(fileName)}`;
+}
+
+function refreshCaptureUploadUrl() {
+  cCaptureUploadUrl.value = buildCaptureUploadUrl();
+}
+
+function buildCommandText(type) {
+  switch (type) {
+    case 'osd_on':
+      return JSON.stringify({ type: 'cfg_osd', data: { enable: 1 } });
+
+    case 'osd_off':
+      return JSON.stringify({ type: 'cfg_osd', data: { enable: 0 } });
+
+    case 'rotate_on':
+      return JSON.stringify({ type: 'cfg_rotate', data: { enable: 1 } });
+
+    case 'rotate_off':
+      return JSON.stringify({ type: 'cfg_rotate', data: { enable: 0 } });
+
+    case 'sub_on':
+      return JSON.stringify({ type: 'cfg_sub', data: { enable: 1 } });
+
+    case 'sub_off':
+      return JSON.stringify({ type: 'cfg_sub', data: { enable: 0 } });
+
+    case 'capture':
+      return JSON.stringify({
+        type: 'capture',
+        upload_url: buildCaptureUploadUrl()
+      });
+
+    case 'wifi':
+      return JSON.stringify({
+        type: 'cfg_wifi',
+        data: {
+          essid: (cWifiEssid.value || '').trim() || 'srr1',
+          passwd: (cWifiPasswd.value || '').trim() || '88888888'
+        }
+      });
+case 'voltage_url': {
+  const url = (cVoltageUploadUrl.value || '').trim() || 'http://rcwulian.cn/app/dump/dump_post.php';
+
+  if (!/^https?:\/\//i.test(url)) {
+    showToast('电压回传地址必须以 http:// 或 https:// 开头');
+    return '';
+  }
+
+  return `+VU#${url}-`;
+}
+
+case 'voltage_reset':
+  return '+VU#RESET-';
+    case 'ota':
+      return JSON.stringify({
+        type: 'ota_update',
+        data: {
+          ver: (cOtaVer.value || '').trim() || '1.0.1',
+          url: (cOtaUrl.value || '').trim() || 'http://120.79.154.209/models/cv181x/firmware_CIVTEK-1811CA-SC4336-APP_1.0.1_20260129185732.bin',
+          force: Number((cOtaForce.value || '0').trim() || '0')
+        }
+      });
+    case 'hardware_ota': {
+      const url = (cHardwareOtaUrl.value || '').trim() || 'https://rcwulian.cn/OTA/zxb.bin';
+    
+      if (!/^https?:\/\//i.test(url)) {
+        showToast('硬件 OTA 地址必须以 http:// 或 https:// 开头');
+        return '';
+      }
+    
+      return `+UP#${url}-`;
+    }
+    default:
+      return '';
+  }
+}
+
+function openControlModal(row) {
+  currentControlRow = row || null;
+  controlModal.style.display = 'flex';
+
+  cRoomId.value = row?.room_id ?? '';
+  cFromUserId.value = 'server_bot_1';
+
+  cCaptureFilename.value = 'snap.jpg';
+  cWifiEssid.value = 'srr1';
+  cWifiPasswd.value = '88888888';
+  cOtaVer.value = '1.0.1';
+  cOtaUrl.value = 'http://120.79.154.209/models/cv181x/firmware_CIVTEK-1811CA-SC4336-APP_1.0.1_20260129185732.bin';
+  cOtaForce.value = '0';
+  cHardwareOtaUrl.value = 'https://rcwulian.cn/OTA/zxb.bin';
+  cVoltageUploadUrl.value = 'http://rcwulian.cn/app/dump/dump_post.php';
+  refreshCaptureUploadUrl();
+
+  controlModalTitle.textContent = `设备控制 - ${row?.device_id ?? ''}`;
+}
+
+function closeControlModal() {
+  controlModal.style.display = 'none';
+  currentControlRow = null;
+}
+async function sendDeviceCommandByType(type, triggerBtn = null) {
+  const room_id = (cRoomId.value || '').trim();
+  const from_user_id = (cFromUserId.value || '').trim() || 'server_bot_1';
+
+  if (!room_id) {
+    showToast('room_id 不能为空');
+    return;
+  }
+
+  if (!from_user_id) {
+    showToast('from_user_id 不能为空');
+    return;
+  }
+
+  const message = buildCommandText(type);
+
+  if (!message) {
+    showToast('指令生成失败');
+    return;
+  }
+
+  let oldText = '';
+  if (triggerBtn) {
+    oldText = triggerBtn.textContent;
+    triggerBtn.disabled = true;
+    triggerBtn.textContent = '发送中...';
+  }
+
+  try {
+    const fd = new URLSearchParams();
+    fd.append('room_id', room_id);
+    fd.append('from_user_id', from_user_id);
+    fd.append('message', message);
+
+    const resp = await fetch(CONTROL_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+      },
+      body: fd.toString(),
+      credentials: 'include'
+    });
+
+    const json = await resp.json();
+
+    if (json.code !== 200) {
+      showToast(json.msg || '发送失败');
+      return;
+    }
+
+const successTextMap = {
+  osd_on: 'OSD启用已发送',
+  osd_off: 'OSD禁用已发送',
+  rotate_on: '竖屏显示已发送',
+  rotate_off: '横屏显示已发送',
+  sub_on: '推子码流已发送',
+  sub_off: '推主码流已发送',
+  capture: '抓图上传已发送',
+  wifi: 'WIFI设置已发送',
+  ota: '摄像头 OTA 升级已发送',
+  hardware_ota: '硬件 OTA 升级指令已发送',
+  voltage_url: '电压回传地址变更指令已发送',
+voltage_reset: '电压回传地址恢复默认指令已发送'
+};
+
+    const failUsers = json.data?.fail_users || [];
+    if (Array.isArray(failUsers) && failUsers.length > 0) {
+      showToast(`${successTextMap[type] || '发送成功'}，但有 ${failUsers.length} 个用户未收到`);
+    } else {
+      showToast(successTextMap[type] || '发送成功');
+    }
+  } catch (e) {
+    showToast('网络错误：发送失败');
+  } finally {
+    if (triggerBtn) {
+      triggerBtn.disabled = false;
+      triggerBtn.textContent = oldText;
+    }
+  }
+}
+// async function sendHardwareOta(triggerBtn = null) {
+//   const url = (cHardwareOtaUrl.value || '').trim() || 'https://rcwulian.cn/OTA/zxb.bin';
+
+//   if (!url) {
+//     showToast('硬件 OTA 地址不能为空');
+//     return;
+//   }
+
+//   if (!/^https?:\/\//i.test(url)) {
+//     showToast('硬件 OTA 地址必须以 http:// 或 https:// 开头');
+//     return;
+//   }
+
+//   let oldText = '';
+//   if (triggerBtn) {
+//     oldText = triggerBtn.textContent;
+//     triggerBtn.disabled = true;
+//     triggerBtn.textContent = '发送中...';
+//   }
+
+//   try {
+//     const fd = new URLSearchParams();
+//     fd.append('url', url);
+
+//     const resp = await fetch(HARDWARE_OTA_API, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+//       },
+//       body: fd.toString(),
+//       credentials: 'include'
+//     });
+
+//     const json = await resp.json();
+
+//     if (!json.ok) {
+//       showToast(json.msg || '硬件 OTA 发送失败');
+//       return;
+//     }
+
+//     const cmd = json.data?.cmd || '';
+//     if (cmd) {
+//       showToast(`硬件 OTA 已发送：${cmd}`, 3500);
+//     } else {
+//       showToast('硬件 OTA 已发送');
+//     }
+//   } catch (e) {
+//     showToast('网络错误：硬件 OTA 发送失败');
+//   } finally {
+//     if (triggerBtn) {
+//       triggerBtn.disabled = false;
+//       triggerBtn.textContent = oldText;
+//     }
+//   }
+// }
+    function esc(s) {
+      return String(s ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function parseDeviceValueFromRtcUserId(rtcUserId) {
+      const s = String(rtcUserId || '').trim();
+      if (!s) return '';
+
+      // 优先解析最后一个下划线后的纯数字：user023968912_80037 => 80037
+      const underscoreMatch = s.match(/_(\d+)$/);
+      if (underscoreMatch) return underscoreMatch[1];
+
+      // 兼容直接填写 80037
+      if (/^\d+$/.test(s)) return s;
+
+      return '';
+    }
+
+    function fillDeviceFieldsByParsedNo(parsedNo) {
+      if (!parsedNo) return;
+
+      syncLock = true;
+      fDeviceId.value = parsedNo;
+      fRoomId.value = parsedNo;
+      fStreamId.value = parsedNo;
+
+      syncFields.forEach(input => {
+        input.dataset.detached = '0';
+      });
+
+      activeSyncSourceId = fDeviceId.id;
+      syncEnabled = true;
+      syncLock = false;
+
+      refreshSyncInputStyle();
+    }
+
+    function handleRtcUserIdAutoParse() {
+      const parsedNo = parseDeviceValueFromRtcUserId(fRtcUserId.value);
+      if (!parsedNo) return;
+      fillDeviceFieldsByParsedNo(parsedNo);
+    }
+
+    function openBatchModal() {
+      if (!permissions.can_add) {
+        showToast('当前账号无新增权限');
+        return;
+      }
+
+      batchModal.style.display = 'flex';
+      fBatchRtcUserIds.value = '';
+      refreshBatchPreview();
+      setTimeout(() => fBatchRtcUserIds.focus(), 50);
+    }
+
+    function closeBatchModal() {
+      batchModal.style.display = 'none';
+    }
+
+    function parseBatchInput() {
+      const raw = String(fBatchRtcUserIds.value || '');
+      const lines = raw.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const items = [];
+      const errors = [];
+      const seen = new Set();
+
+      lines.forEach((line, idx) => {
+        const lineNo = idx + 1;
+        const rtc_user_id = line.replace(/，/g, ',').split(',')[0].trim();
+        const parsedNo = parseDeviceValueFromRtcUserId(rtc_user_id);
+
+        if (!rtc_user_id) {
+          errors.push(`第 ${lineNo} 行为空`);
+          return;
+        }
+
+        if (!parsedNo) {
+          errors.push(`第 ${lineNo} 行无法解析编号：${line}`);
+          return;
+        }
+
+        if (seen.has(parsedNo)) {
+          errors.push(`第 ${lineNo} 行重复：${parsedNo}`);
+          return;
+        }
+
+        seen.add(parsedNo);
+        items.push({
+          device_id: parsedNo,
+          room_id: parsedNo,
+          playing_stream_id: parsedNo,
+          rtc_user_id
+        });
+      });
+
+      return { items, errors };
+    }
+
+    function refreshBatchPreview() {
+      const { items, errors } = parseBatchInput();
+
+      if (!items.length && !errors.length) {
+        batchPreview.innerHTML = '待解析';
+        return;
+      }
+
+      const sample = items.slice(0, 6).map(x => {
+        return `${esc(x.rtc_user_id)} → ${esc(x.device_id)}`;
+      }).join('<br>');
+
+      let html = `已识别 <b>${items.length}</b> 条`;
+      if (sample) html += `<br>${sample}`;
+      if (items.length > 6) html += `<br>……`;
+      if (errors.length) {
+        html += `<br><br><span style="color:#ef4444">错误 ${errors.length} 条：</span><br>${errors.slice(0, 5).map(esc).join('<br>')}`;
+      }
+
+      batchPreview.innerHTML = html;
+    }
+
+    async function saveBatch() {
+      if (!permissions.can_add) {
+        showToast('当前账号无新增权限');
+        return;
+      }
+
+      const { items, errors } = parseBatchInput();
+
+      if (errors.length) {
+        showToast(errors[0], 3500);
+        refreshBatchPreview();
+        return;
+      }
+
+      if (!items.length) {
+        showToast('请先填写要批量新增的 rtc_user_id');
+        return;
+      }
+
+      try {
+        const json = await apiPost('batch_create', {
+          items: JSON.stringify(items)
+        });
+
+        if (json.code === 1001) {
+          showToast(json.msg || '未登录');
+          return;
+        }
+
+        if (json.code !== 200) {
+          showToast(json.msg || '批量新增失败', 3500);
+          return;
+        }
+
+        const successCount = Number(json.data?.success_count || 0);
+        const skipCount = Number(json.data?.skip_count || 0);
+        const errorCount = Number(json.data?.error_count || 0);
+        showToast(`批量新增完成：成功 ${successCount} 条，跳过 ${skipCount} 条，错误 ${errorCount} 条`, 3500);
+
+        closeBatchModal();
+        await apiGetList();
+      } catch (e) {
+        showToast('网络错误：批量新增失败');
+      }
+    }
+
+    function refreshSyncInputStyle() {
+      syncFields.forEach(input => {
+        input.classList.remove('input-master', 'input-detached');
+      });
+
+      syncFields.forEach(input => {
+        if (input.dataset.detached === '1') {
+          input.classList.add('input-detached');
+        }
+      });
+
+      if (activeSyncSourceId) {
+        const master = document.getElementById(activeSyncSourceId);
+        if (master) {
+          master.classList.remove('input-detached');
+          master.classList.add('input-master');
+        }
+      }
+    }
+
+    function resetFieldSync(mode = 'create') {
+      activeSyncSourceId = null;
+      syncLock = false;
+      syncEnabled = true;
+
+      syncFields.forEach(input => {
+        input.dataset.detached = '0';
+      });
+
+      if (mode === 'update') {
+        const vals = syncFields.map(i => (i.value || '').trim());
+        const allEmpty = vals.every(v => v === '');
+
+        if (!allEmpty) {
+          const first = vals[0];
+          const allEqual = vals.every(v => v === first);
+
+          if (allEqual) {
+            syncEnabled = true;
+            activeSyncSourceId = fDeviceId.id;
+          } else {
+            syncEnabled = false;
+            activeSyncSourceId = null;
+            syncFields.forEach(input => {
+              input.dataset.detached = '1';
+            });
+          }
+        }
+      }
+
+      refreshSyncInputStyle();
+    }
+
+    function syncOtherFieldsFrom(source) {
+      if (!syncEnabled) return;
+      if (!source) return;
+      if (!activeSyncSourceId) activeSyncSourceId = source.id;
+      if (source.id !== activeSyncSourceId) return;
+
+      syncLock = true;
+      syncFields.forEach(input => {
+        if (input === source) return;
+        if (input.dataset.detached === '1') return;
+        input.value = source.value;
+      });
+      syncLock = false;
+
+      refreshSyncInputStyle();
+    }
+
+    function onSyncFieldInput(e) {
+      if (syncLock) return;
+
+      const input = e.target;
+
+      if (!activeSyncSourceId && input.value !== '') {
+        activeSyncSourceId = input.id;
+        syncEnabled = true;
+      }
+
+      if (activeSyncSourceId && input.id !== activeSyncSourceId) {
+        input.dataset.detached = '1';
+        refreshSyncInputStyle();
+        return;
+      }
+
+      syncOtherFieldsFrom(input);
+      refreshSyncInputStyle();
+    }
+
+    syncFields.forEach(input => {
+      input.addEventListener('input', onSyncFieldInput);
+    });
+
+    fRtcUserId.addEventListener('input', handleRtcUserIdAutoParse);
+
+function openModal(mode, row) {
+  modal.style.display = 'flex';
+
+  if (mode === 'create') {
+    modalTitle.textContent = '新增设备信息';
+    modalTip.textContent = '优先填写 rtc_user_id，例如 user023968912_80037，系统会自动把 device_id / room_id / playing_stream_id 填成 80037。';
+
+    fId.value = '';
+    fDeviceId.value = '';
+    fRoomId.value = '';
+    fStreamId.value = '';
+    fRtcUserId.value = '';
+
+    resetFieldSync('create');
+  } else {
+    modalTitle.textContent = '编辑设备信息';
+    modalTip.textContent = '修改 rtc_user_id 为 user023968912_80037 时，也会自动把前三项同步成 80037；如需特殊值，可再手动改前三项。';
+
+    fId.value = row.id ?? '';
+    fDeviceId.value = row.device_id ?? '';
+    fRoomId.value = row.room_id ?? '';
+    fStreamId.value = row.playing_stream_id ?? '';
+    fRtcUserId.value = row.rtc_user_id ?? '';
+
+    resetFieldSync('update');
+  }
+
+  setTimeout(() => (mode === 'create' ? fRtcUserId : fDeviceId).focus(), 50);
+}
+
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+function filteredRows() {
+  const kw = (elKeyword.value || '').trim().toLowerCase();
+  if (!kw) return rows;
+
+  return rows.filter(r => {
+    const a = String(r.device_id ?? '').toLowerCase();
+    const b = String(r.room_id ?? '').toLowerCase();
+    const c = String(r.playing_stream_id ?? '').toLowerCase();
+    const d = String(r.id ?? '').toLowerCase();
+    const e = String(r.rtc_user_id ?? '').toLowerCase();
+    return a.includes(kw) || b.includes(kw) || c.includes(kw) || d.includes(kw) || e.includes(kw);
+  });
+}
+
+    // function setStatus(rowId, text, type = 'loading') {
+    //   const el = document.getElementById(`st_${rowId}`);
+    //   if (!el) return;
+
+    //   el.textContent = text;
+    //   el.classList.remove('muted', 'st', 'st-online', 'st-offline', 'st-loading');
+
+    //   el.classList.add('st');
+    //   if (type === 'online') {
+    //     el.classList.add('st-online');
+    //   } else if (type === 'offline') {
+    //     el.classList.add('st-offline');
+    //   } else {
+    //     el.classList.add('st-loading');
+    //   }
+    // }
+       function getStatusClass(type) {
+  if (type === 'online') return 'st-online';
+  if (type === 'offline') return 'st-offline';
+  return 'st-loading';
+}
+
+function getSavedStatus(rowId) {
+  return streamStatusMap[String(rowId)] || {
+    text: '未查询',
+    type: 'loading'
+  };
+}
+
+function setStatus(rowId, text, type = 'loading') {
+  const key = String(rowId);
+
+  // ✅ 先保存状态，避免搜索/重新 render 后状态丢失
+  streamStatusMap[key] = {
+    text: text,
+    type: type
+  };
+
+  const el = document.getElementById(`st_${key}`);
+  if (!el) return;
+
+  el.textContent = text;
+  el.classList.remove('muted', 'st', 'st-online', 'st-offline', 'st-loading');
+
+  el.classList.add('st');
+  el.classList.add(getStatusClass(type));
+}
+    async function checkStream(rowId, streamId) {
+      if (!streamId) {
+        showToast("playing_stream_id 为空");
+        return;
+      }
+
+      setStatus(rowId, "查询中...", "loading");
+
+      try {
+        const url = `${STREAM_STATE_API}?stream_id=${encodeURIComponent(streamId)}`;
+        const resp = await fetch(url, { credentials: 'omit' });
+        const json = await resp.json();
+
+        if (json.code !== 200) {
+          setStatus(rowId, `查询失败：${json.message || '未知错误'}`, "loading");
+          return;
+        }
+
+        const zc = Number(json.zego_code);
+        const desc = ZEGO_CODE_DESC[zc] || `未知返回码：${zc}`;
+        const onlineText = json.active ? "在线" : "离线";
+
+        setStatus(
+          rowId,
+          `${onlineText}（${desc}）`,
+          json.active ? "online" : "offline"
+        );
+      } catch (e) {
+        setStatus(rowId, "网络错误/解析失败", "loading");
+      }
+    }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * ✅ 页面加载后自动查询所有流状态
+ * 使用小并发，避免一次性打太多请求
+ */
+async function checkAllStreams() {
+  if (checkingAllStreams) return;
+
+  const targets = rows.filter(r => {
+    return String(r.playing_stream_id || '').trim() !== '';
+  });
+
+  if (!targets.length) {
+    elStatText.textContent = `共 ${rows.length} 条，没有可查询的流`;
+    return;
+  }
+
+  checkingAllStreams = true;
+
+  let index = 0;
+  let done = 0;
+
+  targets.forEach(r => {
+    setStatus(r.id, '等待查询...', 'loading');
+  });
+
+  async function worker() {
+    while (index < targets.length) {
+      const row = targets[index++];
+      const rowId = row.id;
+      const streamId = row.playing_stream_id;
+
+      await checkStream(rowId, streamId);
+
+      done++;
+      elStatText.textContent = `共 ${rows.length} 条，正在查询流 ${done}/${targets.length}`;
+
+      // ✅ 间隔一下，避免请求太密
+      await sleep(150);
+    }
+  }
+
+  try {
+    const workerCount = Math.min(STREAM_CHECK_CONCURRENCY, targets.length);
+    const workers = [];
+
+    for (let i = 0; i < workerCount; i++) {
+      workers.push(worker());
+    }
+
+    await Promise.all(workers);
+
+    const onlineCount = targets.filter(r => {
+      const st = streamStatusMap[String(r.id)];
+      return st && st.type === 'online';
+    }).length;
+
+    const offlineCount = targets.filter(r => {
+      const st = streamStatusMap[String(r.id)];
+      return st && st.type === 'offline';
+    }).length;
+
+    elStatText.textContent = `共 ${rows.length} 条，流在线 ${onlineCount} 条，离线 ${offlineCount} 条`;
+  } finally {
+    checkingAllStreams = false;
+  }
+}
+
+    function render() {
+      const list = filteredRows();
+      elStatText.textContent = `共 ${rows.length} 条，当前显示 ${list.length} 条`;
+
+      if (!list.length) {
+        elList.innerHTML = `<div class="loading">暂无数据</div>`;
+        return;
+      }
+
+      elList.innerHTML = list.map(r => {
+        const initials = (String(r.device_id ?? 'D').slice(0, 2) || 'D').toUpperCase();
+const savedStatus = getSavedStatus(r.id);
+const savedStatusClass = getStatusClass(savedStatus.type);
+        return `
+          <div class="venue-card">
+            <div class="venue-img">${esc(initials)}</div>
+
+            <div class="venue-info">
+              <div class="venue-name">
+                设备：${esc(r.device_id)}
+                <span class="badge">ID: ${esc(r.id)}</span>
+              </div>
+              <span>房间 room_id：<b>${esc(r.room_id)}</b></span>
+              <span>播放流 playing_stream_id：<b>${esc(r.playing_stream_id)}</b></span>
+              <span>推流用户 rtc_user_id：<b>${esc(r.rtc_user_id || '-')}</b></span>
+            <span>流状态：<b id="st_${esc(String(r.id))}" class="st ${savedStatusClass}">${esc(savedStatus.text)}</b></span>
+            </div>
+
+<div class="venue-actions">
+  <button class="edit-btn" data-act="edit" data-id="${esc(r.id)}" ${permissions.can_edit ? '' : 'disabled'}>
+    修改
+  </button>
+  <button class="edit-btn secondary" data-act="check" data-stream="${esc(r.playing_stream_id)}" data-rowid="${String(r.id)}">
+    查询
+  </button>
+  <button class="edit-btn secondary" data-act="control" data-id="${esc(r.id)}">
+    控制
+  </button>
+</div>
+          </div>
+        `;
+      }).join('');
+
+      elList.querySelectorAll('[data-act="edit"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const row = rows.find(x => String(x.id) === String(id));
+          if (!row) {
+            showToast('记录不存在');
+            return;
+          }
+          openModal('update', row);
+        });
+      });
+
+      elList.querySelectorAll('[data-act="check"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const stream = btn.getAttribute('data-stream');
+          const rowId = btn.getAttribute('data-rowid');
+          await checkStream(rowId, stream);
+        });
+      });
+      
+      elList.querySelectorAll('[data-act="control"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const row = rows.find(x => String(x.id) === String(id));
+            if (!row) {
+              showToast('记录不存在');
+              return;
+            }
+            openControlModal(row);
+          });
+        });
+    }
+document.getElementById('btnControlClose').addEventListener('click', closeControlModal);
+document.getElementById('btnControlCancel').addEventListener('click', closeControlModal);
+cCaptureFilename.addEventListener('input', refreshCaptureUploadUrl);
+
+document.querySelectorAll('[data-send]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.getAttribute('data-send');
+    sendDeviceCommandByType(type, btn);
+  });
+});
+// document.getElementById('btnHardwareOta').addEventListener('click', function () {
+//   sendHardwareOta(this);
+// });
+// controlModal.addEventListener('click', (e) => {
+//   if (e.target === controlModal) closeControlModal();
+// });
+    async function apiGetList() {
+      elList.innerHTML = `<div class="loading">正在加载...</div>`;
+
+      try {
+        const resp = await fetch(`${API}?action=list`, { credentials: 'include' });
+        const json = await resp.json();
+
+        if (json.code === 1001) {
+          elList.innerHTML = `<div class="loading">${esc(json.msg || '未登录')}</div>`;
+          showToast(json.msg || '未登录');
+          return;
+        }
+
+        if (json.code !== 200) {
+          elList.innerHTML = `<div class="loading">${esc(json.msg || '加载失败')}</div>`;
+          showToast(json.msg || '加载失败');
+          return;
+        }
+
+        // permissions = json.data?.permissions || permissions;
+        // rows = json.data?.rows || [];
+        // render();
+        
+        permissions = json.data?.permissions || permissions;
+        rows = json.data?.rows || [];
+        
+        // ✅ 每次重新拉列表，先初始化流状态
+        streamStatusMap = {};
+        rows.forEach(r => {
+          const rowId = String(r.id);
+          const streamId = String(r.playing_stream_id || '').trim();
+        
+          streamStatusMap[rowId] = {
+            text: streamId ? '未查询' : '流ID为空',
+            type: 'loading'
+          };
+        });
+        
+        render();
+        
+      } catch (e) {
+        elList.innerHTML = `<div class="loading">网络错误：无法加载</div>`;
+        showToast('网络错误：无法加载');
+      }
+    }
+
+    async function apiPost(action, formObj) {
+      const fd = new URLSearchParams();
+      Object.keys(formObj).forEach(k => fd.append(k, formObj[k]));
+
+      const resp = await fetch(`${API}?action=${encodeURIComponent(action)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: fd.toString(),
+        credentials: 'include'
+      });
+
+      return resp.json();
+    }
+
+    async function save() {
+        const id = (fId.value || '').trim();
+        const device_id = (fDeviceId.value || '').trim();
+        const room_id = (fRoomId.value || '').trim();
+        const playing_stream_id = (fStreamId.value || '').trim();
+        const rtc_user_id = (fRtcUserId.value || '').trim();
+        
+        if (!device_id || !room_id || !playing_stream_id) {
+          showToast('device_id / room_id / playing_stream_id 不能为空');
+          return;
+        }
+
+      try {
+        let json;
+
+        if (!id) {
+          if (!permissions.can_add) {
+            showToast('当前账号无新增权限');
+            return;
+          }
+json = await apiPost('create', { device_id, room_id, playing_stream_id, rtc_user_id });
+        } else {
+          if (!permissions.can_edit) {
+            showToast('当前账号无修改权限');
+            return;
+          }
+json = await apiPost('update', { id, device_id, room_id, playing_stream_id, rtc_user_id });
+        }
+
+        if (json.code === 1001) {
+          showToast(json.msg || '未登录');
+          return;
+        }
+
+        if (json.code !== 200) {
+          showToast(json.msg || '保存失败');
+          return;
+        }
+
+        showToast(json.msg || '保存成功');
+        closeModal();
+        await apiGetList();
+      } catch (e) {
+        showToast('网络错误：保存失败');
+      }
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', apiGetList);
+    document.getElementById('btnAdd').addEventListener('click', () => openModal('create'));
+    document.getElementById('btnBatchAdd').addEventListener('click', openBatchModal);
+    document.getElementById('btnClose').addEventListener('click', closeModal);
+    document.getElementById('btnCancel').addEventListener('click', closeModal);
+    document.getElementById('btnSave').addEventListener('click', save);
+    document.getElementById('btnBatchClose').addEventListener('click', closeBatchModal);
+    document.getElementById('btnBatchCancel').addEventListener('click', closeBatchModal);
+    document.getElementById('btnBatchSave').addEventListener('click', saveBatch);
+    fBatchRtcUserIds.addEventListener('input', refreshBatchPreview);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    batchModal.addEventListener('click', (e) => {
+      if (e.target === batchModal) closeBatchModal();
+    });
+
+    elKeyword.addEventListener('input', () => render());
+
+    apiGetList();
+  </script>
+</body>
+</html>
