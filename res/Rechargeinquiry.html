@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>充值记录查询</title>
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 18px 0;
+}
+
+.sum-pill {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+}
+
+.sum-pill:hover,
+.sum-pill.active {
+  border-color: rgba(15, 143, 140, .36);
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.sum-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.sum-pill-green .sum-dot { background: var(--success); }
+.sum-pill-orange .sum-dot { background: var(--warning); }
+
+.sum-text {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sum-strong {
+  margin-left: auto;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.form-item {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.form-input::placeholder {
+  color: #9aabb2;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+select.form-input,
+.form-select {
+  cursor: pointer;
+}
+
+.autocomplete-container {
+  position: relative;
+}
+
+.suggestions-container,
+.suggestions-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: none;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.suggestion-item {
+  padding: 9px 12px;
+  border-bottom: 1px solid #edf3f5;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestion-item:last-child {
+  border-bottom: 0;
+}
+
+.suggestion-item:hover {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.form-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 15px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.form-button:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .16);
+  transform: translateY(-1px);
+}
+
+.form-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none;
+  box-shadow: none;
+}
+
+.refund-btn {
+  border-color: rgba(47, 125, 246, .22);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.refund-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: #fff;
+  background: var(--blue);
+  box-shadow: 0 8px 18px rgba(47, 125, 246, .16);
+}
+
+.cancel-refund-btn {
+  border-color: rgba(223, 91, 87, .35) !important;
+  color: #fff;
+  background: var(--danger) !important;
+}
+
+.lock-action-btn {
+  border-color: rgba(255, 184, 77, .42);
+  color: #a16000;
+  background: var(--warning-soft);
+}
+
+.lock-action-btn:hover:not(:disabled) {
+  border-color: var(--warning);
+  color: #6b3f00;
+  background: #ffe9b8;
+  box-shadow: 0 8px 18px rgba(255, 184, 77, .16);
+}
+
+.unlock-action-btn {
+  border-color: rgba(32, 168, 118, .30);
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.unlock-action-btn:hover:not(:disabled) {
+  border-color: var(--success);
+  color: #fff;
+  background: var(--success);
+  box-shadow: 0 8px 18px rgba(32, 168, 118, .16);
+}
+
+.cards-container {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  background: var(--panel);
+}
+
+.order-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.order-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 12px 28px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+}
+
+.order-head {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) auto minmax(150px, auto) minmax(160px, auto);
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.order-no,
+.order-money {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.order-no-label,
+.order-money-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.order-no-value,
+.order-money-value {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.order-money-value {
+  color: var(--primary-dark);
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-body {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 4px 16px 14px;
+}
+
+.order-field,
+.order-item {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed #e7eff2;
+}
+
+.order-field {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.order-field:nth-last-child(-n+4),
+.order-item:last-child {
+  border-bottom-color: transparent;
+}
+
+.field-label,
+.item-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.field-value,
+.item-value {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.money {
+  color: var(--primary-dark);
+  font-weight: 900;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.status-badge,
+.check-badge,
+.lock-status-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.status-completed,
+.status-success,
+.check-badge.checked,
+.lock-status-badge.normal {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(32, 168, 118, .20);
+}
+
+.status-pending,
+.status-wait,
+.lock-status-badge.locked {
+  color: #a16000;
+  background: var(--warning-soft);
+  border-color: rgba(255, 184, 77, .30);
+}
+
+.status-failed,
+.status-cancel,
+.check-badge.unchecked {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(223, 91, 87, .22);
+}
+
+.refund-status-text {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.refund-status-text.empty {
+  color: var(--subtle);
+  background: #f2f5f6;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#pageInfo,
+.page-info {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.total-sum-card {
+  margin: 18px 18px 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(15, 143, 140, .22);
+  border-radius: 8px;
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.total-sum-title {
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.total-sum-value {
+  margin-top: 6px;
+  color: var(--primary-dark);
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+@media (max-width: 1180px) {
+  .form-container {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+  .order-head {
+    grid-template-columns: 1fr auto;
+  }
+  .order-money,
+  .order-actions {
+    grid-column: auto;
+  }
+  .order-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+  .dashboard-card {
+    border-radius: 8px;
+  }
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+  .summary-bar,
+  .form-container,
+  .cards-container {
+    padding: 12px;
+  }
+  .summary-bar,
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+  .order-head,
+  .order-body {
+    grid-template-columns: 1fr;
+  }
+  .order-head {
+    padding: 12px;
+  }
+  .order-actions {
+    justify-content: flex-start;
+  }
+  .form-button {
+    width: 100%;
+  }
+  .pagination {
+    flex-wrap: wrap;
+    padding: 0 12px 12px;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="dashboard-card">
+    <h1 class="card-title">充值记录查询</h1>
+
+    <!-- 汇总卡：点击可切换筛选 -->
+<!-- 顶部小胶囊汇总：点击可切换筛选 -->
+<div class="summary-bar">
+  <div id="pillPaid" class="sum-pill sum-pill-green" onclick="toggleStatusByCard('paid')">
+    <span class="sum-dot"></span>
+    <span class="sum-text">支付成功</span>
+    <span class="sum-strong" id="sumPaidAmountSmall">+0.00</span>
+  </div>
+
+  <div id="pillPending" class="sum-pill sum-pill-orange" onclick="toggleStatusByCard('pending')">
+    <span class="sum-dot"></span>
+    <span class="sum-text">待支付</span>
+    <span class="sum-strong" id="sumPendingCountSmall">0笔</span>
+  </div>
+</div>
+
+
+    <div class="form-container">
+      <div class="form-item">
+        <label class="form-label">用户ID</label>
+        <input type="text" id="uid" class="form-input" placeholder="请输入用户ID">
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">订单编号</label>
+        <div class="autocomplete-container">
+          <input type="text" id="orderNumber" class="form-input" placeholder="请输入订单编号">
+          <div id="suggestions" class="suggestions-list"></div>
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">订单状态</label>
+        <select id="statusFilter" class="form-select">
+          <option value="">全部</option>
+          <option value="paid">支付成功</option>
+          <option value="pending">待支付</option>
+        </select>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">&nbsp;</label>
+        <button onclick="searchOrders(false)" class="form-button">查询</button>
+      </div>
+    </div>
+
+    <div class="cards-container" id="orderCardsContainer"></div>
+
+    <div class="pagination">
+      <button id="prevPage" class="form-button">上一页</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage" class="form-button">下一页</button>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let pageSize = 10;
+    let totalOrders = [];
+    let orderCache = [];
+    let summaryData = {};
+
+    function yuan(v){
+      const n = Number(v || 0);
+      return "￥" + n.toFixed(2);
+    }
+
+    // summary: { paid_total, paid_count, pending_total, pending_count }
+function renderSummary(summary){
+  const paidTotal = Number(summary?.paid_total ?? 0);
+  const paidCount = Number(summary?.paid_count ?? 0);
+  const pendingCount = Number(summary?.pending_count ?? 0);
+
+  // 支付成功：金额 +（笔数）
+  document.getElementById('sumPaidAmountSmall').textContent =
+    `+${paidTotal.toFixed(2)}（${paidCount}笔）`;
+
+  // 待支付：只显示笔数
+  document.getElementById('sumPendingCountSmall').textContent =
+    `${pendingCount}笔`;
+
+  // 保存summary数据以便在渲染订单时使用
+  summaryData = summary || {};
+
+  refreshSummaryActive();
+}
+
+
+
+    // 卡片点击：若当前已筛选同状态 -> 回到全部；否则切换到该状态并搜索
+    function toggleStatusByCard(type){
+      const sel = document.getElementById('statusFilter');
+      const target = (type === 'paid') ? 'paid' : 'pending';
+      sel.value = (sel.value === target) ? '' : target;
+      currentPage = 1;
+      searchOrders(false);
+    }
+
+function refreshSummaryActive(){
+  const sel = document.getElementById('statusFilter').value;
+  const pillPaid = document.getElementById('pillPaid');
+  const pillPending = document.getElementById('pillPending');
+
+  pillPaid.classList.toggle('active', sel === 'paid');
+  pillPending.classList.toggle('active', sel === 'pending');
+}
+
+
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentPage = 1;
+      refreshSummaryActive();
+      searchOrders(false);
+    });
+
+    function buildUrl(){
+      const uid = document.getElementById('uid').value.trim();
+      const orderNumber = document.getElementById('orderNumber').value.trim();
+      const status = document.getElementById('statusFilter').value; // '' | paid | pending
+
+      let url = '/api/finance/Rechargeinquiry.php?';
+      if (uid) url += `uid=${encodeURIComponent(uid)}&`;
+      if (orderNumber) url += `order_number=${encodeURIComponent(orderNumber)}&`;
+      if (status) url += `status=${encodeURIComponent(status)}&`;
+      // 去掉尾巴 &
+      url = url.replace(/[&?]$/, '');
+      return url;
+    }
+
+    function searchOrders(isAutocomplete = false) {
+      const url = buildUrl();
+
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          if (data.code === 0) {
+            if (isAutocomplete) {
+              updateSuggestions(data.data);
+            } else {
+              // 兼容：后端升级后返回 {summary, data}
+              const list = Array.isArray(data.data) ? data.data : (data.data?.list || data.data || []);
+              totalOrders = list;
+
+              // summary 优先取顶层，其次取 data.summary
+              const summary = data.summary || data.data?.summary;
+              if (summary) renderSummary(summary);
+              else renderSummary(null);
+
+              currentPage = 1;
+              displayOrders();
+            }
+          } else {
+            if (!isAutocomplete) alert(data.msg || '查询失败');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          if (!isAutocomplete) alert('查询失败，请稍后重试');
+        });
+    }
+
+    function displayOrders() {
+      const container = document.getElementById('orderCardsContainer');
+      container.innerHTML = '';
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const currentPageOrders = totalOrders.slice(startIndex, endIndex);
+
+      const totalPages = Math.max(1, Math.ceil(totalOrders.length / pageSize));
+      document.getElementById('pageInfo').textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = currentPage === totalPages;
+
+      if (currentPageOrders.length === 0) {
+        // 如果没有订单数据，但可能有用户信息，则显示用户信息卡片
+        if (Object.keys(summaryData).length > 0) {
+          container.innerHTML = createUserInfoCard();
+        } else {
+          container.innerHTML = `<div style="text-align:center;color:#6b7280;padding:24px 0;">暂无数据</div>`;
+        }
+        return;
+      }
+
+      // 先显示用户信息卡片
+      if (Object.keys(summaryData).length > 0) {
+        container.innerHTML = createUserInfoCard();
+      }
+
+      // 再显示订单卡片
+      currentPageOrders.forEach(order => {
+        const card = document.createElement('div');
+        card.className = 'order-card';
+
+        const statusText = order.status || '';
+        const statusClass = (statusText === '支付成功') ? 'status-paid' : 'status-pending';
+
+        let cardHTML = `
+          <div class="order-item"><span class="item-label">用户ID</span><span class="item-value">${order.uid ?? ''}</span></div>
+          <div class="order-item"><span class="item-label">订单编号</span><span class="item-value">${order.order_number ?? ''}</span></div>
+          <div class="order-item"><span class="item-label">商品名称</span><span class="item-value">${order.product_name ?? ''}</span></div>
+          <div class="order-item"><span class="item-label">订单类型</span><span class="item-value">${order.shop_type ?? ''}</span></div>
+          <div class="order-item"><span class="item-label">实际支付</span><span class="item-value">￥${order.payer_total != null ? order.payer_total : 0}</span></div>
+          <div class="order-item"><span class="item-label">订单状态</span><span class="item-value status-badge ${statusClass}">${statusText}</span></div>
+          <div class="order-item"><span class="item-label">创建时间</span><span class="item-value">${order.created_at ?? ''}</span></div>
+        `;
+
+        if (order.paid_at) {
+          cardHTML += `<div class="order-item"><span class="item-label">支付时间</span><span class="item-value">${order.paid_at}</span></div>`;
+        }
+        if (order.reservation_id) {
+          cardHTML += `<div class="order-item"><span class="item-label">预约ID</span><span class="item-value">${order.reservation_id}</span></div>`;
+        }
+        cardHTML += `<div class="order-item"><span class="item-label">支付渠道</span><span class="item-value">${order.payment_channel || '微信'}</span></div>`;
+
+        card.innerHTML = cardHTML;
+        container.appendChild(card);
+      });
+    }
+
+    // 创建用户信息卡片
+    function createUserInfoCard() {
+        const calculation = summaryData.calculation || {};
+        
+        const walletBalance = calculation.wallet_balance ?? summaryData.wallet_balance ?? 0;
+        const goldBalanceAmount = calculation.gold_balance_amount ?? summaryData.gold_balance_amount ?? 0;
+        const userWallet = summaryData.user_wallet ?? (Number(walletBalance) + Number(goldBalanceAmount));
+        const rechargeOrderPaidTotal = calculation.recharge_order_paid_total ?? summaryData.recharge_order_paid_total ?? 0;
+        const iapGoldAmount = calculation.iap_gold_amount ?? summaryData.iap_gold_amount ?? 0;
+        const orderConsumption = calculation.order_consumption ?? summaryData.order_consumption ?? 0;
+        const giftConsumption = calculation.gift_consumption ?? summaryData.gift_consumption ?? 0;
+        const totalConsumption = summaryData.total_consumption ?? (Number(orderConsumption) + Number(giftConsumption));
+        
+        const balanceCheck = summaryData.balance_check ?? false;
+
+      const checkClass = balanceCheck ? 'check-success' : 'check-error';
+      const checkText = balanceCheck ? '✓ 核对正确' : '✗ 核对异常';
+
+      return `
+        <div class="order-card" style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f3ff 100%); border: 2px solid rgba(91, 140, 255, 0.2);">
+<div class="order-item">
+  <span class="item-label">当前余额合计</span>
+  <span class="item-value" style="color: var(--primary); font-weight: 700;">${yuan(userWallet)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">钱包余额</span>
+  <span class="item-value">${yuan(walletBalance)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">金币余额折算</span>
+  <span class="item-value">${yuan(goldBalanceAmount)}</span>
+</div>
+          <div class="order-item">
+            <span class="item-label">待实消金额</span>
+            <span class="item-value" style="color: #f59e0b; font-weight: 700;">${yuan(calculation.waiting_consumption)}</span>
+          </div>
+<div class="order-item">
+  <span class="item-label">累计消费</span>
+  <span class="item-value" style="color: #f59e0b; font-weight: 700;">${yuan(totalConsumption)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">订单消费</span>
+  <span class="item-value">${yuan(orderConsumption)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">礼物消费</span>
+  <span class="item-value">${yuan(giftConsumption)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">RechargeOrders支付</span>
+  <span class="item-value">${yuan(rechargeOrderPaidTotal)}</span>
+</div>
+<div class="order-item">
+  <span class="item-label">苹果内购金币折算</span>
+  <span class="item-value">${yuan(iapGoldAmount)}</span>
+</div>
+          <div class="order-item">
+            <span class="item-label">核对状态</span>
+            <span class="item-value check-badge ${checkClass}">${checkText}</span>
+          </div>
+          ${calculation.total_recharge ? `
+            <div class="order-item" style="margin-top: 10px; padding-top: 15px; border-top: 2px dashed rgba(0,0,0,0.1);">
+              <span class="item-label">计算公式</span>
+              <span class="item-value" style="font-size: 12px; color: #7f8fa4;">
+                ${yuan(calculation.total_recharge)} = ${yuan(calculation.total_consumption)} + ${yuan(calculation.waiting_consumption)} + ${yuan(calculation.user_wallet)}
+              </span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; displayOrders(); }
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(totalOrders.length / pageSize));
+      if (currentPage < totalPages) { currentPage++; displayOrders(); }
+    });
+
+    // 初始化缓存（给联想）
+    function initializeOrderData() {
+      fetch('/api/finance/Rechargeinquiry.php')
+        .then(r => r.json())
+        .then(data => {
+          if (data.code === 0) {
+            // 兼容升级：可能 data.data 是数组，也可能是对象
+            orderCache = Array.isArray(data.data) ? data.data : (data.data?.list || data.data || []);
+            // 若带 summary，顺便渲染
+            const summary = data.summary || data.data?.summary;
+            if (summary) {
+              summaryData = summary;
+              renderSummary(summary);
+            }
+          }
+        })
+        .catch(e => console.error('Error:', e));
+    }
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   initializeOrderData();
+    //   refreshSummaryActive();
+    // });
+function getQueryParam(name){
+  const u = new URL(window.location.href);
+  return (u.searchParams.get(name) || '').trim();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeOrderData();
+  refreshSummaryActive();
+
+  // ✅ 支持从用户管理跳转：Rechargeinquiry.html?user_id=xxx 或 ?uid=xxx
+  const fromUid = getQueryParam('user_id') || getQueryParam('uid');
+  if (fromUid) {
+    document.getElementById('uid').value = fromUid;
+    currentPage = 1;
+    searchOrders(false); // 自动查询
+  }
+});
+    // 联想
+    function updateSuggestions(searchText) {
+      const suggestionsDiv = document.getElementById('suggestions');
+      suggestionsDiv.innerHTML = '';
+
+      if (!searchText || searchText.length < 2) {
+        suggestionsDiv.style.display = 'none';
+        return;
+      }
+
+      const matchedOrders = orderCache.filter(order => {
+        const on = (order.order_number || '');
+        const lastDigits = on.slice(-6);
+        return lastDigits.includes(searchText);
+      }).slice(0, 10);
+
+      if (matchedOrders.length > 0) {
+        matchedOrders.forEach(order => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          const orderNumber = order.order_number || '';
+          const lastSix = orderNumber.slice(-6);
+          const highlightedNumber = orderNumber.slice(0, -6) +
+            lastSix.replace(new RegExp(searchText, 'g'),
+              `<span style="color: var(--primary); font-weight: 800;">${searchText}</span>`);
+
+          div.innerHTML = highlightedNumber;
+          div.addEventListener('click', () => {
+            document.getElementById('orderNumber').value = orderNumber;
+            suggestionsDiv.style.display = 'none';
+            currentPage = 1;
+            searchOrders(false);
+          });
+          suggestionsDiv.appendChild(div);
+        });
+        suggestionsDiv.style.display = 'block';
+      } else {
+        suggestionsDiv.style.display = 'none';
+      }
+    }
+
+    const orderInput = document.getElementById('orderNumber');
+    const suggestionsDiv = document.getElementById('suggestions');
+    let debounceTimer;
+
+    orderInput.addEventListener('input', function(e){
+      const value = e.target.value.trim();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => updateSuggestions(value), 250);
+    });
+
+    document.addEventListener('click', function(e){
+      if (!orderInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+        suggestionsDiv.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>订单管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+#order-list {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+#order-list > p {
+  padding: 28px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfcfd;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.order-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.order-item:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 12px 28px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+}
+
+.order-id,
+.status {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.status {
+  justify-content: flex-end;
+  color: #a16000;
+}
+
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status.completed { color: var(--success); }
+.status.cancelled { color: var(--danger); }
+.status.pending { color: #a16000; }
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 900;
+}
+
+.value {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: right;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.complete-btn,
+.cancel-btn {
+  grid-column: 1 / -1;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.complete-btn:hover:not(:disabled),
+.cancel-btn:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .16);
+  transform: translateY(-1px);
+}
+
+.complete-btn:disabled,
+.cancel-btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+@media (max-width: 700px) {
+  body { padding: 12px; }
+  #order-list { padding: 12px; }
+  .order-item { grid-template-columns: 1fr; }
+  .status { justify-content: flex-start; }
+  .value { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-title">订单管理</div>
+            <div id="order-list"></div> <!-- 这里将动态插入订单 -->
+        </div>
+    </div>
+
+    <script>
+        // 发起请求获取数据并更新页面 
+        fetch('/api/venue/getReservationsList.php?page=1&limit=20&order_number=&reservation_date=&reservation_location=&status=%E6%AD%A3%E5%9C%A8%E9%A9%BE%E9%A9%B6')
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 0 && data.data.length > 0) {
+                    const orderListContainer = document.getElementById('order-list');
+
+                    data.data.forEach(order => {
+                        const orderItem = document.createElement('div');
+                        orderItem.classList.add('order-item');
+
+                        // 订单编号和状态
+                        orderItem.innerHTML = `
+                            <div class="order-id">订单编号：${order.order_number}</div>
+                            <div class="status ${getStatusClass(order.order_status)}">${getStatusText(order.order_status)}</div>
+
+                            <div class="label">用户昵称</div>
+                            <div class="value">${order.nickname} (ID: ${order.user_id})</div>
+
+                            <div class="label">可驾驶时长</div>
+                            <div class="value">${order.driving_duration}分钟</div>
+
+                            <div class="label">驾驶开始时间</div>
+                            <div class="value">${order.driving_start_time}</div>
+
+                            <div class="label">支付方式</div>
+                            <div class="value">${order.pay_type}</div>
+
+                            <div class="label">驾驶车辆</div>
+                            <div class="value">${order.vehicle_name}</div>
+                        
+                            <button class="complete-btn" ${order.order_status !== "正在驾驶" ? "disabled" : ""} onclick="completeOrder('${order.order_number}', this)">结束订单</button>
+                        `;
+
+                    
+
+                        orderListContainer.appendChild(orderItem);
+                    });
+                } else {
+                    const orderListContainer = document.getElementById('order-list');
+                    orderListContainer.innerHTML = "<p>暂无订单记录</p>";
+                }
+            })
+            .catch(error => {
+                console.error('数据加载失败:', error);
+            });
+
+        // 根据状态获取对应的状态文本和颜色
+        function getStatusText(status) {
+            switch (status) {
+                case "正在驾驶": return "正在驾驶";
+                case "已完成": return "已完成";
+                case "已取消": return "已取消";
+                default: return "未知";
+            }
+        }
+
+        // 根据状态返回对应的状态类名
+        function getStatusClass(status) {
+            switch (status) {
+                case "正在驾驶": return "pending";
+                case "已完成": return "completed";
+                case "已取消": return "cancelled";
+                default: return "pending";
+            }
+        }
+
+        // 结束订单的功能
+        function completeOrder(orderNumber, buttonElement) {
+            const url = `/api/orders/CompleteOrder.php?order_id=${orderNumber}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        // 更新状态为已完成
+                        const statusElement = buttonElement.closest('.order-item').querySelector('.status');
+                        statusElement.textContent = '已完成';
+                        statusElement.classList.remove('pending');
+                        statusElement.classList.add('completed');
+
+                        // 禁用按钮，防止重复点击
+                        buttonElement.disabled = true;
+                        buttonElement.textContent = `已完成`;
+                        alert(data.msg);  // 显示退款金额提示
+                    } else {
+                        alert('结束订单失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('结束订单失败:', error);
+                    alert('网络错误，结束订单失败');
+                });
+        }
+    </script>
+
+</body>
+</html>

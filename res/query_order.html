@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单查询统计</title>
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 18px 0;
+}
+
+.sum-pill {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+}
+
+.sum-pill:hover,
+.sum-pill.active {
+  border-color: rgba(15, 143, 140, .36);
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.sum-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.sum-pill-green .sum-dot { background: var(--success); }
+.sum-pill-orange .sum-dot { background: var(--warning); }
+
+.sum-text {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sum-strong {
+  margin-left: auto;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.form-item {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.form-input::placeholder {
+  color: #9aabb2;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+select.form-input,
+.form-select {
+  cursor: pointer;
+}
+
+.autocomplete-container {
+  position: relative;
+}
+
+.suggestions-container,
+.suggestions-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: none;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.suggestion-item {
+  padding: 9px 12px;
+  border-bottom: 1px solid #edf3f5;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestion-item:last-child {
+  border-bottom: 0;
+}
+
+.suggestion-item:hover {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.form-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 15px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.form-button:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .16);
+  transform: translateY(-1px);
+}
+
+.form-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none;
+  box-shadow: none;
+}
+
+.refund-btn {
+  border-color: rgba(47, 125, 246, .22);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.refund-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: #fff;
+  background: var(--blue);
+  box-shadow: 0 8px 18px rgba(47, 125, 246, .16);
+}
+
+.cancel-refund-btn {
+  border-color: rgba(223, 91, 87, .35) !important;
+  color: #fff;
+  background: var(--danger) !important;
+}
+
+.lock-action-btn {
+  border-color: rgba(255, 184, 77, .42);
+  color: #a16000;
+  background: var(--warning-soft);
+}
+
+.lock-action-btn:hover:not(:disabled) {
+  border-color: var(--warning);
+  color: #6b3f00;
+  background: #ffe9b8;
+  box-shadow: 0 8px 18px rgba(255, 184, 77, .16);
+}
+
+.unlock-action-btn {
+  border-color: rgba(32, 168, 118, .30);
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.unlock-action-btn:hover:not(:disabled) {
+  border-color: var(--success);
+  color: #fff;
+  background: var(--success);
+  box-shadow: 0 8px 18px rgba(32, 168, 118, .16);
+}
+
+.cards-container {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  background: var(--panel);
+}
+
+.order-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.order-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 12px 28px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+}
+
+.order-head {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) auto minmax(150px, auto) minmax(160px, auto);
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.order-no,
+.order-money {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.order-no-label,
+.order-money-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.order-no-value,
+.order-money-value {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.order-money-value {
+  color: var(--primary-dark);
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-body {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 4px 16px 14px;
+}
+
+.order-field,
+.order-item {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed #e7eff2;
+}
+
+.order-field {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.order-field:nth-last-child(-n+4),
+.order-item:last-child {
+  border-bottom-color: transparent;
+}
+
+.field-label,
+.item-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.field-value,
+.item-value {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.money {
+  color: var(--primary-dark);
+  font-weight: 900;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.status-badge,
+.check-badge,
+.lock-status-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.status-completed,
+.status-success,
+.check-badge.checked,
+.lock-status-badge.normal {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(32, 168, 118, .20);
+}
+
+.status-pending,
+.status-wait,
+.lock-status-badge.locked {
+  color: #a16000;
+  background: var(--warning-soft);
+  border-color: rgba(255, 184, 77, .30);
+}
+
+.status-failed,
+.status-cancel,
+.check-badge.unchecked {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(223, 91, 87, .22);
+}
+
+.refund-status-text {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.refund-status-text.empty {
+  color: var(--subtle);
+  background: #f2f5f6;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#pageInfo,
+.page-info {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.total-sum-card {
+  margin: 18px 18px 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(15, 143, 140, .22);
+  border-radius: 8px;
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.total-sum-title {
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.total-sum-value {
+  margin-top: 6px;
+  color: var(--primary-dark);
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+@media (max-width: 1180px) {
+  .form-container {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+  .order-head {
+    grid-template-columns: 1fr auto;
+  }
+  .order-money,
+  .order-actions {
+    grid-column: auto;
+  }
+  .order-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+  .dashboard-card {
+    border-radius: 8px;
+  }
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+  .summary-bar,
+  .form-container,
+  .cards-container {
+    padding: 12px;
+  }
+  .summary-bar,
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+  .order-head,
+  .order-body {
+    grid-template-columns: 1fr;
+  }
+  .order-head {
+    padding: 12px;
+  }
+  .order-actions {
+    justify-content: flex-start;
+  }
+  .form-button {
+    width: 100%;
+  }
+  .pagination {
+    flex-wrap: wrap;
+    padding: 0 12px 12px;
+  }
+}
+</style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <h1 class="card-title">订单查询统计</h1>
+        
+        <div class="form-container">
+            <div class="form-item">
+                <label class="form-label">场地</label>
+                <input type="text" id="reservationId" class="form-input" placeholder="请输入预约ID">
+            </div>
+            <div class="form-item">
+                <label class="form-label">用户ID</label>
+                <input type="text" id="uid" class="form-input" placeholder="请输入用户ID">
+            </div>
+            <div class="form-item">
+                <label class="form-label">订单编号</label>
+                <div style="position: relative;">
+                    <input type="text" id="orderNumber" class="form-input" placeholder="请输入订单编号">
+                    <div id="suggestions" class="suggestions-list"></div>
+                </div>
+            </div>
+            <div class="form-item">
+                <label class="form-label">开始日期</label>
+                <input type="date" id="startDate" class="form-input">
+            </div>
+            <div class="form-item">
+                <label class="form-label">结束日期</label>
+                <input type="date" id="endDate" class="form-input">
+            </div>
+            <div class="form-item">
+                <label class="form-label">&nbsp;</label>
+                <button onclick="searchOrders()" class="form-button">查询</button>
+            </div>
+        </div>
+
+        <!-- 总金额统计卡片 -->
+        <div class="total-sum-card">
+            <div class="total-sum-title">订单总金额</div>
+            <div class="total-sum-value">￥<span id="totalSum">0.00</span></div>
+            <div class="page-info" style="margin-top: 10px; color: var(--secondary); font-size: 14px;">
+                共 <span id="totalCount">0</span> 条记录
+            </div>
+        </div>
+
+        <div class="cards-container" id="orderCardsContainer">
+            <!-- 数据将通过 JavaScript 动态插入 -->
+        </div>
+
+        <!-- 添加分页控件 -->
+        <div class="pagination">
+            <button id="prevPage" class="form-button" style="margin-right: 10px;">上一页</button>
+            <span id="pageInfo" style="margin: 0 10px;">第 1 页 / 共 1 页</span>
+            <button id="nextPage" class="form-button" style="margin-left: 10px;">下一页</button>
+        </div>
+    </div>
+
+    <script>
+        // 添加分页相关变量
+        let currentPage = 1;
+        const pageSize = 10; // 每页显示10条
+        let totalPages = 1;
+        let totalCount = 0;
+
+        function searchOrders(page = 1) {
+            currentPage = page;
+            const reservationId = document.getElementById('reservationId').value;
+            const uid = document.getElementById('uid').value;
+            const orderNumber = document.getElementById('orderNumber').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            let url = `/api/orders/query_order.php?page=${page}&page_size=${pageSize}`;
+            if (reservationId) url += `&reservation_id=${encodeURIComponent(reservationId)}`;
+            if (uid) url += `&uid=${encodeURIComponent(uid)}`;
+            if (orderNumber) url += `&order_number=${encodeURIComponent(orderNumber)}`;
+            if (startDate) url += `&start_date=${encodeURIComponent(startDate)}`;
+            if (endDate) url += `&end_date=${encodeURIComponent(endDate)}`;
+
+            // 显示加载状态
+            document.getElementById('orderCardsContainer').innerHTML = '<div style="text-align: center; padding: 20px;">加载中...</div>';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 0) {
+                        displayOrders(data.data.list);
+                        updateTotalSum(data.data.total_sum);
+                        updatePagination(data.data.total_count);
+                    } else {
+                        alert(data.msg);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('查询失败，请稍后重试');
+                });
+        }
+
+        function updatePagination(total) {
+            totalCount = total;
+            totalPages = Math.ceil(total / pageSize);
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('pageInfo').textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+            
+            // 更新按钮状态
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+
+        // 添加分页事件监听
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                searchOrders(currentPage - 1);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                searchOrders(currentPage + 1);
+            }
+        });
+
+        // 修改页面加载初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置默认日期范围为最近7天
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+
+            document.getElementById('startDate').value = sevenDaysAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+            // 执行首次查询
+            searchOrders(1);
+        });
+
+        function displayOrders(orders) {
+            const container = document.getElementById('orderCardsContainer');
+            container.innerHTML = '';
+
+            orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                
+                card.innerHTML = `
+                    <div class="order-item">
+                        <span class="item-label">预约ID</span>
+                        <span class="item-value">${order.reservation_id}</span>
+                    </div>
+                    <div class="order-item">
+                        <span class="item-label">用户ID</span>
+                        <span class="item-value">${order.uid}</span>
+                    </div>
+                    <div class="order-item">
+                        <span class="item-label">订单编号</span>
+                        <span class="item-value">${order.order_number}</span>
+                    </div>
+                    <div class="order-item">
+                        <span class="item-label">商品名称</span>
+                        <span class="item-value">${order.product_name}</span>
+                    </div>
+                    <div class="order-item">
+                        <span class="item-label">创建时间</span>
+                        <span class="item-value">${order.created_at}</span>
+                    </div>
+                    <div class="order-item">
+                        <span class="item-label">支付金额</span>
+                        <span class="item-value">￥${order.total_payment}</span>
+                    </div>`;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function updateTotalSum(totalSum) {
+            document.getElementById('totalSum').textContent = 
+                parseFloat(totalSum).toLocaleString('zh-CN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+        }
+
+        // 订单号输入联想功能
+        const orderInput = document.getElementById('orderNumber');
+        const suggestionsDiv = document.getElementById('suggestions');
+        
+        let debounceTimer;
+        orderInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            const value = e.target.value.trim();
+            
+            if (value.length < 3) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/api/orders/query_order.php?order_number=${encodeURIComponent(value)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 0) {
+                            updateSuggestions(data.data.list);
+                        }
+                    });
+            }, 300);
+        });
+
+        function updateSuggestions(orders) {
+            suggestionsDiv.innerHTML = '';
+            
+            if (orders.length > 0) {
+                orders.slice(0, 10).forEach(order => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = order.order_number;
+                    div.addEventListener('click', () => {
+                        orderInput.value = order.order_number;
+                        suggestionsDiv.style.display = 'none';
+                        searchOrders();
+                    });
+                    suggestionsDiv.appendChild(div);
+                });
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+
+        // 点击外部关闭建议列表
+        document.addEventListener('click', function(e) {
+            if (!orderInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>用户消费记录</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.form-item {
+  min-width: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.form-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  transition: background .16s ease, border .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.form-button:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .16);
+  transform: translateY(-1px);
+}
+
+#summary {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 18px 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#summary:empty {
+  display: none;
+}
+
+#summary span {
+  min-width: 130px;
+  display: inline-flex;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.green {
+  color: var(--success) !important;
+}
+
+.red {
+  color: var(--danger) !important;
+}
+
+#summary .green {
+  background: var(--success-soft);
+}
+
+#summary .red {
+  background: var(--danger-soft);
+}
+
+#record-container {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.record-card {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.record-item {
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e7eff2;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.record-item:nth-last-child(-n+4) {
+  border-bottom-color: transparent;
+}
+
+.record-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+@media (max-width: 980px) {
+  .record-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+  body { padding: 12px; }
+  .form-container { grid-template-columns: 1fr; padding: 12px; }
+  .form-button { width: 100%; }
+  #summary { justify-content: flex-start; padding: 12px 12px 0; }
+  #record-container { padding: 12px; }
+  .record-card { grid-template-columns: 1fr; }
+  .record-item { border-bottom-color: #e7eff2 !important; }
+}
+</style>
+</head>
+
+<body>
+  <div class="dashboard-card">
+    <div class="card-title">用户消费查询变动记录</div>
+
+    <div class="form-container">
+      <div class="form-item">
+        <label class="form-label" for="user_id">用户 ID</label>
+        <input class="form-input" id="user_id" type="text" placeholder="请输入用户ID" />
+      </div>
+      <div class="form-item">
+        <label class="form-label" for="change_type">变动类型</label>
+        <select class="form-select" id="change_type">
+          <option value="">全部类型</option>
+          <option value="充值">充值</option>
+          <option value="消费">消费</option>
+          <option value="提现">提现</option>
+          <option value="金额返还">金额返还</option>
+        </select>
+      </div>
+      <button class="form-button" id="search_btn">查询</button>
+    </div>
+
+    <div id="summary"></div>
+    <div id="record-container"></div>
+  </div>
+
+  <script>
+    document.getElementById('search_btn').addEventListener('click', () => {
+      const userId = document.getElementById('user_id').value;
+      const changeType = document.getElementById('change_type').value;
+      let apiUrl = `/api/finance/Comsumquery.php?user_id=${userId}`;
+      if (changeType) apiUrl += `&change_type=${changeType}`;
+
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+          const records = data.data || [];
+          const container = document.getElementById('record-container');
+          const summary = document.getElementById('summary');
+          container.innerHTML = '';
+          summary.innerHTML = '';
+
+          records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+          let totalRecharge = 0;
+          let totalConsumption = 0;
+
+          records.forEach(record => {
+            const card = document.createElement('div');
+            card.className = 'record-card';
+
+            let amount = parseFloat(record.change_amount).toFixed(2);
+            let amountClass = '';
+            let symbol = '';
+
+            if (record.change_type === '消费') {
+              symbol = '-';
+              amountClass = 'red';
+              totalConsumption += parseFloat(amount);
+            } else if (record.change_type === '充值') {
+              symbol = '+';
+              amountClass = 'green';
+              totalRecharge += parseFloat(amount);
+            }
+
+            card.innerHTML = `
+              <div class="record-item"><strong>用户 ID:</strong> ${record.user_id}</div>
+              <div class="record-item"><strong>变动金额:</strong> <span class="${amountClass}">${symbol}${amount}</span></div>
+              <div class="record-item"><strong>变动前余额:</strong> ${record.balance_before}</div>
+              <div class="record-item"><strong>变动后余额:</strong> ${record.balance_after}</div>
+              <div class="record-item"><strong>变动类型:</strong> ${record.change_type}</div>
+              <div class="record-item"><strong>描述:</strong> ${record.description || '无'}</div>
+              <div class="record-item"><strong>支付渠道:</strong> ${record.payment_channel}</div>
+              <div class="record-item"><strong>创建时间:</strong> ${record.created_at}</div>
+            `;
+            container.appendChild(card);
+          });
+
+          if (changeType === '') {
+            summary.innerHTML = `
+              总充值金额：<span class="green">+${totalRecharge.toFixed(2)}</span>
+              总消费金额：<span class="red">-${totalConsumption.toFixed(2)}</span>
+            `;
+          } else if (changeType === '充值') {
+            summary.innerHTML = `总充值金额：<span class="green">+${totalRecharge.toFixed(2)}</span>`;
+          } else if (changeType === '消费') {
+            summary.innerHTML = `总消费金额：<span class="red">-${totalConsumption.toFixed(2)}</span>`;
+          }
+        })
+        .catch(err => {
+          console.error('查询出错:', err);
+        });
+    });
+  </script>
+</body>
+</html>
