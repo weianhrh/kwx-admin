@@ -57,6 +57,10 @@
       background: var(--sidebar);
     }
 
+    .sidebar-overlay {
+      display: none;
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -1233,6 +1237,21 @@
         padding: 0;
       }
 
+      .nav-parent {
+        justify-content: center;
+        padding: 0;
+      }
+
+      .nav-parent-main {
+        justify-content: center;
+      }
+
+      .nav-parent-main > span,
+      .nav-caret,
+      .nav-group.open .nav-children {
+        display: none;
+      }
+
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1264,16 +1283,45 @@
       }
 
       .sidebar {
-        position: static;
-        height: auto;
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 40;
+        width: min(84vw, 292px);
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 18px;
+        padding: 18px 14px;
+        box-shadow: 24px 0 50px rgba(6, 20, 24, .24);
+        transform: translateX(-105%);
+        transition: transform .2s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 35;
+        display: none;
+        background: rgba(10, 24, 28, .42);
+        backdrop-filter: blur(2px);
+      }
+
+      body.sidebar-open {
+        overflow: hidden;
+      }
+
+      body.sidebar-open .sidebar-overlay {
         display: block;
-        padding: 14px;
       }
 
       .brand {
         justify-content: flex-start;
-        padding: 0;
-        border-bottom: 0;
+        padding: 0 2px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, .1);
       }
 
       .brand div:last-child {
@@ -1282,7 +1330,44 @@
 
       .nav,
       .sidebar-foot {
-        display: none;
+        display: grid;
+      }
+
+      .nav {
+        overflow-y: auto;
+        align-content: start;
+        padding-right: 4px;
+      }
+
+      .nav-section {
+        display: block;
+      }
+
+      .nav a {
+        justify-content: flex-start;
+        padding: 0 12px;
+      }
+
+      .nav a span {
+        display: inline;
+      }
+
+      .nav-parent {
+        justify-content: space-between;
+        padding: 0 12px;
+      }
+
+      .nav-parent-main {
+        justify-content: flex-start;
+      }
+
+      .nav-parent-main > span,
+      .nav-caret {
+        display: inline-block;
+      }
+
+      .nav-group.open .nav-children {
+        display: grid;
       }
 
       .mobile-menu {
@@ -1385,10 +1470,11 @@
         <span>后续页面可复用左侧导航、顶部工具栏、面板、表格与状态标签。</span>
       </div>
     </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
     <main class="main">
       <header class="topbar">
-        <button class="ghost-btn mobile-menu" type="button">
+        <button class="ghost-btn mobile-menu" type="button" aria-controls="sidebarNav" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
           菜单
         </button>
@@ -1562,10 +1648,45 @@
   </div>
   <script>
     const sidebarNav = document.getElementById('sidebarNav');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const mobileMenuButton = document.querySelector('.mobile-menu');
     const pageContent = document.getElementById('pageContent');
     const homeContent = pageContent.innerHTML;
     let menuTree = [];
     let deviceFilters = { keyword: '', venueId: '' };
+
+    function isMobileSidebar() {
+      return window.matchMedia('(max-width: 760px)').matches;
+    }
+
+    function openSidebar() {
+      if (!sidebar) return;
+      sidebar.classList.add('open');
+      document.body.classList.add('sidebar-open');
+      if (mobileMenuButton) {
+        mobileMenuButton.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function closeSidebar() {
+      if (sidebar) {
+        sidebar.classList.remove('open');
+      }
+      document.body.classList.remove('sidebar-open');
+      if (mobileMenuButton) {
+        mobileMenuButton.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    function toggleSidebar() {
+      if (!sidebar) return;
+      if (sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    }
 
     const iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>';
     const menuIcons = {
@@ -2214,7 +2335,31 @@
       });
     }
 
+    if (mobileMenuButton) {
+      mobileMenuButton.addEventListener('click', toggleSidebar);
+    }
+
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    window.addEventListener('resize', function() {
+      if (!isMobileSidebar()) {
+        closeSidebar();
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeSidebar();
+      }
+    });
+
     sidebarNav.addEventListener('click', function(event) {
+      const link = event.target.closest('a[data-menu-id]');
+      if (link && isMobileSidebar()) {
+        closeSidebar();
+      }
       const toggle = event.target.closest('[data-toggle-group]');
       if (!toggle) return;
       const group = toggle.closest('.nav-group');
