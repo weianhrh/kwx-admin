@@ -1,0 +1,192 @@
+/* Shared skin for standalone legacy HTML pages loaded inside dashboard content. */
+body.kwx-legacy-page {
+  --primary: #0f8f8c !important;
+  --primary-dark: #08706e !important;
+  --primary-hover: #08706e !important;
+  --primary-light: #e6f6f5 !important;
+  --secondary: #667985 !important;
+  --success: #20a876 !important;
+  --warning: #d98b16 !important;
+  --danger: #df5b57 !important;
+  --purple: #405ca8 !important;
+  --text-main: #172126 !important;
+  --text-muted: #667985 !important;
+  --text-light: #8aa0a8 !important;
+  --text-color: #172126 !important;
+  --border: #dfe8eb !important;
+  --border-color: #dfe8eb !important;
+  --card: #fff !important;
+  --card-bg: #fff !important;
+  --bg: #fff !important;
+  --bg-start: #f4f7f8 !important;
+  --bg-end: #f4f7f8 !important;
+  --background-gradient-start: #f4f7f8 !important;
+  --background-gradient-end: #f4f7f8 !important;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08) !important;
+  --shadow-soft: 0 8px 22px rgba(30, 55, 66, .07) !important;
+  --radius: 8px !important;
+  min-width: 320px !important;
+  min-height: auto !important;
+  display: block !important;
+  padding: 0 !important;
+  color: #172126 !important;
+  background: transparent !important;
+}
+
+body.kwx-legacy-page *,
+body.kwx-legacy-page *::before,
+body.kwx-legacy-page *::after {
+  box-sizing: border-box;
+  letter-spacing: 0 !important;
+}
+
+body.kwx-legacy-page button,
+body.kwx-legacy-page input,
+body.kwx-legacy-page select,
+body.kwx-legacy-page textarea {
+  font: inherit;
+}
+
+body.kwx-legacy-page button {
+  cursor: pointer;
+}
+
+body.kwx-legacy-page .container,
+body.kwx-legacy-page .wrap,
+body.kwx-legacy-page .main,
+body.kwx-legacy-page .page,
+body.kwx-legacy-page .page-wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+body.kwx-legacy-page .card,
+body.kwx-legacy-page .page-header,
+body.kwx-legacy-page .board-card,
+body.kwx-legacy-page .stat-card,
+body.kwx-legacy-page .venue-card,
+body.kwx-legacy-page .form,
+body.kwx-legacy-page .modal-content,
+body.kwx-legacy-page .preview-box {
+  border: 1px solid #dfe8eb !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 34px rgba(30, 55, 66, .08) !important;
+}
+
+body.kwx-legacy-page .card,
+body.kwx-legacy-page .page-header,
+body.kwx-legacy-page .board-card {
+  padding: 18px !important;
+}
+
+body.kwx-legacy-page .card-title,
+body.kwx-legacy-page h1,
+body.kwx-legacy-page h2,
+body.kwx-legacy-page h3,
+body.kwx-legacy-page .board-title h2,
+body.kwx-legacy-page .modal-title {
+  color: #172126 !important;
+}
+
+body.kwx-legacy-page .card-title,
+body.kwx-legacy-page h2 {
+  border-color: #dfe8eb !important;
+}
+
+body.kwx-legacy-page .eyebrow,
+body.kwx-legacy-page .section-title,
+body.kwx-legacy-page .tag,
+body.kwx-legacy-page .status-bar,
+body.kwx-legacy-page .tips {
+  border-color: rgba(15, 143, 140, .18) !important;
+  color: #08706e !important;
+  background: #e6f6f5 !important;
+}
+
+body.kwx-legacy-page input,
+body.kwx-legacy-page select,
+body.kwx-legacy-page textarea,
+body.kwx-legacy-page .form-control,
+body.kwx-legacy-page .input,
+body.kwx-legacy-page .select {
+  min-height: 38px;
+  border: 1px solid #dfe8eb !important;
+  border-radius: 8px !important;
+  color: #172126 !important;
+  background: #fff !important;
+  outline: 0 !important;
+}
+
+body.kwx-legacy-page input:focus,
+body.kwx-legacy-page select:focus,
+body.kwx-legacy-page textarea:focus,
+body.kwx-legacy-page .form-control:focus,
+body.kwx-legacy-page .input:focus,
+body.kwx-legacy-page .select:focus {
+  border-color: rgba(15, 143, 140, .48) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10) !important;
+}
+
+body.kwx-legacy-page .btn,
+body.kwx-legacy-page .action-button,
+body.kwx-legacy-page button:not(.preview-close):not(.modal-close):not(.close-btn),
+body.kwx-legacy-page input[type="button"],
+body.kwx-legacy-page input[type="submit"] {
+  min-height: 36px;
+  border-radius: 8px !important;
+  border: 1px solid rgba(15, 143, 140, .22) !important;
+  background: #eefaf8 !important;
+  color: #08706e !important;
+  box-shadow: none !important;
+}
+
+body.kwx-legacy-page .btn-primary,
+body.kwx-legacy-page .btn_add,
+body.kwx-legacy-page .submit-btn,
+body.kwx-legacy-page .action-button:not(.danger),
+body.kwx-legacy-page button[type="submit"] {
+  border-color: transparent !important;
+  background: #0f8f8c !important;
+  color: #fff !important;
+}
+
+body.kwx-legacy-page .danger,
+body.kwx-legacy-page .danger-btn,
+body.kwx-legacy-page .btn-danger,
+body.kwx-legacy-page .del-btn {
+  border-color: rgba(223, 91, 87, .24) !important;
+  background: #ffefef !important;
+  color: #df5b57 !important;
+}
+
+body.kwx-legacy-page table,
+body.kwx-legacy-page .thead {
+  width: 100%;
+  border-color: #dfe8eb !important;
+}
+
+body.kwx-legacy-page th,
+body.kwx-legacy-page td,
+body.kwx-legacy-page .row,
+body.kwx-legacy-page .item {
+  border-color: #dfe8eb !important;
+}
+
+body.kwx-legacy-page .modal {
+  border-radius: 8px !important;
+}
+
+body.kwx-legacy-page .modal-mask,
+body.kwx-legacy-page .modal {
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 720px) {
+  body.kwx-legacy-page .card,
+  body.kwx-legacy-page .page-header,
+  body.kwx-legacy-page .board-card {
+    padding: 14px !important;
+  }
+}

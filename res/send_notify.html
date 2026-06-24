@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>发送通知</title>
+  <style>
+    :root{
+      --primary:#5b8cff;
+      --bg:#f5f7ff;
+      --card:#fff;
+      --text:#222;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+    }
+    *{ box-sizing:border-box; font-family:"PingFang SC",system-ui; }
+    body{
+      margin:0;
+      background:var(--bg);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:28px 18px;
+      color:var(--text);
+    }
+    .card{
+      width:min(920px, 96vw);
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:26px 28px;
+      box-shadow:0 10px 34px rgba(91,140,255,.10);
+    }
+    h1{ margin:0 0 18px; font-size:28px; font-weight:800; }
+    label{ display:block; font-size:16px; color:var(--muted); margin:14px 0 8px; font-weight:700; }
+    input, textarea, select{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px 16px;
+      font-size:18px;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height:200px; resize:vertical; line-height:1.5; }
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(91,140,255,.16);
+    }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .row{ display:flex; gap:12px; margin-top:18px; }
+    button{
+      width:100%;
+      border:none;
+      border-radius:12px;
+      padding:16px 18px;
+      font-size:20px;
+      font-weight:800;
+      background:var(--primary);
+      color:#fff;
+      cursor:pointer;
+    }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+    .msg{
+      margin-top:14px;
+      font-size:16px;
+      padding:12px 14px;
+      border-radius:12px;
+      display:none;
+      font-weight:700;
+      white-space:pre-wrap;
+      line-height:1.5;
+    }
+    .ok{ background:#ecfdf3; border:1px solid #a7f3d0; color:#065f46; }
+    .bad{ background:#fff1f2; border:1px solid #fecdd3; color:#9f1239; }
+    @media (max-width: 520px){
+      body{ padding:18px 12px; }
+      .card{ width:100%; padding:18px 16px; border-radius:14px; }
+      h1{ font-size:22px; margin-bottom:12px; }
+      label{ font-size:14px; margin:12px 0 6px; }
+      input, textarea, select{ font-size:16px; padding:12px 12px; border-radius:10px; }
+      textarea{ min-height:160px; }
+      .grid{ grid-template-columns:1fr; }
+      button{ font-size:18px; padding:14px 14px; border-radius:10px; }
+      .msg{ font-size:14px; padding:10px 12px; border-radius:10px; }
+    }
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="kwx-legacy-page">
+  <div class="card">
+    <h1>发送通知</h1>
+
+    <div class="grid">
+      <div>
+        <label>平台</label>
+<select id="platform">
+  <option value="android">Android</option>
+  <option value="ios" selected>iOS</option>
+</select>
+      </div>
+      <div>
+        <label>环境</label>
+        <select id="productionMode">
+          <option value="false">测试</option>
+          <option value="true" selected>正式</option>
+        </select>
+      </div>
+    </div>
+
+    <label>标题</label>
+    <input id="title" placeholder="例如：场地通知" value="场地通知"/>
+
+    <label>内容</label>
+    <textarea id="text" placeholder="例如：车辆已准备完成">车辆已准备完成</textarea>
+
+    <div class="row">
+      <button id="sendBtn">发送</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+  </div>
+
+<script>
+  const API_URL = "https://open.rcwulian.cn/api/send.php";
+  const PUSH_TOKEN = "rc_admin_push_2026";
+
+  const $platform = document.getElementById("platform");
+  const $productionMode = document.getElementById("productionMode");
+  const $title = document.getElementById("title");
+  const $text = document.getElementById("text");
+  const $btn = document.getElementById("sendBtn");
+  const $msg = document.getElementById("msg");
+
+  function showMsg(ok, text){
+    $msg.style.display = "block";
+    $msg.className = "msg " + (ok ? "ok" : "bad");
+    $msg.textContent = text;
+  }
+
+  $btn.addEventListener("click", async () => {
+    const platform = ($platform.value || "ios").trim();
+    const production_mode = ($productionMode.value || "true").trim();
+    const title = ($title.value || "").trim();
+    const text = ($text.value || "").trim();
+
+    if (!title) return showMsg(false, "请填写标题");
+    if (!text) return showMsg(false, "请填写内容");
+    if (!PUSH_TOKEN || PUSH_TOKEN.indexOf("请改成") === 0) {
+      return showMsg(false, "请先把页面里的 PUSH_TOKEN 改掉");
+    }
+
+    $btn.disabled = true;
+    showMsg(true, "发送中...");
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          push_token: PUSH_TOKEN,
+          platform,
+          production_mode,
+          title,
+          text
+        })
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!data) throw new Error("返回不是 JSON");
+
+      if (data.ok) {
+        showMsg(true, `✅ 发送成功\n平台：${data.platform || platform}\n环境：${data.production_mode || production_mode}`);
+      } else {
+        showMsg(false, `❌ 发送失败\n${data.msg || data.error || "unknown"}\nHTTP ${data.http_code || res.status}`);
+      }
+    } catch (e) {
+      showMsg(false, "❌ 请求失败：" + (e && e.message ? e.message : e));
+    } finally {
+      $btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
+
+

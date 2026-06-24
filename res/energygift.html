@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能量补偿</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">  
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --transition: all 0.3s ease;
+            --hover-bg: #f9f9f9;
+            --highlight-bg: #eff4ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+        }
+
+        .card-title {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+/* 让按钮可以换行 */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;  /* 关键 */
+    gap: 8px;         /* 按钮间距 */
+}
+/* 按钮自适应宽度 */
+.button-group .action-button {
+    flex: 1 1 auto;   /* 自动伸缩 */
+    min-width: 120px;  /* 最小宽度 */
+}
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .form-group label {
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+            height: 36px;
+        }
+
+        .action-button {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            height: 36px;
+            min-width: 100px;
+            transition: 0.3s;
+        }
+
+        .action-button.danger {
+            background-color: #ff4d4f;
+        }
+
+        .action-button.danger:hover {
+            background-color: #ff7875;
+        }
+        
+/* 表单元素宽度 100% */
+.form-group input,
+.form-group select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 容器适配小屏 */
+.container {
+    width: 100%;
+    padding: 10px;
+}
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+    <div class="container">
+        <div class="card">
+            <div class="card-title">能量补偿</div>
+            <form id="energyGiftForm">
+                <div class="form-group">
+                    <label for="user_id">用户 ID:</label>
+                    <div class="input-group">
+                        <input type="text" id="user_id" min="0" name="user_id" required>
+                        <button type="button" class="action-button" id="queryButton">查询能量</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="venue_id">场地 ID:</label>
+                    <select id="venue_id" name="venue_id" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="venue_search">场地名称搜索:</label>
+                    <input type="text" id="venue_search" placeholder="输入场地名称模糊搜索" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="energy_amount">能量值:</label>
+                    <input type="number" id="energy_amount" min="0" step="1" name="energy_amount" required>
+                </div>
+<div class="button-group">
+    <button type="submit" class="action-button">赠送能量</button>
+    <button type="button" class="action-button danger" id="clearButton">清除能量</button>
+    <button type="button" class="action-button" id="giftAllButton">全场地赠送</button>
+    <button type="button" class="action-button danger" id="clearAllButton">全场地清零</button>
+</div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded',   function () {
+            // 获取场地信息
+            const venueSelect = document.getElementById('venue_id');  
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST',   'https://open.rcwulian.cn/api/operat/EnergyGift.php',   true);
+            xhr.setRequestHeader('Content-Type',   'application/x-www-form-urlencoded');
+            xhr.onreadystatechange   = function () {
+                if (xhr.readyState   === 4 && xhr.status   === 200) {
+                    const response = JSON.parse(xhr.responseText);  
+                    if (response.code   === 0) {
+                        const data = response.data;  
+                        data.forEach(venue   => {
+                            const option = document.createElement('option');  
+                            option.value   = venue.id;  
+                            option.textContent   = `${venue.id}   - ${venue.venue_name}`;  
+                            venueSelect.appendChild(option);  
+                        });
+                    }
+                }
+            };
+            const data = 'action=get_venues';
+            xhr.send(data);  
+            // 模糊搜索场地名称（不覆盖历史）
+        document.getElementById('venue_search').addEventListener('input', function () {
+            const keyword = this.value.trim().toLowerCase();
+            const venueSelect = document.getElementById('venue_id');
+            const options = venueSelect.options;
+        
+            for (let i = 0; i < options.length; i++) {
+                const text = options[i].textContent.toLowerCase();
+                options[i].style.display = keyword === '' || text.includes(keyword) ? 'block' : 'none';
+            }
+        
+            // 可选：自动选择第一个匹配的
+            const firstVisibleOption = Array.from(options).find(opt => opt.style.display !== 'none');
+            if (firstVisibleOption) {
+                venueSelect.value = firstVisibleOption.value;
+            }
+        });
+
+
+            // 处理能量赠送表单提交
+            const energyGiftForm = document.getElementById('energyGiftForm');  
+            energyGiftForm.addEventListener('submit', function (e) {
+                e.preventDefault();  
+                const userId = document.getElementById('user_id').value;  
+                const venueId = document.getElementById('venue_id').value;  
+                const energyAmount = document.getElementById('energy_amount').value;  
+
+                const xhrGift = new XMLHttpRequest();
+                xhrGift.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhrGift.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhrGift.onreadystatechange = function () {
+                    if (xhrGift.readyState === 4 && xhrGift.status === 200) {
+                        const response = JSON.parse(xhrGift.responseText);  
+                        if (response.code === 0) {
+                            const venueName = document.getElementById('venue_id').options[document.getElementById('venue_id').selectedIndex].text;
+                            alert(`赠送能量成功！\n用户ID: ${userId}\n场地: ${venueName}\n赠送数量: ${energyAmount}`);
+                            // 刷新能量显示
+                            document.getElementById('queryButton').click();
+                        } else {
+                            alert(response.msg);  
+                        }
+                    }
+                };
+                const giftData = `action=gift_energy&user_id=${userId}&venue_id=${venueId}&energy_amount=${energyAmount}`;
+                xhrGift.send(giftData);  
+            });
+
+            // 查询用户能量
+            document.getElementById('queryButton').addEventListener('click', function() {
+                const userId = document.getElementById('user_id').value;
+                const venueId = document.getElementById('venue_id').value;
+                
+                if (!userId || !venueId) {
+                    alert('请输入用户ID并选择场地');
+                    return;
+                }
+
+                const xhrQuery = new XMLHttpRequest();
+                xhrQuery.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhrQuery.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhrQuery.onreadystatechange = function() {
+                    if (xhrQuery.readyState === 4 && xhrQuery.status === 200) {
+                        const response = JSON.parse(xhrQuery.responseText);
+                        if (response.code === 0) {
+                            document.getElementById('energy_amount').value = response.data.energy || 0;
+                        } else {
+                            alert(response.msg);
+                        }
+                    }
+                };
+                const queryData = `action=query_energy&user_id=${userId}&venue_id=${venueId}`;
+                xhrQuery.send(queryData);
+            });
+
+            // 清除能量
+            document.getElementById('clearButton').addEventListener('click', function() {
+                const userId = document.getElementById('user_id').value;
+                const venueId = document.getElementById('venue_id').value;
+                const energyAmount = document.getElementById('energy_amount').value;
+                
+                if (!userId || !venueId) {
+                    alert('请输入用户ID并选择场地');
+                    return;
+                }
+
+                if (energyAmount > 0) {
+                    // 如果输入框有值，则进行减法清除
+                    if (confirm(`确定要清除 ${energyAmount} 点能量吗？`)) {
+                        const xhrClear = new XMLHttpRequest();
+                        xhrClear.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                        xhrClear.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                        xhrClear.onreadystatechange = function() {
+                            if (xhrClear.readyState === 4 && xhrClear.status === 200) {
+                                const response = JSON.parse(xhrClear.responseText);
+                                if (response.code === 0) {
+                                    const venueName = document.getElementById('venue_id').options[document.getElementById('venue_id').selectedIndex].text;
+                                    alert(`清除能量成功！\n用户ID: ${userId}\n场地: ${venueName}\n清除数量: ${energyAmount}`);
+                                    document.getElementById('energy_amount').value = '0';
+                                } else {
+                                    alert(response.msg);
+                                }
+                            }
+                        };
+                        const clearData = `action=clear_energy&user_id=${userId}&venue_id=${venueId}&energy_amount=${energyAmount}`;
+                        xhrClear.send(clearData);
+                    }
+                } else {
+                    // 如果输入框没有值，则查询当前能量并一次性清除
+                    const xhrQuery = new XMLHttpRequest();
+                    xhrQuery.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                    xhrQuery.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhrQuery.onreadystatechange = function() {
+                        if (xhrQuery.readyState === 4 && xhrQuery.status === 200) {
+                            const response = JSON.parse(xhrQuery.responseText);
+                            if (response.code === 0) {
+                                const currentEnergy = response.data.energy || 0;
+                                if (currentEnergy > 0) {
+                                    if (confirm(`确定要清除全部 ${currentEnergy} 点能量吗？`)) {
+                                        const xhrClear = new XMLHttpRequest();
+                                        xhrClear.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                                        xhrClear.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                                        xhrClear.onreadystatechange = function() {
+                                            if (xhrClear.readyState === 4 && xhrClear.status === 200) {
+                                                const response = JSON.parse(xhrClear.responseText);
+                                                if (response.code === 0) {
+                                                    const venueName = document.getElementById('venue_id').options[document.getElementById('venue_id').selectedIndex].text;
+                                                    alert(`清除能量成功！\n用户ID: ${userId}\n场地: ${venueName}\n清除数量: ${currentEnergy}`);
+                                                    document.getElementById('energy_amount').value = '0';
+                                                } else {
+                                                    alert(response.msg);
+                                                }
+                                            }
+                                        };
+                                        const clearData = `action=clear_energy&user_id=${userId}&venue_id=${venueId}&energy_amount=${currentEnergy}`;
+                                        xhrClear.send(clearData);
+                                    }
+                                } else {
+                                    alert('当前能量值为0，无需清除');
+                                }
+                            } else {
+                                alert(response.msg);
+                            }
+                        }
+                    };
+                    const queryData = `action=query_energy&user_id=${userId}&venue_id=${venueId}`;
+                    xhrQuery.send(queryData);
+                }
+            });
+            
+            // 全场地赠送
+            document.getElementById('giftAllButton').addEventListener('click', function() {
+                const userId = document.getElementById('user_id').value;
+                const energyAmount = document.getElementById('energy_amount').value;
+            
+                if (!userId || !energyAmount) {
+                    alert('请输入用户ID和赠送能量');
+                    return;
+                }
+            
+                if (!confirm(`确定给用户 ${userId} 全场地赠送 ${energyAmount} 点能量吗？`)) return;
+            
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        const resp = JSON.parse(xhr.responseText);
+                        alert(resp.msg);
+                    }
+                };
+                xhr.send(`action=gift_all_energy&user_id=${userId}&energy_amount=${energyAmount}`);
+            });
+            
+            // 全场地清零
+            document.getElementById('clearAllButton').addEventListener('click', function() {
+                const userId = document.getElementById('user_id').value;
+                if (!userId) {
+                    alert('请输入用户ID');
+                    return;
+                }
+            
+                if (!confirm(`确定将用户 ${userId} 所有场地能量清零吗？`)) return;
+            
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        const resp = JSON.parse(xhr.responseText);
+                        alert(resp.msg);
+                    }
+                };
+                xhr.send(`action=clear_all_energy&user_id=${userId}`);
+            });
+            
+        });
+    </script>
+</body>
+
+</html>
+

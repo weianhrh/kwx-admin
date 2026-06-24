@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>礼物补偿</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+        }
+
+        .card-title {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .form-group label {
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+            height: 36px;
+            outline: none;
+        }
+
+        .action-button {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            height: 36px;
+            min-width: 100px;
+            transition: 0.3s;
+        }
+
+        .action-button:hover {
+            opacity: 0.92;
+        }
+
+        .action-button.danger {
+            background-color: #ff4d4f;
+        }
+
+        .action-button.danger:hover {
+            background-color: #ff7875;
+        }
+
+        .tips {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.8;
+            background: #f7faff;
+            border: 1px solid #e8efff;
+            border-radius: 8px;
+            padding: 12px;
+        }
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+    <div class="container">
+        <div class="card">
+            <div class="card-title">礼物补偿</div>
+
+            <form id="giftCompensationForm">
+                <div class="form-group">
+                    <label for="user_id">用户 ID：</label>
+                    <div class="input-group">
+                        <input type="text" id="user_id" name="user_id" required>
+                        <button type="button" class="action-button" id="queryButton">查询礼物数量</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gift_id">礼物：</label>
+                    <select id="gift_id" name="gift_id" required>
+                        <option value="">正在加载礼物列表...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="gift_search">礼物名称搜索：</label>
+                    <input type="text" id="gift_search" placeholder="输入礼物ID或礼物名称搜索" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="gift_quantity">礼物数量：</label>
+                    <input type="number" id="gift_quantity" min="0" step="1" name="gift_quantity" required>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="action-button">赠送礼物</button>
+                    <button type="button" class="action-button danger" id="clearButton">清除礼物</button>
+                </div>
+
+                <div class="tips">
+                    说明：<br>
+                    1. 点击“查询礼物数量”可查询当前用户该礼物已有数量。<br>
+                    2. 点击“赠送礼物”会累加数量。<br>
+                    3. 点击“清除礼物”时，如果数量框填写了值，则扣减指定数量；如果为空或为 0，则直接清空当前礼物数量。
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 这里改成你的实际接口地址
+            const API_URL = 'https://open.rcwulian.cn/api/gift/GiftCompensation.php';
+
+            const giftSelect = document.getElementById('gift_id');
+            const giftSearchInput = document.getElementById('gift_search');
+            const giftQuantityInput = document.getElementById('gift_quantity');
+            const userIdInput = document.getElementById('user_id');
+
+            let allGifts = [];
+
+            function encodeForm(data) {
+                const arr = [];
+                for (const key in data) {
+                    arr.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key] ?? ''));
+                }
+                return arr.join('&');
+            }
+
+            function postRequest(data, callback) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', API_URL, true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            let response = {};
+                            try {
+                                response = JSON.parse(xhr.responseText);
+                            } catch (e) {
+                                alert('接口返回解析失败：' + xhr.responseText);
+                                return;
+                            }
+                            callback(response);
+                        } else {
+                            alert('请求失败，HTTP状态码：' + xhr.status);
+                        }
+                    }
+                };
+                xhr.send(encodeForm(data));
+            }
+
+            function renderGiftOptions(keyword = '') {
+                const text = keyword.trim().toLowerCase();
+                const filtered = allGifts.filter(item => {
+                    const matchText = `${item.id} ${item.gift_name}`.toLowerCase();
+                    return !text || matchText.includes(text);
+                });
+
+                giftSelect.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '未找到匹配礼物';
+                    giftSelect.appendChild(option);
+                    return;
+                }
+
+                filtered.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${item.id} - ${item.gift_name}`;
+                    giftSelect.appendChild(option);
+                });
+            }
+
+            function loadGifts() {
+                postRequest({ action: 'get_gifts' }, function (response) {
+                    if (response.code === 0) {
+                        allGifts = response.data || [];
+                        renderGiftOptions('');
+                    } else {
+                        alert(response.msg || '礼物列表加载失败');
+                    }
+                });
+            }
+
+            function getSelectedGiftText() {
+                if (giftSelect.selectedIndex < 0) return '';
+                return giftSelect.options[giftSelect.selectedIndex].text;
+            }
+
+            // 加载礼物列表
+            loadGifts();
+
+            // 搜索礼物
+            giftSearchInput.addEventListener('input', function () {
+                renderGiftOptions(this.value);
+            });
+
+            // 查询礼物数量
+            document.getElementById('queryButton').addEventListener('click', function () {
+                const userId = userIdInput.value.trim();
+                const giftId = giftSelect.value;
+
+                if (!userId) {
+                    alert('请输入用户ID');
+                    return;
+                }
+                if (!giftId) {
+                    alert('请选择礼物');
+                    return;
+                }
+
+                postRequest({
+                    action: 'query_gift',
+                    user_id: userId,
+                    gift_id: giftId
+                }, function (response) {
+                    if (response.code === 0) {
+                        giftQuantityInput.value = response.data.quantity || 0;
+                    } else {
+                        alert(response.msg || '查询失败');
+                    }
+                });
+            });
+
+            // 赠送礼物
+            document.getElementById('giftCompensationForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const userId = userIdInput.value.trim();
+                const giftId = giftSelect.value;
+                const giftQuantity = giftQuantityInput.value.trim();
+
+                if (!userId) {
+                    alert('请输入用户ID');
+                    return;
+                }
+                if (!giftId) {
+                    alert('请选择礼物');
+                    return;
+                }
+                if (!giftQuantity || Number(giftQuantity) <= 0) {
+                    alert('请输入正确的礼物数量');
+                    return;
+                }
+
+                postRequest({
+                    action: 'gift_item',
+                    user_id: userId,
+                    gift_id: giftId,
+                    gift_quantity: giftQuantity
+                }, function (response) {
+                    if (response.code === 0) {
+                        alert(
+                            `赠送礼物成功！\n` +
+                            `用户ID：${userId}\n` +
+                            `礼物：${getSelectedGiftText()}\n` +
+                            `赠送数量：${giftQuantity}\n` +
+                            `当前总数量：${response.data.quantity}`
+                        );
+
+                        // 刷新当前数量
+                        document.getElementById('queryButton').click();
+                    } else {
+                        alert(response.msg || '赠送失败');
+                    }
+                });
+            });
+
+            // 清除礼物
+            document.getElementById('clearButton').addEventListener('click', function () {
+                const userId = userIdInput.value.trim();
+                const giftId = giftSelect.value;
+                const giftQuantity = giftQuantityInput.value.trim();
+
+                if (!userId) {
+                    alert('请输入用户ID');
+                    return;
+                }
+                if (!giftId) {
+                    alert('请选择礼物');
+                    return;
+                }
+
+                let confirmText = '';
+                if (giftQuantity && Number(giftQuantity) > 0) {
+                    confirmText = `确定要清除 ${giftQuantity} 个礼物吗？`;
+                } else {
+                    confirmText = '数量未填写或为0，将清空该礼物当前全部数量，确定继续吗？';
+                }
+
+                if (!confirm(confirmText)) {
+                    return;
+                }
+
+                postRequest({
+                    action: 'clear_gift',
+                    user_id: userId,
+                    gift_id: giftId,
+                    gift_quantity: giftQuantity || 0
+                }, function (response) {
+                    if (response.code === 0) {
+                        alert(
+                            `清除礼物成功！\n` +
+                            `用户ID：${userId}\n` +
+                            `礼物：${getSelectedGiftText()}\n` +
+                            `当前剩余：${response.data.quantity}`
+                        );
+
+                        giftQuantityInput.value = response.data.quantity || 0;
+                    } else {
+                        alert(response.msg || '清除失败');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
+

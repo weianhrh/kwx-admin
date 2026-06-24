@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>轮播图管理</title>
+
+<style>
+  :root{
+    --primary:#5b8cff; --secondary:#7f8fa4;
+    --background-gradient-start:#f8f9ff; --background-gradient-end:#f0f3ff;
+    --card-bg:#ffffff; --border-color:#ddd; --text-color:#333;
+    --shadow:0 4px 24px rgba(91,140,255,.08); --transition:.3s all ease; --hover-bg:#f9f9f9;
+  }
+  html{ -webkit-text-size-adjust:100%; }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui}
+  img{max-width:100%;height:auto;display:block}
+
+  body{
+    background:linear-gradient(135deg,var(--background-gradient-start) 0%,var(--background-gradient-end) 100%);
+    min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start;
+  }
+  .container{max-width:1200px;width:100%}
+  .card{background:var(--card-bg);border-radius:12px;padding:20px;box-shadow:var(--shadow);margin-bottom:20px;transition:var(--transition)}
+  .card-title{font-size:24px;color:var(--text-color);margin-bottom:20px;font-weight:600;border-bottom:2px solid var(--primary);padding-bottom:10px;text-align:left}
+
+  /* 工具栏 */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .input,.select{height:36px;border:1px solid var(--border-color);border-radius:8px;padding:0 10px;font-size:14px;background:#fff}
+  .btn{height:36px;padding:0 14px;border:none;border-radius:8px;cursor:pointer;font-size:14px;transition:var(--transition)}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:#4a77e4}
+  .btn-ghost{background:#fff;border:1px solid var(--border-color);color:#333}
+  .btn-ghost:hover{background:var(--hover-bg)}
+  .spacer{flex:1}
+  .muted{color:#7f8fa4}
+
+  /* 列表网格（桌面） */
+  .thead,.rowgrid{
+    display:grid;
+    grid-template-columns: 36px 120px 110px 1fr 90px 220px; /* 勾选 | 图片 | 类型 | 跳转 | ID | 操作 */
+    gap:10px; padding:10px 0; align-items:center;
+  }
+  .thead{font-weight:600;color:#666;border-bottom:1px dashed #eee}
+  .rowgrid{border-bottom:1px dashed #f0f0f0}
+  .checkbox{width:18px;height:18px}
+  .thumb{width:96px;height:64px;border-radius:8px;object-fit:cover;border:1px solid #eee;background:#fff}
+  .link{color:#2b59ff;text-decoration:none;word-break:break-all;overflow-wrap:anywhere}
+  .btn-s{height:30px;padding:0 10px;border-radius:10px;font-size:13px}
+  .btn-outline{background:#fff;border:1px solid var(--border-color);color:#333}
+  .btn-outline:hover{background:var(--hover-bg)}
+  .btn-danger{background:#fff;color:#c62828;border:1px solid #e57373}
+  .btn-danger:hover{background:#fdecec}
+  .btn-group{display:inline-flex;gap:8px;overflow:auto}
+  .loading{text-align:center;font-size:16px;color:var(--primary);padding:20px}
+
+  /* 分页 */
+  .pagination{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px}
+  #pagerInfo{margin-right:auto;color:#666}
+
+  /* ==== 弹窗（Android 适配：居中 + 锁滚动 + 高度单位） ==== */
+  .modal{
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    display: none;
+    z-index: 9999;
+    background: rgba(0,0,0,.5);
+    padding:16px; box-sizing:border-box;
+    justify-content: center; align-items: center;
+  }
+  @supports (height: 100dvh){ .modal{ height: 100dvh; } }
+  .modal.open{ display:flex; }
+  .modal-content{
+    background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);
+    width:min(420px,92vw);max-height:86vh;overflow:auto;
+    padding:20px 16px;display:flex;flex-direction:column;gap:12px;
+  }
+  .modal-content input,.modal-content select, .modal-content textarea{
+    width:100%;padding:8px 10px;font-size:14px;border:1px solid #ccc;border-radius:6px;transition:border-color .3s;line-height:1.2;
+    background:#fff;
+  }
+  .modal-content input:focus,.modal-content select:focus,.modal-content textarea:focus{outline:none;border-color:var(--primary)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  body.lock-scroll{ overflow:hidden; touch-action:none; }
+
+  /* ========= 小屏适配 ========= */
+  @media (max-width:768px){
+    body{padding:12px}
+    .card{padding:14px;border-radius:10px}
+    .card-title{font-size:20px}
+    .toolbar{gap:8px}
+    .toolbar .input{flex:1;min-width:0}
+    .toolbar .btn,.toolbar .select{height:34px}
+    .thumb{width:84px;height:56px}
+    .btn-s{height:28px;font-size:12px}
+    .pagination{justify-content:center}
+    #pagerInfo{margin-right:0;width:100%;text-align:center;margin-bottom:6px}
+  }
+
+  /* ≤ 600px：表格卡片化，ID隐藏，操作单独成行（类型保留） */
+  @media (max-width:600px){
+    .thead{ grid-template-columns:28px 100px 90px 1fr; }
+    .thead > :nth-child(5),
+    .thead > :nth-child(6){ display:none!important; }
+
+    .rowgrid{
+      grid-template-columns:28px 100px 90px 1fr;
+      grid-auto-rows:auto; padding:12px 0;
+    }
+    .rowgrid > :nth-child(5){ display:none!important; } /* 隐藏ID */
+    .rowgrid > :nth-child(6){
+      grid-column: 2 / 5; margin-top:8px; overflow:auto; -webkit-overflow-scrolling:touch;
+    }
+    .btn-group{gap:6px}
+  }
+  @media (max-width:380px){
+    .thumb{width:76px;height:50px}
+    .btn-s{height:26px;font-size:12px;padding:0 8px}
+  }
+</style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+  <div class="container">
+    <div class="card">
+      <div class="card-title">轮播图管理</div>
+
+      <div class="toolbar">
+        <select id="typeFilter" class="select">
+          <option value="">全部类型</option>
+          <option value="0">App</option>
+          <option value="1">娃娃机</option>
+          <option value="2">RC后台</option>
+          <option value="3">游戏列表</option>
+        </select>
+
+        <input id="kw" class="input" placeholder="按名称或跳转链接搜索…" />
+        <button class="btn btn-primary" id="btnSearch">搜索</button>
+
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnBatchDelete">批量删除</button>
+        <button class="btn btn-primary" id="btnCreate">新增轮播图</button>
+      </div>
+
+      <div class="thead">
+        <div><input class="checkbox" id="checkAll" type="checkbox"></div>
+        <div>图片</div>
+        <div>类型</div>
+        <div>跳转链接</div>
+        <div>ID</div>
+        <div style="text-align:right">操作</div>
+      </div>
+
+      <div id="list"></div>
+
+      <div class="pagination">
+        <span id="pagerInfo"></span>
+        <button class="btn btn-ghost" id="prev">上一页</button>
+        <button class="btn btn-ghost" id="next">下一页</button>
+        <select id="pageSize" class="select">
+          <option value="10">10/页</option>
+          <option value="20" selected>20/页</option>
+          <option value="50">50/页</option>
+          <option value="100">100/页</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 -->
+  <div class="modal" id="imgModal">
+    <div class="modal-content">
+      <h3 id="modalTitle">新增轮播图</h3>
+      <input id="f_id" type="hidden" />
+
+      <label>类型（type）</label>
+      <select id="f_type">
+        <option value="0">App</option>
+        <option value="1">娃娃机</option>
+        <option value="2">RC后台</option>
+        <option value="3">游戏列表</option>
+      </select>
+
+      <label>图片地址（image_url）</label>
+      <input id="f_image" placeholder="https://…/banner1.jpg" />
+
+      <!-- 上传图片并自动填入 image_url -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="localImageFile" accept="image/*" style="flex:1;min-width:0;" />
+        <button type="button" class="btn btn-primary btn-s" id="btnUploadLocal">上传并填入</button>
+      </div>
+      <small class="muted">选择本地图片上传到服务器，成功后自动把链接填到上面的图片地址</small>
+    <label>名称（name）</label>
+    <input id="f_name" placeholder="例如：幸运九宫格" />
+    
+    <label>是否显示（is_show）</label>
+    <select id="f_is_show">
+      <option value="1">显示</option>
+      <option value="0">隐藏</option>
+    </select>
+    
+    <label>排序（sort_order）</label>
+    <input id="f_sort_order" type="number" value="0" placeholder="数字越小越靠前" />
+      <label>跳转链接（redirect_url，可留空）</label>
+      <input id="f_redirect" placeholder="https://… 或 /app/xxx" />
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancel">取消</button>
+        <button class="btn btn-primary" id="btnSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = '/api/operat/app_images.php';
+  const API_HEADERS = { 'Content-Type':'application/json' };
+  const API_FETCH_OPTS = { credentials:'include' };
+
+  // 上传接口地址（你原来的）
+  const UPLOAD_API = 'https://rcwulian.cn/app/img/userimg/upload_profile.php';
+
+  const TYPE_TEXT = {0:'App',1:'娃娃机',2:'RC后台',3:'游戏列表'};
+
+  const state = { page:1, pageSize:20, q:'', type:'', total:0, list:[], checked:new Set() };
+  const $ = s=>document.querySelector(s);
+  const listEl = $('#list'), pagerInfoEl = $('#pagerInfo'), checkAllEl = $('#checkAll');
+
+  function qs(obj){
+    const p=new URLSearchParams();
+    Object.entries(obj).forEach(([k,v])=>{ if(v!=='' && v!=null) p.append(k,v); });
+    return p.toString();
+  }
+  function toast(m){ alert(m); }
+  function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function escapeAttr(s=''){return escapeHtml(s).replace(/"/g,'&quot;')}
+
+  const apiList=async()=>{
+    const url=`${API_BASE}?${qs({act:'list',page:state.page,page_size:state.pageSize,q:state.q,type:state.type})}`;
+    const r=await fetch(url,{...API_FETCH_OPTS,headers:API_HEADERS});
+    return r.json();
+  }
+  const apiCreate=p=>fetch(`${API_BASE}?act=create`,{...API_FETCH_OPTS,method:'POST',headers:API_HEADERS,body:JSON.stringify(p)}).then(r=>r.json());
+  const apiUpdate=p=>fetch(`${API_BASE}?act=update`,{...API_FETCH_OPTS,method:'POST',headers:API_HEADERS,body:JSON.stringify(p)}).then(r=>r.json());
+  const apiDelete=id=>fetch(`${API_BASE}?act=delete`,{...API_FETCH_OPTS,method:'POST',headers:API_HEADERS,body:JSON.stringify({id})}).then(r=>r.json());
+  const apiBatchDelete=ids=>fetch(`${API_BASE}?act=batch_delete`,{...API_FETCH_OPTS,method:'POST',headers:API_HEADERS,body:JSON.stringify({ids})}).then(r=>r.json());
+
+  function renderList(){
+    listEl.innerHTML='';
+    if(!state.list.length){
+      listEl.innerHTML='<div class="loading">暂无数据</div>';
+      pagerInfoEl.textContent='第 0/0 页，共 0 条';
+      updateHeaderCheck(); return;
+    }
+
+    state.list.forEach(row=>{
+      const wrap=document.createElement('div'); wrap.className='rowgrid';
+
+      const cb=document.createElement('input');
+      cb.type='checkbox'; cb.className='checkbox checkbox-row';
+      cb.checked=state.checked.has(Number(row.id));
+      cb.addEventListener('change',()=>{
+        const id=Number(row.id);
+        if(cb.checked) state.checked.add(id); else state.checked.delete(id);
+        updateHeaderCheck();
+      });
+
+      const img=document.createElement('div');
+      img.innerHTML = row.image_url
+        ? `<a href="${escapeAttr(row.image_url)}" target="_blank" title="新窗口预览" rel="noopener">
+             <img class="thumb" src="${escapeAttr(row.image_url)}" alt="">
+           </a>`
+        : '<span class="muted">无</span>';
+
+      const typeCell=document.createElement('div');
+      const t = Number(row.type ?? 0);
+      typeCell.textContent = TYPE_TEXT[t] ?? String(row.type ?? '');
+
+    const link=document.createElement('div');
+    link.innerHTML = `
+      <div style="margin-bottom:4px;"><strong>${escapeHtml(row.name || '')}</strong></div>
+      <div class="muted" style="margin-bottom:4px;">
+        显示：${Number(row.is_show) === 1 ? '是' : '否'} ｜ 排序：${row.sort_order ?? 0}
+      </div>
+      ${
+        row.redirect_url
+          ? `<a class="link" href="${escapeAttr(row.redirect_url)}" target="_blank" rel="noopener">${escapeHtml(row.redirect_url)}</a>`
+          : '<span class="muted">（无）</span>'
+      }
+    `;
+
+      const idCell=document.createElement('div'); idCell.textContent=row.id;
+
+      const actions=document.createElement('div'); actions.style.textAlign='right';
+      const group=document.createElement('div'); group.className='btn-group';
+
+      const btnEdit=document.createElement('button');
+      btnEdit.className='btn btn-outline btn-s'; btnEdit.textContent='编辑';
+      btnEdit.onclick=()=>openEdit(row);
+
+      const btnDelete=document.createElement('button');
+      btnDelete.className='btn btn-danger btn-s'; btnDelete.textContent='删除';
+      btnDelete.onclick=async ()=>{
+        if(!confirm('确定删除该图片？')) return;
+        const ret=await apiDelete(Number(row.id));
+        if(!ret.ok) return toast(ret.msg||'删除失败');
+        load();
+      };
+
+      group.append(btnEdit,btnDelete);
+      actions.append(group);
+
+      wrap.append(cb,img,typeCell,link,idCell,actions);
+      listEl.appendChild(wrap);
+    });
+
+    const tp=Math.max(1,Math.ceil(state.total/state.pageSize));
+    pagerInfoEl.textContent=`第 ${state.page}/${tp} 页，共 ${state.total} 条`;
+    updateHeaderCheck();
+  }
+
+  function updateHeaderCheck(){
+    const total=state.list.length, selected=state.checked.size;
+    checkAllEl.indeterminate = selected>0 && selected<total;
+    checkAllEl.checked = total>0 && selected===total;
+  }
+  checkAllEl.onchange=()=>{
+    const all=checkAllEl.checked; checkAllEl.indeterminate=false;
+    state.checked.clear();
+    if(all) state.list.forEach(r=>state.checked.add(Number(r.id)));
+    document.querySelectorAll('#list .checkbox-row').forEach(cb=>cb.checked=all);
+    updateHeaderCheck();
+  };
+
+  // 事件
+  $('#btnSearch').onclick=()=>{ state.q=$('#kw').value.trim(); state.page=1; state.checked.clear(); load(); };
+  $('#typeFilter').onchange=e=>{ state.type=e.target.value; state.page=1; state.checked.clear(); load(); };
+  $('#pageSize').onchange=e=>{ state.pageSize=Number(e.target.value); state.page=1; state.checked.clear(); load(); };
+  $('#prev').onclick=()=>{ if(state.page>1){state.page--; state.checked.clear(); load();} };
+  $('#next').onclick=()=>{ const tp=Math.max(1,Math.ceil(state.total/state.pageSize)); if(state.page<tp){state.page++; state.checked.clear(); load();} };
+  $('#btnCreate').onclick=()=>openCreate();
+  $('#btnCancel').onclick=()=>closeModal();
+  $('#btnSave').onclick=()=>saveImg();
+  $('#btnBatchDelete').onclick=async ()=>{
+    if(!state.checked.size) return toast('请先勾选要删除的项');
+    if(!confirm('确定批量删除所选轮播图？')) return;
+    const ret=await apiBatchDelete(Array.from(state.checked));
+    if(!ret.ok) return toast(ret.msg||'批量删除失败');
+    state.checked.clear(); load();
+  };
+
+  // 上传本地图片并自动填入 f_image
+  async function uploadLocalImage(){
+    const fileInput = document.getElementById('localImageFile');
+    const file = fileInput.files[0];
+    if(!file){ toast('请先选择要上传的图片'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try{
+      const resp = await fetch(UPLOAD_API, { method:'POST', body:formData });
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      const result = await resp.json();
+      console.log('上传结果', result);
+
+      if(result.code === 0 && result.url){
+        document.getElementById('f_image').value = result.url;
+        toast('上传成功，已自动填入图片地址');
+      }else{
+        toast('上传失败：' + (result.msg || '未知错误'));
+      }
+    }catch(e){
+      console.error('上传出错', e);
+      toast('上传出错，请稍后重试');
+    }
+  }
+  const uploadBtn = document.getElementById('btnUploadLocal');
+  if(uploadBtn) uploadBtn.addEventListener('click', uploadLocalImage);
+
+  // 弹窗控制（Android：用 class + 锁滚动）
+function openCreate(){
+  $('#modalTitle').textContent='新增图片/游戏';
+  $('#f_id').value='';
+  $('#f_name').value='';
+  $('#f_type').value='0';
+  $('#f_image').value='';
+  $('#f_redirect').value='';
+  $('#f_is_show').value='1';
+  $('#f_sort_order').value='0';
+  const fileInput = document.getElementById('localImageFile');
+  if(fileInput) fileInput.value = '';
+  const modal=$('#imgModal'); 
+  modal.classList.add('open'); 
+  document.body.classList.add('lock-scroll');
+}
+function openEdit(row){
+  $('#modalTitle').textContent='编辑图片/游戏';
+  $('#f_id').value=row.id;
+  $('#f_name').value=row.name || '';
+  $('#f_type').value=String(row.type ?? 0);
+  $('#f_image').value=row.image_url || '';
+  $('#f_redirect').value=row.redirect_url || '';
+  $('#f_is_show').value=String(row.is_show ?? 1);
+  $('#f_sort_order').value=String(row.sort_order ?? 0);
+  const fileInput = document.getElementById('localImageFile');
+  if(fileInput) fileInput.value = '';
+  const modal=$('#imgModal'); 
+  modal.classList.add('open'); 
+  document.body.classList.add('lock-scroll');
+}
+  function closeModal(){
+    const modal=$('#imgModal'); modal.classList.remove('open'); document.body.classList.remove('lock-scroll');
+  }
+  // 点击遮罩关闭（可选）
+  $('#imgModal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+async function saveImg(){
+  const id=$('#f_id').value.trim();
+  const payload={
+    name: $('#f_name').value.trim(),
+    type: Number($('#f_type').value),
+    image_url: $('#f_image').value.trim(),
+    redirect_url: $('#f_redirect').value.trim(),
+    is_show: Number($('#f_is_show').value),
+    sort_order: Number($('#f_sort_order').value || 0)
+  };
+
+  if(!payload.image_url) return toast('图片地址不能为空');
+
+  const ret = id
+    ? await apiUpdate({id:Number(id), ...payload})
+    : await apiCreate(payload);
+
+  if(!ret.ok) return toast(ret.msg||'保存失败');
+  closeModal();
+  load();
+}
+
+  async function load(){
+    listEl.innerHTML='<div class="loading">加载中…</div>';
+    const ret=await apiList();
+    if(!ret.ok){
+      listEl.innerHTML=`<div class="loading" style="color:#c62828">加载失败：${escapeHtml(ret.msg||'')}</div>`;
+      return;
+    }
+    state.list=ret.data.list||[];
+    state.total=ret.data.pagination?.total||0;
+    renderList();
+  }
+
+  (function init(){
+    $('#pageSize').value=String(state.pageSize);
+    $('#typeFilter').value=state.type;
+    load();
+  })();
+</script>
+</body>
+</html>
+
+

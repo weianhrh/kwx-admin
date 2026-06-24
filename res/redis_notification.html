@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>APP通知管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --transition: all 0.3s ease;
+            --hover-bg: #f9f9f9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        .card-title {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title span {
+            font-size: 14px;
+            font-weight: normal;
+            color: var(--secondary);
+        }
+
+        .venue-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        .venue-card:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .venue-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #5b8cff, #7f8fa4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .venue-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .venue-info .venue-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .value-preview {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .venue-actions {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 15px;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .edit-btn:hover {
+            background-color: #4a77e4;
+        }
+
+        .danger-btn {
+            background-color: #ff4d4f;
+        }
+
+        .danger-btn:hover {
+            background-color: #d9363e;
+        }
+
+        .secondary-btn {
+            background-color: #f0f3ff;
+            color: var(--primary);
+        }
+
+        .secondary-btn:hover {
+            background-color: #e1e5ff;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 16px;
+            color: var(--primary);
+            padding: 20px;
+        }
+
+        .empty-tip {
+            text-align: center;
+            color: var(--secondary);
+            padding: 30px 0;
+            font-size: 14px;
+        }
+
+        /* 弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px 20px 16px;
+            border-radius: 12px;
+            width: 480px;
+            max-width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--secondary);
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .form-row label {
+            color: var(--secondary);
+        }
+
+        .form-row textarea {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+            font-family: "PingFang SC", system-ui;
+            resize: vertical;
+            min-height: 100px;
+            max-height: 260px;
+        }
+
+        .form-row textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-footer {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .small-text {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 1080px) {
+            body{
+                padding: 12px;
+            }
+
+            .card{
+                padding: 14px;
+            }
+
+            .modal{
+                align-items: flex-start;
+            }
+
+            .modal-content{
+                width: 100%;
+                max-width: none;
+                margin: 40px 8px 16px;
+                padding: 16px 14px;
+                border-radius: 10px;
+                gap: 10px;
+            }
+
+            .modal-header{
+                font-size: 16px;
+            }
+
+            .form-row label{
+                font-size: 13px;
+            }
+
+            .form-row textarea{
+                min-height: 90px;
+            }
+
+            .small-text{
+                font-size: 11px;
+                line-height: 1.4;
+            }
+
+            .edit-btn{
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+
+            .modal-footer{
+                margin-top: 4px;
+                gap: 6px;
+            }
+
+            .venue-card{
+                flex-direction: column;
+            }
+            .venue-actions{
+                flex-direction: row;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="kwx-legacy-page">
+<div class="container">
+    <div class="card">
+        <div class="card-title">
+            <div>
+                APP通知管理
+                <span>只可编辑通知内容，键名和有效期由系统自动处理</span>
+            </div>
+            <button class="edit-btn secondary-btn" onclick="openModalForNew()">+ 新增通知</button>
+        </div>
+
+        <div id="listArea">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modalTitle">编辑通知</span>
+            <span class="modal-close" onclick="closeModal()">×</span>
+        </div>
+
+        <div class="form-row">
+            <label>通知内容（messageContent）</label>
+            <textarea id="formMessage" placeholder="例如：严禁未成年人消费。严禁违法违规、低俗色情内容。"></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="edit-btn secondary-btn" onclick="closeModal()">取消</button>
+            <button class="edit-btn" onclick="saveKey()">保存</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const apiBase = '/api/redis_notification.php';
+
+    let currentMode = 'new';   // 'new' or 'edit'
+    let originalKey = '';      // 编辑时记录原 key
+    let currentRawValue = '';  // 当前这个 key 的完整 JSON 字符串
+
+    function $(id) { return document.getElementById(id); }
+
+    function showLoading() {
+        $('listArea').innerHTML = '<div class="loading">加载中...</div>';
+    }
+
+    function escapeHtml(str) {
+        return (str || '').replace(/[&<>"']/g, function (m) {
+            return ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            })[m];
+        });
+    }
+
+    // 解析后端返回的 value（是 JSON 字符串），取出 messageContent
+    function extractMessageContent(valueStr) {
+        if (!valueStr) return '';
+        try {
+            const obj = JSON.parse(valueStr);
+            if (obj && typeof obj === 'object' && obj.messageContent) {
+                return obj.messageContent;
+            }
+        } catch(e) {
+            // 不是标准 JSON，就原样返回
+        }
+        return valueStr;
+    }
+
+    function loadList() {
+        showLoading();
+        fetch(apiBase + '?action=list&pattern=' + encodeURIComponent('notification:*'))
+            .then(r => r.json())
+            .then(res => {
+                if (res.code !== 200) {
+                    $('listArea').innerHTML = '<div class="empty-tip">加载失败：' + res.msg + '</div>';
+                    return;
+                }
+                const list = res.data || [];
+                if (list.length === 0) {
+                    $('listArea').innerHTML = '<div class="empty-tip">暂无通知配置</div>';
+                    return;
+                }
+                const html = list.map(item => renderItem(item)).join('');
+                $('listArea').innerHTML = html;
+            })
+            .catch(e => {
+                $('listArea').innerHTML = '<div class="empty-tip">请求异常：' + e.message + '</div>';
+            });
+    }
+
+    // 列表卡片：只显示通知内容
+    function renderItem(item) {
+        const key = item.key || '';
+        const msg = extractMessageContent(item.value || '');
+        const firstChar = msg ? msg.charAt(0).toUpperCase() : 'N';
+
+        return `
+        <div class="venue-card">
+            <div class="venue-img">${firstChar}</div>
+            <div class="venue-info">
+                <span class="value-preview">${escapeHtml(msg || '（暂无内容）')}</span>
+            </div>
+            <div class="venue-actions">
+                <button class="edit-btn" onclick="openModalForEdit('${encodeURIComponent(key)}')">编辑</button>
+                <button class="edit-btn danger-btn" onclick="deleteKeyFromList('${encodeURIComponent(key)}')">删除</button>
+            </div>
+        </div>`;
+    }
+
+    function openModalForNew() {
+        currentMode = 'new';
+        originalKey = '';
+        currentRawValue = '';
+        $('modalTitle').innerText = '新增通知';
+        $('formMessage').value = '';
+        $('editModal').style.display = 'flex';
+    }
+
+    function openModalForEdit(encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        currentMode = 'edit';
+        originalKey = key;
+        currentRawValue = '';
+        $('modalTitle').innerText = '编辑通知';
+        $('formMessage').value = '';
+        $('editModal').style.display = 'flex';
+
+        fetch(apiBase + '?action=get&key=' + encodeURIComponent(key))
+            .then(r => r.json())
+            .then(res => {
+                if (res.code !== 200) {
+                    alert('获取详情失败：' + res.msg);
+                    return;
+                }
+                const v = res.data.value || '';
+                currentRawValue = v;
+                $('formMessage').value = extractMessageContent(v);
+            })
+            .catch(e => {
+                alert('请求异常：' + e.message);
+            });
+    }
+
+    function closeModal() {
+        $('editModal').style.display = 'none';
+    }
+
+    // 保存：新增不传 key，由后端自动生成；编辑传原 key
+    function saveKey() {
+        const message = $('formMessage').value.trim();
+
+        if (!message) {
+            alert('请填写通知内容（messageContent）');
+            return;
+        }
+
+        // 构造完整 JSON：保留原有字段，只覆盖 messageContent
+        let obj = {};
+        if (currentMode === 'edit' && currentRawValue) {
+            try {
+                obj = JSON.parse(currentRawValue) || {};
+            } catch (e) {
+                obj = {};
+            }
+        }
+        obj.messageContent = message;
+        if (!('iconType' in obj)) {
+            obj.iconType = 'notice';
+        }
+
+        const valueJson = JSON.stringify(obj);
+
+        const fd = new FormData();
+        fd.append('key', currentMode === 'edit' ? originalKey : '');
+        fd.append('value', valueJson);
+
+        fetch(apiBase + '?action=save', {
+            method: 'POST',
+            body: fd
+        }).then(r => r.json())
+          .then(res => {
+              if (res.code === 200) {
+                  alert('保存成功');
+                  closeModal();
+                  loadList();
+              } else {
+                  alert('保存失败：' + res.msg);
+              }
+          })
+          .catch(e => {
+              alert('请求异常：' + e.message);
+          });
+    }
+
+    // 列表上的删除按钮
+    function deleteKeyFromList(encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        if (!key) {
+            alert('未找到要删除的键');
+            return;
+        }
+        if (!confirm('确定要删除这个通知吗？')) return;
+
+        const fd = new FormData();
+        fd.append('key', key);
+
+        fetch(apiBase + '?action=delete', {
+            method: 'POST',
+            body: fd
+        }).then(r => r.json())
+          .then(res => {
+              if (res.code === 200) {
+                  alert('删除成功');
+                  loadList();
+              } else {
+                  alert('删除失败：' + res.msg);
+              }
+          })
+          .catch(e => {
+              alert('请求异常：' + e.message);
+          });
+    }
+
+    // 点击遮罩关闭弹窗
+    $('editModal').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+    });
+
+    // 首次加载
+    loadList();
+</script>
+
+</body>
+</html>
+
+

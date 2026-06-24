@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>消息管理</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --primary-dark: #4169e1;
+            --primary-light: #edf3ff;
+            --success: #18a058;
+            --warning: #f59e0b;
+            --danger: #ff4d4f;
+            --purple: #7c3aed;
+            --text-main: #1f2937;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --border: #e5e7eb;
+            --card: rgba(255, 255, 255, 0.92);
+            --bg-start: #f8fbff;
+            --bg-end: #eef3ff;
+            --shadow: 0 18px 45px rgba(30, 64, 175, 0.10);
+            --shadow-soft: 0 10px 28px rgba(30, 64, 175, 0.08);
+            --radius: 18px;
+            --transition: all .22s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 15% 10%, rgba(91, 140, 255, .18), transparent 28%),
+                radial-gradient(circle at 90% 20%, rgba(124, 58, 237, .12), transparent 26%),
+                linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            padding: 24px;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+            padding: 24px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, .95), rgba(247, 250, 255, .88));
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, .65);
+            margin-bottom: 18px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary);
+            background: var(--primary-light);
+            border: 1px solid rgba(91, 140, 255, .18);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            line-height: 1.25;
+            letter-spacing: .5px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 38px;
+            padding: 9px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            box-shadow: 0 10px 22px rgba(91, 140, 255, .26);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(91, 140, 255, .32);
+        }
+
+        .btn-soft {
+            color: var(--primary);
+            background: var(--primary-light);
+            border: 1px solid rgba(91, 140, 255, .20);
+        }
+
+        .btn-soft:hover {
+            background: #e6efff;
+        }
+
+        .btn-danger {
+            color: #fff;
+            background: linear-gradient(135deg, #ff6b6b, var(--danger));
+        }
+
+        .btn-ghost {
+            color: var(--text-muted);
+            background: #f8fafc;
+            border: 1px solid var(--border);
+        }
+
+        .btn-mini {
+            min-height: 30px;
+            padding: 6px 9px;
+            border-radius: 9px;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid rgba(226, 232, 240, .85);
+            box-shadow: var(--shadow-soft);
+            border-radius: var(--radius);
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            color: var(--primary);
+            background: var(--primary-light);
+            font-size: 18px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .board-card {
+            background: var(--card);
+            border: 1px solid rgba(226, 232, 240, .85);
+            box-shadow: var(--shadow-soft);
+            border-radius: var(--radius);
+            overflow: hidden;
+            min-height: 360px;
+        }
+
+        .board-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .board-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .board-title i {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            background: var(--primary-light);
+            border-radius: 12px;
+        }
+
+        .board-title h2 {
+            font-size: 18px;
+        }
+
+        .board-title p {
+            margin-top: 2px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .list {
+            padding: 14px;
+        }
+
+        .message-item {
+            position: relative;
+            background: #fff;
+            border: 1px solid #edf1f7;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .message-item:hover {
+            transform: translateY(-1px);
+            border-color: rgba(91, 140, 255, .32);
+            box-shadow: 0 12px 26px rgba(30, 64, 175, .08);
+        }
+
+        .message-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .message-title {
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .message-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            margin-top: 8px;
+            color: var(--text-light);
+            font-size: 12px;
+        }
+
+        .message-content {
+            margin-top: 10px;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.75;
+            word-break: break-word;
+            white-space: pre-wrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .message-actions {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .badge-blue {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .badge-green {
+            color: #059669;
+            background: #ecfdf5;
+        }
+
+        .badge-gray {
+            color: #64748b;
+            background: #f1f5f9;
+        }
+
+        .level-1 {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .level-2 {
+            color: #ca8a04;
+            background: #fefce8;
+        }
+
+        .level-3 {
+            color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .level-4 {
+            color: #7c2d12;
+            background: #ffedd5;
+        }
+
+        .empty-state,
+        .loading-state {
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            gap: 10px;
+            text-align: center;
+            border: 1px dashed #dbe3ef;
+            border-radius: 16px;
+            background: rgba(248, 250, 252, .74);
+        }
+
+        .empty-state i,
+        .loading-state i {
+            color: var(--primary);
+            font-size: 26px;
+        }
+
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(15, 23, 42, .46);
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-mask.show {
+            display: flex;
+        }
+
+        .modal {
+            width: min(680px, 100%);
+            max-height: 92vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 26px 80px rgba(15, 23, 42, .28);
+            border: 1px solid rgba(255, 255, 255, .7);
+            animation: popIn .18s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: translateY(12px) scale(.98);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #ffffff, #f8fbff);
+        }
+
+        .modal-head h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        .modal-head h3 i {
+            color: var(--primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 20px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 7px;
+        }
+
+        .form-control {
+            width: 100%;
+            min-height: 40px;
+            padding: 9px 12px;
+            border: 1px solid #dbe3ef;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: rgba(91, 140, 255, .75);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(91, 140, 255, .12);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.65;
+        }
+
+        .switch-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+            padding-top: 26px;
+        }
+
+        .switch-line input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-row input[type="color"] {
+            width: 46px;
+            height: 38px;
+            padding: 2px;
+            border: 1px solid #dbe3ef;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .toast {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            z-index: 2000;
+            transform: translateX(-50%) translateY(-12px);
+            opacity: 0;
+            pointer-events: none;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .92);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            transition: var(--transition);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, .24);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 14px;
+            }
+
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 18px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .stats-grid,
+            .board-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .switch-line {
+                padding-top: 0;
+            }
+
+            .message-top {
+                flex-direction: column;
+            }
+
+            .message-actions {
+                width: 100%;
+            }
+
+            .message-actions .btn {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 23px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .board-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .modal-footer {
+                flex-direction: column-reverse;
+            }
+        }
+
+
+        /* 单列表切换版：统计卡片当作筛选 tab，用整页展示一种消息 */
+        .stat-card {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            min-height: 86px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(91, 140, 255, .35);
+            box-shadow: 0 14px 32px rgba(30, 64, 175, .12);
+        }
+
+        .stat-card.active {
+            border-color: rgba(91, 140, 255, .72);
+            background: linear-gradient(135deg, #ffffff, #f2f7ff);
+            box-shadow: 0 16px 36px rgba(91, 140, 255, .18);
+        }
+
+        .stat-card.active::after {
+            content: "";
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            bottom: 0;
+            height: 3px;
+            border-radius: 999px 999px 0 0;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+
+        .single-board {
+            grid-template-columns: 1fr;
+        }
+
+        .single-board .board-card {
+            min-height: 420px;
+        }
+
+        .compact-list {
+            padding: 12px 14px 16px;
+        }
+
+        .compact-list .message-item {
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-radius: 14px;
+        }
+
+        .compact-list .message-top {
+            align-items: center;
+        }
+
+        .message-main {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .compact-list .message-title {
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .compact-list .message-meta {
+            flex-wrap: nowrap;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .compact-list .message-meta span {
+            flex-shrink: 0;
+        }
+
+        .compact-list .message-content {
+            display: block;
+            margin-top: 6px;
+            line-height: 1.45;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            -webkit-line-clamp: unset;
+            -webkit-box-orient: initial;
+        }
+
+        @media (max-width: 900px) {
+            .compact-list .message-top {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .compact-list .message-actions {
+                width: auto;
+                flex-shrink: 0;
+            }
+
+            .compact-list .message-actions .btn {
+                flex: unset;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .compact-list .message-actions .btn {
+                width: auto;
+                padding: 6px 8px;
+            }
+
+            .compact-list .message-actions .btn i {
+                margin-right: 0;
+            }
+        }
+
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+    <div class="toast" id="toast"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <div>
+                <div class="eyebrow"><i class="fas fa-bullhorn"></i> 消息中心</div>
+                <h1>消息管理</h1>
+                <p>默认展示官方通知，点击统计卡片可切换官方通知、更新日志和弹窗通知。</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-soft" type="button" onclick="loadAllMessages()">
+                    <i class="fas fa-sync-alt"></i> 刷新列表
+                </button>
+                <button class="btn btn-primary" type="button" onclick="openNoticeModal('add')">
+                    <i class="fas fa-plus-circle"></i> 添加官方通知
+                </button>
+                <button class="btn btn-primary" type="button" onclick="openLogModal('add')">
+                    <i class="fas fa-pen-nib"></i> 添加更新日志
+                </button>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card active" data-view="notice" onclick="switchView('notice')" role="button" tabindex="0">
+                <div class="stat-icon"><i class="fas fa-bell"></i></div>
+                <div>
+                    <div class="stat-label">官方通知</div>
+                    <div class="stat-value" id="noticeCount">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-view="log" onclick="switchView('log')" role="button" tabindex="0">
+                <div class="stat-icon"><i class="fas fa-code-branch"></i></div>
+                <div>
+                    <div class="stat-label">更新日志</div>
+                    <div class="stat-value" id="logCount">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-view="popup" onclick="switchView('popup')" role="button" tabindex="0">
+                <div class="stat-icon"><i class="fas fa-window-restore"></i></div>
+                <div>
+                    <div class="stat-label">弹窗通知</div>
+                    <div class="stat-value" id="popupCount">0</div>
+                </div>
+            </div>
+        </section>
+
+        <main class="board-grid single-board">
+            <section class="board-card">
+                <div class="board-head">
+                    <div class="board-title">
+                        <i id="boardIcon" class="fas fa-bullhorn"></i>
+                        <div>
+                            <h2 id="boardTitle">官方通知</h2>
+                            <p id="boardDesc">后台公告、弹窗通知、处罚提示</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-soft btn-mini" id="boardAddBtn" type="button" onclick="openCurrentAddModal()">
+                        <i class="fas fa-plus"></i> 发布官方通知
+                    </button>
+                </div>
+                <div class="list compact-list" id="messageList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <div>正在加载官方通知...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 官方通知弹窗 -->
+    <div class="modal-mask" id="noticeModal" onclick="closeModalOnMask(event, 'noticeModal')">
+        <div class="modal">
+            <div class="modal-head">
+                <h3><i class="fas fa-bullhorn"></i><span id="noticeModalTitle">发布官方通知</span></h3>
+                <button class="btn btn-ghost btn-mini" type="button" onclick="closeModal('noticeModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="noticeForm">
+                <div class="modal-body">
+                    <input type="hidden" id="noticeId" name="id">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="noticeTitle">通知标题</label>
+                            <input type="text" id="noticeTitle" name="title" class="form-control" value="官方通知" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="importance">通知等级</label>
+                            <select id="importance" name="importance" class="form-control" required>
+                                <option value="1">普通</option>
+                                <option value="2">重要</option>
+                                <option value="3">紧急</option>
+                                <option value="4">处罚</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="color">标题颜色</label>
+                            <div class="color-row">
+                                <input type="color" id="color" name="color" value="#e30d0d">
+                                <span class="badge badge-gray">用于前台标题颜色</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="switch-line">
+                                <input type="checkbox" id="isPopup" onchange="updateNoticeTitle(this)">
+                                设为弹窗通知
+                            </label>
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="noticeContent">通知内容</label>
+                            <textarea id="noticeContent" name="content" class="form-control" placeholder="请输入通知内容..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" type="button" onclick="closeModal('noticeModal')">取消</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-paper-plane"></i> 保存通知
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 更新日志弹窗 -->
+    <div class="modal-mask" id="logModal" onclick="closeModalOnMask(event, 'logModal')">
+        <div class="modal">
+            <div class="modal-head">
+                <h3><i class="fas fa-clipboard-list"></i><span id="logModalTitle">发布更新日志</span></h3>
+                <button class="btn btn-ghost btn-mini" type="button" onclick="closeModal('logModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="logForm">
+                <div class="modal-body">
+                    <input type="hidden" id="logId" name="id">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="version">版本号</label>
+                            <input type="text" id="version" name="version" class="form-control" placeholder="例如：1.2.0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="platform">平台</label>
+                            <select id="platform" name="platform" class="form-control" required>
+                                <option value="安卓">安卓</option>
+                                <option value="苹果">苹果</option>
+                                <option value="全部">全部</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="logContent">更新内容</label>
+                            <textarea id="logContent" name="content" class="form-control" placeholder="例如：&#10;1. 新增语音房场地消费榜&#10;2. 优化场地页面样式" required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" type="button" onclick="closeModal('logModal')">取消</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-paper-plane"></i> 保存日志
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://open.rcwulian.cn/api/index/Msg.php';
+
+        const state = {
+            notices: [],
+            logs: [],
+            view: 'notice'
+        };
+
+        const viewConfig = {
+            notice: {
+                title: '官方通知',
+                desc: '后台公告、弹窗通知、处罚提示',
+                icon: 'fas fa-bullhorn',
+                addIcon: 'fas fa-plus',
+                addText: '发布官方通知',
+                emptyTitle: '暂无官方通知',
+                emptyDesc: '点击右上角发布新的官方通知'
+            },
+            log: {
+                title: '更新日志',
+                desc: '安卓 / 苹果版本发布记录',
+                icon: 'fas fa-clipboard-list',
+                addIcon: 'fas fa-plus',
+                addText: '发布更新日志',
+                emptyTitle: '暂无更新日志',
+                emptyDesc: '点击右上角发布新的版本更新记录'
+            },
+            popup: {
+                title: '弹窗通知',
+                desc: '只展示需要弹窗提醒的官方通知',
+                icon: 'fas fa-window-restore',
+                addIcon: 'fas fa-plus',
+                addText: '发布弹窗通知',
+                emptyTitle: '暂无弹窗通知',
+                emptyDesc: '发布官方通知时勾选“设为弹窗通知”后会显示在这里'
+            }
+        };
+
+        async function request(action, data = {}) {
+            const formData = new FormData();
+            formData.append('action', action);
+
+            Object.keys(data).forEach(key => {
+                if (data[key] !== undefined && data[key] !== null) {
+                    formData.append(key, data[key]);
+                }
+            });
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            const text = await response.text();
+            let result;
+
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                throw new Error('接口返回不是JSON：' + text.slice(0, 120));
+            }
+
+            if (result.code !== 0) {
+                throw new Error(result.msg || '请求失败');
+            }
+
+            return result;
+        }
+
+        async function loadAllMessages() {
+            setLoading();
+
+            try {
+                const result = await request('getMessages', { type: 'all' });
+                state.notices = result.data?.notices || [];
+                state.logs = result.data?.logs || [];
+
+                updateStats();
+                renderCurrentList();
+            } catch (error) {
+                document.getElementById('messageList').innerHTML = errorState(error.message);
+                showToast(error.message);
+            }
+        }
+
+        function setLoading() {
+            const config = getCurrentConfig();
+            document.getElementById('messageList').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <div>正在加载${escapeHtml(config.title)}...</div>
+                </div>
+            `;
+        }
+
+        function switchView(view) {
+            if (!viewConfig[view]) {
+                return;
+            }
+
+            state.view = view;
+            renderCurrentList();
+        }
+
+        function getCurrentConfig() {
+            return viewConfig[state.view] || viewConfig.notice;
+        }
+
+        function getCurrentRows() {
+            if (state.view === 'log') {
+                return state.logs;
+            }
+
+            if (state.view === 'popup') {
+                return state.notices.filter(item => String(item.read_status) === '0');
+            }
+
+            return state.notices;
+        }
+
+        function updateBoardHeader() {
+            const config = getCurrentConfig();
+            document.getElementById('boardIcon').className = config.icon;
+            document.getElementById('boardTitle').textContent = config.title;
+            document.getElementById('boardDesc').textContent = config.desc;
+            document.getElementById('boardAddBtn').innerHTML = `<i class="${config.addIcon}"></i> ${config.addText}`;
+        }
+
+        function updateActiveStats() {
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.view === state.view);
+            });
+        }
+
+        function renderCurrentList() {
+            updateBoardHeader();
+            updateActiveStats();
+
+            const list = document.getElementById('messageList');
+            const config = getCurrentConfig();
+            const rows = getCurrentRows();
+
+            if (!rows.length) {
+                list.innerHTML = emptyState(config.emptyTitle, config.emptyDesc);
+                return;
+            }
+
+            list.innerHTML = rows.map(item => {
+                return state.view === 'log' ? renderLogItem(item) : renderNoticeItem(item);
+            }).join('');
+        }
+
+        function renderNoticeItem(item) {
+            const level = getLevelMeta(item.importance);
+            const isPopup = String(item.read_status) === '0';
+
+            return `
+                <article class="message-item">
+                    <div class="message-top">
+                        <div class="message-main">
+                            <div class="message-title" style="color:${escapeAttr(item.color || '#1f2937')}" title="${escapeHtml(item.title || '官方通知')}">
+                                ${escapeHtml(item.title || '官方通知')}
+                            </div>
+                            <div class="message-meta">
+                                <span class="badge ${level.className}">${level.text}</span>
+                                <span class="badge ${isPopup ? 'badge-blue' : 'badge-gray'}">
+                                    ${isPopup ? '弹窗通知' : '普通通知'}
+                                </span>
+                                <span><i class="far fa-clock"></i> ${escapeHtml(item.publish_time || '-')}</span>
+                            </div>
+                            <div class="message-content" title="${escapeHtml(item.content || '')}">${escapeHtml(item.content || '')}</div>
+                        </div>
+                        <div class="message-actions">
+                            <button class="btn btn-soft btn-mini" type="button" onclick="openNoticeModal('edit', ${Number(item.id)})">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
+                            <button class="btn btn-danger btn-mini" type="button" onclick="deleteMessage('notice', ${Number(item.id)})">
+                                <i class="fas fa-trash-alt"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderLogItem(item) {
+            const titleText = `v${item.version || '-'}`;
+
+            return `
+                <article class="message-item">
+                    <div class="message-top">
+                        <div class="message-main">
+                            <div class="message-title" title="${escapeHtml(titleText)}">
+                                ${escapeHtml(titleText)}
+                            </div>
+                            <div class="message-meta">
+                                <span class="badge badge-green">${escapeHtml(item.platform || '-')}</span>
+                                <span><i class="far fa-clock"></i> ${escapeHtml(item.publish_time || '-')}</span>
+                            </div>
+                            <div class="message-content" title="${escapeHtml(item.content || '')}">${escapeHtml(item.content || '')}</div>
+                        </div>
+                        <div class="message-actions">
+                            <button class="btn btn-soft btn-mini" type="button" onclick="openLogModal('edit', ${Number(item.id)})">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
+                            <button class="btn btn-danger btn-mini" type="button" onclick="deleteMessage('log', ${Number(item.id)})">
+                                <i class="fas fa-trash-alt"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function updateStats() {
+            document.getElementById('noticeCount').textContent = state.notices.length;
+            document.getElementById('logCount').textContent = state.logs.length;
+            document.getElementById('popupCount').textContent = state.notices.filter(item => String(item.read_status) === '0').length;
+        }
+
+        function openCurrentAddModal() {
+            if (state.view === 'log') {
+                openLogModal('add');
+                return;
+            }
+
+            openNoticeModal('add');
+
+            if (state.view === 'popup') {
+                const checkbox = document.getElementById('isPopup');
+                checkbox.checked = true;
+                updateNoticeTitle(checkbox);
+            }
+        }
+
+        function openNoticeModal(mode, id = 0) {
+            const form = document.getElementById('noticeForm');
+            form.reset();
+
+            document.getElementById('noticeId').value = '';
+            document.getElementById('noticeTitle').value = '官方通知';
+            document.getElementById('color').value = '#e30d0d';
+            document.getElementById('importance').value = '1';
+            document.getElementById('isPopup').checked = false;
+            document.getElementById('noticeContent').value = '';
+
+            if (mode === 'edit') {
+                const item = state.notices.find(row => Number(row.id) === Number(id));
+                if (!item) {
+                    showToast('未找到这条通知，请刷新后再试');
+                    return;
+                }
+
+                document.getElementById('noticeModalTitle').textContent = '编辑官方通知';
+                document.getElementById('noticeId').value = item.id;
+                document.getElementById('noticeTitle').value = item.title || '官方通知';
+                document.getElementById('noticeContent').value = item.content || '';
+                document.getElementById('importance').value = String(item.importance || '1');
+                document.getElementById('isPopup').checked = String(item.read_status) === '0';
+                document.getElementById('color').value = item.color || '#e30d0d';
+            } else {
+                document.getElementById('noticeModalTitle').textContent = '发布官方通知';
+            }
+
+            openModal('noticeModal');
+        }
+
+        function openLogModal(mode, id = 0) {
+            const form = document.getElementById('logForm');
+            form.reset();
+
+            document.getElementById('logId').value = '';
+            document.getElementById('version').value = '';
+            document.getElementById('platform').value = '安卓';
+            document.getElementById('logContent').value = '';
+
+            if (mode === 'edit') {
+                const item = state.logs.find(row => Number(row.id) === Number(id));
+                if (!item) {
+                    showToast('未找到这条日志，请刷新后再试');
+                    return;
+                }
+
+                document.getElementById('logModalTitle').textContent = '编辑更新日志';
+                document.getElementById('logId').value = item.id;
+                document.getElementById('version').value = item.version || '';
+                document.getElementById('platform').value = item.platform || '安卓';
+                document.getElementById('logContent').value = item.content || '';
+            } else {
+                document.getElementById('logModalTitle').textContent = '发布更新日志';
+            }
+
+            openModal('logModal');
+        }
+
+        document.getElementById('noticeForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const id = document.getElementById('noticeId').value;
+            const payload = Object.fromEntries(new FormData(event.target).entries());
+            payload.read_status = document.getElementById('isPopup').checked ? '0' : '1';
+
+            try {
+                await request(id ? 'updateNotice' : 'addNotice', payload);
+                closeModal('noticeModal');
+                showToast(id ? '通知编辑成功' : '通知发布成功');
+                await loadAllMessages();
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
+
+        document.getElementById('logForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const id = document.getElementById('logId').value;
+            const payload = Object.fromEntries(new FormData(event.target).entries());
+
+            try {
+                await request(id ? 'updateLog' : 'addLog', payload);
+                closeModal('logModal');
+                showToast(id ? '日志编辑成功' : '日志发布成功');
+                await loadAllMessages();
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
+
+        async function deleteMessage(type, id) {
+            const label = type === 'notice' ? '官方通知' : '更新日志';
+
+            if (!confirm(`确定要删除这条${label}吗？删除后前台将不再展示。`)) {
+                return;
+            }
+
+            try {
+                await request('deleteMessage', { type, id });
+                showToast('删除成功');
+                await loadAllMessages();
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        function updateNoticeTitle(checkbox) {
+            const isEdit = !!document.getElementById('noticeId').value;
+            if (isEdit) {
+                return;
+            }
+
+            document.getElementById('noticeTitle').value = checkbox.checked ? '官方公告' : '官方通知';
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function closeModalOnMask(event, id) {
+            if (event.target.id === id) {
+                closeModal(id);
+            }
+        }
+
+        function emptyState(title, desc) {
+            return `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <strong>${escapeHtml(title)}</strong>
+                    <span>${escapeHtml(desc)}</span>
+                </div>
+            `;
+        }
+
+        function errorState(msg) {
+            return `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>加载失败</strong>
+                    <span>${escapeHtml(msg)}</span>
+                </div>
+            `;
+        }
+
+        function getLevelMeta(value) {
+            const level = Number(value || 1);
+            const map = {
+                1: { text: '普通', className: 'level-1' },
+                2: { text: '重要', className: 'level-2' },
+                3: { text: '紧急', className: 'level-3' },
+                4: { text: '处罚', className: 'level-4' }
+            };
+
+            return map[level] || map[1];
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeAttr(value) {
+            const text = String(value ?? '').trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(text)) {
+                return text;
+            }
+            return '#1f2937';
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+
+            clearTimeout(toastTimer);
+            toast.classList.add('show');
+
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2200);
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeModal('noticeModal');
+                closeModal('logModal');
+            }
+
+            if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('stat-card')) {
+                event.preventDefault();
+                switchView(event.target.dataset.view);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadAllMessages);
+    </script>
+</body>
+
+</html>
+
+

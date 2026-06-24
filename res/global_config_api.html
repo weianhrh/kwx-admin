@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全局配置管理</title>
+  <style>
+    :root {
+      --primary: #5b8cff;
+      --border: #ddd;
+      --bg: #fff;
+      --text: #333;
+    }
+
+    body {
+      background: #f5f8ff;
+      font-family: "PingFang SC", sans-serif;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    .card {
+      max-width: 980px;
+      margin: auto;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .btn_add {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      display: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .del-btn {
+      background: #ff4d4f;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .form {
+      border: 1px solid var(--border);
+      padding: 15px;
+      margin-top: 12px;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .section-title {
+      margin: 18px 0 12px;
+      padding: 8px 10px;
+      background: #f0f5ff;
+      color: var(--primary);
+      border-left: 4px solid var(--primary);
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .form-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+.form-group > label:not(.switch) {
+  width: 28%;
+  line-height: 34px;
+  color: #333;
+}
+    .form-group input[type="text"],
+    .form-group textarea {
+      width: 68%;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      min-height: 76px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 42px;
+      height: 24px;
+      margin-top: 5px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+/* 修复开关被 .form-group label 拉长的问题 */
+.form-group label.switch {
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  height: 24px;
+  flex: 0 0 42px;
+  line-height: normal;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.form-group label.switch .slider {
+  width: 42px;
+  height: 24px;
+}
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="kwx-legacy-page">
+  <div class="card">
+    <h2>全局配置列表 <button class="btn_add" onclick="addConfig()">添加</button></h2>
+    <div id="configList"></div>
+  </div>
+
+  <script>
+    async function fetchConfigList() {
+      const res = await fetch('/api/operat/global_config_api.php?action=list');
+      const json = await res.json();
+      if (json.code === 0) renderConfigs(json.data);
+    }
+
+    function renderConfigs(configs) {
+      const container = document.getElementById('configList');
+      container.innerHTML = '';
+
+      configs.forEach(config => {
+        const form = document.createElement('form');
+        form.className = 'form';
+        form.dataset.id = config.id;
+        form.dataset.editing = 'false';
+
+        function createGroup(label, html) {
+          return `<div class="form-group"><label>${label}</label>${html}</div>`;
+        }
+
+        form.innerHTML = `
+          ${sectionTitle('基础开关配置')}
+          ${createGroup('支付宝：', checkboxOld('alipay_enabled', config.alipay_enabled))}
+          ${createGroup('微信支付：', checkboxOld('wechatpay_enabled', config.wechatpay_enabled))}
+          ${createGroup('抖音登录：', checkboxOld('douyin_login_enabled', config.douyin_login_enabled))}
+          ${createGroup('快手登录：', checkboxOld('kuaishou_login_enabled', config.kuaishou_login_enabled))}
+          ${createGroup('微信登录：', checkboxOld('wechat_login_enabled', config.wechat_login_enabled))}
+          ${createGroup('AppleID 登录：', checkboxOld('appleid_login_enabled', config.appleid_login_enabled))}
+
+          ${sectionTitle('域名配置')}
+          ${createGroup('APP 域名地址：', text('app_domain', config.app_domain))}
+          ${createGroup('控制域名地址：', text('control_domain', config.control_domain))}
+          ${createGroup('控制端口地址：', text('control_port', config.control_port))}
+          ${createGroup('图传域名地址：', text('video_stream_domain', config.video_stream_domain))}
+
+          ${sectionTitle('版本更新配置')}
+          ${createGroup('安卓最新版本：', text('latest_version', config.latest_version))}
+          ${createGroup('iOS 最新版本：', text('ios_latest_version', config.ios_latest_version))}
+          ${createGroup('iOS 更新地址：', text('ios_url', config.ios_url))}
+          ${createGroup('安卓 APK 地址：', text('apk_url', config.apk_url))}
+          ${createGroup('安卓更新文案：', textarea('version_name', config.version_name, 3))}
+          ${createGroup('iOS 更新文案：', textarea('ios_version_name', config.ios_version_name, 4))}
+          ${createGroup('安卓强制更新：', checkboxOne('is_updated', config.is_updated))}
+          ${createGroup('iOS 强制更新：', checkboxOne('ios_is_updated', config.ios_is_updated))}
+
+          ${sectionTitle('公告配置')}
+          ${createGroup('公告 ID：', text('announcement_id', config.announcement_id))}
+          ${createGroup('公告内容：', textarea('announcement_info', config.announcement_info, 3))}
+
+          <div style="text-align:right">
+            <button type="button" class="btn" onclick="toggleEdit(this)">编辑</button>
+          </div>
+        `;
+
+        container.appendChild(form);
+        setDisabled(form, true);
+      });
+    }
+
+    function sectionTitle(title) {
+      return `<div class="section-title">${title}</div>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, function (s) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[s];
+      });
+    }
+
+    /**
+     * 保留你原来的旧开关逻辑：
+     * 你当前代码是 0 = 勾选，1 = 不勾选
+     * 为了避免影响支付宝/微信/登录开关，这里不改旧逻辑。
+     */
+    function checkboxOld(name, checked) {
+      const isChecked = checked == 0;
+      return `<label class="switch"><input name="${name}" type="checkbox" ${isChecked ? 'checked' : ''}><span class="slider"></span></label>`;
+    }
+
+    /**
+     * 新增版本强更开关：
+     * 1 = 开启强更，0 = 关闭强更
+     */
+    function checkboxOne(name, checked) {
+      const isChecked = Number(checked) === 1;
+      return `<label class="switch"><input name="${name}" type="checkbox" ${isChecked ? 'checked' : ''}><span class="slider"></span></label>`;
+    }
+
+    function text(name, value) {
+      return `<input name="${name}" type="text" value="${escapeHtml(value || '')}">`;
+    }
+
+    function textarea(name, value, rows = 3) {
+      return `<textarea name="${name}" rows="${rows}">${escapeHtml(value || '')}</textarea>`;
+    }
+
+    function setDisabled(form, disabled) {
+      const inputs = form.querySelectorAll('input, textarea');
+      inputs.forEach(i => i.disabled = disabled);
+    }
+
+    function toggleEdit(btn) {
+      const form = btn.closest('form');
+      const editing = form.dataset.editing === 'true';
+
+      if (!editing) {
+        setDisabled(form, false);
+        form.dataset.editing = 'true';
+        btn.textContent = '保存';
+      } else {
+        const data = getFormData(form);
+
+        fetch('/api/operat/global_config_api.php?action=update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(res => res.json()).then(json => {
+          alert(json.msg);
+          fetchConfigList();
+        });
+      }
+    }
+
+    function getFormData(form) {
+      return {
+        id: form.dataset.id,
+
+        alipay_enabled: form.querySelector('[name="alipay_enabled"]').checked ? 0 : 1,
+        wechatpay_enabled: form.querySelector('[name="wechatpay_enabled"]').checked ? 0 : 1,
+        douyin_login_enabled: form.querySelector('[name="douyin_login_enabled"]').checked ? 0 : 1,
+        kuaishou_login_enabled: form.querySelector('[name="kuaishou_login_enabled"]').checked ? 0 : 1,
+        appleid_login_enabled: form.querySelector('[name="appleid_login_enabled"]').checked ? 0 : 1,
+        wechat_login_enabled: form.querySelector('[name="wechat_login_enabled"]').checked ? 0 : 1,
+
+        app_domain: form.querySelector('[name="app_domain"]').value,
+        control_port: form.querySelector('[name="control_port"]').value,
+        control_domain: form.querySelector('[name="control_domain"]').value,
+        video_stream_domain: form.querySelector('[name="video_stream_domain"]').value,
+
+        latest_version: form.querySelector('[name="latest_version"]').value,
+        ios_latest_version: form.querySelector('[name="ios_latest_version"]').value,
+        ios_url: form.querySelector('[name="ios_url"]').value,
+        apk_url: form.querySelector('[name="apk_url"]').value,
+        version_name: form.querySelector('[name="version_name"]').value,
+        ios_version_name: form.querySelector('[name="ios_version_name"]').value,
+        announcement_id: form.querySelector('[name="announcement_id"]').value,
+        announcement_info: form.querySelector('[name="announcement_info"]').value,
+        is_updated: form.querySelector('[name="is_updated"]').checked ? 1 : 0,
+        ios_is_updated: form.querySelector('[name="ios_is_updated"]').checked ? 1 : 0
+      };
+    }
+
+    function deleteConfig(id) {
+      if (!confirm('确定删除此配置？')) return;
+
+      fetch(`/api/operat/global_config_api.php?action=delete&id=${id}`)
+        .then(res => res.json())
+        .then(json => {
+          alert(json.msg);
+          fetchConfigList();
+        });
+    }
+
+    function addConfig() {
+      const timestamp = Date.now();
+
+      const data = {
+        alipay_enabled: 0,
+        wechatpay_enabled: 0,
+        douyin_login_enabled: 0,
+        kuaishou_login_enabled: 0,
+        appleid_login_enabled: 0,
+        wechat_login_enabled: 0,
+
+        app_domain: 'app-' + timestamp,
+        control_port: (8000 + Math.floor(Math.random() * 1000)).toString(),
+        control_domain: 'domain-' + timestamp + '.com',
+        video_stream_domain: '',
+
+        latest_version: '',
+        ios_latest_version: '',
+        ios_url: '',
+        apk_url: '',
+        version_name: '',
+        ios_version_name: '',
+        announcement_id: '',
+        announcement_info: '',
+        is_updated: 0,
+        ios_is_updated: 0
+      };
+
+      fetch('/api/operat/global_config_api.php?action=add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(json => {
+        alert(json.msg);
+        fetchConfigList();
+      });
+    }
+
+    fetchConfigList();
+  </script>
+</body>
+</html>
+
