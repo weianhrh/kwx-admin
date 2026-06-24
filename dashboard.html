@@ -1902,14 +1902,30 @@
     }
 
     function setActive(id) {
+      let activeGroupId = '';
       sidebarNav.querySelectorAll('a').forEach(function(link) {
         const active = link.dataset.menuId === String(id);
         link.classList.toggle('active', active);
         if (active && link.dataset.groupId) {
-          const group = sidebarNav.querySelector('[data-group-id="' + link.dataset.groupId + '"]');
-          if (group) group.classList.add('open');
+          activeGroupId = link.dataset.groupId;
         }
       });
+      sidebarNav.querySelectorAll('.nav-parent').forEach(function(button) {
+        const active = button.dataset.toggleGroup === String(id);
+        button.classList.toggle('active', active);
+        if (active) {
+          activeGroupId = button.dataset.toggleGroup;
+        }
+      });
+      sidebarNav.querySelectorAll('.nav-group').forEach(function(group) {
+        const shouldOpen = activeGroupId && group.dataset.groupId === String(activeGroupId);
+        group.classList.toggle('open', !!shouldOpen);
+      });
+      if (!activeGroupId) {
+        sidebarNav.querySelectorAll('.nav-group.open').forEach(function(group) {
+          group.classList.remove('open');
+        });
+      }
     }
 
     function routeFromHash() {
@@ -1925,6 +1941,10 @@
         return;
       }
       setActive(item.id);
+      if (Array.isArray(item.children) && item.children.length) {
+        renderCategory(item);
+        return;
+      }
       if (legacyModuleUrl(item)) {
         renderLegacyModule(item);
         return;
@@ -1934,6 +1954,18 @@
         return;
       }
       renderModule(item);
+    }
+
+    function navigateToMenu(id) {
+      const target = 'menu=' + encodeURIComponent(id);
+      if (location.hash.replace(/^#/, '') === target) {
+        routeFromHash();
+      } else {
+        location.hash = target;
+      }
+      if (isMobileSidebar()) {
+        closeSidebar();
+      }
     }
 
     function isDeviceChild(item) {
@@ -2055,7 +2087,7 @@
     function openCategoryChild(el) {
       const item = findMenu(el.dataset.menuId);
       if (!item) return;
-      location.hash = 'menu=' + encodeURIComponent(item.id);
+      navigateToMenu(item.id);
     }
 
     function renderDeviceSubpage(item) {
@@ -2421,7 +2453,7 @@
         return menu.jump === jump;
       });
       if (item) {
-        location.hash = 'menu=' + encodeURIComponent(item.id);
+        navigateToMenu(item.id);
         return;
       }
       const titleEl = el.querySelector('strong') || el.querySelector('span');
@@ -2481,11 +2513,14 @@
 
     sidebarNav.addEventListener('click', function(event) {
       const link = event.target.closest('a[data-menu-id]');
-      if (link && isMobileSidebar()) {
-        closeSidebar();
+      if (link) {
+        event.preventDefault();
+        navigateToMenu(link.dataset.menuId);
+        return;
       }
       const toggle = event.target.closest('[data-toggle-group]');
       if (!toggle) return;
+      event.preventDefault();
       const group = toggle.closest('.nav-group');
       if (!group) return;
       sidebarNav.querySelectorAll('.nav-group.open').forEach(function(openGroup) {
@@ -2494,7 +2529,7 @@
       group.classList.toggle('open');
       const item = findTopMenu(toggle.dataset.toggleGroup);
       if (item) {
-        renderCategory(item);
+        navigateToMenu(item.id);
       }
     });
 
