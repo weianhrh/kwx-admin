@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
 require_once '../Database.php'; // 引入数据库连接类
 
 // 日志记录函数 
@@ -42,24 +43,25 @@ logMessage("用户角色: $role_id, 用户绑定场地: $bind_venue_id, 请求 i
 
 // 构造 SQL 和参数
 $params = [];
+$venueFields = "id, venue_name, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock";
 
 if ($role_id == 1 || $role_id == 2) {
     if (!empty($get_venue_id) && is_numeric($get_venue_id)) {
         // 管理员传了有效 id，就查指定场地
-        $sql = "SELECT id, venue_name, image_url,voice_room_bg_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status,income_30d_lock,venue_status_num,venue_room_id,dr_venue_id,voice_room_scene_type FROM venues WHERE id = ?";
+        $sql = "SELECT $venueFields FROM venues WHERE id = ?";
         $params = [$get_venue_id];
     } elseif (!empty($bind_venue_id)) {
         // 管理员未传 id，但有绑定场地，只查绑定场地
-        $sql = "SELECT id, venue_name, image_url,voice_room_bg_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status,income_30d_lock,venue_status_num,venue_room_id,dr_venue_id,voice_room_scene_type FROM venues WHERE id = ?";
+        $sql = "SELECT $venueFields FROM venues WHERE id = ?";
         $params = [$bind_venue_id];
     } else {
         // 管理员无绑定场地，查全部
-        $sql = "SELECT id, venue_name, image_url,voice_room_bg_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status,income_30d_lock,venue_status_num,venue_room_id,dr_venue_id,voice_room_scene_type FROM venues";
+        $sql = "SELECT $venueFields FROM venues";
         $params = [];
     }
 } else {
     // 普通用户：只能查看绑定场地
-    $sql = "SELECT id, venue_name, image_url,voice_room_bg_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status,income_30d_lock,venue_status_num,venue_room_id,dr_venue_id,voice_room_scene_type FROM venues WHERE id = ?";
+    $sql = "SELECT $venueFields FROM venues WHERE id = ?";
     $params = [$bind_venue_id];
 }
 

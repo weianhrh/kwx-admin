@@ -78,7 +78,7 @@ if (!in_array($role_id, [1, 2], true)&& (int)$venue_id !== (int)$user[0]['venue_
 
 // ========== 获取原始信息 ==========
 $venueInfo = $database->query("
-    SELECT id, is_banned, venue_name, venue_description, start_time, venue_status, live_stream_url, show_live_stream,income_30d_lock, venue_status_num
+    SELECT id, is_banned, venue_name, venue_description, start_time, venue_status, live_stream_url, show_live_stream, income_30d_lock
     FROM venues WHERE id = ?
 ", [$venue_id]);
 

@@ -1096,6 +1096,17 @@ function renderLocksUI() {
 
 
     // ================= 数据加载 =================
+    function parseJsonResponse(response, apiName) {
+      return response.text().then(text => {
+        try {
+          return JSON.parse(text);
+        } catch (err) {
+          const preview = text.replace(/\s+/g, ' ').slice(0, 220);
+          throw new Error(`${apiName} 返回非 JSON：${preview}`);
+        }
+      });
+    }
+
     function loadVenueData() {
       const venueId = getUrlParameter('id');
       const url = venueId
@@ -1103,7 +1114,7 @@ function renderLocksUI() {
         : '/api/venue/getVenueList.php?page=1&limit=10';
 
       fetch(url)
-        .then(response => response.json())
+        .then(response => parseJsonResponse(response, 'getVenueList.php'))
         .then(data => {
           if (data.code === 0 && data.data.length > 0) {
             const venue = data.data[0];
@@ -1150,10 +1161,13 @@ function renderLocksUI() {
               });
 
           } else {
-            alert('未找到场地信息');
+            alert(data.msg || '未找到场地信息');
           }
         })
-        .catch(err => console.error('数据加载失败:', err));
+        .catch(err => {
+          console.error('数据加载失败:', err);
+          alert(`场地详情加载失败：${err.message}`);
+        });
     }
 
     // ================= 渲染（输入控件首屏即存在，但默认禁用） =================

@@ -241,7 +241,7 @@ textarea {
 
 .venue-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -366,8 +366,6 @@ textarea {
 .venue-status-badge,
 .venue-live-badge,
 .venue-review-badge,
-.venue-room-badge,
-.venue-live-log-badge,
 .venue-level-control {
   min-height: 28px;
   display: inline-flex;
@@ -382,8 +380,7 @@ textarea {
   white-space: nowrap;
 }
 
-.venue-status-badge,
-.venue-live-log-badge {
+.venue-status-badge {
   cursor: pointer;
 }
 
@@ -402,23 +399,6 @@ textarea {
 .venue-review-badge {
   color: var(--danger);
   background: var(--danger-soft);
-}
-
-.venue-room-badge {
-  color: var(--primary);
-  background: var(--primary-soft);
-}
-
-.venue-live-log-badge {
-  color: #486169;
-  background: #f3f7f8;
-  border-color: var(--line);
-}
-
-.venue-live-log-badge:hover {
-  color: var(--primary);
-  border-color: rgba(15, 143, 140, .28);
-  background: var(--primary-soft);
 }
 
 .venue-level-control {
@@ -545,9 +525,8 @@ button.venue-pill:hover {
 }
 
 .venue-action-area {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
+  display: flex;
+  justify-content: flex-start;
   padding: 14px 16px;
   border-top: 1px solid var(--line);
   background: #fbfcfd;
@@ -557,11 +536,7 @@ button.venue-pill:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-}
-
-.venue-actions-ban {
-  justify-content: flex-end;
+  gap: 8px;
 }
 
 .edit-btn,
@@ -797,12 +772,8 @@ button.venue-pill:hover {
     grid-column: span 2;
   }
 
-  .venue-action-area {
-    grid-template-columns: 1fr;
-  }
-
-  .venue-actions-ban {
-    justify-content: flex-start;
+  .venue-actions {
+    width: 100%;
   }
 }
 
@@ -842,7 +813,7 @@ button.venue-pill:hover {
   }
 
   .venue-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -880,10 +851,9 @@ button.venue-pill:hover {
     padding: 12px 14px;
   }
 
-  .venue-actions,
-  .venue-actions-ban {
+  .venue-actions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
   }
 
@@ -1194,10 +1164,6 @@ function renderVenues(list) {
 </label>
     ${isLive ? `<span class="venue-live-badge">直播中</span>` : ''}
     ${isPriorityReview ? `<span class="venue-review-badge">优先检测</span>` : ''}
-    ${venue.venue_room_id ? `<span class="venue-room-badge">房间号：${escapeHtml(venue.venue_room_id)}</span>` : ''}
-    <div class="live-log-row">
-        <button type="button" class="venue-live-log-badge" onclick="openVenueLiveLogs(${venue.id})">查看直播记录</button>
-    </div>
 </div>
 
 ${isPriorityReview ? `
@@ -1239,11 +1205,8 @@ ${isLive ? `
                 </div>
 
 <div class="venue-action-area">
-    <div class="venue-actions venue-actions-main">
+    <div class="venue-actions">
         <button class="edit-btn" onclick="editVenue(${venue.id})">修改场地信息</button>
-    </div>
-
-    <div class="venue-actions venue-actions-ban">
         ${venue.is_banned_venue
             ? `<button class="unban-btn" onclick="openUnbanModal(${venue.id})">解封场地</button>`
             : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁场地</button>`
@@ -1295,10 +1258,6 @@ statCards.forEach(card => {
         applyFilters();
     });
 });
-window.openVenueLiveLogs = function (venueId) {
-    const url = `/res/venueLiveStatusLogs.html?venue_id=${encodeURIComponent(venueId)}`;
-    window.open(url, '_blank');
-};
 window.setVenueStatus = function (venueId, currentStatus) {
     const current = String(currentStatus || '').trim() === '营业中' ? '营业中' : '休息中';
     const nextStatus = current === '营业中' ? '休息中' : '营业中';
