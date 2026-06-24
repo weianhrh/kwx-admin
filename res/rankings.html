@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>用户排行榜</title>
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --gold: #f3b833;
+  --gold-soft: #fff7df;
+  --silver: #8b98a5;
+  --silver-soft: #f3f6f8;
+  --bronze: #b47a4f;
+  --bronze-soft: #fff1e8;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  outline: none;
+}
+
+button {
+  user-select: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.card-title {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.card:first-child .card-title > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+}
+
+.card:first-child .card-title > div:first-child::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0;
+}
+
+.left-tools,
+.right-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.segmented {
+  min-height: 38px;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7fafb;
+}
+
+.segmented button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+  line-height: 38px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.segmented button.active {
+  color: #fff;
+  background: var(--primary);
+}
+
+.searchbox {
+  min-width: 280px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  transition: border .16s ease, box-shadow .16s ease;
+}
+
+.searchbox:focus-within {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.searchbox input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 13px;
+}
+
+.searchbox input::placeholder {
+  color: var(--subtle);
+}
+
+.btn,
+select.btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn.ghost,
+select.btn.ghost {
+  color: var(--primary);
+  background: #fff;
+  border-color: rgba(15, 143, 140, .34);
+}
+
+.btn.ghost:hover:not(:disabled) {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+select.btn.ghost {
+  appearance: auto;
+  padding-right: 28px !important;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.top3-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 8px;
+}
+
+.top-card {
+  position: relative;
+  min-height: 178px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  overflow: hidden;
+  padding: 18px 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.top-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(30, 55, 66, .10);
+}
+
+.top-card.gold {
+  border-color: rgba(243, 184, 51, .32);
+  background: linear-gradient(180deg, #fffaf0, var(--gold-soft));
+}
+
+.top-card.silver {
+  border-color: rgba(139, 152, 165, .26);
+  background: linear-gradient(180deg, #ffffff, var(--silver-soft));
+}
+
+.top-card.bronze {
+  border-color: rgba(180, 122, 79, .26);
+  background: linear-gradient(180deg, #fffaf6, var(--bronze-soft));
+}
+
+.crown {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .78);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.top-card.gold .crown {
+  color: #8f650b;
+  border-color: rgba(243, 184, 51, .30);
+  background: rgba(255, 255, 255, .82);
+}
+
+.top-card.silver .crown {
+  color: #56636e;
+}
+
+.top-card.bronze .crown {
+  color: #8d5630;
+}
+
+.avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(30, 55, 66, .12);
+}
+
+.name {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid rgba(15, 143, 140, .16);
+  border-radius: 999px;
+  color: var(--primary);
+  background: rgba(255, 255, 255, .78);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.row {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  transition: var(--transition);
+}
+
+.row:hover {
+  border-color: var(--line-strong);
+  background: #fbfcfd;
+  box-shadow: 0 8px 20px rgba(30, 55, 66, .05);
+}
+
+.rank {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 13px;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.row .avatar {
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(15, 143, 140, .14);
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+.info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.subline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.pill {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid rgba(15, 143, 140, .16);
+  border-radius: 999px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.value {
+  min-width: 120px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.value .big {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.value .small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.loading,
+.empty {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.loading {
+  color: var(--primary);
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 920px) {
+  body {
+    padding: 14px 10px 22px;
+  }
+
+  .card {
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+
+  .card-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .toolbar,
+  .left-tools,
+  .right-tools {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .left-tools,
+  .right-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .segmented,
+  .searchbox {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .segmented button {
+    flex: 1;
+  }
+
+  .btn,
+  select.btn {
+    width: 100%;
+  }
+
+  .top3-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .top-card {
+    min-height: 154px;
+  }
+
+  .row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .info {
+    min-width: calc(100% - 102px);
+  }
+
+  .value {
+    width: 100%;
+    min-width: 0;
+    padding-left: 46px;
+    align-items: flex-start;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-tools,
+  .right-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    gap: 10px;
+  }
+
+  .rank {
+    width: 32px;
+    height: 32px;
+  }
+
+  .row .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .info {
+    min-width: calc(100% - 92px);
+  }
+
+  .value {
+    padding-left: 42px;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="card">
+      <div class="card-title">
+        <div>用户排行榜</div>
+        <div class="muted" id="statusText">—</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="left-tools">
+          <div class="segmented">
+            <button id="btnLevel" class="active" type="button">等级榜</button>
+            <button id="btnSpending" type="button">消费榜</button>
+          </div>
+
+          <div class="searchbox">
+            <input id="keyword" placeholder="搜索：昵称 / uid（支持模糊）" />
+          </div>
+
+          <button class="btn" id="btnSearch" type="button">搜索</button>
+          <button class="btn ghost" id="btnReset" type="button">重置</button>
+        </div>
+
+        <div class="right-tools">
+          <span class="muted">每页</span>
+          <select id="pageSize" class="btn ghost" style="padding:10px 12px;">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top3 -->
+    <div class="card">
+      <div class="card-title">
+        <div id="topTitle">Top 3</div>
+        <div class="muted">展示前 3 名，下面列表从第 4 名开始</div>
+      </div>
+
+      <div id="topLoading" class="loading" style="display:none;">加载中...</div>
+      <div id="topEmpty" class="empty" style="display:none;">暂无数据</div>
+
+      <div class="top3-wrap" id="top3"></div>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+      <div class="card-title">
+        <div>排行榜列表</div>
+        <div class="muted" id="totalText">—</div>
+      </div>
+
+      <div id="listLoading" class="loading" style="display:none;">加载中...</div>
+      <div id="listEmpty" class="empty" style="display:none;">暂无数据</div>
+      <div class="list" id="list"></div>
+
+      <div class="pager">
+        <button class="btn ghost" id="prevPage" type="button">上一页</button>
+        <span class="muted" id="pageText">—</span>
+        <button class="btn ghost" id="nextPage" type="button">下一页</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // ====== 配置：你的 API 路径 ======
+  const API_URL = "/api/operat/user_rankings.php";
+
+  // ====== 状态 ======
+  let state = {
+    type: "level",     // level / spending
+    keyword: "",
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    lastList: []
+  };
+
+  // ====== 工具 ======
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function fmtMoney(v){
+    // v 可能是字符串
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v ?? "0");
+    // 简单保留 2 位（你也可以改成不保留）
+    return n.toFixed(2);
+  }
+
+  function labelForType(){
+    return state.type === "spending" ? "消费榜" : "等级榜";
+  }
+
+  function buildUrl(){
+    const u = new URL(API_URL, location.origin);
+    u.searchParams.set("type", state.type);
+    u.searchParams.set("page", String(state.page));
+    u.searchParams.set("page_size", String(state.pageSize));
+    if (state.keyword) u.searchParams.set("keyword", state.keyword);
+    return u.toString();
+  }
+
+  function setLoading(isLoading){
+    document.getElementById("topLoading").style.display = isLoading ? "block" : "none";
+    document.getElementById("listLoading").style.display = isLoading ? "block" : "none";
+  }
+
+  function setEmpty(topEmpty, listEmpty){
+    document.getElementById("topEmpty").style.display = topEmpty ? "block" : "none";
+    document.getElementById("listEmpty").style.display = listEmpty ? "block" : "none";
+  }
+
+  function updateHeader(){
+    document.getElementById("topTitle").innerText = `Top 3（${labelForType()}）`;
+    document.getElementById("statusText").innerText = `当前：${labelForType()}`;
+  }
+
+  // ====== 渲染 Top3 + 列表 ======
+  function render(data){
+    const list = Array.isArray(data?.data?.list) ? data.data.list : [];
+    state.total = Number(data?.data?.total ?? 0) || 0;
+    state.lastList = list;
+
+    updateHeader();
+
+    // 分离 top3 + others（按照当前页拿到的数据的前3名来展示）
+    const top3 = list.slice(0, 3);
+    const others = list.slice(3);
+
+    // Top3
+    const topWrap = document.getElementById("top3");
+    topWrap.innerHTML = "";
+
+    if (top3.length === 0){
+      setEmpty(true, list.length === 0);
+    } else {
+      setEmpty(false, others.length === 0 && state.page === 1 && list.length <= 3 ? true : false);
+
+      // 排列：第2名 | 第1名 | 第3名（更像截图）
+      const order = [1,0,2].filter(i => top3[i]);
+
+      const classes = {
+        0: "gold",
+        1: "silver",
+        2: "bronze"
+      };
+
+      const crownText = {
+        0: "NO.1",
+        1: "NO.2",
+        2: "NO.3"
+      };
+
+      order.forEach((i) => {
+        const u = top3[i];
+        const cls = classes[i] || "silver";
+        const crown = crownText[i] || "TOP";
+
+        const showMain = state.type === "spending"
+          ? `¥ ${fmtMoney(u.cumulative_spending)}`
+          : `Lv.${esc(u.vip)}`;
+
+        const showSub = state.type === "spending"
+          ? `等级 Lv.${esc(u.vip)}`
+          : `消费 ¥ ${fmtMoney(u.cumulative_spending)}`;
+
+        topWrap.insertAdjacentHTML("beforeend", `
+          <div class="top-card ${cls}">
+            <div class="crown">${crown}</div>
+            <img class="avatar" src="${esc(u.headimgurl)}" alt="avatar" onerror="this.src='https://rcwulian.cn/img/logo.png'"/>
+            <div class="name">${esc(u.nickname || ("UID " + u.uid))}</div>
+            <div class="badge">
+              <span class="dot"></span>
+              <span>${showMain}</span>
+            </div>
+            <div class="muted">${showSub} · UID ${esc(u.uid)}</div>
+          </div>
+        `);
+      });
+    }
+
+    // List（从第4名开始显示，如果你更想显示全量列表，把 others 改成 list）
+    const listEl = document.getElementById("list");
+    listEl.innerHTML = "";
+
+    if (others.length === 0){
+      // 如果第一页只有 0~3 条，列表显示空提示即可
+      if (list.length === 0) {
+        document.getElementById("listEmpty").style.display = "block";
+      } else {
+        // 有 top3 但没有 others
+        document.getElementById("listEmpty").style.display = "block";
+      }
+    } else {
+      document.getElementById("listEmpty").style.display = "none";
+      others.forEach(u => {
+        const leftPill = `<span class="pill">Lv.${esc(u.vip)} · ${esc(u.vip_name || "")}</span>`;
+        const rightMain = state.type === "spending"
+          ? `¥ ${fmtMoney(u.cumulative_spending)}`
+          : `Lv.${esc(u.vip)}`;
+
+        const rightSub = state.type === "spending"
+          ? `累计消费`
+          : `消费 ¥ ${fmtMoney(u.cumulative_spending)}`;
+
+        listEl.insertAdjacentHTML("beforeend", `
+          <div class="row">
+            <div class="rank">${esc(u.rank)}</div>
+            <img class="avatar" src="${esc(u.headimgurl)}" alt="avatar" onerror="this.src='https://rcwulian.cn/img/logo.png'"/>
+            <div class="info">
+              <div class="name" style="text-align:left; max-width: 100%;">${esc(u.nickname || ("UID " + u.uid))}</div>
+              <div class="subline">
+                ${leftPill}
+                <span>UID ${esc(u.uid)}</span>
+              </div>
+            </div>
+            <div class="value">
+              <div class="big">${rightMain}</div>
+              <div class="small">${rightSub}</div>
+            </div>
+          </div>
+        `);
+      });
+    }
+
+    // 分页信息
+    const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+    document.getElementById("totalText").innerText = `共 ${state.total} 条 · 第 ${state.page} / ${totalPages} 页`;
+    document.getElementById("pageText").innerText = `第 ${state.page} 页`;
+
+    // 按钮可用性
+    document.getElementById("prevPage").disabled = state.page <= 1;
+    document.getElementById("nextPage").disabled = state.page >= totalPages;
+  }
+
+  // ====== 拉取 ======
+  async function load(){
+    setLoading(true);
+    document.getElementById("statusText").innerText = `加载中...`;
+
+    try{
+      const res = await fetch(buildUrl(), {
+        method: "GET",
+        credentials: "include" // ✅ 带 cookie（你的 session_token 在 cookie 里）
+      });
+
+      const data = await res.json();
+
+      if (data?.code !== 200){
+        setLoading(false);
+        setEmpty(true, true);
+        document.getElementById("statusText").innerText = data?.msg ? `错误：${data.msg}` : "请求失败";
+        document.getElementById("totalText").innerText = "—";
+        document.getElementById("pageText").innerText = "—";
+        return;
+      }
+
+      setLoading(false);
+      render(data);
+
+    }catch(e){
+      setLoading(false);
+      setEmpty(true, true);
+      document.getElementById("statusText").innerText = "网络错误 / 跨域 / 未登录";
+      console.error(e);
+    }
+  }
+
+  // ====== 事件绑定 ======
+  function setType(t){
+    state.type = t;
+    state.page = 1;
+
+    document.getElementById("btnLevel").classList.toggle("active", t === "level");
+    document.getElementById("btnSpending").classList.toggle("active", t === "spending");
+
+    load();
+  }
+
+  document.getElementById("btnLevel").addEventListener("click", ()=>setType("level"));
+  document.getElementById("btnSpending").addEventListener("click", ()=>setType("spending"));
+
+  document.getElementById("btnSearch").addEventListener("click", ()=>{
+    state.keyword = document.getElementById("keyword").value.trim();
+    state.page = 1;
+    load();
+  });
+
+  document.getElementById("btnReset").addEventListener("click", ()=>{
+    document.getElementById("keyword").value = "";
+    state.keyword = "";
+    state.page = 1;
+    load();
+  });
+
+  document.getElementById("keyword").addEventListener("keydown", (e)=>{
+    if (e.key === "Enter"){
+      state.keyword = e.target.value.trim();
+      state.page = 1;
+      load();
+    }
+  });
+
+  document.getElementById("pageSize").addEventListener("change", (e)=>{
+    state.pageSize = Number(e.target.value) || 20;
+    state.page = 1;
+    load();
+  });
+
+  document.getElementById("prevPage").addEventListener("click", ()=>{
+    if (state.page > 1){
+      state.page -= 1;
+      load();
+    }
+  });
+
+  document.getElementById("nextPage").addEventListener("click", ()=>{
+    const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+    if (state.page < totalPages){
+      state.page += 1;
+      load();
+    }
+  });
+
+  // ====== 初始化 ======
+  updateHeader();
+  load();
+</script>
+
+</body>
+</html>
