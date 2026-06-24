@@ -129,6 +129,42 @@ function menu_feature_key(array $menu): string
     return '';
 }
 
+function menu_append_system_tools(array &$groups, int $roleId): void
+{
+    if ($roleId <= 0) {
+        return;
+    }
+
+    $toolsId = (int)$groups['tools']['id'];
+    $append = function (array $item) use (&$groups): void {
+        foreach ($groups['tools']['children'] as $child) {
+            if (($child['jump'] ?? '') === $item['jump'] || ($child['title'] ?? '') === $item['title']) {
+                return;
+            }
+        }
+        $groups['tools']['children'][] = $item;
+    };
+
+    $append([
+        'id' => 9101,
+        'parent_id' => $toolsId,
+        'name' => 'system-profile',
+        'title' => '基本资料',
+        'icon' => 'user',
+        'jump' => '/iframe/link/system_profile',
+        'sort' => 9101,
+    ]);
+    $append([
+        'id' => 9102,
+        'parent_id' => $toolsId,
+        'name' => 'system-password',
+        'title' => '修改密码',
+        'icon' => 'tools',
+        'jump' => '/iframe/link/system_password',
+        'sort' => 9102,
+    ]);
+}
+
 function menu_compact_tree(array $menus, int $roleId): array
 {
     $groups = [
@@ -182,6 +218,8 @@ function menu_compact_tree(array $menus, int $roleId): array
             'sort' => (int)($menu['sort'] ?? 0),
         ];
     }
+
+    menu_append_system_tools($groups, $roleId);
 
     $tree = [[
         'id' => 9000,

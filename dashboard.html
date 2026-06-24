@@ -1768,6 +1768,7 @@
       if (text.includes('energy') || text.includes('能量')) return menuIcon('energy');
       if (text.includes('rank') || text.includes('stats') || text.includes('kanban') || text.includes('排行') || text.includes('数据') || text.includes('面板')) return menuIcon('chart');
       if (text.includes('report') || text.includes('ban') || text.includes('violation') || text.includes('patrol') || text.includes('audit') || text.includes('投诉') || text.includes('违规') || text.includes('巡查') || text.includes('审核')) return menuIcon('shield');
+      if (text.includes('profile') || text.includes('password') || text.includes('资料') || text.includes('密码')) return menuIcon('user');
       if (text.includes('config') || text.includes('setting') || text.includes('tools') || text.includes('配置') || text.includes('设置') || text.includes('工具')) return menuIcon('tools');
       if (text.includes('search') || text.includes('query') || text.includes('查询')) return menuIcon('search');
       return iconSvg;
@@ -2069,11 +2070,15 @@
       if (text.includes('franchise') || text.includes('user') || text.includes('invite') || text.includes('加盟') || text.includes('用户') || text.includes('邀请')) return 'user';
       if (text.includes('pay') || text.includes('recharge') || text.includes('amount') || text.includes('fund') || text.includes('支付') || text.includes('充值') || text.includes('金额') || text.includes('账户')) return 'wallet';
       if (text.includes('order') || text.includes('订单')) return 'order';
+      if (text.includes('profile') || text.includes('password') || text.includes('资料') || text.includes('密码')) return 'user';
+      if (text.includes('tools') || text.includes('系统') || text.includes('工具')) return 'tools';
       return 'device';
     }
 
     function moduleDescription(item) {
       const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('profile') || text.includes('基本资料')) return '查看和维护当前后台账号的基础资料。';
+      if (text.includes('password') || text.includes('修改密码')) return '修改当前后台账号登录密码。';
       if (text.includes('franchise') || text.includes('加盟')) return '管理加盟后台账号、绑定场地与待处理加盟申请。';
       if (text.includes('devicemgt') || text.includes('设备管理')) return '设备列表、状态、绑定关系与基础维护入口。';
       if (text.includes('adddev') || text.includes('添加')) return '新增设备资料并完成初始配置。';

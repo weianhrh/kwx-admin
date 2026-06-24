@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基本资料</title>
+  <style>
+    :root {
+      --brand: #0f918d;
+      --brand-dark: #08706d;
+      --brand-soft: #e7f7f6;
+      --ink: #15242c;
+      --muted: #687c86;
+      --line: #dbe7eb;
+      --panel: #ffffff;
+      --panel-soft: #f8fbfb;
+      --page: #f3f7f8;
+      --danger: #d94c4c;
+      --shadow: 0 18px 42px rgba(31, 58, 68, .08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    .page-shell {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .profile-panel {
+      max-width: 1080px;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .page-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 24px 26px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .page-title h1 {
+      position: relative;
+      margin: 0;
+      padding-left: 16px;
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .page-title h1::before {
+      position: absolute;
+      left: 0;
+      top: 4px;
+      width: 6px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--brand);
+      content: "";
+    }
+
+    .page-title p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-pill {
+      min-width: 78px;
+      border-radius: 999px;
+      padding: 8px 14px;
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .profile-body {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) 1fr;
+      gap: 18px;
+      padding: 22px 26px 28px;
+      background: linear-gradient(180deg, #fff 0%, #f8fbfb 100%);
+    }
+
+    .account-card,
+    .form-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+
+    .account-card {
+      padding: 22px;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, #15aaa5, #3563a8);
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 14px 26px rgba(15, 145, 141, .22);
+    }
+
+    .account-name {
+      margin-top: 18px;
+    }
+
+    .account-name strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .account-name span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .meta-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: var(--panel-soft);
+      font-size: 13px;
+    }
+
+    .meta-item span {
+      color: var(--muted);
+    }
+
+    .meta-item strong {
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .form-card {
+      padding: 22px;
+    }
+
+    .section-title {
+      margin: 0 0 18px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: #49606a;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: #fff;
+      outline: 0;
+      font-size: 14px;
+    }
+
+    .field input[readonly] {
+      color: #5a6e77;
+      background: #f5f8f9;
+    }
+
+    .field input:focus {
+      border-color: rgba(15, 145, 141, .5);
+      box-shadow: 0 0 0 4px rgba(15, 145, 141, .1);
+    }
+
+    .radio-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 120px));
+      gap: 10px;
+    }
+
+    .radio-card {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      background: #fff;
+      color: #49606a;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .radio-card input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 1px solid rgba(15, 145, 141, .24);
+      border-radius: 8px;
+      padding: 0 18px;
+      color: var(--brand-dark);
+      background: #effaf9;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: var(--brand);
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .message {
+      min-height: 22px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .message.error {
+      color: var(--danger);
+    }
+
+    .message.success {
+      color: var(--brand-dark);
+    }
+
+    @media (max-width: 760px) {
+      .page-shell {
+        padding: 14px;
+      }
+
+      .page-head,
+      .profile-body {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .btn {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="profile-panel">
+      <header class="page-head">
+        <div class="page-title">
+          <h1>基本资料</h1>
+          <p>查看当前后台账号信息，维护昵称、性别和手机号。</p>
+        </div>
+        <div class="status-pill" id="loadState">读取中</div>
+      </header>
+
+      <div class="profile-body">
+        <aside class="account-card">
+          <div class="avatar" id="avatarText">KX</div>
+          <div class="account-name">
+            <strong id="accountName">-</strong>
+            <span id="accountRole">角色读取中</span>
+          </div>
+          <div class="meta-list">
+            <div class="meta-item"><span>后台ID</span><strong id="adminId">-</strong></div>
+            <div class="meta-item"><span>用户UID</span><strong id="userUid">-</strong></div>
+            <div class="meta-item"><span>绑定场地</span><strong id="venueName">-</strong></div>
+          </div>
+        </aside>
+
+        <section class="form-card">
+          <h2 class="section-title">资料维护</h2>
+          <form id="profileForm" autocomplete="off">
+            <div class="form-grid">
+              <div class="field">
+                <label for="role">我的角色</label>
+                <input id="role" name="role" type="text" readonly>
+              </div>
+              <div class="field">
+                <label for="username">用户名</label>
+                <input id="username" name="username" type="text" readonly>
+              </div>
+              <div class="field">
+                <label for="nickname">昵称</label>
+                <input id="nickname" name="nickname" type="text" placeholder="请输入昵称">
+              </div>
+              <div class="field">
+                <label for="cellphone">手机</label>
+                <input id="cellphone" name="cellphone" type="text" placeholder="请输入手机号">
+              </div>
+              <div class="field full">
+                <label>性别</label>
+                <div class="radio-row">
+                  <label class="radio-card"><input type="radio" name="sex" value="男" checked>男</label>
+                  <label class="radio-card"><input type="radio" name="sex" value="女">女</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn" type="button" id="refreshBtn">重新读取</button>
+              <button class="btn primary" type="submit" id="saveBtn">保存资料</button>
+            </div>
+            <div class="message" id="message"></div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const stateEl = document.getElementById('loadState');
+    const messageEl = document.getElementById('message');
+    const form = document.getElementById('profileForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    const fields = {
+      role: document.getElementById('role'),
+      username: document.getElementById('username'),
+      nickname: document.getElementById('nickname'),
+      cellphone: document.getElementById('cellphone'),
+      accountName: document.getElementById('accountName'),
+      accountRole: document.getElementById('accountRole'),
+      adminId: document.getElementById('adminId'),
+      userUid: document.getElementById('userUid'),
+      venueName: document.getElementById('venueName'),
+      avatarText: document.getElementById('avatarText')
+    };
+
+    function valueOrDash(value) {
+      if (value === null || value === undefined || value === '') return '-';
+      return String(value);
+    }
+
+    function setMessage(text, type) {
+      messageEl.textContent = text || '';
+      messageEl.className = 'message' + (type ? ' ' + type : '');
+    }
+
+    function setLoading(loading) {
+      saveBtn.disabled = loading;
+      refreshBtn.disabled = loading;
+      stateEl.textContent = loading ? '处理中' : '可编辑';
+    }
+
+    function parseJsonResponse(response) {
+      return response.text().then(function(text) {
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error('接口返回不是 JSON：' + text.slice(0, 80));
+        }
+      });
+    }
+
+    function renderAuth(user) {
+      fields.accountName.textContent = valueOrDash(user.username);
+      fields.accountRole.textContent = 'role_' + valueOrDash(user.role_id);
+      fields.adminId.textContent = valueOrDash(user.id);
+      fields.userUid.textContent = valueOrDash(user.uid);
+      fields.venueName.textContent = valueOrDash(user.venue_name || user.venue_id);
+      fields.avatarText.textContent = (valueOrDash(user.username).slice(0, 2) || 'KX').toUpperCase();
+      fields.username.value = valueOrDash(user.username);
+      fields.role.value = 'role_' + valueOrDash(user.role_id);
+    }
+
+    function renderProfile(data) {
+      fields.username.value = valueOrDash(data.username);
+      fields.role.value = valueOrDash(data.role_name);
+      fields.nickname.value = valueOrDash(data.nickname) === '-' ? '' : valueOrDash(data.nickname);
+      fields.cellphone.value = valueOrDash(data.phone_number) === '-' ? '' : valueOrDash(data.phone_number);
+      const sex = data.sex === '女' ? '女' : '男';
+      const radio = form.querySelector('input[name="sex"][value="' + sex + '"]');
+      if (radio) radio.checked = true;
+      fields.accountRole.textContent = valueOrDash(data.role_name);
+      if (data.username) {
+        fields.accountName.textContent = data.username;
+        fields.avatarText.textContent = String(data.username).slice(0, 2).toUpperCase();
+      }
+    }
+
+    async function loadAuth() {
+      const result = await fetch('/api/auth/me.php', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      }).then(parseJsonResponse);
+      if (result.code !== 0) throw new Error(result.msg || '当前登录已失效');
+      renderAuth(result.data || {});
+    }
+
+    async function loadProfile() {
+      const result = await fetch('/api/user/info.php', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      }).then(parseJsonResponse);
+      if (result.code !== 0) throw new Error(result.msg || '资料读取失败');
+      renderProfile(result.data || {});
+    }
+
+    async function loadAll() {
+      setLoading(true);
+      setMessage('正在读取当前账号资料...');
+      try {
+        await loadAuth();
+        await loadProfile();
+        stateEl.textContent = '可编辑';
+        setMessage('资料已同步。', 'success');
+      } catch (error) {
+        stateEl.textContent = '需检查';
+        setMessage(error.message || '资料读取失败', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        refreshBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const nickname = fields.nickname.value.trim();
+      const phone = fields.cellphone.value.trim();
+      const sex = form.querySelector('input[name="sex"]:checked').value === '女' ? 1 : 0;
+
+      if (!nickname) {
+        setMessage('昵称不能为空。', 'error');
+        fields.nickname.focus();
+        return;
+      }
+
+      setLoading(true);
+      setMessage('正在保存资料...');
+      try {
+        const result = await fetch('/api/user/info.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            nickname: nickname,
+            sex: sex,
+            phone_number: phone
+          })
+        }).then(parseJsonResponse);
+
+        if (result.code !== 0) throw new Error(result.msg || '保存失败');
+        setMessage('资料保存成功。', 'success');
+        stateEl.textContent = '已保存';
+      } catch (error) {
+        stateEl.textContent = '保存失败';
+        setMessage(error.message || '保存失败', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        refreshBtn.disabled = false;
+      }
+    });
+
+    refreshBtn.addEventListener('click', loadAll);
+    loadAll();
+  </script>
+</body>
+</html>
