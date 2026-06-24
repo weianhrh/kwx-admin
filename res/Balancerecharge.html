@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>用户管理</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+/* 旧页面的 canvas 背景动画保留脚本，不改 JS，只用样式隐藏，避免和新模板风格冲突 */
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.form-container {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.search-area {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(135px, 1fr));
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.form-item {
+  min-width: 0;
+  width: auto;
+}
+
+.venue-filter-item {
+  width: auto;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.form-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.form-input::placeholder {
+  color: #9aabb2;
+}
+
+.form-input:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+select.form-input {
+  cursor: pointer;
+}
+
+#streamer_venue_filter {
+  cursor: pointer;
+}
+
+.button-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: 0;
+  flex-wrap: wrap;
+}
+
+.form-button,
+.czcx-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.form-button {
+  border: 1px solid var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.form-button:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.czcx-btn {
+  border: 1px solid var(--line);
+  color: #486169;
+  background: #fff;
+}
+
+.czcx-btn:hover,
+.filter-active {
+  border-color: rgba(15, 143, 140, .28) !important;
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+}
+
+#user-list {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.user-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 390px;
+  align-items: center;
+  gap: 14px;
+  min-height: 88px;
+  margin-top: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  transition: border .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.user-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.user-img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--primary-soft);
+  flex-shrink: 0;
+}
+
+.user-info {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px 14px;
+  align-items: center;
+}
+
+.user-info span {
+  min-width: 0;
+  color: #34464e;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-info .user-name {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.badge-deleted,
+.badge-streamer,
+.badge-muted {
+  flex: 0 0 auto;
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.badge-streamer {
+  color: #a16d13;
+  border: 1px solid rgba(255, 184, 77, .34);
+  background: var(--warning-soft);
+}
+
+.badge-deleted,
+.badge-muted {
+  color: var(--danger);
+  border: 1px solid rgba(223, 91, 87, .28);
+  background: var(--danger-soft);
+}
+
+.user-actions {
+  width: 390px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.user-actions .action-row,
+.user-actions .action-row-full {
+  display: contents !important;
+}
+
+.user-actions .action-row > .action-row-full {
+  grid-column: auto !important;
+}
+
+.action-btn,
+.streamer-select {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.action-btn:hover {
+  box-shadow: 0 8px 20px rgba(30, 55, 66, .10);
+  transform: translateY(-1px);
+  filter: none;
+}
+
+.action-btn i {
+  flex: 0 0 auto;
+}
+
+.streamer-select {
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  color: #34464e;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.streamer-select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.btn-recharge,
+.btn-streamer,
+.btn-assign,
+.btn-nickname {
+  background: var(--primary);
+}
+
+.btn-recharge:hover,
+.btn-streamer:hover,
+.btn-assign:hover,
+.btn-nickname:hover {
+  background: var(--primary-dark);
+}
+
+.btn-gold-recharge {
+  color: #8a5a09;
+  border-color: rgba(255, 184, 77, .36);
+  background: var(--warning-soft);
+}
+
+.btn-consume {
+  color: #486169;
+  border-color: var(--line);
+  background: #fff;
+}
+
+.btn-delete,
+.btn-mute {
+  color: var(--danger);
+  border-color: rgba(223, 91, 87, .30);
+  background: var(--danger-soft);
+}
+
+.btn-undelete,
+.btn-unmute {
+  color: var(--success);
+  border-color: rgba(32, 168, 118, .30);
+  background: var(--success-soft);
+}
+
+.user-actions .btn-mute,
+.user-actions .btn-unmute {
+  grid-column: span 2;
+}
+
+.loading {
+  margin: 0 18px 18px;
+  padding: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--primary);
+  background: #fbfcfd;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pagination {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 18px 18px;
+}
+
+.pagination button {
+  min-width: 82px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #486169;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.pagination button:not(:disabled):hover {
+  border-color: rgba(15, 143, 140, .28);
+  color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.pagination button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+#page-info {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .search-area {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .user-card {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .user-actions {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .user-actions .btn-mute,
+  .user-actions .btn-unmute {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    box-shadow: none;
+  }
+
+  .card-title {
+    min-height: 54px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+
+  .form-container,
+  #user-list {
+    padding: 14px;
+  }
+
+  .search-area {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .button-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .form-button,
+  .czcx-btn {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .user-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .user-img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .user-info {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .user-info .user-name {
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  .user-info span {
+    font-size: 12px;
+  }
+
+  .user-actions {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .action-btn,
+  .streamer-select {
+    height: 40px;
+    font-size: 12px;
+  }
+
+  .streamer-select,
+  .user-actions .btn-mute,
+  .user-actions .btn-unmute {
+    grid-column: 1 / -1;
+  }
+
+  .pagination {
+    padding: 0 14px 14px;
+    gap: 8px;
+  }
+
+  .pagination button {
+    min-width: 72px;
+    height: 38px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 8px;
+  }
+
+  .form-container,
+  #user-list {
+    padding: 12px;
+  }
+
+  .button-group {
+    grid-template-columns: 1fr;
+  }
+
+  .user-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .action-btn,
+  .streamer-select {
+    grid-column: 1 / -1;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+<div class="container">
+  <div class="card">
+    <div class="card-title">用户管理</div>
+
+    <div class="form-container">
+      <div class="search-area">
+        <div class="form-item">
+          <label class="form-label">ID</label>
+          <input type="text" name="id" placeholder="请输入" autocomplete="off" class="form-input">
+        </div>
+        <div class="form-item">
+          <label class="form-label">用户名</label>
+          <input type="text" name="username" placeholder="请输入" autocomplete="off" class="form-input">
+        </div>
+        <div class="form-item">
+          <label class="form-label">手机号</label>
+          <input type="text" name="phone" placeholder="请输入" autocomplete="off" class="form-input">
+        </div>
+        <div class="form-item">
+          <label class="form-label">邀请码</label>
+          <input type="text" name="invitation_code" placeholder="请输入邀请码" autocomplete="off" class="form-input">
+        </div>
+        <div class="form-item venue-filter-item">
+          <label class="form-label">场地搜索</label>
+          <input type="text"
+                 id="venue_search_filter"
+                 placeholder="输入场地ID/名称"
+                 autocomplete="off"
+                 class="form-input">
+        </div>
+        
+        <div class="form-item venue-filter-item">
+          <label class="form-label">场地</label>
+          <select id="streamer_venue_filter"
+                  name="streamer_venue"
+                  class="form-input">
+            <option value="">全部场地</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="czcx-btn" id="filter-streamer-btn">
+         <i class="fas fa-video"></i> 只看主播
+        </button>
+        <button class="form-button" type="submit">
+          <i class="fas fa-search"></i> 搜索
+        </button>
+        <a href="Rechargeinquiry.html" class="czcx-btn">充值查询</a>
+        <a href="rankings.html" class="czcx-btn">排行榜</a>
+      </div>
+    </div>
+
+    <div id="user-list"></div>
+    <div id="loading" class="loading" style="display:none;">正在加载...</div>
+
+    <div class="pagination">
+      <button id="prev-page" disabled>上一页</button>
+      <span id="page-info">第 1 页，共 1 页</span>
+      <button id="next-page">下一页</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script src="canvas-nest-colorful.js"></script>
+
+<script>
+  const searchButton = document.querySelector('.form-button');
+  const searchInputs = document.querySelectorAll('.form-input');
+  const userList = document.getElementById('user-list');
+  const prevPageButton = document.getElementById('prev-page');
+  const nextPageButton = document.getElementById('next-page');
+  const pageInfo = document.getElementById('page-info');
+  const loading = document.getElementById('loading');
+  const filterStreamerBtn = document.getElementById('filter-streamer-btn');
+const venueSearchFilter = document.getElementById('venue_search_filter');
+const streamerVenueFilter = document.getElementById('streamer_venue_filter');
+
+let venueFilterEventsBound = false;
+
+    let streamerFilterType = 0; 
+    // 0 = 全部用户
+    // 1 = 只看主播
+    // 2 = 只看管理员
+  let venueList = [];
+  let currentPage = 1;
+  let totalPages = 1;
+  let lastParams = {}; // ✅ 记住搜索条件，翻页时也带上
+
+  function viewConsume(uid) {
+    // 你原页面没有消费查询，这里沿用第一个页面的跳转（需要就保留，不需要就删）
+    const url = `ComsumQuery.html?user_id=${uid}`;
+    window.location.href = url;
+  }
+function goRechargeQuery(uid){
+  // 你按你实际页面改这里的路径即可
+  window.location.href = `Rechargeinquiry.html?user_id=${encodeURIComponent(uid)}`;
+}
+
+function goDriveRecord(uid){
+  // 你按你实际页面改这里的路径即可
+  window.location.href = `/res/views/venues/AdminDrivingOrders.html?user_id=${encodeURIComponent(uid)}`;
+}
+  function buildQuery(params) {
+    return Object.entries(params)
+      .filter(([_, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+  }
+function collectSearchParams() {
+  const params = {};
+
+  searchInputs.forEach(input => {
+    const name = input.getAttribute('name');
+    const v = (input.value || '').trim();
+
+    // 没有 name 的输入框，例如场地搜索框，不直接传给接口
+    if (name && v) {
+      params[name] = v;
+    }
+  });
+
+  // 原来的主播/管理员筛选
+  // 1 = 主播，2 = 管理员
+  if (streamerFilterType === 1 || streamerFilterType === 2) {
+    params.is_streamer = String(streamerFilterType);
+  }
+
+  return params;
+}
+
+function updateStreamerFilterButton() {
+  if (!filterStreamerBtn) return;
+
+  filterStreamerBtn.classList.toggle('filter-active', streamerFilterType !== 0);
+
+  if (streamerFilterType === 0) {
+    filterStreamerBtn.innerHTML = '<i class="fas fa-video"></i> 只看主播';
+  } else if (streamerFilterType === 1) {
+    filterStreamerBtn.innerHTML = '<i class="fas fa-user-shield"></i> 只看管理员';
+  } else {
+    filterStreamerBtn.innerHTML = '<i class="fas fa-users"></i> 显示全部用户';
+  }
+}
+function fetchVenueList() {
+  if (venueList.length > 0) {
+    renderVenueFilterOptions(venueSearchFilter ? venueSearchFilter.value : '');
+    bindTopVenueFilterEvents();
+    return Promise.resolve(venueList);
+  }
+
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/operat/EnergyGift.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        try {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText || '{}');
+
+            if (response.code === 0 && Array.isArray(response.data)) {
+              venueList = response.data;
+
+              venueList.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+
+              renderVenueFilterOptions('');
+              bindTopVenueFilterEvents();
+            }
+          }
+        } catch (e) {
+          console.error('场地列表解析失败:', e);
+        }
+
+        resolve(venueList);
+      }
+    };
+
+    xhr.onerror = function () {
+      console.error('场地列表加载失败');
+      resolve(venueList);
+    };
+
+    xhr.send('action=get_venues');
+  });
+}
+function renderVenueFilterOptions(keyword = '') {
+  if (!streamerVenueFilter) return;
+
+  const oldValue = streamerVenueFilter.value || '';
+  const key = String(keyword || '').trim().toLowerCase();
+
+  streamerVenueFilter.innerHTML = '<option value="">全部场地</option>';
+
+  const matchedVenues = venueList.filter(venue => {
+    const text = `${venue.id} - ${venue.venue_name || ''}`.toLowerCase();
+    return key === '' || text.includes(key);
+  });
+
+  matchedVenues.forEach(venue => {
+    const option = document.createElement('option');
+    option.value = String(venue.id);
+    option.textContent = `${venue.id} - ${venue.venue_name}`;
+    streamerVenueFilter.appendChild(option);
+  });
+
+  // 如果原来选中的场地还在搜索结果里，保留选中
+  if (oldValue && matchedVenues.some(v => String(v.id) === String(oldValue))) {
+    streamerVenueFilter.value = oldValue;
+    return;
+  }
+
+  // 输入搜索时，自动选中第一个匹配场地
+  if (key && matchedVenues.length > 0) {
+    streamerVenueFilter.value = String(matchedVenues[0].id);
+  }
+}
+
+function bindTopVenueFilterEvents() {
+  if (venueFilterEventsBound) return;
+  venueFilterEventsBound = true;
+
+  // 下拉框变化后，自动刷新列表
+  if (streamerVenueFilter) {
+    streamerVenueFilter.addEventListener('change', function () {
+      currentPage = 1;
+      const params = collectSearchParams();
+      lastParams = params;
+      loadTableData(params);
+    });
+  }
+
+  // 输入场地名称/ID，只过滤下拉框，不立刻请求接口
+  if (venueSearchFilter) {
+    venueSearchFilter.addEventListener('input', function () {
+      renderVenueFilterOptions(this.value);
+    });
+
+    // 输入后按回车，直接搜索
+    venueSearchFilter.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        currentPage = 1;
+        const params = collectSearchParams();
+        lastParams = params;
+        loadTableData(params);
+      }
+    });
+  }
+}
+
+function buildVenueOptions(selectedId = '') {
+  let html = '<option value="">请选择场地</option>';
+  venueList.forEach(venue => {
+    const selected = String(venue.id) === String(selectedId) ? 'selected' : '';
+    html += `<option value="${venue.id}" ${selected}>${venue.id} - ${venue.venue_name}</option>`;
+  });
+  return html;
+}
+
+function getVenueName(id) {
+  if (!id) return '未分配';
+  const venue = venueList.find(v => String(v.id) === String(id));
+  return venue ? `${venue.id} - ${venue.venue_name}` : `场地ID:${id}`;
+}
+
+async function toggleUserStreamer(uid, type) {
+  const name = Number(type) === 2 ? '管理员' : '主播';
+  const tip = Number(type) === 0 ? '确认取消该用户身份吗？' : `确认将该用户设为${name}吗？`;
+  if (!confirm(tip)) return;
+
+  try {
+    const r = await fetch(`/api/user/setUserStreamer.php?uid=${encodeURIComponent(uid)}&type=${encodeURIComponent(type)}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    const d = await r.json();
+    alert(d.msg || '操作完成');
+
+    if (Number(d.code) === 0) {
+      loadTableData(lastParams);
+    }
+  } catch (e) {
+    console.error(e);
+    alert('主播身份切换失败，请稍后再试');
+  }
+}
+
+async function saveStreamerVenue(uid) {
+  const select = document.getElementById(`streamer_venue_${uid}`);
+  if (!select) {
+    alert('未找到场地下拉框');
+    return;
+  }
+
+  const streamerVenue = (select.value || '').trim();
+  if (!streamerVenue) {
+    alert('请先选择场地');
+    return;
+  }
+
+  const form = new FormData();
+  form.append('uid', String(uid));
+  form.append('streamer_venue', String(streamerVenue));
+
+  try {
+    const r = await fetch('/api/user/updateStreamerVenue.php', {
+      method: 'POST',
+      body: form,
+      credentials: 'include'
+    });
+
+    const d = await r.json();
+    alert(d.msg || '操作完成');
+
+    if (Number(d.code) === 0) {
+      loadTableData(lastParams);
+    }
+  } catch (e) {
+    console.error(e);
+    alert('分配场地失败，请稍后再试');
+  }
+}
+  // ✅ 读取 URL 参数
+  function getQueryParam(name) {
+    const url = new URL(window.location.href);
+    return (url.searchParams.get(name) || '').trim();
+  }
+
+  // ✅ 自动把 URL 里的 invitation_code 填到输入框并搜索
+  function applyInvitationFromUrl() {
+    const inv = getQueryParam('invitation_code');
+    if (!inv) return false;
+
+    const invInput = document.querySelector('input[name="invitation_code"]');
+    if (invInput) invInput.value = inv;
+
+    currentPage = 1;
+    lastParams = { invitation_code: inv };
+    loadTableData(lastParams);
+    return true;
+  }
+
+  // 初始化表格数据
+async function loadTableData(params = {}) {
+  await fetchVenueList();
+    lastParams = params;
+
+    const p = { ...params };
+    p.page = currentPage;
+    p.limit = 20;
+
+    const url = `/api/user/getUserList.php?${buildQuery(p)}`;
+
+    loading.style.display = 'block';
+    fetch(url)
+      .then(r => {
+        if (!r.ok) throw new Error('网络响应异常');
+        return r.json();
+      })
+      .then(data => {
+        loading.style.display = 'none';
+
+        if (data.code === 0) {
+          userList.innerHTML = '';
+
+          totalPages = Math.max(1, Math.ceil((Number(data.count) || 0) / p.limit));
+          pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+
+          prevPageButton.disabled = currentPage === 1;
+          nextPageButton.disabled = currentPage === totalPages;
+
+          (data.data || []).forEach(item => {
+            const isDeleted = Number(item.deleted) === 1;
+            const terraceMap = {
+              mobile: '手机号',
+              wx: '微信',
+              google: 'Google',
+              apple: 'Apple',
+              line: 'LINE',
+              Facebook: 'Facebook',
+              dy: '抖音',
+              ks: '快手'
+            };
+            const registerWay = terraceMap[item.terrace] || (item.terrace || '未知');
+
+            const invitation = item.invitation_code || '未设置';
+
+            const safeUsername = (item.username || '').replace(/'/g, "\\'");
+
+            const userHTML = `
+              <div class="user-card">
+                <img class="user-img" src="${item.avatar}" onerror="this.src='default-avatar.png'">
+
+                <div class="user-info">
+                    <span class="user-name">
+                        ${
+                          Number(item.is_streamer) === 1
+                            ? '<span class="badge-streamer">主播</span>'
+                            : (Number(item.is_streamer) === 2 ? '<span class="badge-streamer">管理员</span>' : '')
+                        }
+                      ${Number(item.is_mute) === 1 ? '<span class="badge-muted">禁言</span>' : ''}
+                      ${item.username || '-'}
+                      ${isDeleted ? '<span class="badge-deleted">已注销</span>' : ''}
+                    </span>
+                  <span>ID: ${item.id}</span>
+                  <span>手机号: ${item.phone || '未设置'}</span>
+                  <span>邀请码: ${invitation}</span>
+                  <span>分配场地: ${getVenueName(item.streamer_venue)}</span>
+                  <span>注册方式: ${registerWay}</span>
+                  <span>用户余额: ¥${item.wallet || '0.00'}</span>
+                  <span>用户金币: $${item.gold_balance || '0.00'}</span>
+                  <span>加入时间: ${item.jointime || '-'}</span>
+                </div>
+
+<div class="user-actions">
+
+  ${
+    Number(item.is_streamer) > 0
+      ? `
+      <div class="action-row">
+        <button class="action-btn btn-streamer" onclick="toggleUserStreamer(${item.id}, 0)">
+          <i class="fas fa-user-minus"></i> 取消身份
+        </button>
+
+        <button class="action-btn btn-assign" onclick="saveStreamerVenue(${item.id})">
+          <i class="fas fa-map-marker-alt"></i> 分配场地
+        </button>
+      </div>
+
+      <select class="streamer-select" id="streamer_venue_${item.id}">
+        ${buildVenueOptions(item.streamer_venue)}
+      </select>
+      `
+      : `
+      <div class="action-row">
+        <button class="action-btn btn-streamer" onclick="toggleUserStreamer(${item.id}, 1)">
+          <i class="fas fa-video"></i> 设为主播
+        </button>
+        
+        <button class="action-btn btn-assign" onclick="toggleUserStreamer(${item.id}, 2)">
+          <i class="fas fa-user-shield"></i> 设为管理员
+        </button>
+        <div class="action-row action-row-full">
+          <button class="action-btn btn-nickname" onclick="changeNicknameByAdmin(${item.id}, '${safeUsername}')">
+            <i class="fas fa-user-edit"></i> 改昵称
+          </button>
+        </div>
+      </div>
+      `
+  }
+
+<div class="action-row">
+  <button class="action-btn btn-recharge" onclick="rechargeUser(${item.id})">
+    <i class="fas fa-battery-half"></i> 电池充值
+  </button>
+
+  <button class="action-btn btn-gold-recharge" onclick="goldRechargeUser(${item.id})">
+    <i class="fas fa-coins"></i> 金币充值
+  </button>
+</div>
+
+<div class="action-row">
+  ${
+    Number(item.is_streamer) > 0
+      ? `
+      <button class="action-btn btn-consume" onclick="goRechargeQuery(${item.id})">
+        <i class="fas fa-file-invoice-dollar"></i> 充值查询
+      </button>
+      `
+      : `
+      <button class="action-btn btn-consume" onclick="goDriveRecord(${item.id})">
+        <i class="fas fa-route"></i> 驾驶记录
+      </button>
+      `
+  }
+
+  <button class="action-btn ${isDeleted ? 'btn-undelete' : 'btn-delete'}"
+          onclick="toggleUserDeleted(${item.id}, ${isDeleted})">
+    <i class="fas ${isDeleted ? 'fa-user-check' : 'fa-user-slash'}"></i>
+    ${isDeleted ? '取消注销' : '注销'}
+  </button>
+</div>
+
+<!-- 暂时隐藏禁言、取消禁言按钮-->
+<div class="action-row action-row-full">
+  <button class="action-btn ${Number(item.is_mute) === 1 ? 'btn-unmute' : 'btn-mute'}"
+          onclick="toggleUserMute(${item.id}, ${Number(item.is_mute)})">
+    <i class="fas ${Number(item.is_mute) === 1 ? 'fa-comment-slash' : 'fa-ban'}"></i>
+    ${Number(item.is_mute) === 1 ? '取消禁言' : '禁言'}
+  </button>
+</div>
+
+              </div>
+            `;
+            userList.insertAdjacentHTML('beforeend', userHTML);
+          });
+
+        } else {
+          console.error('获取用户列表失败:', data.msg);
+        }
+      })
+      .catch(err => {
+        loading.style.display = 'none';
+        console.error('数据加载失败:', err);
+      });
+  }
+
+  // 搜索
+searchButton.addEventListener('click', function (event) {
+  event.preventDefault();
+  currentPage = 1;
+  const params = collectSearchParams();
+  lastParams = params;
+  loadTableData(params);
+});
+
+  // 翻页保留条件
+  prevPageButton.addEventListener('click', function () {
+    if (currentPage > 1) {
+      currentPage--;
+      loadTableData(lastParams);
+    }
+  });
+
+  nextPageButton.addEventListener('click', function () {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadTableData(lastParams);
+    }
+  });
+
+  // 充值（保持你原接口）
+    function rechargeUser(uid) {
+  const amount = prompt('请输入电池充值金额（输入 -100 表示扣减 100）');
+  if (amount === null) return;
+
+  const value = String(amount).trim();
+  if (value === '' || isNaN(value)) {
+    alert('无效的电池充值金额');
+    return;
+  }
+
+  const url = '/api/user/recharge.php';
+  const formData = new FormData();
+  formData.append('uid', uid);
+  formData.append('amount', value);
+
+  fetch(url, { method: 'POST', body: formData })
+    .then(r => {
+      if (!r.ok) throw new Error('网络响应异常');
+      return r.json();
+    })
+    .then(res => {
+      if (res.success) {
+        alert('电池余额变动成功');
+        loadTableData(lastParams);
+      } else {
+        alert('电池余额变动失败: ' + (res.message || '未知错误'));
+      }
+    })
+    .catch(e => {
+      console.error(e);
+      alert('请求失败，请稍后重试');
+    });
+}
+    function goldRechargeUser(uid) {
+  const amount = prompt('请输入金币充值数量（输入 -100 表示扣减 100）');
+  if (amount === null) return;
+
+  const value = String(amount).trim();
+  if (!/^-?\d+$/.test(value)) {
+    alert('金币数量必须是整数，例如 100 或 -100');
+    return;
+  }
+
+  const url = '/api/user/gold_recharge.php';
+  const formData = new FormData();
+  formData.append('uid', uid);
+  formData.append('amount', value);
+
+  fetch(url, { method: 'POST', body: formData })
+    .then(r => {
+      if (!r.ok) throw new Error('网络响应异常');
+      return r.json();
+    })
+    .then(res => {
+      if (res.success) {
+        alert('金币变动成功');
+        loadTableData(lastParams);
+      } else {
+        alert('金币变动失败: ' + (res.message || '未知错误'));
+      }
+    })
+    .catch(e => {
+      console.error(e);
+      alert('请求失败，请稍后重试');
+    });
+}
+  // ✅ 移植：注销 / 取消注销逻辑（按你第一个页面的写法）
+  async function toggleUserDeleted(uid, isDeleted) {
+    const actionText = isDeleted ? '取消注销' : '注销';
+    if (!confirm(`确认要${actionText}该用户吗？`)) return;
+
+    const form = new FormData();
+    form.append('uid', String(uid));
+
+    try {
+      const r = await fetch('/api/user/toggleUserDeleted.php', {
+        method: 'POST',
+        body: form,
+        credentials: 'include'
+      });
+
+      const d = await r.json();
+      alert(d.message || '操作完成');
+
+      if (d.success) {
+        loadTableData(lastParams);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('操作失败，请稍后再试');
+    }
+  }
+async function toggleUserMute(uid, isMute) {
+  const actionText = Number(isMute) === 1 ? '取消禁言' : '禁言';
+  if (!confirm(`确认要${actionText}该用户吗？`)) return;
+
+  const form = new FormData();
+  form.append('uid', String(uid));
+
+  try {
+    const r = await fetch('/api/user/toggleUserMute.php', {
+      method: 'POST',
+      body: form,
+      credentials: 'include'
+    });
+
+    const d = await r.json();
+    alert(d.message || '操作完成');
+
+    if (d.success) {
+      loadTableData(lastParams);
+    }
+  } catch (e) {
+    console.error(e);
+    alert('操作失败，请稍后再试');
+  }
+}
+  // 改昵称（保持你原逻辑）
+  async function changeNicknameByAdmin(uid, current='') {
+    const n = prompt('新昵称（≤25个字符）', current || '')?.trim();
+    if (!n) return;
+
+    const form = new FormData();
+    form.append('uid', String(uid));
+    form.append('nickname', n);
+
+    const r = await fetch('/api/operat/updateNickname.php', {
+      method: 'POST',
+      body: form,
+      credentials: 'include'
+    });
+
+    const d = await r.json();
+    alert(d.message || (d.success ? '成功' : '失败'));
+    if (d.success) loadTableData(lastParams);
+  }
+
+  // 初始化：优先读 URL invitation_code
+  const used = applyInvitationFromUrl();
+  if (!used) loadTableData();
+  if (filterStreamerBtn) {
+  updateStreamerFilterButton();
+
+    filterStreamerBtn.addEventListener('click', function () {
+      streamerFilterType++;
+    
+      if (streamerFilterType > 2) {
+        streamerFilterType = 0;
+      }
+    
+      updateStreamerFilterButton();
+      currentPage = 1;
+    
+      const params = collectSearchParams();
+      lastParams = params;
+      loadTableData(params);
+    });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>客服面板</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { --green:#55c355; --red:#ff4d4f; --bubble-me:#daf1ff; --bubble-peer:#e8f7df; }
+  html,body{height:100%;}
+  *{box-sizing:border-box;}
+  body{margin:16px;font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#fff;}
+  /* --- 布局 --- */
+  #wrap{
+    display:grid; grid-template-columns:300px 1fr; gap:16px;
+    height:calc(100vh - 32px);
+  }
+  #list, #chat{min-height:0;}
+  #list{border-right:1px solid #eee; padding-right:12px; overflow:auto;}
+  #chat{display:flex; flex-direction:column; min-height:0;}
+
+  /* --- 会话列表 --- */
+  .conv{display:grid; grid-template-columns:40px 1fr auto; gap:8px;
+        align-items:center; padding:10px 8px; border-radius:10px; margin-bottom:8px; border:1px solid #f2f2f2; cursor:pointer;}
+  .conv:hover{background:#f7f7f7;}
+  .conv.active{background:#eaf9ea; border-color:#def1de;}
+  .avatar{width:40px;height:40px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;overflow:hidden;}
+  .conv-main{display:flex;flex-direction:column;min-width:0;}
+ .conv-peer{
+  font-weight:600;font-size:14px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+  .last{color:#999;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
+
+  /* --- 顶部标题 --- */
+  #title{margin:0 0 10px;}
+  #statusDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#55c355;vertical-align:middle;margin-right:6px;}
+
+  /* --- 消息区 --- */
+  #msgs-wrap{position:relative;min-height:0;flex:1;display:flex;flex-direction:column;}
+  /* 让输入区与消息区保持“1/4屏”间距：用内边距撑开可视底部 */
+  #msgs{flex:1;min-height:0;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px;padding-bottom:25vh;background:#fff;overscroll-behavior:contain;}
+  .day{display:flex;align-items:center;justify-content:center;margin:10px 0; color:#666; font-size:12px;}
+  .day>span{background:#f5f5f5;border-radius:10px;padding:3px 10px;}
+  .row{display:flex;margin:8px 0;}
+/* 消息区里不用 .peer 这个类名 */
+.row.their{ justify-content:flex-start; }
+.row.mine { justify-content:flex-end; }
+.bubble.their{ background: var(--bubble-peer); }
+.bubble.mine { background: var(--bubble-me); }
+
+/* 让气泡允许换行，彻底禁止省略号干扰 */
+.bubble{
+  max-width:80%;         /* 移动端可调成 85%～90% */
+  padding:8px 10px;
+  border-radius:10px;
+  white-space:pre-wrap;  /* 允许自动与手动换行 */
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
+  .bmeta{margin-top:4px;font-size:11px;color:#999;white-space:nowrap;}
+  .bwrap{display:flex;gap:8px;align-items:flex-end;width:100%;}
+  .bavatar{width:30px;height:30px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;overflow:hidden;}
+ .bcontent{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  flex:1;                /* ← 关键：占据剩余空间 */
+  min-width:0;           /* ← 关键：允许在 flex 中缩小，否则会触发奇怪的换行 */
+  max-width:100%;
+}
+ .row.mine .bcontent{ align-items:flex-end; }
+  /* --- 输入区 --- */
+  .inputbar{display:flex;gap:10px;align-items:center;margin-top:10px;}
+  .inputbar input{flex:1;height:44px;padding:0 10px;border:1px solid #ddd;border-radius:8px;}
+  .inputbar button{height:44px;padding:0 16px;border:none;border-radius:8px;background:var(--green);color:#fff;cursor:pointer;}
+  .inputbar button:disabled{background:#9acd9a;cursor:not-allowed;}
+
+  /* --- 移动端（Android/窄屏）隐藏会话列表，单列布局 --- */
+  body.mobile #wrap{grid-template-columns:1fr;}
+  body.mobile #list{display:none;}
+  /* === 移动端 + 客服账号(10001) 才启用 rail === */
+body.mobile.agent #rail{ display:flex; }
+body.mobile.agent #wrap{ grid-template-columns:56px 1fr; } /* 左边窄轨 56px */
+
+#rail{
+  display:none;            /* 非 agent/mobile 默认不显示 */
+  position:relative;
+  border-right:1px solid #eee;
+  overflow:auto;
+  padding:8px 6px;
+  gap:8px;
+  flex-direction:column;
+  align-items:center;
+  background:#fff;
+}
+
+/* rail 中的头像 */
+.rail-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:#ddd; overflow:hidden; position:relative; cursor:pointer;
+  flex:0 0 auto;
+}
+.rail-avatar img{ width:100%;height:100%;object-fit:cover;display:block; }
+
+/* 未读红点 */
+.rail-avatar .dot{
+  position:absolute; right:-2px; top:-2px;
+  min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+  background:var(--red); color:#fff; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* 小箭头按钮（悬浮在 rail 与聊天区之间） */
+#railToggle{
+  position:absolute; left:52px; top:50%; transform:translateY(-50%);
+  width:18px;height:34px; border:none; background:transparent; cursor:pointer;
+}
+#railToggle::before{
+  content:""; display:block; width:0;height:0;
+  border-top:17px solid transparent; border-bottom:17px solid transparent;
+  border-left:16px solid #ccc;  /* ▶ 指向聊天区 */
+  filter:drop-shadow(0 0 1px rgba(0,0,0,.2));
+}
+
+/* 切换为“展开大列表”模式：隐藏 rail，显示原来的 #list */
+body.mobile.agent.rail-expanded #wrap{ grid-template-columns:280px 1fr; }
+body.mobile.agent.rail-expanded #rail{ display:none; }
+body.mobile.agent.rail-expanded #list{ display:block; }
+
+/* 你之前的移动端规则保留：默认隐藏 list */
+body.mobile #list{ display:none; }
+
+</style>
+</head>
+<body>
+<div id="wrap">
+   <!-- 新增：窄头像轨道（仅 agent+mobile 才显示） -->
+  <div id="rail">
+    <div id="railUsers"></div>
+    <button id="railToggle" aria-label="展开/收起"></button>
+  </div>
+  <div id="list">
+    <h3 style="margin-top:0">会话列表</h3>
+    <div id="convs"></div>
+  </div>
+
+  <div id="chat">
+    <h3 id="title"><span id="statusDot"></span><span id="peerTitle">与 客服 的会话</span></h3>
+    <div id="msgs-wrap">
+      <div id="msgs"></div>
+    </div>
+    <div class="inputbar">
+      <input id="msg" placeholder="请输入文字" />
+      <button id="send">提交</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 基础配置 ================= */
+const API = {
+  convs:   '/api/chat/conversations.php',
+  hist:    '/api/chat/history.php',
+  send:    '/api/chat/send_message.php',
+  read:    '/api/chat/mark_read.php',
+  user:    '/api//chat/get_user.php',
+};
+const PAGE_SIZE = 20;         // 按你需求，上拉逐页追加历史
+const POLL_MS   = 2000;
+
+const AGENT_UID = 10001;
+
+/* 1) 取自己 uid（用你已有的 get_user.php） */
+async function fetchSelfUid(){
+  try{
+    const j = await apiGet(API.user, { token, _: Date.now() });
+    if (j && j.code === 200 && j.data && j.data.uid != null) {
+      myUid = Number(j.data.uid);
+      // 标记身份：移动端 && 我是客服 -> 打开 agent 布局
+      if (document.body.classList.contains('mobile') && myUid === AGENT_UID){
+        document.body.classList.add('agent');
+      }
+    }
+  }catch(e){}
+}
+
+/* 2) rail 渲染：把会话列表数据映射成竖向头像 + 未读红点 */
+function renderRail(convs){
+  const rail = document.getElementById('rail');
+  const railUsers = document.getElementById('railUsers');
+  if (!rail || !railUsers) return;
+
+  // 只在“移动端+客服”模式下渲染
+  if (!(document.body.classList.contains('mobile') && document.body.classList.contains('agent'))){
+    rail.style.display = 'none';
+    return;
+  }
+  rail.style.display = 'flex';
+
+  railUsers.innerHTML = '';
+  (convs || []).forEach(c=>{
+    const peer = c.peer_uid_resolved;
+    const div = document.createElement('div');
+    div.className = 'rail-avatar';
+    div.title = String(peer);
+
+    // 头像
+    getUserBrief(peer).then(b=>{
+      if (b.headimgurl){
+        div.innerHTML = `<img src="${b.headimgurl}" alt="">`;
+      }
+    });
+
+    // 未读
+    const unread = Number(c.unread||0);
+    if (unread > 0){
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.textContent = unread > 99 ? '99+' : String(unread);
+      div.appendChild(dot);
+    }
+
+    div.onclick = () => {
+      // 点击 rail 头像切换会话；若当前是展开模式也保持不变
+      switchConversation(peer);
+    };
+    railUsers.appendChild(div);
+  });
+}
+
+/* 3) 小箭头切换“窄轨 <-> 大列表” */
+(function bindRailToggle(){
+  document.addEventListener('click', (e)=>{
+    if (e.target && e.target.id === 'railToggle'){
+      const cls = document.body.classList;
+      if (cls.contains('rail-expanded')) cls.remove('rail-expanded');
+      else cls.add('rail-expanded');
+    }
+  });
+})();
+
+
+/* ================= UserAgent: PC / Android ================= */
+(function applyMobileClass(){
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroid = ua.includes('android');
+  const isSmall   = window.innerWidth <= 640;
+  if (isAndroid || isSmall) document.body.classList.add('mobile');
+})();
+
+/* ================= 取 token ================= */
+function getCookieValue(name){
+  // 你的“多个同名 cookie 取最后值”的写法
+  const matches = document.cookie.matchAll(new RegExp(`${name}=([^;]+)`, 'g'));
+  let lastValue = null;
+  for (const m of matches) lastValue = m[1];
+  return lastValue || '';
+}
+const token = getCookieValue('auth_token') || new URLSearchParams(location.search).get('token') || 'e95eb87753eb704098dffd43dfc43e868b4fe753db57200fcb6e197792cc16c5';
+
+/* ================= DOM refs ================= */
+const $ = s=>document.querySelector(s);
+const convsWrap = $('#convs');
+const msgsPanel = $('#msgs');
+const msgInput  = $('#msg');
+const sendBtn   = $('#send');
+const peerTitle = $('#peerTitle');
+
+/* ================= 会话 / 消息状态 ================= */
+let myUid = null;                 // 不依赖 me.php；用于缓存发送时的 uid（可为 null）
+let currentPeer = AGENT_UID;
+let msgs = [];                    // 升序
+let oldestId = 0, newestId = 0;
+let noMoreOld = false;
+let pollTimer = null;
+let loadingOlder = false;
+
+const userCache = new Map();      // uid -> {nickname, headimgurl}
+
+/* ================= 工具 ================= */
+function qs(obj){ return Object.entries(obj).map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&'); }
+function apiGet(url, params){ return fetch(url + '?' + qs(params), {cache:'no-store'}).then(r=>r.json()); }
+function apiPost(url, fd){ return fetch(url, {method:'POST', body: fd}).then(r=>r.json()); }
+/** 1) 把各种时间输入统一解析成 Date（把无时区的 MySQL DATETIME 当成 UTC） */
+function parseAsUTC(input) {
+  if (input == null) return new Date(NaN);
+
+  // 数字时间戳：按毫秒
+  if (typeof input === 'number') return new Date(input);
+
+  const s = String(input).trim();
+
+  // 已带时区的 ISO（…Z 或 +08:00 这类）——让引擎自己解析
+  if (/[zZ]$/.test(s) || /[+\-]\d{2}:?\d{2}$/.test(s)) return new Date(s);
+
+  // 纯 MySQL DATETIME / ISO 不带时区：YYYY-MM-DD HH:mm:ss / YYYY-MM-DDTHH:mm:ss
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(s);
+  if (m) {
+    const [_, Y, M, D, h, i, sec] = m;
+    // 关键：按 UTC 组装
+    return new Date(Date.UTC(+Y, +M - 1, +D, +h, +i, +(sec || 0)));
+  }
+
+  // 兜底（尽量不要走到这里）
+  return new Date(s);
+}
+
+/** 2) 通用格式化：按指定时区输出（tz = undefined 表示用用户本地时区） */
+function formatYMD_HM(date, tz) {
+  // 用 Intl 确保各浏览器一致，tz 可为 'Asia/Shanghai' 强制 UTC+8
+  const parts = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(date);
+
+  const m = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return { day: `${m.year}年${m.month}月${m.day}日`, hm: `${m.hour}:${m.minute}` };
+}
+
+/** 3) 入口：把后端的 create_time 转成你需要的显示
+ *    - tz = undefined  -> 按用户所在地本地时区显示（自动 UTC→本地）
+ *    - tz = 'Asia/Shanghai' -> 强制按北京时间（UTC+8）显示
+ */
+function fmtDay(create_time, tz /* 可传 'Asia/Shanghai' */) {
+  const d = parseAsUTC(create_time);
+  return formatYMD_HM(d, tz);
+}
+function recomputeBounds(){
+  const ids = (msgs||[]).map(m=>Number(m.id)).filter(n=>Number.isFinite(n)&&n>0);
+  oldestId = ids.length? Math.min(...ids):0;
+  newestId = ids.length? Math.max(...ids):0;
+}
+/* “我/对方”判定：只看发送者 */
+function isMine(m){ return Number(m.uid) !== Number(currentPeer); }
+
+/* ================= 头像/昵称 ================= */
+async function getUserBrief(uid){
+  if (userCache.has(uid)) return userCache.get(uid);
+  try{
+    const j = await apiGet(API.user, {token, uid, _: Date.now()}); // 你的 get_user.php 是按 token 查。我保留 token；若你扩展支持 uid，可直接用。
+    // 兼容你的 get_user.php（按 token 查本人）；对其它 uid，后端可返回默认头像
+    const data = (j && j.data) ? j.data : {};
+    const brief = { nickname: data.nickname || String(uid), headimgurl: data.headimgurl || '' };
+    userCache.set(uid, brief);
+    return brief;
+  }catch(e){ return {nickname:String(uid), headimgurl:''}; }
+}
+
+/* ================= 会话列表 ================= */
+async function loadConvs(){
+  const j = await apiGet(API.convs, {token});
+  if (j.code!==200) return;
+   const list = j.data || [];
+  convsWrap.innerHTML = '';
+  (j.data||[]).forEach(c=>{
+    const peer = c.peer_uid_resolved;
+    const div = document.createElement('div');
+    div.className = 'conv'+(peer===currentPeer?' active':'');
+    div.onclick = ()=>switchConversation(peer);
+
+    const av = document.createElement('div');
+    av.className = 'avatar'; av.textContent = '头像';
+    // 简单异步设置头像
+    getUserBrief(peer).then(b=>{
+      if (b.headimgurl){
+        av.innerHTML = `<img src="${b.headimgurl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      }else{
+        av.textContent='头像';
+      }
+    });
+
+    const main = document.createElement('div');
+    main.className='conv-main';
+  main.innerHTML = `<div class="conv-peer">${peer}</div><div class="last">${c.text||''}</div>`;
+
+    const badge = document.createElement('div');
+    if (Number(c.unread)>0){
+      badge.className='badge';
+      badge.textContent = c.unread;
+    }
+
+    div.appendChild(av); div.appendChild(main); if (Number(c.unread)>0) div.appendChild(badge);
+    convsWrap.appendChild(div);
+  });
+    // 新增：如果是移动端客服，则渲染左侧 rail
+  renderRail(list);
+    // 如果我是客服且还没选会话，自动选第一条
+  if (myUid === AGENT_UID && list.length && currentPeer === AGENT_UID) {
+    currentPeer = list[0].peer_uid_resolved;
+  }
+}
+
+/* ================= 消息渲染（按天分组） ================= */
+function renderDaySeparator(dayText){
+  const wrap = document.createElement('div'); wrap.className='day';
+  wrap.innerHTML = `<span>${dayText}</span>`;
+  msgsPanel.appendChild(wrap);
+}
+
+function appendBubble(m, {prepend=false}={}){
+  const mine = isMine(m);
+  const {day, hm} = fmtDay(m.create_time||new Date().toISOString());
+  // 如果需要插入“当天标题”：判断最后一个 day 标题是否相同
+  function ensureDay(prependMode){
+    const nodes = [...msgsPanel.querySelectorAll('.day>span')];
+    if (!prependMode){
+      const last = nodes[nodes.length-1];
+      if (!last || last.textContent!==day) renderDaySeparator(day);
+    }else{
+      const first = nodes[0];
+      if (!first || first.textContent!==day){
+        const dnode = document.createElement('div'); dnode.className='day'; dnode.innerHTML=`<span>${day}</span>`;
+        // 顶部哨兵后插
+        const sentinel = document.getElementById('topSentinel');
+        if (sentinel) msgsPanel.insertBefore(dnode, sentinel.nextSibling);
+        else msgsPanel.insertBefore(dnode, msgsPanel.firstChild);
+      }
+    }
+  }
+
+  if (!prepend) ensureDay(false); else ensureDay(true);
+
+  const row = document.createElement('div');
+ // row.className = 'row ' + (mine?'mine':'peer');
+row.className = 'row ' + (mine ? 'mine' : 'their');
+
+
+  const bwrap = document.createElement('div'); bwrap.className = 'bwrap';
+  const bavatar = document.createElement('div'); bavatar.className = 'bavatar'; bavatar.textContent = '头像';
+  const bcontent = document.createElement('div'); bcontent.className = 'bcontent';
+
+  // 异步头像
+  const who = mine ? (myUid ?? -1) : m.uid;
+  getUserBrief(who).then(b=>{
+    if (b.headimgurl){
+      bavatar.innerHTML = `<img src="${b.headimgurl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    }
+  });
+
+  const bubble = document.createElement('div');
+// bubble.className = 'bubble ' + (mine?'mine':'peer');
+bubble.className = 'bubble ' + (mine ? 'mine' : 'their');
+
+  bubble.textContent = m.text || '';
+
+  const meta = document.createElement('div');
+  meta.className = 'bmeta';
+  meta.textContent = hm;
+
+  if (mine){ // 我的：内容在前，头像在后
+    bcontent.appendChild(bubble); bcontent.appendChild(meta);
+    bwrap.appendChild(bcontent); bwrap.appendChild(bavatar);
+  }else{     // 对方：头像在前，内容在后
+    bcontent.appendChild(bubble); bcontent.appendChild(meta);
+    bwrap.appendChild(bavatar); bwrap.appendChild(bcontent);
+  }
+  row.appendChild(bwrap);
+
+  if (prepend){
+    const prevH = msgsPanel.scrollHeight;
+    const sentinel = document.getElementById('topSentinel');
+    if (sentinel && sentinel.parentNode===msgsPanel){
+      msgsPanel.insertBefore(row, sentinel.nextSibling);
+    }else{
+      msgsPanel.insertBefore(row, msgsPanel.firstChild);
+    }
+    const newH = msgsPanel.scrollHeight; msgsPanel.scrollTop += (newH - prevH);
+  }else{
+    msgsPanel.appendChild(row);
+    msgsPanel.scrollTop = msgsPanel.scrollHeight;
+  }
+}
+
+/* ================= 加载接口 ================= */
+async function fetchLatestPage(){
+  const j = await apiGet(API.hist, {token, peer_uid: currentPeer, before_id: 0, limit: PAGE_SIZE});
+  if (j.code!==200) return [];
+  return (j.data||[]);
+}
+async function fetchOlderPage(){
+  const j = await apiGet(API.hist, {token, peer_uid: currentPeer, before_id: oldestId, limit: PAGE_SIZE});
+  if (j.code!==200) return [];
+  return (j.data||[]);
+}
+async function fetchNewerSince(){
+  const j = await apiGet(API.hist, {token, peer_uid: currentPeer, before_id: 0, limit: PAGE_SIZE});
+  if (j.code!==200) return [];
+  return (j.data||[]).filter(m=>Number(m.id)>Number(newestId)).sort((a,b)=>Number(a.id)-Number(b.id));
+}
+
+/* ================= 上滑加载（哨兵 + 回退） ================= */
+let topObserver = null;
+async function loadOlderOnce(){
+  if (loadingOlder || noMoreOld) return;
+  if (!Number.isFinite(Number(oldestId)) || oldestId<=0) return;
+  loadingOlder = true;
+  try{
+    const older = await fetchOlderPage();
+    if (!older.length){ noMoreOld = true; return; }
+    older.sort((a,b)=>Number(a.id)-Number(b.id));
+    const prevH = msgsPanel.scrollHeight;
+    older.forEach(m=>appendBubble(m,{prepend:true}));
+    msgs = older.concat(msgs);
+    recomputeBounds();
+    const newH = msgsPanel.scrollHeight; msgsPanel.scrollTop += (newH - prevH);
+    await markRead();
+  } finally { loadingOlder=false; }
+}
+function bindScrollForOlder(){
+  // 顶部哨兵
+  if (topObserver){ topObserver.disconnect(); topObserver=null; }
+  let sentinel = document.getElementById('topSentinel');
+  if (!sentinel){ sentinel = document.createElement('div'); sentinel.id='topSentinel'; sentinel.style.height='1px'; msgsPanel.prepend(sentinel); }
+  else if (msgsPanel.firstChild !== sentinel){ msgsPanel.prepend(sentinel); }
+
+  if ('IntersectionObserver' in window){
+    topObserver = new IntersectionObserver((es)=>{ if (es[0].isIntersecting) loadOlderOnce(); }, {root:msgsPanel, threshold:0});
+    topObserver.observe(sentinel);
+  }
+  // 回退触发
+  msgsPanel.removeEventListener('scroll', onScrollOlder);
+  msgsPanel.addEventListener('scroll', onScrollOlder);
+}
+function onScrollOlder(){ if (msgsPanel.scrollTop <= 10) loadOlderOnce(); }
+
+/* ================= 已读/发送/轮询 ================= */
+async function markRead(){
+  const fd = new FormData(); fd.append('token', token); fd.append('peer_uid', currentPeer);
+  try{ await apiPost(API.read, fd); }catch(e){}
+}
+sendBtn.onclick = async ()=>{
+  const text = msgInput.value.trim(); if (!text) return;
+  sendBtn.disabled = true;
+  try{
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('peer_uid', currentPeer);
+    fd.append('text', text);
+    const j = await apiPost(API.send, fd);
+    if (j.code===200){
+      msgInput.value='';
+      const m = j.data || { id:(newestId||0)+1, uid:-1, peer_uid:currentPeer, text, create_time:new Date().toISOString() };
+      appendBubble(m); msgs.push(m); recomputeBounds();
+      if (!myUid && m.uid!=null) myUid = m.uid;
+      await markRead(); loadConvs();
+    }
+  }finally{ sendBtn.disabled = false; }
+};
+// === PC 回车提交 ===
+let isComposing = false;
+msgInput.addEventListener('compositionstart', () => isComposing = true);
+msgInput.addEventListener('compositionend',  () => isComposing = false);
+
+msgInput.addEventListener('keydown', (e) => {
+  // 只在桌面端启用；移动端仍用按钮
+  const isMobile = document.body.classList.contains('mobile');
+  if (isMobile) return;
+
+  if (e.key === 'Enter') {
+    if (isComposing) return;   // 中文输入合成中，不发送
+    e.preventDefault();        // 阻止换行/光标行为
+    sendBtn.click();           // 触发你现有的发送逻辑
+  }
+});
+
+function startPolling(){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async ()=>{
+    const newer = await fetchNewerSince();
+    if (newer.length){
+      newer.forEach(m=>appendBubble(m));
+      msgs = msgs.concat(newer); recomputeBounds();
+      await markRead(); loadConvs();
+    }
+  }, POLL_MS);
+}
+
+/* ================= 会话切换 ================= */
+async function switchConversation(peer){
+  currentPeer = peer;
+  peerTitle.textContent = `与 ${peer} 的会话`;
+  msgs = []; msgsPanel.innerHTML = ''; oldestId=0; newestId=0; noMoreOld=false;
+
+  // 插入顶部哨兵
+  const sentinel = document.createElement('div'); sentinel.id='topSentinel'; sentinel.style.height='1px'; msgsPanel.prepend(sentinel);
+
+  const first = await fetchLatestPage();
+  first.sort((a,b)=>Number(a.id)-Number(b.id));
+  // 按天分组在 appendBubble 里自动处理
+  first.forEach(m=>appendBubble(m));
+  msgs = first.slice(); recomputeBounds();
+
+  await markRead(); loadConvs();
+  bindScrollForOlder(); startPolling();
+}
+
+/* ================= 初始化 ================= */
+(async function init(){
+  await fetchSelfUid();     // 先识别是否 agent
+  await loadConvs();        // 会驱动 rail 渲染
+  await switchConversation(currentPeer);
+})();
+
+</script>
+</body>
+</html>

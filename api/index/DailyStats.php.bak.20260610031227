@@ -1,0 +1,93 @@
+<?php
+require_once '../Database.php';   // 确保路径正确
+
+// 创建数据库连接
+$database = new Database();
+
+// 从会话中获取 session_token
+$session_token = $_COOKIE['session_token'] ?? null;
+
+// 验证 session_token 并获取用户信息
+if (!$session_token) {
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或会话已过期', 'data' => []]);
+    exit;
+}
+
+$user = $database->getUserBySessionToken($session_token);
+
+// 检查用户是否存在和权限获取
+if (!$user || !$user['role_id']) {
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或无权访问', 'data' => []]);
+    exit;
+}
+
+$role_id = $user['role_id'];
+$venue_id = $role_id != 1 ? $user['venue_id'] : null;
+
+// 获取日期参数，如果没有提供则默认为今天
+$date = $_GET['date'] ?? date('Y-m-d');
+if ($date === 'yesterday') {
+    $date = date('Y-m-d', strtotime('-1 day'));
+}
+
+// 查询营业中的场地 ID
+$activeVenuesSql = "SELECT id FROM venues WHERE venue_status = '营业中'";
+$activeVenuesResult = $database->query($activeVenuesSql);
+$activeVenues = [];
+if ($activeVenuesResult) {
+    foreach ($activeVenuesResult as $venue) {
+        $activeVenues[] = $venue['id'];
+    }
+}
+
+// 存储每个营业场地的数据
+$venueData = [];
+foreach ($activeVenues as $venueId) {
+    // 获取场地名称
+    $venueNameSql = "SELECT venue_name, queue_length FROM venues WHERE id = ?";
+    $venueNameResult = $database->query($venueNameSql, [$venueId]);
+    $venue_name = $venueNameResult ? $venueNameResult[0]['venue_name'] : null;
+    $queue_length = $venueNameResult ? $venueNameResult[0]['queue_length'] : null;
+
+    // 查询指定日期订单数量
+    $orderCountSql = "SELECT COUNT(*) AS order_count FROM orders WHERE DATE(end_time) = ? AND reservation_id = ?";
+    $orderParams = [$date, $venueId];
+    $orderCount = $database->query($orderCountSql, $orderParams)[0]['order_count'];
+
+    // 查询指定日期预约用户数量
+    $reservationCountSql = "SELECT COUNT(*) AS reservation_count FROM Reservations WHERE DATE(reservation_time) = ? AND reservation_id = ?";
+    $reservationParams = [$date, $venueId];
+    $reservationCount = $database->query($reservationCountSql, $reservationParams)[0]['reservation_count'];
+
+    // 查询指定日期收入总额
+    // Query to get the total income for the specified date, excluding 'energy' type payments
+    $totalPaymentSql = "SELECT SUM(payment_amount) AS total_payment FROM orders WHERE DATE(end_time) = ? AND pays_type != '能量' AND reservation_id = ?";
+    $paymentParams = [$date, $venueId];
+    $totalPayment = $database->query($totalPaymentSql, $paymentParams)[0]['total_payment'] ?? '0.00';
+
+    // 存储场地数据
+    $venueData[] = [
+        'orderCount' => $orderCount,
+        'reservationCount' => $reservationCount,
+        'venue_id' => $venueId,
+        'venue_name' => $venue_name,
+        'queue_length' => $queue_length,
+        'totalPayment' => $totalPayment
+    ];
+}
+
+// 根据 totalPayment 进行排序
+usort($venueData, function ($a, $b) {
+    return $b['totalPayment'] - $a['totalPayment'];
+});
+
+// 输出 JSON 格式的数据
+echo json_encode([
+    'code' => 0,
+    'msg' => '',
+    'data' => $venueData
+]);
+
+// 关闭数据库连接
+$database->close();
+?>

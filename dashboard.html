@@ -1807,13 +1807,44 @@
     }
 
     function renderMenuLink(item, groupId) {
-      const isHome = item.jump === '' || item.jump === '/';
-      return '<a href="#menu=' + encodeURIComponent(item.id) + '" class="' + (isHome ? 'active' : '') + '" data-menu-id="' + item.id + '" data-group-id="' + (groupId || '') + '">' +
-        (groupId ? childMenuIcon(item) : menuIcon(item.name)) +
-        '<span>' + escapeHtml(item.title) + '</span>' +
-        '</a>';
-    }
+  const isHome = item.jump === '' || item.jump === '/';
+  const href = isHome
+    ? '#menu=' + encodeURIComponent(item.id)
+    : legacyJumpToRealHtml(item.jump);
 
+  return '<a href="' + escapeHtml(href) + '" class="' + (isHome ? 'active' : '') + '" data-menu-id="' + item.id + '" data-group-id="' + (groupId || '') + '">' +
+    iconSvg +
+    '<span>' + escapeHtml(item.title) + '</span>' +
+    '</a>';
+}
+    function legacyJumpToRealHtml(jump) {
+  jump = String(jump || '').trim();
+
+  if (!jump || jump === '/') {
+    return './dashboard.html';
+  }
+
+  if (/^https?:\/\//i.test(jump)) {
+    return jump;
+  }
+
+  jump = jump.replace(/^\/+/, '');
+
+  // 老项目菜单：iframe/link/Balancerecharge => 新项目：res/Balancerecharge.html
+  if (jump.startsWith('iframe/link/')) {
+    const pageName = jump.slice('iframe/link/'.length).replace(/\/$/, '');
+    return './res/' + pageName + '.html';
+  }
+
+  // 已经是 html 路径
+  if (jump.endsWith('.html')) {
+    return './' + jump;
+  }
+
+  // 兜底：取最后一级作为 html 文件名
+  const pageName = jump.split('/').pop();
+  return './res/' + pageName + '.html';
+}
     async function loadMenus() {
       const response = await fetch('./api/auth/menu.php', {
         credentials: 'same-origin',

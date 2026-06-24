@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>主播认证</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 阿里云 H5 获取 MetaInfo -->
+    <script type="text/javascript" src="https://o.alicdn.com/yd-cloudauth/cloudauth-cdn/jsvm_all.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Microsoft YaHei", sans-serif;
+            color: #333;
+        }
+
+        .wrap {
+            max-width: 760px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.08);
+        }
+
+        h2 {
+            margin: 0 0 24px;
+            font-size: 22px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .form-row label {
+            width: 110px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        .form-row input {
+            flex: 1;
+            height: 38px;
+            border: 1px solid #d6dbe6;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .form-row input:focus {
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64,158,255,.12);
+        }
+
+        .btn {
+            height: 40px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 8px;
+            background: #1677ff;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn:disabled {
+            background: #aab7c8;
+            cursor: not-allowed;
+        }
+
+        .btn-gray {
+            background: #606266;
+        }
+
+        .result {
+            margin-top: 18px;
+            padding: 14px;
+            background: #f7f9fc;
+            border-radius: 10px;
+            word-break: break-all;
+            line-height: 1.7;
+            display: none;
+        }
+
+        .tip {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .mobile-title {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-desc {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 26px;
+        }
+
+        @media (max-width: 600px) {
+            .wrap {
+                margin: 18px;
+                padding: 22px;
+            }
+
+            .form-row {
+                display: block;
+            }
+
+            .form-row label {
+                display: block;
+                width: auto;
+                margin-bottom: 8px;
+            }
+
+            .form-row input {
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrap" id="adminBox" style="display:none;">
+    <h2>主播认证资料录入</h2>
+
+    <div class="tip">
+        后台录入资料后，会生成一个“主播本人认证链接”。把链接发给主播，主播用手机打开后完成阿里云点头/摇头活体认证。
+    </div>
+
+    <div class="form-row">
+        <label>姓名</label>
+        <input id="real_name" placeholder="请输入真实姓名">
+    </div>
+
+    <!--<div class="form-row">-->
+    <!--    <label>手机号</label>-->
+    <!--    <input id="phone" placeholder="请输入手机号">-->
+    <!--</div>-->
+
+    <div class="form-row">
+        <label>身份证号</label>
+        <input id="id_card_no" placeholder="请输入身份证号">
+    </div>
+
+    <div class="form-row">
+        <label>开播账户ID</label>
+        <input id="uid" placeholder="对应 users.uid">
+    </div>
+
+    <div class="center">
+        <button class="btn" id="submitBtn" onclick="submitAuth()">提交并生成认证链接</button>
+    </div>
+
+    <div class="result" id="resultBox"></div>
+</div>
+
+<div class="wrap center" id="mobileBox" style="display:none;">
+    <div class="mobile-title">主播实名认证</div>
+    <div class="mobile-desc">
+        请使用主播本人手机完成认证。<br>
+        点击开始后，会跳转到阿里云活体认证页面。
+    </div>
+
+    <button class="btn" id="startBtn" onclick="startFaceAuth()">开始认证</button>
+
+    <div class="result" id="mobileResult"></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+
+    if (token) {
+        document.getElementById('mobileBox').style.display = 'block';
+    } else {
+        document.getElementById('adminBox').style.display = 'block';
+    }
+
+    async function submitAuth() {
+        const btn = document.getElementById('submitBtn');
+        const resultBox = document.getElementById('resultBox');
+
+        const data = {
+            real_name: document.getElementById('real_name').value.trim(),
+            phone: '',
+            id_card_no: document.getElementById('id_card_no').value.trim(),
+            uid: document.getElementById('uid').value.trim()
+        };
+        
+        if (!data.real_name || !data.id_card_no || !data.uid) {
+            alert('请把姓名、身份证号、开播账户ID都填完整');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = '提交中...';
+
+        try {
+            const res = await fetch('anchor_auth_submit.php?action=create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (json.code !== 0) {
+                alert(json.msg || '提交失败');
+                return;
+            }
+
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                <b>认证链接：</b><br>
+                <a href="${json.data.auth_url}" target="_blank">${json.data.auth_url}</a>
+                <br><br>
+                <button class="btn btn-gray" onclick="copyText('${json.data.auth_url}')">复制链接</button>
+            `;
+        } catch (e) {
+            alert('请求失败：' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '提交并生成认证链接';
+        }
+    }
+
+    async function startFaceAuth() {
+        const btn = document.getElementById('startBtn');
+        const result = document.getElementById('mobileResult');
+
+        if (!token) {
+            alert('认证链接无效');
+            return;
+        }
+
+        if (!window.getMetaInfo) {
+            alert('阿里云认证组件加载失败，请刷新页面或更换浏览器');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = '正在初始化...';
+        result.style.display = 'block';
+        result.innerText = '正在获取设备环境信息...';
+
+        try {
+            const metaInfo = window.getMetaInfo();
+
+            const res = await fetch('anchor_auth_submit.php?action=init', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    token: token,
+                    meta_info: metaInfo
+                })
+            });
+
+            const json = await res.json();
+
+            if (json.code !== 0) {
+                result.innerText = json.msg || '认证初始化失败';
+                btn.disabled = false;
+                btn.innerText = '重新开始认证';
+                return;
+            }
+
+            result.innerText = '即将跳转阿里云认证页面...';
+            location.href = json.data.certify_url;
+        } catch (e) {
+            result.innerText = '初始化失败：' + e.message;
+            btn.disabled = false;
+            btn.innerText = '重新开始认证';
+        }
+    }
+
+    function copyText(text) {
+        const tip = '若当前浏览器无法跳转，请更换浏览器进行认证';
+    
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制认证链接。\n' + tip);
+            }).catch(() => {
+                prompt('复制下面链接。\n' + tip, text);
+            });
+        } else {
+            prompt('复制下面链接。\n' + tip, text);
+        }
+    }
+</script>
+
+</body>
+</html>

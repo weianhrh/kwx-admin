@@ -1,0 +1,8 @@
+[2026-03-13 17:00:11] 新增成功 serial_number=1CC3ABE0AF1C id=8
+[2026-03-13 17:14:16] 新增成功 serial_number=1CC3ABE05EC8 id=9
+[2026-03-20 10:57:43] 新增成功 serial_number=E09EFBABC31C id=10
+[2026-03-20 13:20:36] 新增成功 serial_number=34E8BEABC31C id=11
+[2026-03-20 14:20:06] 新增成功 serial_number=44B38ECA4B70 id=12
+[2026-04-08 19:55:33] 新增成功 serial_number=68538CCA4B70 id=13
+[2026-04-08 19:56:46] 新增成功 serial_number=XX1 id=14
+[2026-04-08 20:11:25] 新增成功 serial_number=F4ED5CCA4B70 id=15

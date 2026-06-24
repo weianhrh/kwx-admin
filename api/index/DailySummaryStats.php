@@ -1,0 +1,151 @@
+<?php
+require_once '../Database.php'; // Ensure correct path
+
+// Check for session token in cookie
+if (!isset($_COOKIE['session_token'])) {
+    header("Location: login.html");
+    exit;
+}
+
+// Create database connection
+$database = new Database();
+$session_token = $_COOKIE['session_token'] ?? null;
+
+// Validate session token
+if (!$session_token) {
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或会话已过期', 'data' => []]);
+    exit;
+}
+
+$user = $database->getUserBySessionToken($session_token);
+
+// Validate user and role
+if (!$user || !$user['role_id']) {
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或无权访问', 'data' => []]);
+    exit;
+}
+
+$role_id = $user['role_id'];
+$today = date('Y-m-d');
+$todayEnd = date('Y-m-d', strtotime($today . ' +1 day'));
+$venue_id = ($role_id != 0) ? $user['venue_id'] : null;
+$venue_name = null; // Default value
+
+// Get venue name and queue length
+$queue_length = 0;
+if ($venue_id) {
+    $venue_level = 'A';
+    $withdraw_ratio = 80;
+    
+    if ($venue_id) {
+        $venueNameSql = "SELECT venue_name, queue_length, venue_level FROM venues WHERE id = ?";
+        $venueNameResult = $database->query($venueNameSql, [$venue_id]);
+        if ($venueNameResult) {
+            $venue_name = $venueNameResult[0]['venue_name'] ?? null;
+            $queue_length = $venueNameResult[0]['queue_length'] ?? 0;
+    
+            $venue_level = strtoupper(trim($venueNameResult[0]['venue_level'] ?? 'A'));
+            if (!in_array($venue_level, ['S', 'A', 'B', 'C', 'D'], true)) {
+                $venue_level = 'A';
+            }
+    
+            // 当前只启用 A / C
+            if ($venue_level === 'C') {
+                $withdraw_ratio = 60;
+            } else {
+                $withdraw_ratio = 80;
+            }
+        }
+    }
+    $venueNameResult = $database->query($venueNameSql, [$venue_id]);
+    if ($venueNameResult) {
+        $venue_name = $venueNameResult[0]['venue_name'] ?? null;
+        $queue_length = $venueNameResult[0]['queue_length'] ?? 0;
+    }
+}
+
+// Order count query
+$orderCountSql = "SELECT COUNT(*) AS order_count FROM orders WHERE end_time >= ? AND end_time < ?" .
+    ($venue_id ? " AND reservation_id = ?" : "");
+$orderParams = [$today, $todayEnd];
+if ($venue_id) {
+    $orderParams[] = $venue_id;
+}
+$orderCount = $database->query($orderCountSql, $orderParams)[0]['order_count'];
+
+// Reservation count query
+$reservationCountSql = "SELECT COUNT(*) AS reservation_count FROM Reservations WHERE reservation_time >= ? AND reservation_time < ?" .
+    ($venue_id ? " AND reservation_id = ?" : "");
+$reservationParams = [$today, $todayEnd];
+if ($venue_id) {
+    $reservationParams[] = $venue_id;
+}
+$reservationCount = $database->query($reservationCountSql, $reservationParams)[0]['reservation_count'];
+
+// 总收益（排除能量）
+$totalPaymentSql = "SELECT COALESCE(SUM(payment_amount), 0) AS total_payment
+                    FROM orders
+                    WHERE end_time >= ? AND end_time < ?
+                      AND pays_type != '能量'" .
+                    ($venue_id ? " AND reservation_id = ?" : "");
+$paymentParams = [$today, $todayEnd];
+if ($venue_id) {
+    $paymentParams[] = $venue_id;
+}
+$totalPayment = $database->query($totalPaymentSql, $paymentParams)[0]['total_payment'] ?? '0.00';
+
+// 设备收益（note != 'gift'，并且排除能量）
+// 注意：这里额外兼容 note 为 NULL 的情况，避免 NULL 被漏掉
+$devicePaymentSql = "SELECT COALESCE(SUM(payment_amount), 0) AS device_payment
+                     FROM orders
+                     WHERE end_time >= ? AND end_time < ?
+                       AND pays_type != '能量'
+                       AND (note <> 'gift' OR note IS NULL)" .
+                     ($venue_id ? " AND reservation_id = ?" : "");
+$devicePaymentParams = [$today, $todayEnd];
+if ($venue_id) {
+    $devicePaymentParams[] = $venue_id;
+}
+$devicePayment = $database->query($devicePaymentSql, $devicePaymentParams)[0]['device_payment'] ?? '0.00';
+
+// 礼物收益（note = 'gift'，并且排除能量）
+$giftPaymentSql = "SELECT COALESCE(SUM(payment_amount), 0) AS gift_payment
+                   FROM orders
+                   WHERE end_time >= ? AND end_time < ?
+                     AND pays_type != '能量'
+                     AND note = 'gift'" .
+                   ($venue_id ? " AND reservation_id = ?" : "");
+$giftPaymentParams = [$today, $todayEnd];
+if ($venue_id) {
+    $giftPaymentParams[] = $venue_id;
+}
+$giftPayment = $database->query($giftPaymentSql, $giftPaymentParams)[0]['gift_payment'] ?? '0.00';
+// Report count
+$reportCountSql = "SELECT COUNT(r.device_id) AS report_count
+                   FROM Reports r
+                   JOIN vehicles v ON r.device_id = v.serial_number  
+                   WHERE v.bind_site = ? AND (r.status  = '未处理' OR r.status  = '处理中')";
+$reportCountResult = $database->query($reportCountSql, [$venue_id]);
+
+// Output data as JSON
+echo json_encode([
+    'code' => 0,
+    'msg' => '',
+    'data' => [
+        'venue_level' => $venue_level,
+        'withdraw_ratio' => $withdraw_ratio,
+        'orderCount' => $orderCount,
+        'reservationCount' => $reservationCount,
+        'venue_id' => $venue_id,
+        'venue_name' => $venue_name,
+        'queue_length' => 0,
+        'totalPayment' => $totalPayment,
+        'devicePayment' => $devicePayment,
+        'giftPayment' => $giftPayment,
+        'reportCount' => $reportCountResult[0]['report_count']
+    ]
+]);
+
+// Close database connection
+$database->close();
+?>

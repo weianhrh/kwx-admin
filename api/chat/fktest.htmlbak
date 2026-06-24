@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>客服对答（WebSocket 实时）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { --green:#55c355; --red:#ff4d4f; }
+  *{ box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 16px; }
+  #wrap { display: grid; grid-template-columns: 280px 1fr; gap: 16px; min-height: calc(100vh - 32px); }
+  #list { border-right: 1px solid #eee; padding-right: 12px; }
+  #chat { display: flex; flex-direction: column; min-height: 60vh; }
+
+  .conv { padding: 10px 8px; cursor: pointer; border-radius: 10px; margin-bottom: 8px; border:1px solid #f2f2f2; }
+  .conv:hover { background: #f7f7f7; }
+  .conv.active { background: #eaf9ea; border-color:#def1de; }
+  .conv .top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .conv .peer { font-weight:600; }
+  .badge { background: var(--red); color:#fff; border-radius: 12px; padding: 0 7px; font-size: 12px; }
+  .muted { color:#999; font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  #msgs { flex:1; padding: 10px; overflow:auto; border:1px solid #eee; border-radius: 10px; }
+  .bubble { padding: 8px 10px; border-radius: 10px; display:inline-block; margin: 6px 0; max-width: 70%; word-break: break-word; }
+  .mine { background: #daf1ff; align-self: flex-end; }
+  .peerb { background: #e8f7df; align-self: flex-start; }
+  .row { display:flex; gap:10px; align-items:center; margin-top:10px; }
+  .row input{ flex:1; height:40px; padding:0 10px; border:1px solid #ddd; border-radius: 8px; }
+  .row button{ height:40px; padding:0 16px; border:none; border-radius: 8px; background:var(--green); color:#fff; cursor:pointer; }
+  .row button:disabled{ background:#9acd9a; cursor:not-allowed; }
+
+  #title { margin:0 0 10px; }
+  #statusDot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#bbb; vertical-align:middle; margin-right:6px; }
+  #statusDot.ok{ background:var(--green); }
+
+  #cookieInfo{
+    position: fixed; bottom: 8px; left: 8px;
+    background: rgba(0,0,0,0.6); color:#fff; padding:6px 12px;
+    font-size:12px; border-radius:4px; z-index: 9; font-family:monospace;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="list">
+    <h3 style="margin-top:0">会话列表</h3>
+    <div id="convs"></div>
+  </div>
+
+  <div id="chat">
+    <h3 id="title"><span id="statusDot"></span>与客服聊天</h3>
+    <div id="msgs"></div>
+    <div class="row">
+      <input id="msg" placeholder="请输入文字" />
+      <button id="send">提交</button>
+    </div>
+  </div>
+</div>
+
+<div id="cookieInfo">Cookie: 读取中...</div>
+
+<script>
+/* ================== 基础：Token/状态 ================== */
+// ⚠️ 测试时可用固定 Token；要切回 Cookie，请用 getCookieValue('auth_token')
+const HARDCODED_TOKEN = "77548a3df43bf685b33f4a3502183ac2dbcb68cfb9d329a00551ef70e34f7201";
+
+function getCookieValue(name) {
+  const m = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
+  return m ? m[1] : '';
+}
+const token = HARDCODED_TOKEN || getCookieValue('auth_token') || '';
+
+const cookieDiv = document.getElementById('cookieInfo');
+cookieDiv.innerText = 'Cookie: ' + document.cookie;
+
+let myUid = null;          // 服务器 hello 赋值
+let currentPeer = 10001;   // 普通用户默认与客服对话；客服端可点侧栏改变
+let convs = [];            // 会话列表缓存
+
+const $ = (sel)=>document.querySelector(sel);
+const convsWrap = $('#convs');
+const msgsWrap = $('#msgs');
+const sendBtn  = $('#send');
+const msgInput = $('#msg');
+const titleEl  = $('#title');
+const dotEl    = $('#statusDot');
+
+/* ================== 辅助函数 ================== */
+function escapeHTML(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// 渲染侧栏
+function renderConvs(){
+  convsWrap.innerHTML = '';
+  convs.forEach(c=>{
+    const active = (c.peer_uid_resolved === currentPeer);
+    const div = document.createElement('div');
+    div.className = 'conv' + (active ? ' active':'');
+    const unread = c.unread ? `<span class="badge">${c.unread}</span>` : '';
+    div.innerHTML = `
+      <div class="top">
+        <div class="peer">与 ${escapeHTML(c.peer_uid_resolved)} 的会话</div>
+        ${unread}
+      </div>
+      <div class="muted">${escapeHTML(c.text || '')}</div>
+    `;
+    div.onclick = ()=>{
+      currentPeer = c.peer_uid_resolved;
+      titleEl.innerHTML = `<span id="statusDot" class="${dotEl.className}"></span>与 ${escapeHTML(currentPeer)} 的会话`;
+      // 重新绑定 dot 引用
+      dotEl = document.getElementById('statusDot');
+      renderConvs();
+      msgsWrap.innerHTML = '';
+      loadHistory();
+      markRead();
+    };
+    convsWrap.appendChild(div);
+  });
+}
+
+// 加载侧栏
+async function loadConvs(){
+  try{
+    const r = await fetch(`/api/chat/conversations.php?token=${encodeURIComponent(token)}`);
+    const j = await r.json();
+    if (j.code===200){ convs = j.data; renderConvs(); }
+  }catch(e){ console.warn('loadConvs error', e); }
+}
+
+// 消息气泡
+function appendBubble(m){
+  const mine = (m.uid===myUid);
+  const el = document.createElement('div');
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
+  el.style.alignItems = mine ? 'flex-end' : 'flex-start';
+
+  const b = document.createElement('div');
+  b.className='bubble ' + (mine?'mine':'peerb');
+  b.innerHTML = `${mine?'我':'对方'}：${escapeHTML(m.text)} <br><span class="muted">${escapeHTML(m.create_time||'')}</span>`;
+
+  el.appendChild(b);
+  msgsWrap.appendChild(el);
+  msgsWrap.scrollTop = msgsWrap.scrollHeight;
+}
+
+// 历史消息
+async function loadHistory(beforeId=0){
+  try{
+    const url = `/api/chat/history.php?token=${encodeURIComponent(token)}&peer_uid=${currentPeer}&before_id=${beforeId}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.code===200){ j.data.forEach(appendBubble); }
+  }catch(e){ console.warn('loadHistory error', e); }
+}
+
+// 标记当前会话已读
+async function markRead(){
+  try{
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('peer_uid', currentPeer);
+    await fetch('/api/chat/mark_read.php', { method:'POST', body: fd });
+    loadConvs();
+  }catch(e){ console.warn('markRead error', e); }
+}
+
+// 发送
+sendBtn.onclick = async ()=>{
+  const text = msgInput.value.trim();
+  if (!text) return;
+  sendBtn.disabled = true;
+  try{
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('peer_uid', currentPeer); // 客服必要；普通用户忽略也行（服务端会重写成 10001）
+    fd.append('text', text);
+    const r = await fetch('/api/chat/send_message.php', { method:'POST', body: fd });
+    const j = await r.json();
+    if (j.code===200) msgInput.value='';
+  }catch(e){ console.warn('send error', e); }
+  finally{ sendBtn.disabled = false; }
+};
+
+/* ================== WebSocket（含心跳 & 重连） ================== */
+let ws = null;
+let hbTimer = null;
+
+function connectWS(){
+  const WS_URL =
+    (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+    location.host + '/ws/?token=' + encodeURIComponent(token);
+
+  try{
+    ws = new WebSocket(WS_URL);
+  }catch(e){
+    console.error('WS create failed', e);
+    setTimeout(connectWS, 3000);
+    return;
+  }
+
+  ws.onopen = ()=>{
+    console.log('[ws] open');
+    dotEl.classList.add('ok');
+    loadConvs(); // 先刷侧栏
+
+    // 客户端心跳：每 15s 发一次
+    if (hbTimer) clearInterval(hbTimer);
+    hbTimer = setInterval(()=>{
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type:'ping' }));
+      }
+    }, 1000);
+  };
+
+  ws.onmessage = (ev)=>{
+    let msg;
+    try{ msg = JSON.parse(ev.data); }catch{ return; }
+
+    // hello：拿到自己的 uid
+    if (msg.event === 'hello') {
+      myUid = msg.uid;
+      console.log('[ws] hello uid=', myUid);
+      loadConvs();
+      loadHistory();
+      return;
+    }
+
+    // 心跳回包（忽略显示）
+    if (msg.event === 'ping' || msg.event === 'pong') {
+      return;
+    }
+
+    // 消息推送
+    if (msg.event === 'message') {
+      const m = msg.data || msg; // 兼容 data 包裹/直给
+      const isCurrent =
+        (m.uid === myUid     && m.peer_uid === currentPeer) ||
+        (m.uid === currentPeer && m.peer_uid === myUid);
+      if (isCurrent) { appendBubble(m); markRead(); }
+      else { loadConvs(); }
+      return;
+    }
+
+    console.log('[ws] other event:', msg);
+  };
+
+  ws.onclose = ()=>{
+    console.warn('[ws] closed, retry in 3s');
+    dotEl.classList.remove('ok');
+    if (hbTimer) { clearInterval(hbTimer); hbTimer=null; }
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = (e)=>{
+    console.warn('[ws] error:', e);
+  };
+}
+
+// 启动
+connectWS();
+</script>
+</body>
+</html>

@@ -25,3 +25,455 @@ temp/
 .vscode/
 .idea/
 *.swp
+# 图片目录不上传
+/img/
+/imgv2/
+**/img/
+**/imgv2/
+
+# 项目里的业务图片/待审核图片不上传
+single/api/pop/picture/
+single/api/venue/pending_images/
+single/api/pop/review_backup/
+
+# 所有图片类型不上传，包含大写 JPEG
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.svg
+*.ico
+*.tif
+*.tiff
+*.avif
+*.heic
+*.heif
+*.JPG
+*.JPEG
+*.PNG
+*.GIF
+*.WEBP
+*.BMP
+*.SVG
+*.ICO
+
+# 视频音频不上传
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.mp3
+*.wav
+
+# 日志/缓存不上传
+*.log
+logs/
+log/
+runtime/
+cache/
+tmp/
+temp/
+
+# 这些虽然是 txt，但实际是日志/临时文件，不上传
+tree.txt
+*operation_log*.txt
+*operation_debug_log*.txt
+*sql_log*.txt
+
+# AI模型/特征数据不上传
+*.pt
+*.pth
+*.npy
+*.npz
+*.onnx
+*.h5
+*.pkl
+
+# 备份/数据库/压缩包不上传
+*.sql
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+
+# 前端 source map 可不上传
+*.map
+
+# 依赖目录不上传
+vendor/
+node_modules/
+
+# 敏感配置
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 编辑器
+.vscode/
+.idea/
+*frozen_log*.txt
+
+# 含阿里云密钥的本地文件，不提交
+/single/api/admin/anchor_auth_submit.php
+/single/api/admin/anchor_auth_submit_test.php
+/single/api/operat/upload.php
+# 图片目录不上传
+/img/
+/imgv2/
+**/img/
+**/imgv2/
+
+# 项目里的业务图片/待审核图片不上传
+single/api/pop/picture/
+single/api/venue/pending_images/
+single/api/pop/review_backup/
+
+# 所有图片类型不上传，包含大写 JPEG
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.svg
+*.ico
+*.tif
+*.tiff
+*.avif
+*.heic
+*.heif
+*.JPG
+*.JPEG
+*.PNG
+*.GIF
+*.WEBP
+*.BMP
+*.SVG
+*.ICO
+
+# 视频音频不上传
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.mp3
+*.wav
+
+# 日志/缓存不上传
+*.log
+logs/
+log/
+runtime/
+cache/
+tmp/
+temp/
+
+# 这些虽然是 txt，但实际是日志/临时文件，不上传
+tree.txt
+*operation_log*.txt
+*operation_debug_log*.txt
+*sql_log*.txt
+
+# AI模型/特征数据不上传
+*.pt
+*.pth
+*.npy
+*.npz
+*.onnx
+*.h5
+*.pkl
+
+# 备份/数据库/压缩包不上传
+*.sql
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+
+# 前端 source map 可不上传
+*.map
+
+# 依赖目录不上传
+vendor/
+node_modules/
+
+# 敏感配置
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 编辑器
+.vscode/
+.idea/
+*frozen_log*.txt
+
+# 含阿里云密钥的本地文件，不提交
+/single/api/admin/anchor_auth_submit.php
+/single/api/admin/anchor_auth_submit_test.php
+/single/api/operat/upload.php
+
+.DS_Store
+Thumbs.db
+.user.ini
+
+*.log
+logs/
+log/
+runtime/
+cache/
+tmp/
+temp/
+
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+*.sql
+*.bak
+
+.env
+.env.*
+
+.vscode/
+.idea/
+*.swp
+# 图片目录不上传
+/img/
+/imgv2/
+**/img/
+**/imgv2/
+
+# 项目里的业务图片/待审核图片不上传
+single/api/pop/picture/
+single/api/venue/pending_images/
+single/api/pop/review_backup/
+
+# 所有图片类型不上传，包含大写 JPEG
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.svg
+*.ico
+*.tif
+*.tiff
+*.avif
+*.heic
+*.heif
+*.JPG
+*.JPEG
+*.PNG
+*.GIF
+*.WEBP
+*.BMP
+*.SVG
+*.ICO
+
+# 视频音频不上传
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.mp3
+*.wav
+
+# 日志/缓存不上传
+*.log
+logs/
+log/
+runtime/
+cache/
+tmp/
+temp/
+
+# 这些虽然是 txt，但实际是日志/临时文件，不上传
+tree.txt
+*operation_log*.txt
+*operation_debug_log*.txt
+*sql_log*.txt
+
+# AI模型/特征数据不上传
+*.pt
+*.pth
+*.npy
+*.npz
+*.onnx
+*.h5
+*.pkl
+
+# 备份/数据库/压缩包不上传
+*.sql
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+
+# 前端 source map 可不上传
+*.map
+
+# 依赖目录不上传
+vendor/
+node_modules/
+
+# 敏感配置
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 编辑器
+.vscode/
+.idea/
+*frozen_log*.txt
+
+# 含阿里云密钥的本地文件，不提交
+/single/api/admin/anchor_auth_submit.php
+/single/api/admin/anchor_auth_submit_test.php
+/single/api/operat/upload.php
+# 图片目录不上传
+/img/
+/imgv2/
+**/img/
+**/imgv2/
+
+# 项目里的业务图片/待审核图片不上传
+single/api/pop/picture/
+single/api/venue/pending_images/
+single/api/pop/review_backup/
+
+# 所有图片类型不上传，包含大写 JPEG
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.svg
+*.ico
+*.tif
+*.tiff
+*.avif
+*.heic
+*.heif
+*.JPG
+*.JPEG
+*.PNG
+*.GIF
+*.WEBP
+*.BMP
+*.SVG
+*.ICO
+
+# 视频音频不上传
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.mp3
+*.wav
+
+# 日志/缓存不上传
+*.log
+logs/
+log/
+runtime/
+cache/
+tmp/
+temp/
+
+# 这些虽然是 txt，但实际是日志/临时文件，不上传
+tree.txt
+*operation_log*.txt
+*operation_debug_log*.txt
+*sql_log*.txt
+
+# AI模型/特征数据不上传
+*.pt
+*.pth
+*.npy
+*.npz
+*.onnx
+*.h5
+*.pkl
+
+# 备份/数据库/压缩包不上传
+*.sql
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+
+# 前端 source map 可不上传
+*.map
+
+# 依赖目录不上传
+vendor/
+node_modules/
+
+# 敏感配置
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 编辑器
+.vscode/
+.idea/
+*frozen_log*.txt
+
+# 含阿里云密钥的本地文件，不提交
+/single/api/admin/anchor_auth_submit.php
+/single/api/admin/anchor_auth_submit_test.php
+/single/api/operat/upload.php
+
+
+
+# 本地敏感配置，不提交
+api/config/aliyun_oss_config.php
+.env
+*.key
+*.pem
+
+# 跳过含本地密钥的旧项目接口文件
+api/admin/anchor_auth_submit.php
+api/admin/anchor_auth_submit_test.php
+api/operat/upload.php
+
+# gitignore 备份文件不提交
+.gitignore.bak_*
