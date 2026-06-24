@@ -53,6 +53,9 @@ function menu_hidden_for_rebuild(array $menu): bool
         '礼物', 'gift',
         '金币', 'gold', 'gold_package', 'coin', 'coins',
         '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
+        '开播时长', '场地开关播记录', '开关播记录', '开关播',
+        'live_duration', 'live_record', 'live_log', 'live_logs',
+        '主播认证管理', '主播认证', 'anchor_auth', 'anchorauth',
         '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
         'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage',
     ]);
