@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>今日新注册用户核对</title>
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --ok: #20a876;
+  --ok-soft: #e8f7f1;
+  --warn: #f59e0b;
+  --warn-soft: #fff5df;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .06);
+  --transition: all .16s ease;
+  --hover-bg: #f8fbfb;
+
+  /* 兼容旧 JS / 旧 CSS 变量名 */
+  --secondary: var(--muted);
+  --card-bg: var(--panel);
+  --border-color: var(--line);
+  --text-color: var(--text);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 22px 24px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+  display: block;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 900;
+  text-align: left;
+}
+
+.card-title > div:first-child {
+  position: relative;
+  padding-left: 16px;
+}
+
+.card-title > div:first-child::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 6px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.sub-title {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 600;
+  border: 0;
+  padding: 0;
+}
+
+.loading {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.left-tools,
+.right-tools {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.input,
+.select {
+  min-width: 220px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  line-height: 38px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.select {
+  min-width: 220px;
+  cursor: pointer;
+}
+
+.input:focus,
+.select:focus {
+  border-color: rgba(15, 143, 140, .48);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.toggle {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--primary);
+  transform: translateY(1px);
+}
+
+.btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.btn.primary {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn.primary:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.btn.ghost {
+  color: var(--text);
+  background: #fff;
+  border-color: var(--line);
+}
+
+.btn.ghost:hover {
+  color: var(--primary-dark);
+  border-color: rgba(15, 143, 140, .32);
+  background: var(--primary-soft);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#statusText {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-weight: 800;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.kpi {
+  min-height: 112px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.kpi:hover {
+  background: var(--hover-bg);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.kpi .label {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.kpi .value {
+  color: var(--text);
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+.kpi .value.money,
+.money {
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi .sub {
+  margin-top: 8px;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.card > div[style*="overflow:auto"] {
+  width: 100%;
+  overflow: auto !important;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px;
+  text-align: left;
+  color: var(--muted);
+  background: #f7fafb;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+tbody tr {
+  background: #fff;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody td b {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.badge.ok {
+  color: var(--ok);
+  border-color: rgba(32, 168, 118, .26);
+  background: var(--ok-soft);
+}
+
+.badge.bad {
+  color: var(--danger);
+  border-color: rgba(223, 91, 87, .28);
+  background: var(--danger-soft);
+}
+
+.badge.warn {
+  color: var(--warn);
+  border-color: rgba(245, 158, 11, .28);
+  background: var(--warn-soft);
+}
+
+.row-bad {
+  outline: 2px solid rgba(223, 91, 87, .14);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.error {
+  display: none;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(223, 91, 87, .28);
+  background: var(--danger-soft);
+  color: #a53131;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  padding: 16px;
+  background: rgba(16, 34, 38, .46);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  width: min(95vw, 460px);
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 56px rgba(16, 34, 38, .18);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.modal-row {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.modal-row strong {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.modal-row span {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+@media (max-width: 1180px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  body {
+    padding: 14px 10px 22px;
+  }
+
+  .card {
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 18px;
+  }
+
+  .left-tools,
+  .right-tools,
+  .toolbar {
+    width: 100%;
+  }
+
+  .input,
+  .select,
+  .btn,
+  .toggle {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi {
+    min-height: 96px;
+  }
+
+  .modal-content {
+    padding: 16px;
+  }
+
+  .modal-title,
+  .modal-row,
+  .modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- 标题卡片 -->
+    <div class="card">
+      <div class="card-title">
+        <div>
+          今日新注册用户 · 充值/消费/余额核对
+          <div class="sub-title">（核对失败优先排序）</div>
+        </div>
+        <div class="right-tools">
+          <button class="btn ghost" id="btnReload">刷新</button>
+          <button class="btn primary" id="btnExport">导出CSV</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+<div class="left-tools">
+  <!-- ✅ 新增：时间范围（datetime-local） -->
+  <input class="input" id="startTime" type="datetime-local" style="min-width:190px;" />
+  <input class="input" id="endTime" type="datetime-local" style="min-width:190px;" />
+
+  <!-- ✅ 新增：查询按钮（不想要也行，输入改变也能触发） -->
+  <button class="btn primary" id="btnQuery">查询</button>
+
+  <!-- 原有：搜索/过滤 -->
+  <input class="input" id="uidSearch" placeholder="搜索 UID（包含匹配）">
+  <label class="toggle">
+    <input type="checkbox" id="onlyBad">
+    只看异常
+  </label>
+  <select class="select" id="sortBy">
+    <option value="api">按接口顺序（默认）</option>
+    <option value="diffAbsDesc">按差额绝对值从大到小</option>
+    <option value="paidDesc">按充值成功从大到小</option>
+    <option value="uidAsc">按UID从小到大</option>
+  </select>
+</div>
+
+        <div class="right-tools">
+          <div class="hint" id="statusText">-</div>
+        </div>
+      </div>
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">总用户数</div>
+          <div class="value" id="kpiTotal">-</div>
+          <div class="sub">今天注册的 uid 数量</div>
+        </div>
+        <div class="kpi">
+          <div class="label">异常用户数</div>
+          <div class="value" id="kpiBad">-</div>
+          <div class="sub">balance_check = false</div>
+        </div>
+        <div class="kpi">
+          <div class="label">异常差额合计</div>
+          <div class="value money" id="kpiDiffSum">-</div>
+          <div class="sub">Σ(difference)（仅异常）</div>
+        </div>
+        <div class="kpi">
+          <div class="label">充值成功合计</div>
+          <div class="value money" id="kpiPaidSum">-</div>
+          <div class="sub">Σ(paid_total)</div>
+        </div>
+      </div>
+
+      <div class="error" id="errorBox"></div>
+    </div>
+
+    <!-- 表格卡片 -->
+    <div class="card">
+      <div class="card-title" style="font-size:20px;">
+        核对明细列表
+        <div class="sub-title">点击某一行可查看弹窗明细</div>
+      </div>
+
+      <div id="loading" class="loading">加载中…</div>
+
+      <div style="overflow:auto;">
+        <table id="dataTable" style="display:none;">
+          <thead>
+            <tr>
+              <th style="width:120px;">UID</th>
+              <th>充值成功</th>
+              <th>待核销金额</th>
+<th>消费金额(含礼物)</th>
+<th>当前余额(含金币)</th>
+              <th>差额</th>
+              <th style="width:140px;">核对结果</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:12px;">
+        公式：差额 = 消费金额(订单消费 + 礼物消费) + 待核销金额 + 当前余额(wallet + gold_balance/10) - 充值成功；核对通过：差额≈0（误差 &lt; 0.01）。
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 详情弹窗 -->
+  <div class="modal" id="detailModal">
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <div class="modal-title">
+        <span id="mTitle">UID 明细</span>
+        <button class="btn ghost" id="btnCloseModal" style="height:34px;">关闭</button>
+      </div>
+
+      <div class="modal-row"><strong>充值成功</strong><span id="mPaid">-</span></div>
+       <div class="modal-row"><strong>待核销金额</strong><span id="dConsume">-</span></div>
+      <div class="modal-row"><strong>消费金额</strong><span id="mConsume">-</span></div>
+      <div class="modal-row"><strong>当前余额</strong><span id="mWallet">-</span></div>
+      <div class="modal-row"><strong>差额</strong><span id="mDiff">-</span></div>
+      <div class="modal-row"><strong>核对结果</strong><span id="mCheck">-</span></div>
+
+      <div class="modal-actions">
+        <button class="btn primary" id="btnCopyLine">复制本行数据</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ✅ 你给的接口地址
+  const API_URL = "/api/finance/demo.php";
+
+  let rawData = [];
+  let viewData = [];
+  let lastClickedRow = null;
+
+  const el = (id) => document.getElementById(id);
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+// datetime-local 需要：YYYY-MM-DDTHH:MM
+function toLocalInputValue(d){
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function setDefaultRangeToday(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0);
+  el("startTime").value = toLocalInputValue(start);
+  el("endTime").value   = toLocalInputValue(end);
+}
+
+  function fmtMoney(n){
+    const x = Number(n || 0);
+    return x.toLocaleString("zh-CN", {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function setError(msg){
+    const box = el("errorBox");
+    if(!msg){
+      box.style.display = "none";
+      box.textContent = "";
+      return;
+    }
+    box.style.display = "block";
+    box.textContent = msg;
+  }
+
+  function calcKpi(data){
+    const total = data.length;
+    const badList = data.filter(x => !x.balance_check);
+    const badCount = badList.length;
+
+    const diffSum = badList.reduce((s,x)=> s + Number(x.difference||0), 0);
+    const paidSum = data.reduce((s,x)=> s + Number(x.paid_total||0), 0);
+
+    el("kpiTotal").textContent = total;
+    el("kpiBad").textContent = badCount;
+    el("kpiDiffSum").textContent = fmtMoney(diffSum);
+    el("kpiPaidSum").textContent = fmtMoney(paidSum);
+  }
+
+  function badgeClassByDiff(diff){
+    const d = Math.abs(Number(diff||0));
+    if(d < 0.01) return "ok";
+    if(d < 5) return "warn";
+    return "bad";
+  }
+
+  function applyFilters(){
+    const q = (el("uidSearch").value || "").trim();
+    const onlyBad = el("onlyBad").checked;
+    const sortBy = el("sortBy").value;
+
+    let data = rawData.slice();
+
+    if(q){
+      data = data.filter(x => String(x.uid).includes(q));
+    }
+    if(onlyBad){
+      data = data.filter(x => !x.balance_check);
+    }
+
+    if(sortBy === "diffAbsDesc"){
+      data.sort((a,b)=> Math.abs(Number(b.difference||0)) - Math.abs(Number(a.difference||0)));
+    }else if(sortBy === "paidDesc"){
+      data.sort((a,b)=> Number(b.paid_total||0) - Number(a.paid_total||0));
+    }else if(sortBy === "uidAsc"){
+      data.sort((a,b)=> Number(a.uid||0) - Number(b.uid||0));
+    } // api：保持接口顺序
+
+    viewData = data;
+    renderTable(viewData);
+
+    el("statusText").textContent = `显示 ${viewData.length} 条 / 总 ${rawData.length} 条`;
+  }
+
+  function renderTable(data){
+    const tbody = el("tbody");
+    tbody.innerHTML = "";
+
+    if(!data.length){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" style="color:var(--secondary);padding:16px;">暂无数据</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    for(const row of data){
+      const tr = document.createElement("tr");
+
+      if(!row.balance_check) tr.classList.add("row-bad");
+
+      const diff = Number(row.difference||0);
+      const diffCls = badgeClassByDiff(diff);
+
+      tr.innerHTML = `
+        <td><b>${row.uid}</b></td>
+        <td class="money">${fmtMoney(row.paid_total)}</td>
+        <td class="money">${fmtMoney(row.waiting_consumption)}</td>
+        <td class="money">${fmtMoney(row.total_consumption)}</td>
+        <td class="money">${fmtMoney(row.user_wallet)}</td>
+        <td class="money">
+          <span class="badge ${diffCls}">${fmtMoney(diff)}</span>
+        </td>
+        <td>
+          ${row.balance_check
+            ? `<span class="badge ok">正常</span>`
+            : `<span class="badge bad">异常</span>`
+          }
+        </td>
+      `;
+
+      tr.addEventListener("click", ()=> openModal(row));
+      tbody.appendChild(tr);
+    }
+  }
+
+  function showLoading(on){
+    el("loading").style.display = on ? "block" : "none";
+    el("dataTable").style.display = on ? "none" : "table";
+  }
+
+  async function load(){
+    setError("");
+    showLoading(true);
+    el("statusText").textContent = "加载中…";
+const showRange = (el("startTime").value || "-") + " ~ " + (el("endTime").value || "-");
+el("statusText").textContent = "加载中…  " + showRange;
+    try{
+// ✅ 从输入框读时间（datetime-local）
+// 后端支持 2026-02-03T00:00 这种格式，所以直接传即可
+const start_time = el("startTime").value;
+const end_time   = el("endTime").value;
+
+const qs = new URLSearchParams();
+if (start_time) qs.set("start_time", start_time);
+if (end_time)   qs.set("end_time", end_time);
+
+const url = qs.toString() ? (API_URL + "?" + qs.toString()) : API_URL;
+
+const res = await fetch(url, {
+  method: "GET",
+  credentials: "include",
+  headers: { "Accept": "application/json" }
+});
+
+      const json = await res.json();
+
+      if(json.code !== 0){
+        rawData = [];
+        calcKpi(rawData);
+        applyFilters();
+        showLoading(false);
+        setError(`接口返回错误：code=${json.code}，msg=${json.msg || "未知错误"}`);
+        return;
+      }
+
+      rawData = Array.isArray(json.data) ? json.data : [];
+      calcKpi(rawData);
+      applyFilters();
+      showLoading(false);
+      setError("");
+
+    }catch(e){
+      rawData = [];
+      calcKpi(rawData);
+      applyFilters();
+      showLoading(false);
+
+      setError(
+        "请求失败（常见原因）：\n" +
+        "1) 未登录/没有 session_token cookie\n" +
+        "2) 跨域 CORS 未放行（尤其是本地 file:// 打开）\n" +
+        "3) 接口不可达\n\n" +
+        "建议：把这个 HTML 放到与 open.rcwulian.cn 同域的静态目录下访问。"
+      );
+    }
+  }
+
+  function exportCsv(){
+    const rows = [
+      ["uid","paid_total","total_consumption","user_wallet","difference","balance_check"]
+    ];
+    for(const x of viewData){
+      rows.push([
+        x.uid,
+        x.paid_total,
+        x.total_consumption,
+        x.user_wallet,
+        x.difference,
+        x.balance_check ? "true" : "false"
+      ]);
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `today_users_balance_check_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ===== Modal =====
+  function openModal(row){
+    lastClickedRow = row;
+
+    el("mTitle").textContent = `UID ${row.uid} · 核对明细`;
+    el("mPaid").textContent = fmtMoney(row.paid_total);
+    el("mConsume").textContent = fmtMoney(row.total_consumption);
+    el("mWallet").textContent = fmtMoney(row.user_wallet);
+    el("mDiff").textContent = fmtMoney(row.difference);
+
+    el("mCheck").innerHTML = row.balance_check
+      ? `<span class="badge ok">正常</span>`
+      : `<span class="badge bad">异常</span>`;
+
+    el("detailModal").style.display = "flex";
+  }
+
+  function closeModal(){
+    el("detailModal").style.display = "none";
+  }
+
+  function copyLine(){
+    if(!lastClickedRow) return;
+    const r = lastClickedRow;
+    const text =
+      `uid=${r.uid}, paid_total=${r.paid_total}, total_consumption=${r.total_consumption}, ` +
+      `user_wallet=${r.user_wallet}, difference=${r.difference}, balance_check=${r.balance_check}`;
+    navigator.clipboard?.writeText(text).then(()=> {
+      // 轻提示：不弹 alert，避免打断
+      el("btnCopyLine").textContent = "已复制";
+      setTimeout(()=> el("btnCopyLine").textContent = "复制本行数据", 1200);
+    }).catch(()=> {
+      alert("复制失败，请手动复制：\n" + text);
+    });
+  }
+
+  // events
+  el("btnReload").addEventListener("click", load);
+  el("btnExport").addEventListener("click", exportCsv);
+  el("uidSearch").addEventListener("input", applyFilters);
+  el("onlyBad").addEventListener("change", applyFilters);
+  el("sortBy").addEventListener("change", applyFilters);
+el("btnQuery").addEventListener("click", load);
+  el("btnCloseModal").addEventListener("click", closeModal);
+  el("btnCopyLine").addEventListener("click", copyLine);
+el("startTime").addEventListener("change", load);
+el("endTime").addEventListener("change", load);
+  // 点击遮罩关闭
+  el("detailModal").addEventListener("click", (e)=>{
+    if(e.target === el("detailModal")) closeModal();
+  });
+  // ESC 关闭
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape") closeModal();
+  });
+
+setDefaultRangeToday();
+load();
+</script>
+</body>
+</html>
