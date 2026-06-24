@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>全平台数据看板</title>
+  <style>
+    :root{
+      --primary:#5b8cff; --secondary:#7f8fa4;
+      --bg1:#f8f9ff; --bg2:#f0f3ff;
+      --card:#fff; --border:#e6e9f2; --text:#111827;
+      --shadow:0 10px 30px rgba(17,24,39,.08);
+      --transition:all .25s ease; --hover:#f9fafb;
+      --radius:16px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui;}
+    body{background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);min-height:100vh;padding:18px;display:flex;justify-content:center;align-items:flex-start;}
+    .container{max-width:1240px;width:100%;}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+    .header{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;
+      border-bottom:2px solid rgba(91,140,255,.18);padding-bottom:12px;margin-bottom:12px;
+    }
+    .title{font-size:22px;font-weight:800;color:var(--text);line-height:1.2;}
+    .subtitle{margin-top:6px;font-size:13px;color:var(--secondary);}
+    .kv{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:var(--secondary);font-size:13px;}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;}
+    .dot{width:8px;height:8px;border-radius:999px;background:rgba(91,140,255,.9);}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;}
+    .pill{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;color:var(--secondary);cursor:pointer;transition:var(--transition);user-select:none;}
+    .pill.active{border-color:rgba(91,140,255,.6);color:var(--primary);box-shadow:0 6px 18px rgba(91,140,255,.12);}
+    .btn{border:none;border-radius:12px;padding:9px 14px;cursor:pointer;font-size:14px;transition:var(--transition);font-weight:700;}
+    .btn.primary{background:var(--primary);color:#fff;}
+    .btn.primary:hover{filter:brightness(.95);}
+    .btn.ghost{background:#fff;color:var(--primary);border:1px solid rgba(91,140,255,.35);}
+    .btn.ghost:hover{background:rgba(91,140,255,.08);}
+    .input{
+      border:1px solid var(--border); border-radius:12px;
+      padding:9px 10px; font-size:13px; background:#fff; color:#111; outline:none;
+    }
+
+    .section{margin-top:10px;}
+    .section-head{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+      margin:6px 0 10px;
+    }
+    .section-title{
+      display:flex;align-items:center;gap:10px;
+      font-size:15px;font-weight:800;color:#111827;
+    }
+    .section-title .tag{
+      font-size:12px;font-weight:800;
+      padding:3px 10px;border-radius:999px;border:1px solid var(--border);
+      color:var(--secondary);background:#fff;
+    }
+    .hint{font-size:12px;color:var(--secondary);}
+
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+    .stat{
+      border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px;background:#fff;transition:var(--transition);min-height:92px;
+    }
+    .stat:hover{background:var(--hover);}
+    .label{font-size:13px;color:var(--secondary);margin-bottom:8px;}
+    .value{font-size:26px;color:var(--text);font-weight:900;letter-spacing:.2px;}
+    .meta{margin-top:8px;font-size:12px;color:var(--secondary);line-height:1.4;}
+    .loading{text-align:center;font-size:15px;color:var(--primary);padding:16px 0;font-weight:700;}
+    .error{border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:#b91c1c;border-radius:var(--radius);padding:12px 14px;font-size:13px;line-height:1.6;}
+
+    @media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr);}}
+    @media (max-width:560px){body{padding:12px;}.grid{grid-template-columns:1fr;}}
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <div>
+        <div class="title">全平台数据看板</div>
+        <div class="subtitle" id="rangeText">—</div>
+      </div>
+      <div class="kv">
+        <span class="badge"><span class="dot"></span><span id="modeBadge">day</span></span>
+      </div>
+    </div>
+
+    <!-- 快捷 -->
+    <div class="toolbar">
+      <div class="pill active" data-mode="day">今天</div>
+      <div class="pill" data-mode="week">本周</div>
+      <div class="pill" data-mode="month">本月</div>
+      <button class="btn primary" id="btnRefresh">刷新</button>
+    </div>
+
+    <!-- 自定义区间 -->
+    <div class="toolbar" style="margin-top:-2px;">
+      <input id="startTime" type="datetime-local" class="input" />
+      <span class="hint">至</span>
+      <input id="endTime" type="datetime-local" class="input" />
+      <button class="btn ghost" id="btnFilter">筛选</button>
+      <button class="btn ghost" id="btnClear" title="清除区间，回到今天">清除</button>
+      <span class="hint">（默认当天 00:00 ~ 23:59）</span>
+    </div>
+
+    <div id="status" class="loading">加载中...</div>
+
+    <!-- 总览 -->
+    <div class="section" id="sectionAll" style="display:none;">
+      <div class="section-head">
+        <div class="section-title">总览 <span class="tag">ALL</span></div>
+        <div class="hint"></div>
+      </div>
+      <div class="grid">
+        <div class="stat">
+          <div class="label">活跃用户数</div>
+          <div class="value" id="active_total">0</div>
+          <div class="meta"> 最后登录在统计周期内</div>
+        </div>
+        <div class="stat">
+          <div class="label">活跃且有实际消费人数</div>
+          <div class="value" id="active_users_with_consumption">0</div>
+          <div class="meta">最后登录在周期内付费订单（排除能量）</div>
+        </div>
+        <div class="stat">
+          <div class="label">新注册用户数</div>
+          <div class="value" id="new_users">0</div>
+          <div class="meta">注册时间在统计周期内</div>
+        </div>
+        <!--<div class="stat">-->
+        <!--  <div class="label">新注册用户消费金额</div>-->
+        <!--  <div class="value" id="new_users_consumption">0.00</div>-->
+        <!--  <div class="meta">新注册用户在周期内付费金额</div>-->
+        <!--</div>-->
+
+        <div class="stat">
+          <div class="label">总消费金额（排除能量）</div>
+          <div class="value" id="total_amount">0.00</div>
+          <div class="meta">在周期内</div>
+        </div>
+        <div class="stat">
+          <div class="label">总订单数（排除能量）</div>
+          <div class="value" id="total_order_cnt">0</div>
+          <div class="meta">新订单数 + 老订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">总体客单价</div>
+          <div class="value" id="total_aov">0.00</div>
+          <div class="meta">总金额 / 总订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">总体人均消费</div>
+          <div class="value" id="total_avg_per_user">0.00</div>
+          <div class="meta">总金额 /（新+老）付费人数</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新用户 -->
+    <div class="section" id="sectionNew" style="display:none;">
+      <div class="section-head">
+        <div class="section-title">新用户 <span class="tag">NEW</span></div>
+        <div class="hint"></div>
+      </div>
+      <div class="grid">
+        <div class="stat">
+          <div class="label">新用户付费人数（去重）</div>
+          <div class="value" id="new_user_cnt">0</div>
+          <div class="meta">注册在周期内且周期内有付费订单</div>
+        </div>
+        <div class="stat">
+          <div class="label">新用户订单数</div>
+          <div class="value" id="new_order_cnt">0</div>
+          <div class="meta">新用户在周期内产生的订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">新用户消费金额</div>
+          <div class="value" id="new_amount">0.00</div>
+          <div class="meta">新用户在周期内付费金额</div>
+        </div>
+        <div class="stat">
+          <div class="label">新用户人均消费</div>
+          <div class="value" id="new_avg_per_user">0.00</div>
+          <div class="meta">新用户金额 / 新用户人数</div>
+        </div>
+        <div class="stat">
+          <div class="label">新用户客单价</div>
+          <div class="value" id="new_aov">0.00</div>
+          <div class="meta">新用户金额 / 新用户订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">新用户金额占比</div>
+          <div class="value" id="new_amount_share">0%</div>
+          <div class="meta">新用户金额 / 总金额</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 老用户 -->
+    <div class="section" id="sectionOld" style="display:none;">
+      <div class="section-head">
+        <div class="section-title">老用户 <span class="tag">OLD</span></div>
+        <div class="hint"></div>
+      </div>
+      <div class="grid">
+        <div class="stat">
+          <div class="label">老用户付费人数（去重）</div>
+          <div class="value" id="old_user_cnt">0</div>
+          <div class="meta">非周期内注册且周期内有付费订单</div>
+        </div>
+        <div class="stat">
+          <div class="label">老用户订单数</div>
+          <div class="value" id="old_order_cnt">0</div>
+          <div class="meta">老用户在周期内产生的订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">老用户消费金额</div>
+          <div class="value" id="old_amount">0.00</div>
+          <div class="meta">老用户在周期内付费金额</div>
+        </div>
+        <div class="stat">
+          <div class="label">老用户人均消费</div>
+          <div class="value" id="old_avg_per_user">0.00</div>
+          <div class="meta">老用户金额 / 老用户人数</div>
+        </div>
+        <div class="stat">
+          <div class="label">老用户客单价</div>
+          <div class="value" id="old_aov">0.00</div>
+          <div class="meta">老用户金额 / 老用户订单数</div>
+        </div>
+        <div class="stat">
+          <div class="label">老用户金额占比</div>
+          <div class="value" id="old_amount_share">0%</div>
+          <div class="meta">老用户金额 / 总金额</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = "/api/index/stats.php";
+  let currentMode = "day";
+  let lastCustomRange = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function fmtMoney(v){ const n = Number(v||0); return (Math.round(n*100)/100).toFixed(2); }
+  function fmtInt(v){ const n = Number(v||0); return String(Math.trunc(n)); }
+  function fmtPct(v){ const n = Number(v||0); return (n*100).toFixed(2) + "%"; }
+
+  function setStatus(html, isError=false){
+    const el = $("status");
+    el.className = isError ? "error" : "loading";
+    el.innerHTML = html;
+    el.style.display = "block";
+  }
+
+  function applyModeBadge(mode){
+    $("modeBadge").textContent = mode;
+  }
+
+  function toLocalInputValue(dt){
+    const yyyy = dt.getFullYear();
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    const dd = String(dt.getDate()).padStart(2,'0');
+    const hh = String(dt.getHours()).padStart(2,'0');
+    const mi = String(dt.getMinutes()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
+  function getDefaultTodayRange(){
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0);
+    return { start, end };
+  }
+
+  function inputToApiDatetime(v, isEnd=false){
+    // "YYYY-MM-DDTHH:MM" -> "YYYY-MM-DD HH:MM:SS"
+    if(!v) return "";
+    return v.replace("T", " ") + (isEnd ? ":59" : ":00");
+  }
+
+  function showSections(){
+    $("sectionAll").style.display = "block";
+    $("sectionNew").style.display = "block";
+    $("sectionOld").style.display = "block";
+  }
+
+  async function load(mode, customRange){
+    currentMode = mode;
+    applyModeBadge(customRange ? "custom" : mode);
+
+    $("sectionAll").style.display = "none";
+    $("sectionNew").style.display = "none";
+    $("sectionOld").style.display = "none";
+    setStatus("加载中...");
+
+    try{
+      let url = `${API}?mode=${encodeURIComponent(mode)}&_t=${Date.now()}`;
+      if (customRange?.start && customRange?.end){
+        url += `&start=${encodeURIComponent(customRange.start)}&end=${encodeURIComponent(customRange.end)}`;
+      }
+
+      const resp = await fetch(url, { credentials:"include" });
+      const text = await resp.text();
+
+      let json;
+      try { json = JSON.parse(text); }
+      catch(e){
+        setStatus("接口返回不是 JSON：<br><br><code>" + (text||"").replace(/[<>&]/g, s=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[s])) + "</code>", true);
+        return;
+      }
+
+      if (!json || json.code !== 0){
+        setStatus(`请求失败：${json?.msg || "unknown"}（code=${json?.code ?? "?"}）`, true);
+        return;
+      }
+
+      const d = json.data || {};
+      $("rangeText").textContent = `统计区间：${d.range?.start || "-"}  →  ${d.range?.end || "-"}`;
+
+      // 总览
+      $("active_total").textContent = fmtInt(d.active_total);
+      $("active_users_with_consumption").textContent = fmtInt(d.active_users_with_consumption);
+      $("new_users").textContent = fmtInt(d.new_users);
+    //   $("new_users_consumption").textContent = fmtMoney(d.new_users_consumption);
+      $("total_amount").textContent = fmtMoney(d.total_amount);
+
+      // 新用户
+      $("new_user_cnt").textContent = fmtInt(d.new_user_cnt);
+      $("new_order_cnt").textContent = fmtInt(d.new_order_cnt);
+      $("new_amount").textContent = fmtMoney(d.new_amount);
+      $("new_avg_per_user").textContent = fmtMoney(d.new_avg_per_user);
+      $("new_aov").textContent = fmtMoney(d.new_aov);
+      $("new_amount_share").textContent = fmtPct(d.new_amount_share);
+
+      // 老用户
+      $("old_user_cnt").textContent = fmtInt(d.old_user_cnt);
+      $("old_order_cnt").textContent = fmtInt(d.old_order_cnt);
+      $("old_amount").textContent = fmtMoney(d.old_amount);
+      $("old_avg_per_user").textContent = fmtMoney(d.old_avg_per_user);
+      $("old_aov").textContent = fmtMoney(d.old_aov);
+      $("old_amount_share").textContent = fmtPct(d.old_amount_share);
+
+      // 派生总订单 / 总体客单 / 总体人均
+      const totalOrderCnt = Number(d.new_order_cnt||0) + Number(d.old_order_cnt||0);
+      const totalPayUsers = Number(d.new_user_cnt||0) + Number(d.old_user_cnt||0);
+      const totalAmount   = Number(d.total_amount||0);
+
+      $("total_order_cnt").textContent = fmtInt(totalOrderCnt);
+      $("total_aov").textContent = fmtMoney(totalOrderCnt > 0 ? totalAmount / totalOrderCnt : 0);
+      $("total_avg_per_user").textContent = fmtMoney(totalPayUsers > 0 ? totalAmount / totalPayUsers : 0);
+
+      $("status").style.display = "none";
+      showSections();
+
+    } catch(err){
+      setStatus("网络/接口异常：" + (err?.message || err), true);
+    }
+  }
+
+  // pills：点今天/本周/本月 -> 清空自定义区间 + 同步输入框为默认当天
+  document.querySelectorAll(".pill").forEach(p => {
+    p.addEventListener("click", () => {
+      document.querySelectorAll(".pill").forEach(x => x.classList.remove("active"));
+      p.classList.add("active");
+
+      lastCustomRange = null;
+
+      const r = getDefaultTodayRange();
+      $("startTime").value = toLocalInputValue(r.start);
+      $("endTime").value = toLocalInputValue(r.end);
+
+      load(p.dataset.mode, null);
+    });
+  });
+
+  // 刷新：保留 lastCustomRange
+  $("btnRefresh").addEventListener("click", () => load(currentMode, lastCustomRange));
+
+  // 筛选：按 start/end 请求（custom）
+  $("btnFilter").addEventListener("click", () => {
+    const s = $("startTime").value;
+    const e = $("endTime").value;
+    if(!s || !e) return alert("请填写开始和结束时间");
+    if (new Date(e).getTime() <= new Date(s).getTime()) return alert("结束时间必须大于开始时间");
+
+    document.querySelectorAll(".pill").forEach(x => x.classList.remove("active"));
+
+    const start = inputToApiDatetime(s, false);
+    const end   = inputToApiDatetime(e, true); // 末尾补 :59
+    lastCustomRange = { start, end };
+
+    load("day", lastCustomRange);
+  });
+
+  // 清除：回到今天
+  $("btnClear").addEventListener("click", () => {
+    document.querySelectorAll(".pill").forEach(x => x.classList.remove("active"));
+    document.querySelector('.pill[data-mode="day"]')?.classList.add("active");
+    lastCustomRange = null;
+
+    const r = getDefaultTodayRange();
+    $("startTime").value = toLocalInputValue(r.start);
+    $("endTime").value = toLocalInputValue(r.end);
+
+    load("day", null);
+  });
+
+  // init：默认当天
+  (function init(){
+    const r = getDefaultTodayRange();
+    $("startTime").value = toLocalInputValue(r.start);
+    $("endTime").value = toLocalInputValue(r.end);
+    load("day", null);
+  })();
+</script>
+</body>
+</html>

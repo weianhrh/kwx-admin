@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能违规巡查系统</title>
+    <link rel="stylesheet" href="style.css">
+   <style>
+#customAlert {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid red;
+    padding: 40px 60px;
+    z-index: 9999;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+    display: none;
+    text-align: center;
+    border-radius: 12px;
+    width: auto;
+    max-width: 400px;
+    word-break: break-word;
+}
+
+#customAlertClose {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: red;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+
+#customAlertMessage {
+    font-size: 28px;
+    color: red;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+#customAlert button {
+    padding: 12px 30px;
+    font-size: 18px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+@media (max-width: 870px) {
+    #customAlert {
+        width: 90vw;
+        padding: 20px 10px;
+    }
+
+    #customAlertMessage {
+        font-size: 18px;
+    }
+
+    #customAlert button {
+        width: 100%;
+        font-size: 16px;
+    }
+}
+.card-remark {
+    /*color: #444;*/
+    font-size: 14px;
+    margin-top: 4px;
+}
+/* 场地命中时的红色高亮 */
+.card-venue.hl{
+  color:#d93025;         /* 文本红色 */
+  background:#ffe6e6;    /* 淡红底 —— 只想变字色可删这一行 */
+  border-left:4px solid #d93025;
+  padding-left:8px;
+  border-radius:4px;
+  font-weight:600;
+}
+
+
+</style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+    <!-- 封禁弹窗 -->
+<div class="modal" id="banModal">
+    <div class="modal-content" onclick="event.stopPropagation()">
+
+        <p>封禁设备：<span id="banDeviceKey"></span></p>
+        <label for="banDuration">封禁时长：</label>
+        <select id="banDuration">
+            <!--<option value="10">10分钟</option>-->
+            <!--<option value="20">20分钟</option>-->
+            <option value="30">30分钟</option>
+            <option value="60">1小时</option>
+            <!--<option value="360">6小时</option>-->
+            <!--<option value="720">12小时</option>-->
+            <!--<option value="1440">1天</option>  -->
+            <!--<option value="4320">3天</option>  -->
+            <!--<option value="10080">7天</option>  -->
+            <!--<option value="43200">1月</option> -->
+            <!--<option value="525600">1年</option>-->
+        </select>
+        <br><br>
+        <label for="banReason">封禁原因：</label><br>
+        <textarea id="banReason" rows="3" style="width: 100%;"></textarea>
+        <br><br>
+        <button onclick="confirmBan()">确认封禁</button>
+        <button onclick="closeBanModal()" style="background-color: #999;">取消</button>
+    </div>
+</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Rc物联-AI违规巡查系统</h1>
+            <!-- 今日统计文字 -->
+<div id="todayCounters" class="today-counters" aria-live="polite">识别统计加载中…</div>
+<div id="todayVendorCounters" class="today-counters" aria-live="polite" style="margin-top:10px;">厂商抓图统计加载中…</div>
+        </div>
+
+        <button id="toggleSoundBtn" onclick="toggleSoundAlert()">声音提醒: 关闭</button>
+        <button id="togglePredictedBtn" onclick="togglePredictedMode()">全部显示</button>
+    <button id="viewCheckinBtn" onclick="location.href='/api/operat/checkin_report.php'">签到记录查看</button>
+
+
+
+
+        <div class="violations-grid" id="violationsContainer">
+            <div class="loading">数据加载中...</div>
+        </div>
+    </div>
+
+    <!-- 音频播放器 -->
+    <audio id="alertSound" src="001.mp3"></audio>
+
+    <!-- 图片放大模态框 -->
+    <div class="modal" id="imageModal" onclick="closeImageModal()">
+        <img id="modalImage" src="" alt="放大图片">
+    </div>
+    <div id="customAlert">
+        <div id="customAlertClose" onclick="closeCustomAlert()">×</div>
+        <div id="customAlertMessage">有举报待处理，是否立即前往？</div>
+        <button onclick="goToReportReview()">立即处理</button>
+    </div>
+<script src="canvas-nest-colorful.js"></script>
+    <script>
+// 三态：all, onlyPredicted, onlyNonPredicted
+// const SENSITIVE_VENUES = ['泡芙', '贝壳', '神密森林', '娇娃', '小辣椒', '小屋'];
+// let SENSITIVE_VENUES = ["午夜教练", "偷心的猫", "黑糖曼巴Ss", "RC打伞的小蘑菇", "神M地带", "👀妹", "禁区乐园🚫", "叽叽歪歪", "想要", "小屋探密", "菲菲越野社"]; 高费率
+let SENSITIVE_VENUES = []; // 兜底可留空或放老名单
+
+async function loadSensitiveVenues() {
+  try {
+    const res = await fetch('/api/pop/get_highrate_venues.php'); // 不传参
+    const data = await res.json();
+    if (data.code === 0 && data.data) {
+      SENSITIVE_VENUES = data.data.names || [];
+      filterPredictedCards(); // 立刻刷新高亮
+    }
+  } catch (e) {
+    console.error('高费率场地加载失败：', e);
+  }
+}
+
+
+
+const SHOW_MODE_KEY = 'showPredictedMode';
+let showPredictedMode = localStorage.getItem(SHOW_MODE_KEY) || 'all';
+// ===== 获取今日统计 =====
+async function fetchTodayCounters() {
+    try {
+        const res = await fetch('/api/pop/get_today_counters.php');
+        const data = await res.json();
+        const counterEl = document.getElementById('todayCounters');
+
+        // 设置背景色和样式
+        counterEl.style.backgroundColor = 'rgb(0, 234, 255)';
+        counterEl.style.color = '#000';
+        counterEl.style.padding = '8px 12px';
+        counterEl.style.borderRadius = '6px';
+        counterEl.style.display = 'inline-block';
+        counterEl.style.fontWeight = 'bold';
+
+        if (data.code === 200 && data.data) {
+            const { safe_cnt, low_cnt, medium_cnt, high_cnt } = data.data;
+            counterEl.innerHTML =
+                `今日识别统计：安全 ${safe_cnt} 条 ｜ 低风险 ${low_cnt} 条 ｜ 中风险 ${medium_cnt} 条 ｜ 高风险 ${high_cnt} 条`;
+        } else {
+            counterEl.textContent = '今日暂无识别数据';
+        }
+    } catch (e) {
+        console.error('获取今日统计失败', e);
+        document.getElementById('todayCounters').textContent = '统计加载失败';
+    }
+}
+
+async function fetchTodayVendorCounters() {
+    try {
+        const res = await fetch('/api/pop/get_today_vendor_counters.php');
+        const data = await res.json();
+        const counterEl = document.getElementById('todayVendorCounters');
+
+        counterEl.style.backgroundColor = '#14f1ff';
+        counterEl.style.color = '#000';
+        counterEl.style.padding = '8px 12px';
+        counterEl.style.borderRadius = '6px';
+        counterEl.style.display = 'block';
+        counterEl.style.width = 'fit-content';
+        counterEl.style.margin = '10px auto 0';
+        counterEl.style.fontWeight = 'bold';
+
+        if (data.code === 200 && data.data) {
+            const {
+                ch_cnt = 0,
+                yl_cnt = 0,
+                xm_cnt = 0,
+                zego_cnt = 0,
+                total_cnt = 0
+            } = data.data;
+
+            counterEl.innerHTML =
+                `今日厂商抓图统计：CH ${ch_cnt} 张 ｜ YL ${yl_cnt} 张 ｜ 熊麦 ${xm_cnt} 张 ｜即构 ${zego_cnt} 张 ｜总计 ${total_cnt} 张`;
+        } else {
+            counterEl.textContent = '今日暂无厂商抓图数据';
+        }
+    } catch (e) {
+        console.error('获取今日厂商抓图统计失败', e);
+        document.getElementById('todayVendorCounters').textContent = '厂商抓图统计加载失败';
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    updatePredictedBtn();
+    fetchTodayCounters();
+    fetchTodayVendorCounters();
+    loadSensitiveVenues();  // ← 新增
+});
+
+// 三态切换
+function togglePredictedMode() {
+    if (showPredictedMode === 'all') showPredictedMode = 'onlyPredicted';
+    else if (showPredictedMode === 'onlyPredicted') showPredictedMode = 'onlyNonPredicted';
+    else showPredictedMode = 'all';
+    localStorage.setItem(SHOW_MODE_KEY, showPredictedMode);
+    updatePredictedBtn();
+    filterPredictedCards();
+}
+
+// 更新按钮文字
+function updatePredictedBtn() {
+    let text = '全部显示';
+    if (showPredictedMode === 'onlyPredicted') text = '仅显示自研';
+    else if (showPredictedMode === 'onlyNonPredicted') text = '仅显示非自研';
+    document.getElementById('togglePredictedBtn').innerText = text;
+    filterPredictedCards();
+}
+
+// 卡片显示逻辑
+function filterPredictedCards() {
+    document.querySelectorAll('.violation-card').forEach(card => {
+        const isPredicted = card.querySelector('.card-remark');
+        if (showPredictedMode === 'all') {
+            card.style.display = '';
+        } else if (showPredictedMode === 'onlyPredicted') {
+            card.style.display = isPredicted ? '' : 'none';
+        } else if (showPredictedMode === 'onlyNonPredicted') {
+            card.style.display = !isPredicted ? '' : 'none';
+        }
+    });
+}
+        let soundEnabled = true;
+        let lastViolations = null;
+        const alertSound = document.getElementById('alertSound');
+
+        async function fetchViolations() {
+            try {
+                const response = await fetch('/api/pop/fetch_vuln.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    const newData = JSON.stringify(data.violations);
+                    if (newData !== lastViolations) {
+                        lastViolations = newData;
+                        renderViolations(data.violations);
+                        if (soundEnabled && data.violations.length > 0) alertSound.play();
+                    }
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('数据获取失败:', error);
+                showErrorState();
+            }
+        }
+
+        // function renderViolations(violations) {
+        //     const container = document.getElementById('violationsContainer');
+        //     container.innerHTML = '';
+
+        //     // 按风险等级排序：high > medium > low
+        //     violations.sort((a, b) => {
+        //         const levelWeight = { high: 3, medium: 2, low: 1 };
+        //         return (levelWeight[b.risk_level] || 0) - (levelWeight[a.risk_level] || 0);
+        //     });
+
+        //     violations.forEach(violation => {
+        //     const card = document.createElement('div');
+        //     card.className = 'violation-card';
+
+        //     const isSensitiveVenue = SENSITIVE_VENUES.some(k =>
+        //         (violation.venue_name || '').includes(k)
+        //     );
+
+        //     const venueLine = `
+        //         <div class="card-venue ${isSensitiveVenue ? 'highlight' : ''}">
+        //             场地：${violation.venue_name}
+        //             ${isSensitiveVenue ? '<span class="venue-flag">尺度</span>' : ''}
+        //         </div>
+        //     `;
+
+        //     card.innerHTML = `
+        //         <div class="image-wrapper">
+        //             <img src="${violation.image_url}" alt="违规截图" class="card-image" loading="lazy" onclick="showImageModal('${violation.image_url}')">
+        //             <div class="time-overlay">${violation.time}</div>
+        //         </div>
+        //         <div class="card-content">
+        //             <div class="risk-and-count">
+        //                 <div class="risk-level ${getRiskClass(violation.risk_level)}">
+        //                     ${getRiskText(violation.risk_level)}
+        //                 </div>
+        //                 <div class="violation-count">
+        //                     <span class="count-num">${violation.hit_count ?? 0}</span> 次违规
+        //                 </div>
+        //             </div>
+
+        //             ${venueLine}
+
+        //             <div class="card">违规次数：<span class="count-num">${violation.violation_count ?? 0}</span> 次违规</div>
+        //             <div class="card-reason">描述：${violation.reason}</div>
+        //             ${violation.remark ? `<div class="card-remark">备注：${violation.remark}</div>` : ''}
+
+        //             <div class="manual-tagging">
+        //               <label for="riskLabel_${violation.key}">实际标记：</label>
+        //               <select id="riskLabel_${violation.key}" class="manual-risk-label">
+        //                   <option value="">请选择</option>
+        //                   <option value="safe">安全</option>
+        //                   <option value="low">低风险</option>
+        //                   <option value="medium">中风险</option>
+        //                   <option value="high">高风险</option>
+        //               </select>
+        //             </div>
+
+        //             <button onclick="banDevice('${violation.key}')">${violation.is_banned === 1 ? '已封禁' : '封禁'}</button>
+        //             <button class="button-off" onclick="offbanDevice('${violation.key}')">忽略</button>
+        //         </div>
+        //     `;
+
+        //     container.appendChild(card);
+        // });
+        //     filterPredictedCards(); // 新增这一句
+        // }
+        //
+        function toDisplayUrl(url) {
+          try {
+            return url.replace(/\/pending_images_folder\//i, '/risk_images_folder/');
+          } catch { return url; }
+        }
+
+        // 互换 pending <-> risk（用于 onerror 兜底）
+        function swapPendingRisk(url) {
+          if (/\/pending_images_folder\//i.test(url))
+            return url.replace(/\/pending_images_folder\//i, '/risk_images_folder/');
+          if (/\/risk_images_folder\//i.test(url))
+            return url.replace(/\/risk_images_folder\//i, '/pending_images_folder/');
+          return url;
+        }
+
+        // <img> 加载失败时只尝试互换一次
+        function imgFallback(img) {
+          if (img.dataset.tried === '1') return;
+          img.dataset.tried = '1';
+          const alt = swapPendingRisk(img.src);
+          if (alt !== img.src) img.src = alt;
+        }
+
+        function renderViolations(violations) {
+    const container = document.getElementById('violationsContainer');
+    container.innerHTML = '';
+
+    // 按风险等级排序：high > medium > low
+    violations.sort((a, b) => {
+        const levelWeight = { high: 3, medium: 2, low: 1 };
+        return (levelWeight[b.risk_level] || 0) - (levelWeight[a.risk_level] || 0);
+    });
+
+    violations.forEach(violation => {
+        const card = document.createElement('div');
+        card.className = 'violation-card';
+
+        // ✅ 把归档相关字段挂到卡片上
+        card.dataset.archiveKey = violation.archive_key || '';
+        card.dataset.redisKey = violation.redis_key || '';
+        card.dataset.sourceType = violation.source_type || '';
+        card.dataset.rawSerial = violation.key || '';
+
+        const venueName = (violation.venue_name || '');
+        const isSensitiveVenue = SENSITIVE_VENUES.some(k => venueName.includes(k));
+        const displayUrl = toDisplayUrl(violation.image_url || '');
+
+        card.innerHTML = `
+            <div class="image-wrapper">
+                <img src="${displayUrl}"
+                    alt="违规截图"
+                    class="card-image"
+                    loading="lazy"
+                    onclick="showImageModal('${displayUrl}')"
+                    onerror="imgFallback(this)">
+                <div class="time-overlay">${violation.time || ''}</div>
+            </div>
+            <div class="card-content">
+                <div class="risk-and-count">
+                    <div class="risk-level ${getRiskClass(violation.risk_level)}">
+                        ${getRiskText(violation.risk_level)}
+                    </div>
+                    <div class="violation-count">
+                        <span class="count-num">${violation.hit_count ?? 0}</span> 次违规
+                    </div>
+                </div>
+
+                <div class="card-venue ${isSensitiveVenue ? 'hl' : ''}">
+                    场地：${venueName}
+                </div>
+
+                <div class="card">
+                    违规次数：<span class="count-num">${violation.violation_count ?? 0}</span> 次违规
+                </div>
+                <div class="card-reason">描述：${violation.reason || ''}</div>
+
+                ${violation.remark ? `<div class="card-remark">备注：${violation.remark}</div>` : ''}
+
+                <div class="manual-tagging">
+                  <label for="riskLabel_${violation.key}">实际标记：</label>
+                  <select id="riskLabel_${violation.key}" class="manual-risk-label">
+                      <option value="">请选择</option>
+                      <option value="safe">安全</option>
+                      <option value="low">低风险</option>
+                      <option value="medium">中风险</option>
+                      <option value="high">高风险</option>
+                  </select>
+                </div>
+
+                <button onclick="banDevice(this, '${violation.key}')">
+                    ${violation.is_banned === 1 ? '已封禁' : '封禁'}
+                </button>
+                <button class="button-off" onclick="offbanDevice(this, '${violation.key}')">
+                    忽略
+                </button>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+
+    filterPredictedCards();
+}
+
+        function getRiskClass(level) {
+            return {
+                high: 'risk-high',
+                medium: 'risk-medium',
+                low: 'risk-low'
+            }[level] || 'risk-medium';
+        }
+
+        function getRiskText(level) {
+            return {
+                high: '高风险',
+                medium: '中风险',
+                low: '低风险'
+            }[level] || '未知风险';
+        }
+
+        function showEmptyState() {
+            const container = document.getElementById('violationsContainer');
+            container.innerHTML = '<div class="loading">当前没有违规记录</div>';
+        }
+
+        function showErrorState() {
+            const container = document.getElementById('violationsContainer');
+            container.innerHTML = '<div class="loading">数据加载失败，请稍后重试</div>';
+        }
+
+        function toggleSoundAlert() {
+            soundEnabled = !soundEnabled;
+            const buttonText = `声音提醒: ${soundEnabled ? "开启" : "关闭"}`;
+            document.getElementById('toggleSoundBtn').innerText = buttonText;
+        }
+
+
+        function showImageModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = imageUrl;
+            modal.classList.add('show');
+        }
+        // function offbanDevice(serialNumber) {
+        //     if (!confirm(`确定要忽略设备 ${serialNumber} 的本次违规记录吗？`)) return;
+
+        //     const formData = new URLSearchParams();
+        //     formData.append('serial_number', serialNumber);
+
+        //     fetch('/api/pop/clear_device_violation.php', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/x-www-form-urlencoded'
+        //         },
+        //         body: formData.toString()
+        //     })
+        //     .then(res => res.json())
+        //     .then(data => {
+        //         alert(data.message || (data.success ? '忽略成功' : '忽略失败'));
+        //         if (data.success) {
+        //             fetchViolations(); // 刷新页面
+        //         }
+        //     })
+        //     .catch(err => {
+        //         alert('忽略请求失败：' + err);
+        //         console.error(err);
+        //     });
+        // }
+        function offbanDevice(button, serialNumber) {
+    if (!confirm(`确定要忽略设备 ${serialNumber} 的本次违规记录吗？`)) return;
+
+    const card = button?.closest('.violation-card');
+    const cardContent = button?.closest('.card-content');
+    const imageUrl = card?.querySelector('img')?.src || '';
+    const hasRemark = cardContent?.querySelector('.card-remark') !== null;
+
+    // 兼容你当前后端 serial 逻辑
+    const finalSerial = hasRemark ? (serialNumber + '_predicted') : serialNumber;
+
+    const archiveKey = card?.dataset.archiveKey || '';
+    const redisKey = card?.dataset.redisKey || '';
+
+    let manualRiskLevel = '';
+    const selectElem = cardContent?.querySelector('.manual-risk-label');
+    if (selectElem) {
+        manualRiskLevel = selectElem.value || '';
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('serial_number', finalSerial);
+    formData.append('manual_risk', manualRiskLevel);
+    formData.append('image_url', imageUrl);
+    formData.append('archive_key', archiveKey);
+    formData.append('redis_key', redisKey);
+
+    fetch('/api/pop/clear_device_violation.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || (data.success ? '忽略成功' : '忽略失败'));
+        if (data.success) {
+            fetchViolations();
+        }
+    })
+    .catch(err => {
+        alert('忽略请求失败：' + err);
+        console.error(err);
+    });
+}
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+        }
+
+        // 初始化加载数据并每30秒刷新一次
+        fetchViolations();
+
+
+        setInterval(fetchViolations, 30000);
+        setInterval(fetchTodayCounters,80000)
+        setInterval(fetchTodayVendorCounters, 80000);
+        document.getElementById('toggleSoundBtn').innerText = `声音提醒: ${soundEnabled ? "开启" : "关闭"}`;
+
+        let selectedKey = '';
+        let selectedArchiveKey = '';
+        let selectedRedisKey = '';
+        let selectedBanButton = null;
+        let defaultReason = '';
+
+        function banDevice(button, key) {
+    selectedBanButton = button;
+    selectedKey = key;
+
+    const card = button?.closest('.violation-card');
+    const cardContent = button?.closest('.card-content');
+
+    selectedArchiveKey = card?.dataset.archiveKey || '';
+    selectedRedisKey = card?.dataset.redisKey || '';
+
+    const reasonElem = cardContent?.querySelector('.card-reason');
+    defaultReason = reasonElem ? reasonElem.textContent.replace('描述：', '') : '';
+
+    document.getElementById('banDeviceKey').textContent = key;
+    document.getElementById('banDuration').value = '360';
+    document.getElementById('banReason').value = defaultReason;
+
+    document.getElementById('banModal').classList.add('show');
+}
+
+        function closeBanModal() {
+            document.getElementById('banModal').classList.remove('show');
+        }
+
+
+    function confirmBan() {
+    const duration = document.getElementById('banDuration').value;
+    const reason = document.getElementById('banReason').value;
+    const imageSerial = selectedKey;
+
+    const button = selectedBanButton;
+    const card = button?.closest('.violation-card');
+    const cardContent = button?.closest('.card-content');
+    const imageUrl = card?.querySelector('img')?.src || '';
+
+    const hasRemark = cardContent?.querySelector('.card-remark') !== null;
+
+    // 兼容你当前后端 image_device_serial 逻辑
+    const finalSerial = hasRemark ? imageSerial.replace('_predicted', '') : imageSerial;
+
+    let manualRiskLevel = '';
+    const selectElem = cardContent?.querySelector('.manual-risk-label');
+    if (selectElem) {
+        manualRiskLevel = selectElem.value || '';
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('image_device_serial', finalSerial);
+    formData.append('image_url', imageUrl);
+    formData.append('ban_duration', duration);
+    formData.append('ban_reason', reason);
+    formData.append('manual_risk', manualRiskLevel);
+    formData.append('archive_key', selectedArchiveKey || '');
+    formData.append('redis_key', selectedRedisKey || '');
+
+    fetch('/api/pop/handle_device_ban.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || (data.success ? '封禁成功' : '封禁失败'));
+        if (data.success) {
+            closeBanModal();
+            const card = button?.closest('.violation-card');
+            card?.remove();
+            fetchViolations();
+        }
+    })
+    .catch(err => {
+        alert('请求异常：' + err);
+        console.error(err);
+    });
+}
+
+    function closeCustomAlert() {
+        document.getElementById('customAlert').style.display = 'none';
+        reportAlertShown = false;
+        // 不清空 lastReportCount，确保只有有“新增未处理记录”才再次提醒
+    }
+
+    </script>
+<script>
+let alertShown = false; // 是否已弹出提示，避免重复弹窗
+
+function checkPendingImages() {
+    fetch('/api/venue/getPendingImages.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.code === 0) {
+                if (data.count > 0 && !alertShown) {
+                    const confirmed = confirm("有图片待审核，是否立即前往？");
+                    alertShown = true;
+
+                    if (confirmed) {
+                        window.location.href = "/res/peddingMain.html";
+                    } else {
+                        console.log("用户取消提醒");
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.error('获取待审核数量失败', err);
+        });
+}
+
+// 首次加载就执行一次
+checkPendingImages();
+
+// 每隔30秒轮询一次
+setInterval(checkPendingImages, 30000);
+</script>
+<script>
+let reportAlertShown = false;
+let lastReportCount = 0;
+let lastAlertTimestamp = 0;
+const REPORT_POPUP_INTERVAL = 10 * 60 * 1000; // 10分钟
+
+function checkReportCount() {
+    const now = Date.now();
+
+    // 防止过于频繁弹窗（10分钟内只提示一次）
+    if (reportAlertShown && now - lastAlertTimestamp < REPORT_POPUP_INTERVAL) return;
+
+    fetch('/api/index/adminbackstage.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.code === 0) {
+                const reportCount = data.data.reportCount || 0;
+
+                // 只有在数量增加，并且我们还没提示过，才去校验详情
+                if (reportCount > lastReportCount && !reportAlertShown) {
+
+                    // 二次确认，是否还有“未处理或处理中”的投诉
+                    fetch('/api/operat/ReporthandV2.php')
+                        .then(r => r.json())
+                        .then(reportData => {
+                            if (reportData.code === 0 && reportData.data.length > 0) {
+                                document.getElementById('customAlertMessage').textContent =
+                                    `当前有 ${reportCount} 条举报待处理，是否立即前往？`;
+                                document.getElementById('customAlert').style.display = 'block';
+                                reportAlertShown = true;
+                                lastAlertTimestamp = now;
+                            }
+
+                            lastReportCount = reportCount; // 不论结果，更新记录值
+                        });
+                }
+            }
+        })
+        .catch(err => {
+            console.error('举报数量检查失败:', err);
+        });
+}
+
+
+
+function goToReportReview() {
+    window.location.href = "/res/reporthand.html";
+}
+
+
+checkReportCount();
+setInterval(checkReportCount, 10000);
+setTimeout(() => {
+    if (document.getElementById('customAlert').style.display === 'block') {
+        closeCustomAlert();
+    }
+}, 30000); // 15秒后自动关闭
+
+</script>
+
+<script>
+(function(){
+  const INTERVAL = 60000;  //1分钟 轮询
+  let current = null;
+  let hasShownLoginError = false; // ★ 新增：是否已经提示过登录过期
+  // 补签弹窗（带自动补签+不同提示）
+  function showResignModal(info){
+    if (document.getElementById('resignModal')) return;
+    const box = document.createElement('div');
+    box.id='resignModal';
+    box.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:10000;';
+    box.innerHTML=`
+      <div style="background:#fff;padding:20px;border-radius:10px;text-align:center;min-width:220px">
+        <div style="margin-bottom:10px;">本时间段签到不足 3 次</div>
+        <div style="margin-bottom:10px;">给你最后一次补签机会</div>
+        <button id="btnResign" style="padding:6px 16px;border:none;border-radius:6px;background:#5b8cff;color:#fff;">立即补签</button>
+      </div>`;
+    document.body.appendChild(box);
+
+    let done = false;      // 防止重复提交
+    let autoTimer = null;  // 自动补签定时器句柄
+
+    // 统一的补签请求（手动/自动都用它）
+    function doResign(auto = false) {
+      if (done) return;
+      done = true;
+      if (autoTimer) {
+        clearTimeout(autoTimer);
+        autoTimer = null;
+      }
+
+      // 弹窗可能已经被移除
+      if (!document.getElementById('resignModal')) return;
+
+      const fd = new URLSearchParams();
+      fd.append('resign','1');
+      if (info && info.period) {
+        fd.append('period', info.period); // 让后端知道是哪个小时的补签
+      }
+      fetch('/api/checkin/click_redis.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:fd
+      }).then(r=>r.json()).then(j=>{
+        if (auto) {
+          // ★ 自动补签的提示文案
+          alert('为避免本时间段签到不足 3 次，若您未及时补签，系统已自动为您补签一次。');
+        } else {
+          // 手动补签沿用原来的提示
+          alert(j.msg || '补签成功');
+        }
+        box.remove();
+      }).catch(e=>{
+        console.error(e);
+        if (!auto) {
+          alert('补签请求失败');
+        }
+        box.remove();
+      });
+    }
+
+    // 1) 手动补签：用户点击按钮
+    document.getElementById('btnResign').onclick = ()=>{
+      doResign(false);
+    };
+
+    // 2) 自动补签：比如弹窗出现后 80 秒自动执行
+    // 80 秒只是示例，你想更接近 59:20 可以自己调这个值
+    const AUTO_MS = 40000; // 40秒 ≈ 1分20秒
+    autoTimer = setTimeout(()=>{
+      console.log('自动补签触发');
+      doResign(true);
+    }, AUTO_MS);
+  }
+
+  // 正常签到弹窗
+  function showModal(info){
+    if (current === info.planned_at) return;
+    current = info.planned_at;
+    if (document.getElementById('checkModal')) return;
+    const box = document.createElement('div');
+    box.id='checkModal';
+    box.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    box.innerHTML=`
+      <div style="background:#fff;padding:20px;border-radius:10px;text-align:center;min-width:220px">
+        <div style="margin-bottom:10px;">计划时间：${info.planned_at}</div>
+        <button id="btnCheck" style="padding:6px 16px;border:none;border-radius:6px;background:#5b8cff;color:#fff;">我在</button>
+      </div>`;
+    document.body.appendChild(box);
+
+    document.getElementById('btnCheck').onclick = ()=>{
+      const fd=new URLSearchParams();
+      fd.append('planned_at',info.planned_at);
+      fetch('/api/checkin/click_redis.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:fd
+      }).then(r=>r.json()).then(j=>{
+        alert(j.msg || '签到成功');
+        box.remove();
+        current=null;
+      }).catch(e=>{
+        console.error(e);
+        alert('签到请求失败');
+        box.remove();
+        current=null;
+      });
+    };
+  }
+
+ function tick(){
+    fetch('/api/checkin/next_prompt_redis.php')
+      .then(r=>r.json())
+      .then(j=>{
+        if (j.code === 200 && j.show && j.data) {
+          const info = j.data;
+          if (info.is_makeup) {
+            showResignModal(info);   // 补签弹窗（带自动补签）
+          } else if (info.planned_at) {
+            showModal(info);         // 正常随机节点弹窗
+          }
+        } else if (j.code === 1001) {
+          // ★ 只提示一次，然后跳转
+          if (!hasShownLoginError) {
+            hasShownLoginError = true;
+            alert(j.msg || '登录状态已失效，请重新登录');
+            // 根据你的实际登录页地址改
+            window.location.href = '/login.html';
+          }
+        }
+      }).catch(e=>{
+        console.error(e);
+      });
+  }
+
+  tick();
+  setInterval(tick, INTERVAL);
+})();
+</script>
+
+
+
+
+</body>
+</html>

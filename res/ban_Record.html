@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>酷玩星违规记录</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --hover-bg: #f9f9f9;
+            --highlight-bg: #eff4ff;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+        }
+
+        .card-title {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 20px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 16px;
+        }
+
+        .card-heading {
+            font-size: 32px;
+            line-height: 1.15;
+            font-weight: 700;
+        }
+
+        .title-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .filter-item,
+        .record-count {
+            min-width: 0;
+        }
+
+        .extra-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .extra-filter label {
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 14px;
+            color: #26364d;
+        }
+
+        .filter-item select,
+        .filter-item input,
+        #Date-control input,
+        #Date-control button {
+            height: 36px;
+            border: 1px solid #d8deea;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .filter-item select,
+        .filter-item input {
+            width: 100%;
+            min-width: 0;
+            padding: 0 10px;
+            background: #fff;
+        }
+
+        .filter-item select:focus,
+        .filter-item input:focus,
+        #Date-control input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.12);
+        }
+
+        .filter-item select {
+            overflow: hidden;
+        }
+
+        .filter-ban-venue {
+            flex: 0 0 280px;
+        }
+
+        .filter-date {
+            flex: 1;
+        }
+        .filter-tools-row {
+            align-items: center;
+        }
+
+.filter-venue {
+    flex: 1 1 420px;
+}
+
+.filter-type {
+    flex: 0 0 220px;
+}
+                /* 时间筛选行 */
+        .date-row {
+            align-items: center;
+            border-bottom: 1px solid #e7ecf6;
+            padding-bottom: 14px;
+        }
+
+        #Date-control {
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            width: 100%;
+        }
+
+        #Date-control .date-field {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #Date-control input {
+            width: 100%;
+            padding: 0 10px;
+            background: #fff;
+        }
+
+        #Date-control .date-separator {
+            flex: 0 0 auto;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #Date-control button {
+            flex: 0 0 auto;
+            min-width: 64px;
+            padding: 0 12px;
+            cursor: pointer;
+        }
+
+        .range-tabs {
+            display: flex;
+            gap: 6px;
+            flex: 0 0 auto;
+            background: #f4f7ff;
+            border-radius: 999px;
+            padding: 3px;
+        }
+
+        #Date-control .range-tab {
+            height: 32px;
+            min-width: 76px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            color: #5b6b82;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #Date-control .range-tab.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(91, 140, 255, 0.25);
+        }
+
+        #Date-control .date-search-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+        }
+
+        #Date-control .date-search-btn:hover {
+            background: #4779f2;
+        }
+
+        .record-count {
+            flex: 0 0 auto;
+            min-width: 130px;
+            text-align: right;
+            font-size: 14px;
+            color: var(--secondary);
+            white-space: nowrap;
+        }
+
+        /* 统计区域 */
+        .stats-card {
+            background: #f8faff;
+            border: 1px solid #e1e9ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .stats-main {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #26364d;
+            white-space: nowrap;
+        }
+
+.stats-brief {
+    font-size: 13px;
+    color: #6b7a90;
+    line-height: 1.5;
+}
+
+.stats-highlight-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.stats-main-count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: #fff2f0;
+    border: 1px solid #ffd7d1;
+    color: #d4380d;
+    font-weight: 700;
+}
+
+.stats-main-count .num {
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.stats-sub-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #7f8fa4;
+    font-size: 12px;
+}
+
+.stats-sub-count b {
+    color: #3b6fff;
+}
+
+.venue-stat-chip .venue-count-strong {
+    color: #d4380d;
+    font-weight: 800;
+}
+
+.venue-stat-chip .device-count-light {
+    color: #7f8fa4;
+    font-weight: 500;
+    margin-left: 6px;
+}
+
+        .stats-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .stats-header .filter-ban-venue {
+            flex: 0 0 300px;
+        }
+
+        .stats-header .filter-ban-venue label {
+            font-size: 13px;
+            color: #5b6b82;
+        }
+
+        .stats-toggle-btn {
+            height: 34px;
+            min-width: 64px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 999px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(91, 140, 255, 0.22);
+        }
+
+        .stats-toggle-btn:hover {
+            background: #4779f2;
+        }
+
+        /* 默认收起 */
+        .stats-card.collapsed .venue-stats {
+            display: none;
+        }
+
+        /* 展开后不使用内部滚动条 */
+        .stats-card:not(.collapsed) .venue-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 13px;
+            color: #333;
+            max-height: none;
+            overflow: visible;
+            padding-right: 0;
+        }
+
+        .venue-stat-chip {
+            display: inline-flex;
+            align-items: center;
+            background: #fff;
+            color: #3b6fff;
+            border: 1px solid #d8deea;
+            border-radius: 999px;
+            padding: 4px 10px;
+            line-height: 1.4;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .venue-stat-chip span {
+            font-weight: 500;
+        }
+
+        /* 记录列表 */
+        .complaint-list {
+            margin-top: 24px;
+        }
+
+        .complaint-item {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .complaint-item:hover {
+            border-color: #c7d6ff;
+            box-shadow: 0 4px 16px rgba(91, 140, 255, 0.08);
+        }
+
+        .complaint-title {
+            display: block;
+            line-height: 1.6;
+        }
+
+        img[alt="违规截图"] {
+            max-width: 120px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+.violation-media-box {
+    margin-top: 6px;
+}
+
+.violation-media-label {
+    font-size: 13px;
+    color: #374151;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.violation-media-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.violation-media-list img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.violation-media-list video {
+    width: 180px;
+    height: 110px;
+    border-radius: 6px;
+    background: #000;
+}
+
+.violation-media-actions {
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .violation-media-list img,
+    .violation-media-list video {
+        width: 100%;
+        height: auto;
+        max-height: 220px;
+    }
+}
+/* 图片/视频放大预览 */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.92);
+    z-index: 9999;
+    overflow: hidden;
+    cursor: zoom-out;
+}
+
+.modal-content {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: block;
+    max-width: none;
+    max-height: none;
+    border-radius: 10px;
+    user-select: none;
+    -webkit-user-drag: none;
+    cursor: grab;
+    transform-origin: center center;
+    transition: transform 0.05s linear;
+}
+
+.modal-content:active {
+    cursor: grabbing;
+}
+
+.modal-img {
+    width: auto;
+    height: auto;
+    min-width: 720px;
+    max-width: 92vw;
+    max-height: 88vh;
+    object-fit: contain;
+}
+
+.modal-video {
+    width: 82vw;
+    max-width: 1200px;
+    max-height: 88vh;
+    background: #000;
+}
+
+.modal-toolbar {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-size: 13px;
+}
+
+.modal-toolbar button {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+}
+
+.modal-toolbar button:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+        @media (max-width: 1100px) {
+            .filters-row {
+                flex-wrap: wrap;
+                align-items: stretch;
+            }
+
+.filter-venue,
+.filter-type,
+.filter-date,
+.record-count {
+    flex: 1 1 calc(50% - 6px);
+}
+            .record-count {
+                text-align: left;
+            }
+
+            .stats-header {
+                flex-wrap: wrap;
+            }
+
+            .stats-header .filter-ban-venue {
+                flex: 1 1 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .card-heading {
+                font-size: 24px;
+            }
+
+            .extra-filter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .date-row {
+                align-items: stretch;
+            }
+
+            #Date-control {
+                flex-direction: column;
+                align-items: stretch;
+                flex-wrap: wrap;
+            }
+
+            .range-tabs {
+                width: 100%;
+                flex: 1 1 100%;
+            }
+
+            #Date-control .range-tab {
+                flex: 1;
+            }
+
+            #Date-control .date-field,
+            #Date-control button {
+                flex: 1 1 100%;
+            }
+
+            #Date-control .date-separator {
+                display: none;
+            }
+
+            .record-count {
+                text-align: left;
+            }
+
+            .stats-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-title {
+                white-space: normal;
+            }
+
+            .stats-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-header .filter-ban-venue,
+            .filter-ban-venue {
+                flex: 1 1 auto;
+            }
+
+            .stats-toggle-btn {
+                width: 100%;
+            }
+
+            .complaint-item {
+                font-size: 13px;
+                padding: 10px;
+            }
+
+            img[alt="违规截图"] {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .filters-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+.filter-venue,
+.filter-type,
+.filter-ban-venue,
+.filter-date,
+.record-count {
+    flex: 1 1 100%;
+}
+
+            .record-count {
+                text-align: left;
+            }
+
+            .venue-stat-chip {
+                white-space: normal;
+                border-radius: 10px;
+                width: 100%;
+            }
+        }
+
+        body.ban-record-page {
+            --primary: #119d8e;
+            --primary-hover: #087c72;
+            --accent-blue: #405ca8;
+            --secondary: #667085;
+            --background-gradient-start: #f4f8fb;
+            --background-gradient-end: #eef3f8;
+            --border-color: #d9e1ec;
+            --text-color: #172033;
+            background:
+                linear-gradient(90deg, rgba(17, 157, 142, 0.08), rgba(64, 92, 168, 0.07) 56%, rgba(198, 132, 31, 0.05)),
+                #f4f7fb;
+            display: block;
+            padding: 22px 24px 28px;
+        }
+
+        body.ban-record-page .container {
+            max-width: 1380px;
+            margin: 0 auto;
+        }
+
+        body.ban-record-page .card {
+            gap: 0;
+            overflow: hidden;
+            border: 1px solid rgba(217, 225, 236, 0.86);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 14px 38px rgba(18, 31, 56, 0.09);
+        }
+
+        body.ban-record-page .card:hover {
+            box-shadow: 0 14px 38px rgba(18, 31, 56, 0.09);
+        }
+
+        body.ban-record-page .card-title {
+            gap: 14px;
+            margin: -20px -20px 0;
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid rgba(217, 225, 236, 0.82);
+            background:
+                linear-gradient(135deg, rgba(17, 157, 142, 0.07), rgba(64, 92, 168, 0.05)),
+                #fff;
+        }
+
+        .ban-page-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            color: #087c72;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        body.ban-record-page .card-heading {
+            color: #172033;
+            font-size: 24px;
+            line-height: 1.2;
+        }
+
+        .ban-page-subtitle {
+            margin-top: 8px;
+            color: #667085;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        body.ban-record-page .title-controls {
+            gap: 12px;
+            margin-top: 2px;
+        }
+
+        body.ban-record-page .filters-row {
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid rgba(217, 225, 236, 0.84);
+            border-radius: 10px;
+            background: #f8fbfe;
+        }
+
+        body.ban-record-page .date-row {
+            border-bottom: 0;
+        }
+
+        body.ban-record-page .extra-filter label,
+        body.ban-record-page .stats-header .filter-ban-venue label {
+            color: #526071;
+            font-weight: 700;
+        }
+
+        body.ban-record-page .filter-item select,
+        body.ban-record-page .filter-item input,
+        body.ban-record-page #Date-control input,
+        body.ban-record-page #Date-control button {
+            border-color: rgba(217, 225, 236, 0.94);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        body.ban-record-page .filter-item select:focus,
+        body.ban-record-page .filter-item input:focus,
+        body.ban-record-page #Date-control input:focus {
+            border-color: rgba(17, 157, 142, 0.48);
+            box-shadow: 0 0 0 3px rgba(17, 157, 142, 0.12);
+        }
+
+        body.ban-record-page .range-tabs {
+            background: #eefaf8;
+        }
+
+        body.ban-record-page #Date-control .range-tab {
+            color: #087c72;
+        }
+
+        body.ban-record-page #Date-control .range-tab.active,
+        body.ban-record-page #Date-control .date-search-btn,
+        body.ban-record-page .stats-toggle-btn {
+            background: linear-gradient(135deg, #119d8e, #405ca8);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(17, 157, 142, 0.18);
+        }
+
+        body.ban-record-page #Date-control .date-search-btn:hover,
+        body.ban-record-page .stats-toggle-btn:hover {
+            filter: brightness(0.98);
+        }
+
+        body.ban-record-page .record-count {
+            color: #667085;
+            font-weight: 700;
+        }
+
+        body.ban-record-page #record-count {
+            color: #087c72;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        body.ban-record-page .record-count-hint {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 7px;
+            min-width: 132px;
+            color: #087c72;
+        }
+
+        body.ban-record-page .stats-card {
+            border-color: rgba(17, 157, 142, 0.18);
+            background: #f3fbfa;
+        }
+
+        body.ban-record-page .stats-title {
+            color: #172033;
+        }
+
+        body.ban-record-page .stats-main-count {
+            border-color: rgba(214, 77, 64, 0.16);
+            background: #fff3f1;
+            color: #b44436;
+        }
+
+        body.ban-record-page .stats-sub-count b {
+            color: #087c72;
+        }
+
+        body.ban-record-page .venue-stat-chip {
+            border-color: rgba(217, 225, 236, 0.86);
+            background: #fff;
+            color: #344054;
+        }
+
+        body.ban-record-page .venue-stat-chip .venue-count-strong {
+            color: #b44436;
+        }
+
+        body.ban-record-page .venue-stat-chip .device-count-light {
+            color: #667085;
+        }
+
+        body.ban-record-page .complaint-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+            gap: 14px;
+            margin-top: 0;
+            padding: 20px 4px 4px;
+        }
+
+        body.ban-record-page .complaint-item {
+            position: relative;
+            gap: 9px;
+            margin: 0;
+            overflow: hidden;
+            border: 1px solid rgba(217, 225, 236, 0.82);
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 8px 22px rgba(18, 31, 56, 0.045);
+        }
+
+        body.ban-record-page .complaint-item::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: #119d8e;
+            opacity: 0.78;
+        }
+
+        body.ban-record-page .complaint-item:hover {
+            border-color: rgba(17, 157, 142, 0.24);
+            box-shadow: 0 12px 28px rgba(18, 31, 56, 0.08);
+        }
+
+        body.ban-record-page .complaint-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 28px;
+            color: #344054;
+            font-weight: 700;
+        }
+
+        body.ban-record-page .complaint-item > span:not(.complaint-title),
+        body.ban-record-page .complaint-item > div {
+            color: #475467;
+            line-height: 1.55;
+        }
+
+        body.ban-record-page img[alt="违规截图"],
+        body.ban-record-page .violation-media-list img {
+            border-color: rgba(217, 225, 236, 0.86);
+            border-radius: 8px;
+        }
+
+        body.ban-record-page .modal {
+            background: rgba(15, 23, 42, 0.86);
+            backdrop-filter: blur(2px);
+        }
+
+        body.ban-record-page .modal-toolbar button {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        @media (max-width: 720px) {
+            body.ban-record-page {
+                padding: 12px;
+            }
+
+            body.ban-record-page .card {
+                padding: 14px;
+            }
+
+            body.ban-record-page .card-title {
+                margin: -14px -14px 0;
+                padding: 18px 14px;
+            }
+
+            body.ban-record-page .complaint-list {
+                grid-template-columns: 1fr;
+                padding-top: 14px;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="ban-record-page kwx-legacy-page">
+<div class="container">
+    <div class="card">
+        <div class="card-title">
+            <div>
+                <div class="ban-page-kicker"><i class="fas fa-shield-alt"></i> 酷玩星风控中心</div>
+                <span class="card-heading">违规记录</span>
+                <div class="ban-page-subtitle">设备封禁 / 场地违规 / 语音房处罚</div>
+            </div>
+
+            <div class="title-controls">
+<div class="filters-row filter-tools-row">
+    <div id="venue-control" class="extra-filter filter-item filter-venue">
+        <label for="venue_id">选择场地：</label>
+        <select id="venue_id">
+            <option value="all">全部场地</option>
+        </select>
+    </div>
+
+    <div class="extra-filter filter-item filter-type">
+        <label for="record_type_filter">记录类型：</label>
+        <select id="record_type_filter">
+            <option value="all">全部</option>
+            <option value="device">仅设备</option>
+            <option value="venue">仅场地</option>
+            <option value="voice_room">仅语音房</option>
+        </select>
+    </div>
+
+    <div class="record-count record-count-hint">
+        <i class="fas fa-filter"></i><span>筛选记录</span>
+    </div>
+</div>
+                <div class="filters-row date-row">
+                    <div id="Date-control" class="date-filter filter-item filter-date">
+                        <div class="range-tabs">
+                            <button type="button" class="range-tab active" data-range="week" onclick="switchRange('week')">近一周</button>
+                            <button type="button" class="range-tab" data-range="month" onclick="switchRange('month')">近一个月</button>
+                        </div>
+
+                        <div class="date-field">
+                            <input type="datetime-local" id="startDate" class="date-input">
+                        </div>
+
+                        <span class="date-separator">至</span>
+
+                        <div class="date-field">
+                            <input type="datetime-local" id="endDate" class="date-input">
+                        </div>
+
+                        <button type="button" class="date-search-btn" onclick="filterByDate()">筛选</button>
+                    </div>
+
+                    <div class="record-count">
+                        共 <span id="record-count">0</span> 条记录
+                    </div>
+                </div>
+
+                <div class="stats-card collapsed" id="stats-card">
+                    <div class="stats-header">
+                        <div class="stats-main">
+                            <div class="stats-title">当前时间区间违规统计</div>
+                            <div class="stats-brief" id="stats-brief">加载中...</div>
+                        </div>
+
+                        <div class="stats-actions">
+                            <div class="extra-filter filter-item filter-ban-venue" id="ban-venue-filter-wrap" style="display:none;">
+                                <label for="ban_venue_filter">筛选违规场地：</label>
+                                <select id="ban_venue_filter">
+                                    <option value="all">全部场地</option>
+                                </select>
+                            </div>
+
+                            <button type="button" class="stats-toggle-btn" id="stats-toggle-btn" onclick="toggleStatsCard()">
+                                展开
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="venue-stats" id="venue-stats"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="complaint-list" id="record-list"></div>
+    </div>
+</div>
+
+<script>
+    let isMultiVenueMode = true;
+    let venueMap = {};
+    let allRecordsCache = [];
+    let venueStatsCache = [];
+    let currentUser = null;
+    let currentRoleId = 0;
+    let currentRangeType = 'week';
+
+async function loadCurrentUserAndApplyRole() {
+    const banVenueWrap = document.getElementById('ban-venue-filter-wrap');
+
+    try {
+        const res = await fetch('/api/operat/get_current_user.php', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const data = await res.json();
+
+        if (data.code === 0 && data.data) {
+            currentUser = data.data;
+            currentRoleId = Number(data.data.role_id || 0);
+
+            if (currentRoleId === 3 || currentRoleId === 4) {
+                applyVenueOwnerMode();
+                return;
+            }
+
+            // 管理员显示“筛选违规场地”
+            if (currentRoleId === 1 || currentRoleId === 2) {
+                if (banVenueWrap) banVenueWrap.style.display = '';
+            } else {
+                if (banVenueWrap) banVenueWrap.style.display = 'none';
+            }
+        } else {
+            if (banVenueWrap) banVenueWrap.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('获取当前用户失败:', e);
+        if (banVenueWrap) banVenueWrap.style.display = 'none';
+    }
+}
+function applyVenueOwnerMode() {
+    // 场地方不显示顶部场地下拉
+    const venueControl = document.getElementById('venue-control');
+    if (venueControl) {
+        venueControl.style.display = 'none';
+    }
+
+    // 场地方不显示时间区间筛选
+    const dateRow = document.querySelector('.date-row');
+    if (dateRow) {
+        dateRow.style.display = 'none';
+    }
+
+    // 场地方不显示违规统计卡片
+    const statsCard = document.getElementById('stats-card');
+    if (statsCard) {
+        statsCard.style.display = 'none';
+    }
+
+    // 场地方不显示统计卡片里的场地下拉
+    const banVenueWrap = document.getElementById('ban-venue-filter-wrap');
+    if (banVenueWrap) {
+        banVenueWrap.style.display = 'none';
+    }
+
+    // 防止残留筛选影响列表
+    const banVenueSelect = document.getElementById('ban_venue_filter');
+    if (banVenueSelect) {
+        banVenueSelect.value = 'all';
+    }
+}
+    document.addEventListener('DOMContentLoaded', async function () {
+        bindExtraFilters();
+        bindDateManualChange();
+
+        await loadCurrentUserAndApplyRole();
+
+        const result = getQueryParams();
+        console.log('解析后的时间范围：', result);
+
+        const query = new URLSearchParams(window.location.search);
+        const startDateParam = query.get('start_date');
+        const endDateParam = query.get('end_date');
+
+        if (startDateParam && endDateParam) {
+            document.getElementById('startDate').value = `${startDateParam}T00:00`;
+            document.getElementById('endDate').value = `${endDateParam}T23:59`;
+            setRangeTabActive('');
+        } else {
+            setDateRangeByType('week', false);
+        }
+
+if (currentRoleId === 3 || currentRoleId === 4) {
+    // 场地方/主播只查自己场地记录，不加载全部场地下拉，不显示时间筛选
+    fetchVenueOwnerRecords();
+} else {
+    await loadVenueOptions();
+    filterByDate();
+}
+    });
+async function loadVenueOptions() {
+    const venueSelect = document.getElementById('venue_id');
+    if (!venueSelect) return;
+
+    try {
+        const res = await fetch('/api/operat/EnergyGift.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'action=get_venues'
+        });
+
+        const response = await res.json();
+
+        if (response.code !== 0) {
+            venueSelect.innerHTML = '<option value="all">全部场地</option>';
+            return;
+        }
+
+        const data = response.data || [];
+
+        // ✅ 按场地 id 从小到大排列
+        data.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+
+        venueSelect.innerHTML = '<option value="all">全部场地</option>';
+
+        data.forEach(venue => {
+            const option = document.createElement('option');
+            option.value = venue.id;
+            option.textContent = `${venue.id} - ${venue.venue_name}`;
+            venueMap[String(venue.id)] = venue.venue_name;
+            venueSelect.appendChild(option);
+        });
+
+        venueSelect.value = 'all';
+
+        venueSelect.addEventListener('change', function () {
+            // 切换顶部场地后，重置统计卡片里的违规场地下拉
+            const banVenueSelect = document.getElementById('ban_venue_filter');
+            if (banVenueSelect) {
+                banVenueSelect.value = 'all';
+            }
+
+            filterByDate();
+        });
+
+    } catch (e) {
+        console.error('加载场地列表失败:', e);
+        venueSelect.innerHTML = '<option value="all">全部场地</option>';
+    }
+}
+    function toLocalDatetimeValue(date) {
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function setRangeTabActive(type) {
+        document.querySelectorAll('.range-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.range === type);
+        });
+    }
+
+    function setDateRangeByType(type, autoFetch = true) {
+        currentRangeType = type;
+
+        const end = new Date();
+        end.setHours(23, 59, 0, 0);
+
+        const start = new Date();
+
+        if (type === 'month') {
+            // 近一个月：含今天在内 30 天
+            start.setDate(start.getDate() - 29);
+        } else {
+            // 近一周：含今天在内 7 天
+            start.setDate(start.getDate() - 6);
+        }
+
+        start.setHours(0, 0, 0, 0);
+
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+
+        if (startInput) startInput.value = toLocalDatetimeValue(start);
+        if (endInput) endInput.value = toLocalDatetimeValue(end);
+
+        setRangeTabActive(type);
+
+        if (autoFetch) {
+            filterByDate();
+        }
+    }
+
+    function switchRange(type) {
+        setDateRangeByType(type, true);
+    }
+
+    function toggleStatsCard() {
+        const card = document.getElementById('stats-card');
+        const btn = document.getElementById('stats-toggle-btn');
+
+        if (!card || !btn) return;
+
+        const isCollapsed = card.classList.toggle('collapsed');
+        btn.textContent = isCollapsed ? '展开' : '收起';
+    }
+
+    function bindDateManualChange() {
+        ['startDate', 'endDate'].forEach(id => {
+            const el = document.getElementById(id);
+
+            if (el) {
+                el.addEventListener('change', function () {
+                    setRangeTabActive('');
+                });
+            }
+        });
+    }
+
+function filterByDate() {
+    const startInput = document.getElementById('startDate');
+    const endInput = document.getElementById('endDate');
+    const venueSelect = document.getElementById('venue_id');
+
+    if (!startInput || !endInput) {
+        fetchBanRecordsWithDefault();
+        return;
+    }
+
+    if (!startInput.value || !endInput.value) {
+        alert('请填写完整的开始时间和结束时间');
+        return;
+    }
+
+    const start = startInput.value.replace('T', ' ') + ':00';
+    const end = endInput.value.replace('T', ' ') + ':00';
+
+    let url = `/api/operat/ban_record.php?get_default=1&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+
+    if (venueSelect && venueSelect.value && venueSelect.value !== 'all') {
+        url += `&venue_id=${encodeURIComponent(venueSelect.value)}`;
+        isMultiVenueMode = false;
+    } else {
+        isMultiVenueMode = true;
+    }
+
+    fetchBanData(url);
+}
+
+function fetchVenueOwnerRecords() {
+    isMultiVenueMode = false;
+
+    // 后端已经强制 role_id=3 只能返回自己绑定场地
+    const url = '/api/operat/ban_record.php?get_default=1';
+
+    fetchBanData(url);
+}
+    function fetchBanRecordsWithDefault() {
+        isMultiVenueMode = true;
+
+        const url = '/api/operat/ban_record.php?get_default=1';
+        fetchBanData(url);
+    }
+
+    function fetchBanData(url) {
+        fetch(url, {
+            method: 'GET',
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then(res => {
+                if (res.code !== 0) {
+                    document.getElementById('record-list').innerHTML = `<p style="color:red;">${res.msg || '查询失败'}</p>`;
+                    return;
+                }
+
+                const deviceRecords = (res.data.device_bans || []).map(r => ({ ...r, type: 'device' }));
+                const venueRecords = (res.data.venue_bans || []).map(r => ({ ...r, type: 'venue' }));
+                const voiceRoomRecords = (res.data.voice_room_bans || []).map(r => ({ ...r, type: 'voice_room' }));
+
+                allRecordsCache = [...deviceRecords, ...venueRecords, ...voiceRoomRecords].sort(
+                    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+                );
+
+                venueStatsCache = res.data.venue_stats || buildVenueStatsFromRecords(allRecordsCache);
+
+if (currentRoleId !== 3) {
+    updateFilterOptions(allRecordsCache);
+    updateVenueStatsBar(venueStatsCache);
+}
+
+renderRecords();
+            })
+            .catch(err => {
+                console.error('获取违规记录失败:', err);
+                document.getElementById('record-list').innerHTML = '<p style="color:red;">查询失败</p>';
+            });
+    }
+
+function bindExtraFilters() {
+    ['record_type_filter', 'ban_venue_filter'].forEach(id => {
+        const el = document.getElementById(id);
+
+        if (el) {
+            el.addEventListener('change', function () {
+                if (id === 'ban_venue_filter') {
+                    updateVenueStatsBar(venueStatsCache);
+                }
+
+                renderRecords();
+            });
+        }
+    });
+}
+    function buildVenueStatsFromRecords(records) {
+        const map = new Map();
+
+        records.forEach(item => {
+            const venueId = String(item.venue_id || '');
+            if (!venueId) return;
+
+            if (!map.has(venueId)) {
+                map.set(venueId, {
+                    venue_id: venueId,
+                    venue_name: venueMap[venueId] || item.venue_name || '未知场地',
+                    device_count: 0,
+                    venue_count: 0,
+                    voice_room_count: 0,
+                    total_count: 0
+                });
+            }
+
+            const row = map.get(venueId);
+
+            if (item.type === 'device') {
+                row.device_count++;
+            } else if (item.type === 'venue') {
+                row.venue_count++;
+            } else if (item.type === 'voice_room') {
+                row.voice_room_count++;
+            }
+
+            row.total_count++;
+        });
+
+        return [...map.values()].sort((a, b) => Number(b.total_count || 0) - Number(a.total_count || 0));
+    }
+
+function updateVenueStatsBar(stats) {
+    const box = document.getElementById('venue-stats');
+    const brief = document.getElementById('stats-brief');
+    const venueSelect = document.getElementById('ban_venue_filter');
+
+    if (!box) return;
+
+    const selectedVenueId = venueSelect?.value || 'all';
+
+    let displayStats = stats || [];
+
+    // ✅ 如果选择了具体场地，统计区域也只展示该场地
+    if (selectedVenueId !== 'all') {
+        displayStats = displayStats.filter(item => String(item.venue_id || '') === String(selectedVenueId));
+    }
+
+    if (!displayStats.length) {
+        box.innerHTML = '';
+
+        if (brief) {
+            brief.textContent = selectedVenueId === 'all'
+                ? '当前时间区间暂无违规统计'
+                : '当前筛选场地暂无违规统计';
+        }
+
+        return;
+    }
+
+    const totalVenues = displayStats.length;
+
+    // ✅ 三类违规分开统计
+    const venueBanCount = displayStats.reduce((sum, item) => sum + Number(item.venue_count || 0), 0);
+    const voiceRoomBanCount = displayStats.reduce((sum, item) => sum + Number(item.voice_room_count || 0), 0);
+    const deviceBanCount = displayStats.reduce((sum, item) => sum + Number(item.device_count || 0), 0);
+    const totalCount = displayStats.reduce((sum, item) => sum + Number(item.total_count || 0), 0);
+
+    if (brief) {
+        if (selectedVenueId === 'all') {
+            brief.innerHTML = `
+                <div>
+                    当前时间区间涉及 <b>${totalVenues}</b> 个场地
+                </div>
+
+                <div class="stats-highlight-box">
+                    <span class="stats-main-count">
+                        场地违规 <span class="num">${venueBanCount}</span> 次
+                    </span>
+
+                    <span class="stats-sub-count">
+                        语音房违规 <b>${voiceRoomBanCount}</b> 次 / 设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
+                    </span>
+                </div>
+            `;
+        } else {
+            const current = displayStats[0];
+            const venueName = venueMap[current.venue_id] || current.venue_name || '未知场地';
+
+            brief.innerHTML = `
+                <div>
+                    当前已筛选场地：<b>${escHtml(current.venue_id)} - ${escHtml(venueName)}</b>
+                </div>
+
+                <div class="stats-highlight-box">
+                    <span class="stats-main-count">
+                        场地违规 <span class="num">${venueBanCount}</span> 次
+                    </span>
+
+                    <span class="stats-sub-count">
+                        语音房违规 <b>${voiceRoomBanCount}</b> 次 / 设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
+                    </span>
+                </div>
+            `;
+        }
+    }
+
+    // ✅ 展开后优先按场地违规，其次语音房违规，再按合计排序
+    const sortedStats = [...displayStats].sort((a, b) => {
+        const venueDiff = Number(b.venue_count || 0) - Number(a.venue_count || 0);
+        if (venueDiff !== 0) return venueDiff;
+
+        const voiceRoomDiff = Number(b.voice_room_count || 0) - Number(a.voice_room_count || 0);
+        if (voiceRoomDiff !== 0) return voiceRoomDiff;
+
+        return Number(b.total_count || 0) - Number(a.total_count || 0);
+    });
+
+    const chips = sortedStats.map(item => {
+        const venueId = String(item.venue_id || '');
+        const name = venueMap[venueId] || item.venue_name || '未知场地';
+        const total = Number(item.total_count || 0);
+        const deviceCount = Number(item.device_count || 0);
+        const venueCount = Number(item.venue_count || 0);
+        const voiceRoomCount = Number(item.voice_room_count || 0);
+
+        return `
+            <span class="venue-stat-chip">
+                ${escHtml(venueId)} - ${escHtml(name)}：
+                <span class="venue-count-strong">场地${venueCount}次</span>
+                <span class="device-count-light">语音房${voiceRoomCount} / 设备${deviceCount} / 合计${total}</span>
+            </span>
+        `;
+    }).join('');
+
+    box.innerHTML = chips;
+}
+
+function updateFilterOptions(records) {
+    const venueSelect = document.getElementById('ban_venue_filter');
+    const currentVenue = venueSelect?.value || 'all';
+
+    const venueLocalMap = new Map();
+
+    records.forEach(item => {
+        const venueKey = String(item.venue_id || '');
+        const venueLabel = venueMap[venueKey] || item.venue_name || '未知场地';
+
+        if (venueKey) {
+            venueLocalMap.set(venueKey, venueLabel);
+        }
+    });
+
+    if (venueSelect) {
+const venueCountMap = new Map(
+    (venueStatsCache || []).map(item => [
+        String(item.venue_id),
+        {
+            venueCount: Number(item.venue_count || 0),
+            voiceRoomCount: Number(item.voice_room_count || 0),
+            deviceCount: Number(item.device_count || 0),
+            totalCount: Number(item.total_count || 0)
+        }
+    ])
+);
+
+        venueSelect.innerHTML = '<option value="all">全部场地</option>';
+
+        // ✅ 按 venue_id 从小到大排序
+        [...venueLocalMap.entries()]
+            .sort((a, b) => Number(a[0]) - Number(b[0]))
+            .forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+
+const countInfo = venueCountMap.get(String(value)) || {
+    venueCount: 0,
+    voiceRoomCount: 0,
+    deviceCount: 0,
+    totalCount: 0
+};
+
+option.textContent = `${value} - ${label}（场地${countInfo.venueCount}次 / 语音房${countInfo.voiceRoomCount}次 / 合计${countInfo.totalCount}次）`;
+
+                venueSelect.appendChild(option);
+            });
+
+        venueSelect.value = [...venueSelect.options].some(o => o.value === currentVenue)
+            ? currentVenue
+            : 'all';
+    }
+}
+
+function renderRecords() {
+    const typeFilter = document.getElementById('record_type_filter')?.value || 'all';
+    const venueFilter = document.getElementById('ban_venue_filter')?.value || 'all';
+
+    let filteredRecords = [...allRecordsCache];
+
+    if (typeFilter !== 'all') {
+        filteredRecords = filteredRecords.filter(item => item.type === typeFilter);
+    }
+
+    if (venueFilter !== 'all') {
+        filteredRecords = filteredRecords.filter(item => String(item.venue_id || '') === venueFilter);
+    }
+
+    document.querySelectorAll('#record-count').forEach(el => {
+        el.textContent = filteredRecords.length;
+    });
+
+    const container = document.getElementById('record-list');
+    container.innerHTML = '';
+
+    filteredRecords.forEach(item => {
+        const banReason = item.ban_reason?.trim() || '未知原因';
+        const venueName = venueMap[item.venue_id] || item.venue_name || '未知场地';
+
+        let banContent = '';
+
+        if (item.type === 'device') {
+            const deviceName = item.name || item.serial_number || '未知设备';
+            banContent = `封禁设备【${deviceName}】驾驶权限 ${formatDuration(item.ban_duration)}`;
+        } else if (item.type === 'voice_room') {
+            banContent = `封禁语音房【${venueName}】 ${formatDuration(item.ban_duration)}`;
+        } else {
+            banContent = `封禁场地【${venueName}】`;
+        }
+
+        let isOver = true;
+
+        if (item.ban_end_time) {
+            const endTime = new Date(String(item.ban_end_time).replace(/-/g, '/'));
+            const endTs = endTime.getTime();
+
+            if (!Number.isNaN(endTs)) {
+                isOver = Date.now() > endTs;
+            }
+        } else if (String(item.ban_status || '') === '1') {
+            isOver = false;
+        }
+
+        // 语音房记录表 status：1进行中、2结束；如果已标记结束，优先显示已结束
+        if (String(item.ban_status || '') === '2') {
+            isOver = true;
+        }
+
+        const statusText = isOver ? '已结束' : '进行中';
+        const statusStyle = `font-size: 12px; padding: 2px 8px; border-radius: 999px; color: ${isOver ? '#667085' : '#087c72'}; background: ${isOver ? '#eef2f6' : '#e9f8f5'}; border: 1px solid ${isOver ? '#d9e1ec' : 'rgba(17,157,142,.2)'}; margin-left: auto;`;
+
+        // ==============================
+        // 违规截图/视频展示
+        // 支持：
+        // image1 / image2 / image3
+        // 也兼容：
+        // image_url / image_url_2 / image_url_3
+        // ==============================
+        const rawImageUrls = [
+            item.image1 || item.image_url || '',
+            item.image2 || item.image_url_2 || '',
+            item.image3 || item.image_url_3 || ''
+        ];
+
+        const imageUrls = [...new Set(
+            rawImageUrls
+                .map(url => String(url || '').trim())
+                .filter(url => url !== '' && url.toLowerCase() !== 'null')
+        )].slice(0, 3);
+
+        let imageHtml = '';
+
+        if (imageUrls.length > 0) {
+            const createdAtTime = item.created_at
+                ? new Date(String(item.created_at).replace(/-/g, '/')).getTime()
+                : Date.now();
+
+            const fourDaysAgoTs = Date.now() - 4 * 24 * 60 * 60 * 1000;
+            const isOlderThan4Days = createdAtTime < fourDaysAgoTs;
+
+            const mediaItemsHtml = imageUrls.map((url, index) => {
+                const displayUrl = isOlderThan4Days
+                    ? 'https://ruoche.oss-cn-beijing.aliyuncs.com/temp_picture/img/ch2000047280_1763389496638.jpg'
+                    : url;
+
+                const safeUrl = escAttr(displayUrl);
+                const num = index + 1;
+
+                if (isMp4Url(displayUrl)) {
+                    return `
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <video
+                                src="${safeUrl}"
+                                style="width:180px; max-width:100%; height:110px; border-radius:6px; background:#000;"
+                                muted
+                                playsinline
+                                preload="metadata"
+                                controls
+                            ></video>
+
+                            <div style="display:flex; gap:10px; align-items:center; font-size:13px;">
+                                <a href="javascript:void(0)" data-url="${safeUrl}" onclick="showModal(this.dataset.url)" style="color:#5b8cff;">放大观看${num}</a>
+                                <a href="${safeUrl}" target="_blank" style="color:#7f8fa4;">新窗口打开</a>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <img
+                        src="${safeUrl}"
+                        alt="违规截图"
+                        title="点击查看截图${num}"
+                        style="width:120px; height:90px; object-fit:cover; border-radius:6px; cursor:pointer; margin-top:6px; border:1px solid #e5e7eb; background:#f8fafc;"
+                        onclick="showModal(this.src)"
+                    >
+                `;
+            }).join('');
+
+            const imageLabel = item.type === 'venue' ? '场地违规截图' : '违规截图';
+
+            imageHtml = `
+                <div style="margin-top:6px;">
+                    <div style="font-size:13px; color:#374151; font-weight:700; margin-bottom:6px;">
+                        ${imageLabel}：
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;">
+                        ${mediaItemsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        const venueIdInfo = isMultiVenueMode
+            ? `<span>所属场地(ID)：${escHtml(venueName)}(${escHtml(item.venue_id)})</span>`
+            : '';
+
+        const typeMetaMap = {
+            device: {
+                label: '设备',
+                bg: '#f3f5ff',
+                color: '#3b5298'
+            },
+            venue: {
+                label: '场地',
+                bg: '#fff3f1',
+                color: '#b44436'
+            },
+            voice_room: {
+                label: '语音房',
+                bg: '#eefaf8',
+                color: '#087c72'
+            }
+        };
+
+        const typeMeta = typeMetaMap[item.type] || {
+            label: '未知',
+            bg: '#f5f5f5',
+            color: '#666'
+        };
+
+        const typeTag = `
+            <span style="display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; background:${typeMeta.bg}; color:${typeMeta.color}; margin-left:8px; border:1px solid rgba(217,225,236,.64);">
+                ${typeMeta.label}
+            </span>
+        `;
+
+        const operatorHtml = (item.type === 'voice_room' && item.operator_uid)
+            ? `<span>操作人UID：${escHtml(item.operator_uid)}</span>`
+            : '';
+
+        const html = `
+            <div class="complaint-item">
+                <span class="complaint-title">
+                    违规时间：${escHtml(item.created_at || '')}
+                    ${typeTag}
+                    <span style="${statusStyle}">${statusText}</span>
+                </span>
+                <span>处罚内容：${escHtml(banContent)}</span>
+                <span>处罚结束：${escHtml(item.ban_end_time || '')}</span>
+                <span>违规原因：${escHtml(banReason)}</span>
+                ${operatorHtml}
+                ${venueIdInfo}
+                ${imageHtml}
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', html);
+    });
+
+    if (!filteredRecords.length) {
+        container.innerHTML = '<p style="color:#7f8fa4;">当前筛选条件下暂无记录</p>';
+    }
+}
+
+    function formatDuration(seconds) {
+        seconds = parseInt(seconds, 10) || 0;
+
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        let text = '';
+
+        if (days > 0) text += `${days}天`;
+        if (hours > 0) text += `${hours}小时`;
+        if (minutes > 0) text += `${minutes}分钟`;
+        if (secs > 0 && days === 0) text += `${secs}秒`;
+
+        return text || '0分钟';
+    }
+
+    function isMp4Url(url) {
+        if (!url) return false;
+
+        const u = String(url).toLowerCase().split('?')[0].split('#')[0];
+        return u.endsWith('.mp4');
+    }
+
+    function escAttr(s) {
+        return String(s || '').replace(/"/g, '&quot;');
+    }
+
+    function escHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+let previewScale = 1;
+let previewX = 0;
+let previewY = 0;
+let isPreviewDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
+function updatePreviewTransform(el) {
+    if (!el) return;
+
+    el.style.transform = `
+        translate(-50%, -50%)
+        translate(${previewX}px, ${previewY}px)
+        scale(${previewScale})
+    `;
+}
+
+function resetPreviewTransform(el) {
+    previewScale = 1;
+    previewX = 0;
+    previewY = 0;
+    updatePreviewTransform(el);
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('media-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.innerHTML = '';
+    }
+
+    document.body.style.overflow = '';
+}
+
+function showModal(url) {
+    let modal = document.getElementById('media-modal');
+
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'media-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = '';
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'modal-toolbar';
+    toolbar.innerHTML = `
+        <span>滚轮缩放，拖动移动</span>
+        <button type="button" id="preview-reset-btn">还原</button>
+        <button type="button" id="preview-close-btn">关闭</button>
+    `;
+    modal.appendChild(toolbar);
+
+    let mediaEl;
+
+    if (isMp4Url(url)) {
+        mediaEl = document.createElement('video');
+        mediaEl.className = 'modal-content modal-video';
+        mediaEl.src = url;
+        mediaEl.controls = true;
+        mediaEl.preload = 'metadata';
+        mediaEl.playsInline = true;
+    } else {
+        mediaEl = document.createElement('img');
+        mediaEl.className = 'modal-content modal-img';
+        mediaEl.src = url;
+        mediaEl.alt = '违规截图';
+    }
+
+    modal.appendChild(mediaEl);
+
+    resetPreviewTransform(mediaEl);
+
+    modal.onclick = function () {
+        closePreviewModal();
+    };
+
+    toolbar.onclick = function (e) {
+        e.stopPropagation();
+    };
+
+    mediaEl.onclick = function (e) {
+        e.stopPropagation();
+    };
+
+    document.getElementById('preview-close-btn').onclick = function (e) {
+        e.stopPropagation();
+        closePreviewModal();
+    };
+
+    document.getElementById('preview-reset-btn').onclick = function (e) {
+        e.stopPropagation();
+        resetPreviewTransform(mediaEl);
+    };
+
+    // 滚轮缩放
+    modal.onwheel = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const step = e.deltaY < 0 ? 0.15 : -0.15;
+        previewScale = Math.min(6, Math.max(0.5, previewScale + step));
+
+        updatePreviewTransform(mediaEl);
+    };
+
+    // 鼠标拖动移动
+    mediaEl.onmousedown = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        isPreviewDragging = true;
+        dragStartX = e.clientX - previewX;
+        dragStartY = e.clientY - previewY;
+    };
+
+    document.onmousemove = function (e) {
+        if (!isPreviewDragging) return;
+
+        previewX = e.clientX - dragStartX;
+        previewY = e.clientY - dragStartY;
+
+        updatePreviewTransform(mediaEl);
+    };
+
+    document.onmouseup = function () {
+        isPreviewDragging = false;
+    };
+
+    // ESC 关闭
+    document.onkeydown = function (e) {
+        if (e.key === 'Escape') {
+            closePreviewModal();
+        }
+    };
+}
+
+    function getQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+
+        const result = {
+            filterVal: params.get('filterVal'),
+            start_date: params.get('start_date'),
+            end_date: params.get('end_date')
+        };
+
+        console.log('filterVal:', result.filterVal, 'start_date:', result.start_date, 'end_date:', result.end_date);
+
+        return result;
+    }
+</script>
+</body>
+</html>

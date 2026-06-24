@@ -1,0 +1,263 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+    background: linear-gradient(to right top, #0f2027, #203a43, #2c5364); /* 深蓝渐变 */
+    padding: 2rem;
+    min-height: 100vh;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.header h1 {
+    font-size: 2.8rem;
+    font-weight: bold;
+    background: linear-gradient(90deg, #00ffff, #00c3ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
+
+.violation-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.violation-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+
+.header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.violations-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+}
+
+.risk-high {
+    background: rgba(255, 0, 80, 0.1);
+    color: #ff5f7e;
+    border: 1px solid #ff5f7e;
+}
+
+.risk-medium {
+    background: rgba(255, 153, 0, 0.1);
+    color: #ffaa33;
+    border: 1px solid #ffaa33;
+}
+
+.risk-low {
+    background: rgba(0, 204, 102, 0.1);
+    color: #00cc66;
+    border: 1px solid #00cc66;
+}
+
+
+.card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.card-content {
+    padding: 0.5rem;
+}
+.image-wrapper {
+    position: relative;
+}
+
+.time-overlay {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    pointer-events: none;
+}
+.risk-and-count {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.violation-count {
+    font-size: 0.85rem;
+
+}
+
+.count-num {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #dc3545;
+}
+
+/* 原有风险等级样式保留，额外补充中风险背景色 */
+
+.risk-level {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+
+
+.card-time {
+    color: #666;
+    font-size: 0.4rem;
+    margin: 0.3rem 0;
+}
+
+.card-nub {
+    color: #666;
+    font-size: 0.6rem;
+    margin: 0.3rem 0;
+}
+button {
+    padding: 10px 20px ;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+.button-off{
+    padding: 10px 20px;
+    border: none;
+    background-color: #37d384;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 1rem;
+}
+.card-reason {
+
+    line-height: 1.3;
+    font-size: 0.85rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+
+/* 封禁弹窗样式 */
+#banModal {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+#banModal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    color: #333;
+}
+
+.modal-content h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.header h1 {
+    font-size: 2.8rem;
+    font-weight: bold;
+    background: linear-gradient(90deg, #00ffff, #00c3ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
+
+
+/* 模态图查看器 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.modal.show {
+    display: flex;
+}
+
+@media (max-width: 1024px) {
+    .violations-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+
+
+
+    .violations-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

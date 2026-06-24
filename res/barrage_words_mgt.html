@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>弹幕违禁词管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #f5f7fb;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input, textarea, select {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        input {
+            min-width: 220px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: #dc2626;
+        }
+
+        button.gray {
+            background: #6b7280;
+        }
+
+        button.green {
+            background: #16a34a;
+        }
+
+        .stat {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .msg {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #2563eb;
+            word-break: break-all;
+        }
+
+        .tip {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #eef2f7;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 700;
+        }
+
+        .word {
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 30px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .page-info {
+            color: #6b7280;
+            font-size: 14px;
+            padding: 0 6px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            input {
+                width: 100%;
+            }
+
+            button {
+                flex: 1;
+            }
+
+            .toolbar {
+                align-items: stretch;
+            }
+
+            .row {
+                align-items: stretch;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="kwx-legacy-page">
+<div class="page">
+    <div class="title">弹幕违禁词管理</div>
+
+    <div class="card">
+        <textarea id="batchInput" placeholder="输入违禁词：支持单个添加，也支持一行一个、逗号、顿号、竖线分隔批量添加"></textarea>
+
+        <div class="row" style="margin-top: 10px;">
+            <button class="green" onclick="batchAdd()">添加违禁词</button>
+            <button class="gray" onclick="loadWords()">刷新列表</button>
+            <span class="stat" id="stat">未加载</span>
+        </div>
+
+        <div class="tip">
+            示例：加微信、私下交易、测试违禁词。输入一个就是单个添加，输入多个就是批量添加。
+        </div>
+
+        <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card">
+        <div class="toolbar">
+            <div class="row">
+                <input id="searchInput" type="text" placeholder="搜索违禁词" oninput="handleSearch()">
+            </div>
+            <div class="stat" id="pageStat">每页 10 个</div>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th style="width: 80px;">序号</th>
+                <th>违禁词</th>
+                <th style="width: 180px;">操作</th>
+            </tr>
+            </thead>
+            <tbody id="tbody">
+            <tr>
+                <td colspan="3" class="empty">加载中...</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button class="gray" id="firstBtn" onclick="goPage(1)">首页</button>
+            <button class="gray" id="prevBtn" onclick="goPage(currentPage - 1)">上一页</button>
+            <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+            <button class="gray" id="nextBtn" onclick="goPage(currentPage + 1)">下一页</button>
+            <button class="gray" id="lastBtn" onclick="goPage(totalPages)">尾页</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = '/api/mgt/barrage_words_api.php';
+    const PAGE_SIZE = 10;
+
+    let words = [];
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const $ = id => document.getElementById(id);
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function setMsg(text, isError = false) {
+        $('msg').style.color = isError ? '#dc2626' : '#2563eb';
+        $('msg').innerText = text || '';
+    }
+
+    async function api(action, data = {}) {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action,
+                ...data
+            })
+        });
+
+        const json = await res.json().catch(() => {
+            throw new Error('接口返回不是 JSON');
+        });
+
+        if (json.code !== 200) {
+            throw new Error(json.msg || '操作失败');
+        }
+
+        return json;
+    }
+
+    async function loadWords() {
+        try {
+            setMsg('加载中...');
+            const json = await api('list');
+            words = json.data.words || [];
+            currentPage = 1;
+            renderTable();
+            setMsg('加载成功');
+        } catch (e) {
+            setMsg(e.message, true);
+        }
+    }
+
+    function getFilteredWords() {
+        const keyword = $('searchInput').value.trim();
+        if (!keyword) {
+            return words;
+        }
+
+        return words.filter(w => String(w).includes(keyword));
+    }
+
+    function handleSearch() {
+        currentPage = 1;
+        renderTable();
+    }
+
+    function renderTable() {
+        const filtered = getFilteredWords();
+        const total = filtered.length;
+
+        totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const pageList = filtered.slice(start, start + PAGE_SIZE);
+
+        $('stat').innerText = `总数：${words.length}，当前筛选：${total}`;
+        $('pageStat').innerText = `每页 ${PAGE_SIZE} 个，当前显示 ${pageList.length} 个`;
+
+        if (!pageList.length) {
+            $('tbody').innerHTML = `<tr><td colspan="3" class="empty">暂无数据</td></tr>`;
+            renderPagination();
+            return;
+        }
+
+        $('tbody').innerHTML = pageList.map((word, index) => {
+            const safeWord = escapeHtml(word);
+            const encodedWord = encodeURIComponent(word);
+            const number = start + index + 1;
+
+            return `
+                <tr>
+                    <td>${number}</td>
+                    <td class="word">${safeWord}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="gray" data-edit="${encodedWord}">编辑</button>
+                            <button class="danger" data-delete="${encodedWord}">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        renderPagination();
+    }
+
+    function renderPagination() {
+        $('pageInfo').innerText = `第 ${currentPage} / ${totalPages} 页`;
+
+        $('firstBtn').disabled = currentPage <= 1;
+        $('prevBtn').disabled = currentPage <= 1;
+        $('nextBtn').disabled = currentPage >= totalPages;
+        $('lastBtn').disabled = currentPage >= totalPages;
+    }
+
+    function goPage(page) {
+        if (page < 1) {
+            page = 1;
+        }
+
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        currentPage = page;
+        renderTable();
+    }
+
+    async function batchAdd() {
+        const text = $('batchInput').value.trim();
+
+        if (!text) {
+            setMsg('请输入违禁词', true);
+            return;
+        }
+
+        try {
+            const json = await api('batch_add', { words: text });
+            words = json.data.words || [];
+            $('batchInput').value = '';
+            currentPage = 1;
+            renderTable();
+            setMsg(`添加成功，新增 ${json.data.added_count || 0} 个`);
+        } catch (e) {
+            setMsg(e.message, true);
+        }
+    }
+
+    async function editWord(oldWord) {
+        const newWord = prompt('请输入新的违禁词', oldWord);
+
+        if (newWord === null) {
+            return;
+        }
+
+        const value = newWord.trim();
+        if (!value) {
+            setMsg('违禁词不能为空', true);
+            return;
+        }
+
+        try {
+            const json = await api('update', {
+                old_word: oldWord,
+                new_word: value
+            });
+
+            words = json.data.words || [];
+            renderTable();
+            setMsg('修改成功');
+        } catch (e) {
+            setMsg(e.message, true);
+        }
+    }
+
+    async function deleteWord(word) {
+        if (!confirm(`确定删除「${word}」吗？`)) {
+            return;
+        }
+
+        try {
+            const json = await api('delete', { word });
+            words = json.data.words || [];
+            renderTable();
+            setMsg('删除成功');
+        } catch (e) {
+            setMsg(e.message, true);
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        const editBtn = e.target.closest('[data-edit]');
+        const delBtn = e.target.closest('[data-delete]');
+
+        if (editBtn) {
+            editWord(decodeURIComponent(editBtn.getAttribute('data-edit')));
+        }
+
+        if (delBtn) {
+            deleteWord(decodeURIComponent(delBtn.getAttribute('data-delete')));
+        }
+    });
+
+    window.addEventListener('load', function () {
+        loadWords();
+    });
+</script>
+</body>
+</html>

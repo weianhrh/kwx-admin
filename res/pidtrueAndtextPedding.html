@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>图文审核平台</title>
+  <style>
+    :root {
+      --primary: #5b8cff;
+      --secondary: #7f8fa4;
+      --background-gradient-start: #f8f9ff;
+      --background-gradient-end: #f0f3ff;
+      --card-bg: #ffffff;
+      --border-color: #ddd;
+      --text-color: #333;
+      --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", system-ui;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--background-gradient-start), var(--background-gradient-end));
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      /*padding: 24px;*/
+      margin-bottom: 30px;
+    }
+
+    .venue-card {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .venue-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .venue-info {
+      flex: 1;
+    }
+
+    .venue-actions button {
+      margin-right: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+      font-size: 14px;
+      color: var(--text-color);
+    }
+
+    th {
+      background-color: #f0f3ff;
+      font-weight: 600;
+    }
+
+    th[data-hide="true"], td[data-hide="true"] {
+      display: none;
+    }
+
+    button {
+      padding: 6px 12px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button.danger {
+      background-color: #e74c3c;
+    }
+
+    .textarea-box {
+      margin-top: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      resize: vertical;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--secondary);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-content {
+      display: block;
+      margin: 5% auto;
+      max-width: 80%;
+      border-radius: 12px;
+    }
+       .card-title {
+      font-size: 24px;
+      color: var(--text-color);
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 10px;
+      text-align: left;
+    }
+    .actions-cell {
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.venue-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  gap: 20px;
+}
+
+.venue-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.venue-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.venue-info .venue-name {
+  font-weight: bold;
+  /*font-size: 16px;*/
+}
+
+.venue-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.venue-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.venue-actions .edit-btn {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.venue-actions .edit-btn.danger {
+  background-color: #e74c3c;
+}
+@media (max-width: 860px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .venue-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .venue-img {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    margin-bottom: 12px;
+  }
+
+ .venue-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.venue-info .venue-name {
+  font-weight: bold;
+  /*font-size: 15px;*/
+}
+
+
+  .venue-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .venue-actions button {
+    flex: 1 1 45%;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .textarea-box {
+    width: 100%;
+  }
+
+  textarea {
+    font-size: 13px;
+  }
+
+  .card-title {
+    font-size: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="kwx-legacy-page">
+    <div class="card-title">图文审核</div>
+<div class="container">
+  <div class="card">
+    <div id="image-list"></div>
+    <div class="loading" id="loading">正在加载图片...</div>
+    <div class="card" id="audit-list-card"></div>
+    <div class="card" id="desc-audit-list-card"></div>
+    <div class="card" id="device-audit-list-card"></div>
+  </div>
+
+
+</div>
+
+<!-- 脚本逻辑将在下一步注入 -->
+<script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.17.1.min.js"></script>
+  <script>
+    async function loadList() {
+  const res = await fetch("/api/venue/get_audit_list.php");
+  const result = await res.json();
+  const list = result.data?.name_list || [];
+
+  const container = document.getElementById("audit-list-card");
+  container.innerHTML = "";
+
+  list.forEach(item => {
+    const time = new Date(item.timestamp * 1000).toLocaleString();
+    const card = document.createElement("div");
+    card.className = "venue-card";
+    card.innerHTML = `
+      <div class="venue-info">
+        <span class="venue-name">提交名称：${item.venue_name}</span>
+        <span>场地ID: ${item.venue_id}</span>
+        <span>提交时间: ${time}</span>
+      </div>
+      <div class="venue-actions">
+        <button class="edit-btn" onclick="approve(${item.venue_id})">通过</button>
+        <button class="edit-btn danger" onclick="toggleReject(${item.venue_id})">拒绝</button>
+      </div>
+      <div class="textarea-box" id="reject-box-${item.venue_id}" style="display:none;">
+        <textarea id="reason-${item.venue_id}" rows="2" placeholder="请输入拒绝理由">内容不适宜</textarea>
+        <button class="danger" onclick="reject(${item.venue_id})" style="margin-top:8px;">确认拒绝</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  notifyTextCount();
+}
+
+    async function loadDeviceList() {
+  const res = await fetch("/api/venue/getPendingVehicleNameAudits.php");
+  const result = await res.json();
+  const list = result.data || [];
+
+  const container = document.getElementById("device-audit-list-card");
+  container.innerHTML = "";
+
+  list.forEach(item => {
+    const time = new Date(item.timestamp * 1000).toLocaleString();
+    const fieldText = item.field === 'name' ? '设备名称' : '分享名称';
+
+    const card = document.createElement("div");
+    card.className = "venue-card";
+    card.innerHTML = `
+      <div class="venue-info">
+        <span class="venue-name">${fieldText}：${item.new}</span>
+        <span>设备ID: ${item.device_id}</span>
+        <span>提交时间: ${time}</span>
+      </div>
+      <div class="venue-actions">
+        <button class="edit-btn" onclick="approveDevice('${item.device_id}', '${item.field}')">通过</button>
+        <button class="edit-btn danger" onclick="toggleRejectDevice('${item.device_id}', '${item.field}')">拒绝</button>
+      </div>
+      <div class="textarea-box" id="reject-box-${item.device_id}-${item.field}" style="display:none;">
+        <textarea id="reason-${item.device_id}-${item.field}" rows="2" placeholder="请输入拒绝理由">内容不适宜</textarea>
+        <button class="danger" onclick="rejectDevice('${item.device_id}', '${item.field}')" style="margin-top:8px;">确认拒绝</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  notifyTextCount();
+}
+
+    async function loadDescList() {
+  const res = await fetch("/api/venue/get_audit_list.php");
+  const result = await res.json();
+  const list = result.data?.desc_list || [];
+
+  const container = document.getElementById("desc-audit-list-card");
+  container.innerHTML = "";
+
+  list.forEach(item => {
+    const time = new Date(item.timestamp * 1000).toLocaleString();
+    const card = document.createElement("div");
+    card.className = "venue-card";
+    card.innerHTML = `
+      <div class="venue-info">
+        <span class="venue-name">提交描述：${item.venue_description}</span>
+        <span>场地ID: ${item.venue_id}</span>
+        <span>提交时间: ${time}</span>
+      </div>
+      <div class="venue-actions">
+        <button class="edit-btn" onclick="approveDesc(${item.venue_id})">通过</button>
+        <button class="edit-btn danger" onclick="toggleRejectDesc(${item.venue_id})">拒绝</button>
+      </div>
+      <div class="textarea-box" id="reject-desc-box-${item.venue_id}" style="display:none;">
+        <textarea id="reason-desc-${item.venue_id}" rows="2" placeholder="请输入拒绝理由">内容不适宜</textarea>
+        <button class="danger" onclick="rejectDesc(${item.venue_id})" style="margin-top:8px;">确认拒绝</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  notifyTextCount();
+}
+
+    async function approve(id) {
+      await fetch("/api/venue/review_venue_name.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue_id: id, action: "approve" })
+      });
+      alert("已通过");
+      loadList();
+    }
+
+    async function reject(id) {
+      const reason = document.getElementById(`reason-${id}`).value.trim();
+      if (!reason) return alert("请输入拒绝理由");
+
+      await fetch("/api/venue/review_venue_name.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue_id: id, action: "reject", reason })
+      });
+      alert("已拒绝");
+      loadList();
+    }
+
+    function toggleReject(id) {
+      const box = document.getElementById(`reject-box-${id}`);
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    async function approveDevice(id, field) {
+      await fetch("/api/venue/reviewVehicleNameAudit.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device_id: id, field, action: "approve" })
+      });
+      alert("设备审核通过");
+      loadDeviceList();
+    }
+
+    async function rejectDevice(id, field) {
+      const reason = document.getElementById(`reason-${id}-${field}`).value.trim();
+      if (!reason) return alert("请输入拒绝理由");
+
+      await fetch("/api/venue/reviewVehicleNameAudit.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device_id: id, field, action: "reject", reason })
+      });
+      alert("设备已拒绝");
+      loadDeviceList();
+    }
+
+    function toggleRejectDevice(id, field) {
+      const box = document.getElementById(`reject-box-${id}-${field}`);
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    async function approveDesc(id) {
+      await fetch("/api/venue/review_venue_description.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue_id: id, action: "approve" })
+      });
+      alert("描述审核通过");
+      loadDescList();
+    }
+
+    async function rejectDesc(id) {
+      const reason = document.getElementById(`reason-desc-${id}`).value.trim();
+      if (!reason) return alert("请输入拒绝理由");
+
+      await fetch("/api/venue/review_venue_description.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue_id: id, action: "reject", reason })
+      });
+      alert("描述已拒绝");
+      loadDescList();
+    }
+
+    function toggleRejectDesc(id) {
+      const box = document.getElementById(`reject-desc-box-${id}`);
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    function notifyTextCount() {
+      const count =
+        document.querySelectorAll('#audit-list tr').length +
+        document.querySelectorAll('#desc-audit-list tr').length +
+        document.querySelectorAll('#device-audit-list tr').length;
+      window.parent.postMessage({ type: 'text-card-count', count }, '*');
+    }
+
+    loadList();
+    loadDeviceList();
+    loadDescList();
+  </script>
+<script>
+
+         let ossConfig = null;
+
+                // 页面加载时获取场地列表和OSS配置
+        window.onload = async function() {
+            try {
+                // 获取 OSS 配置
+                const configResponse = await fetch('/api/operat/upload.php?get_config=1');
+                const configData = await configResponse.json();
+                if (configData.code === 0) {
+                    ossConfig = configData.data;
+                }
+
+                // 加载待审核图片
+                loadPendingImages();
+
+            } catch (e) {
+                console.error('初始化失败:', e);
+            }
+        }
+
+function loadPendingImages() {
+    fetch('/api/venue/getPendingImages.php')
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('image-list');
+            const loading = document.getElementById('loading');
+            loading.style.display = 'none';
+
+            if (data.code === 0 && data.data.length > 0) {
+                 data.data.sort((a, b) => new Date(b.upload_time) - new Date(a.upload_time));
+                data.data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'venue-card';
+                    const imageUrl = "/api/venue/"+item.image_url;
+                    card.innerHTML = `
+                    <img src="/api/venue/${item.image_url}"class="venue-img" alt="待审核图片"  onclick="showModal('${imageUrl}')">
+                        <div class="venue-info">
+                            <span class="venue-name">${item.venue_name}</span>
+                            <span>场地ID: ${item.id}</span>
+                            <span>状态: ${item.image_status}</span>
+                            <span>上传时间: ${item.upload_time}</span>
+                        </div>
+                        <div class="venue-actions">
+                            <button class="edit-btn" onclick="approveImage(${item.id})">审核通过</button>
+                            <button class="edit-btn" style="background-color:#f44336" onclick="rejectImage(${item.id})">拒绝</button>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+                 // ✅ 主动通知父页面
+                setTimeout(notifyParentCount, 100);
+            } else {
+                container.innerHTML = '<div class="loading">暂无待审核图片或文字</div>';
+                notifyParentCount(); // 如果没图也要通知 count=0
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading').innerText = '加载失败';
+            console.error('加载失败：', error);
+        });
+}
+
+// async function approveImage(venueId) {
+//     if (!confirm("确认通过该图片审核，并上传设为场地头像？")) {
+//             return;
+//     }
+//     const card = document.querySelector(`.venue-card button[onclick="approveImage(${venueId})"]`).closest('.venue-card');
+//     const imgUrl = card.querySelector('img').getAttribute('src');
+
+//     if (!ossConfig) {
+//         alert("OSS 配置未加载");
+//         return;
+//     }
+
+//     try {
+//         const response = await fetch(imgUrl, { mode: 'cors' });
+//         if (!response.ok) {
+//             alert(`图片加载失败：HTTP ${response.status}`);
+//             return;
+//         }
+
+//         const blob = await response.blob();
+
+//         if (blob.size < 100) {
+//             alert("图片太小或无效，上传中止");
+//             return;
+//         }
+
+//         const filename = `app/img/${Date.now()}_venue_${venueId}.jpg`;
+//         const client = new OSS(ossConfig);
+//         const result = await client.put(filename, blob);
+//         const uploadedUrl = result.url;
+
+//         // 更新数据库
+//         const res = await fetch('/api/operat/upload.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify({
+//                 venue_id: venueId,
+//                 image_url: uploadedUrl
+//             })
+//         });
+//         fetch('/api/venue/reviewImage.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify({
+//                 venue_id: venueId,
+//                 oss_uploaded_url: uploadedUrl
+//             })
+//         });
+
+//         const data = await res.json();
+//         if (data.code === 0) {
+//             alert("上传成功，头像已更新！");
+//         const filename = imgUrl.split('/pending_images/')[1]; // 得到 venue_xxx.jpg
+//         const deleteRes = await fetch('/api/venue/deletePendingImage.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify({
+//                 venue_id: venueId,
+//                 filename: `pending_images/${filename}`
+//             })
+//         });
+//         const deleteText = await deleteRes.text();
+//         console.log("🧹 删除图片响应文本：", deleteText);
+
+
+//             location.reload();
+//         } else {
+//             alert("数据库写入失败：" + data.msg);
+//         }
+
+//     } catch (e) {
+//         console.error("上传异常：", e);
+//         alert("图片审核处理失败，请检查网络和 OSS 权限");
+//     }
+// }
+
+async function approveImage(venueId) {
+    if (!confirm("确认通过该图片审核，并设为场地头像？")) return;
+
+    const card = document.querySelector(`.venue-card button[onclick="approveImage(${venueId})"]`).closest('.venue-card');
+    const imgUrl = card.querySelector('img').getAttribute('src');
+
+    try {
+        const response = await fetch(imgUrl);
+        const blob = await response.blob();
+
+        if (blob.size < 100) {
+            alert("图片太小或无效，上传中止");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', blob, `venue_${venueId}.jpg`);
+        formData.append('action', 'update_venue_pictrue');
+        formData.append('venue_id', venueId);
+
+        const uploadRes = await fetch('https://rcwulian.cn/app/img/userimg/upload_profile.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadData.code === 0) {
+            alert("上传成功，头像已更新");
+
+            // 删除待审核图片
+            const filename = imgUrl.split('/pending_images/')[1]; // 取文件名
+            const deleteRes = await fetch('/api/venue/deletePendingImage.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    venue_id: venueId,
+                    filename: `pending_images/${filename}`
+                })
+            });
+            const deleteText = await deleteRes.text();
+            console.log("🧹 删除图片响应文本：", deleteText);
+
+            location.reload();
+        } else {
+            alert("上传失败：" + uploadData.msg);
+        }
+
+    } catch (e) {
+        console.error("上传异常：", e);
+        alert("图片审核处理失败，请检查网络或服务器");
+    }
+}
+
+async function rejectImage(venueId) {
+
+
+
+    // 缓存驳回理由到 localStorage
+    // localStorage.setItem(`rejected_reason_${venueId}`, reason);
+
+    // 找到图片 URL 并提取 filename
+    const reason = prompt("请输入拒绝原因：", "内容不适宜");
+    if (!reason) return;
+    const rejectRes = await fetch('/api/venue/rejectImage.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            venue_id: venueId,
+            reason: reason
+        })
+    });
+
+    const card = document.querySelector(`.venue-card button[onclick="rejectImage(${venueId})"]`).closest('.venue-card');
+    const imgUrl = card.querySelector('img').getAttribute('src');
+    const filename = imgUrl.split('/pending_images/')[1];
+
+    // 删除图片 + 还原 image_status
+    const deleteRes = await fetch('/api/venue/deletePendingImage.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            venue_id: venueId,
+            filename: `pending_images/${filename}`
+        })
+    });
+
+    const deleteData = await deleteRes.json();
+    console.log("🧹 删除图片响应：", deleteData);
+
+    if (deleteData.code === 0) {
+        alert('图片已驳回并清理');
+        location.reload();
+    } else {
+        alert('删除失败：' + deleteData.msg);
+    }
+}
+
+ function showModal(imageUrl) {
+        let modal = document.getElementById('img-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'img-modal';
+            modal.className = 'modal';
+            modal.innerHTML = `<img class="modal-content" id="modal-img">`;
+            modal.onclick = () => (modal.style.display = 'none');
+            document.body.appendChild(modal);
+        }
+        const img = modal.querySelector('#modal-img');
+        img.src = imageUrl;
+        modal.style.display = 'block';
+    }
+ // 方法2：页面加载完后主动告诉父页面
+  function notifyParentCount() {
+    const count = document.querySelectorAll('.venue-card').length;
+    window.parent.postMessage({ type: 'image-card-count', count }, '*');
+  }
+</script>
+</body>
+</html>

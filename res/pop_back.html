@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>驾驶中设备巡查</title>
+  <script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.17.0.min.js"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      position: relative;
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+    .modal-close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #333;
+    }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .modify-btn {
+      width: 100%;
+      padding: 10px;
+      background-color: blue;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .modify-btn:hover { background-color: #4a77e4; }
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+<body class="bg-gray-50 p-6 kwx-legacy-page">
+  <div class="container mx-auto max-w-7xl">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <div class="space-y-2">
+        <h1 class="text-4xl font-bold text-gray-800 font-mono relative">
+          <span class="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">设备巡查面板</span>
+        </h1>
+        <p id="last-updated" class="text-sm text-gray-400">最后更新时间: 未更新</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="capture-all" class="bg-gradient-to-br from-cyan-500 to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl hover:from-cyan-600 hover:to-blue-700 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 4V1h2v3h3v2H5v3H3V6H0V4h3zm3 6V7h3V5h3l4 4-4 4h-3v-2H6v-3zm15 2c0 3.866-3.134 7-7 7-3.86 0-7-3.14-7-7h2c0 2.76 2.24 5 5 5s5-2.24 5-5-2.24-5-5-5v2l-4-4 4-4v2c3.866 0 7 3.134 7 7z"/>
+          </svg>
+          一键抓图
+        </button>
+      </div>
+    </div>
+    <div id="device-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+  </div>
+
+  <script>
+let alertShown = false; // 是否已弹出提示，避免重复弹窗
+
+function checkPendingImages() {
+    fetch('/api/venue/getPendingImages.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.code === 0) {
+                if (data.count > 0 && !alertShown) {
+                    const confirmed = confirm("有图片待审核，是否立即前往？");
+                    alertShown = true;
+
+                    if (confirmed) {
+                        window.location.href = "/res/peddingMain.html";
+                    } else {
+                        console.log("用户取消提醒");
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.error('获取待审核数量失败', err);
+        });
+}
+
+// 首次加载就执行一次
+checkPendingImages();
+
+// 每隔30秒轮询一次
+setInterval(checkPendingImages, 30000);
+</script>
+  <script>
+    const DEFAULT_IMG = 'https://rcwulian.cn/img/opp.jpg';
+    let devicesData = [];
+    async function fetchDevices() {
+      try {
+        const response = await fetch('/api/gl/get_sb.php');
+        const res = await response.json();
+        if (res.code === 0) {
+          devicesData = res.data;
+          renderDevices(devicesData);
+          updateLastUpdatedTime();
+        } else {
+          alert('获取设备失败：' + res.msg);
+        }
+      } catch (e) {
+        alert('请求错误：' + e);
+      }
+    }
+    function captureAllDevices() {
+      devicesData.forEach(device => {
+        fetch(`/api/pop/capture.php?sn=${device.image_device_serial}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.code === 200 && data.image_url) {
+              document.querySelector(`img[data-serial="${device.image_device_serial}"]`).src = data.image_url;
+            // 新增
+            const ts = document.querySelector(`img[data-serial="${device.image_device_serial}"]`)
+              ?.nextElementSibling;
+            if (ts) ts.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+
+
+            }
+          })
+          .catch(err => console.error('抓图请求失败', err));
+      });
+    }
+    function updateLastUpdatedTime() {
+      const now = new Date();
+      document.getElementById('last-updated').textContent = `最后更新时间: ${now.toLocaleString('zh-CN', { hour12: false })}`;
+    }
+    function countViolationsToday(banRecords) {
+  const now = new Date();
+  const today6am = new Date(now);
+  today6am.setHours(6, 0, 0, 0);
+
+  const next6am = new Date(today6am);
+  if (now < today6am) {
+    // 如果当前时间在今天凌晨0点到6点之间，今天6点是昨天的6点
+    today6am.setDate(today6am.getDate() - 1);
+    next6am.setDate(next6am.getDate() - 1);
+    next6am.setDate(next6am.getDate() + 1); // 设置为当前日期的6点
+  } else {
+    next6am.setDate(next6am.getDate() + 1);
+  }
+
+  return banRecords.filter(rec => {
+    const time = new Date(rec.created_at);
+    return time >= today6am && time < next6am;
+  }).length;
+}
+
+function renderDevices(devices) {
+  const container = document.getElementById('device-list');
+  container.innerHTML = '';
+
+  devices.forEach(device => {
+    const card = document.createElement('div');
+    card.className = 'bg-white shadow-lg rounded-2xl p-4 flex flex-col hover:shadow-xl';
+
+    const imgWrapper = document.createElement('div');
+    imgWrapper.className = 'relative mb-4 h-48 overflow-hidden rounded-xl';
+
+    const img = document.createElement('img');
+    img.src = DEFAULT_IMG;
+    img.alt = '设备图像';
+    img.className = 'h-full w-full object-cover';
+    img.dataset.serial = device.image_device_serial;
+    img.onclick = () => showImageModal(img.src);
+
+    const timestamp = document.createElement('div');
+    timestamp.className = 'absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-2 py-0.5 rounded';
+    timestamp.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+
+    imgWrapper.appendChild(img);
+    imgWrapper.appendChild(timestamp);
+
+    const name = document.createElement('h2');
+    name.className = 'text-lg font-semibold';
+    name.textContent = device.device_name;
+
+    const venue = document.createElement('p');
+    venue.className = 'text-gray-600 text-sm mb-2';
+    venue.textContent = `场地：${device.venue_name}`;
+
+    // 🚨 添加违规次数显示容器
+    const violationInfo = document.createElement('div');
+    violationInfo.className = 'text-xs text-right text-gray-500 mb-1';
+    violationInfo.textContent = '违规加载中...';
+
+    fetch(`/api/operat/ban_record.php?venue_id=${device.bind_site}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === 0 && Array.isArray(data.data?.device_bans)) {
+          const todayCount = countViolationsToday(data.data.device_bans);
+          violationInfo.textContent = `今日违规：${todayCount}`;
+        } else {
+          violationInfo.textContent = '获取失败';
+        }
+      })
+      .catch(() => {
+        violationInfo.textContent = '请求异常';
+      });
+
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'mt-auto flex gap-2';
+
+    const snapshotBtn = document.createElement('button');
+    snapshotBtn.textContent = '📸 抓图';
+    snapshotBtn.className = 'bg-blue-500 text-white rounded-xl px-4 py-2 text-sm hover:bg-blue-600';
+    snapshotBtn.onclick = async () => {
+      snapshotBtn.textContent = '抓图中...';
+      snapshotBtn.disabled = true;
+
+      try {
+        const isCH = device.image_device_serial.startsWith('ch');
+        const captureUrl = isCH
+          ? `https://file.minirtc.com/Dev/${device.image_device_serial}/OnCapture?authid=1&ccc=bGQCVsd4hBHf8YjAM+jkQ/R8zBA=&ttt=sss&_ts=${Date.now()}`
+          : `/api/pop/capture.php?sn=${device.image_device_serial}`;
+
+        let finalImageUrl = '';
+
+        if (isCH) {
+          // 立即中转并上传到 OSS
+          const proxyRes = await fetch(`/api/operat/image_proxy.php?url=${encodeURIComponent(captureUrl)}`);
+          const proxyJson = await proxyRes.json();
+
+          if (proxyJson.code !== 0) throw new Error('代理图片失败: ' + proxyJson.msg);
+
+          const base64Url = proxyJson.data;
+          const blob = await (await fetch(base64Url)).blob();
+          console.log('[CH] Blob 大小:', blob.size);
+
+          // 获取 OSS 配置
+          const configRes = await fetch('/api/operat/upload.php?get_config=1');
+          const configJson = await configRes.json();
+          if (configJson.code !== 0) throw new Error('获取 OSS 配置失败');
+
+          const ossClient = new OSS(configJson.data);
+          const filename = `webtmppic/img/${Date.now()}_${device.image_device_serial}.jpg`;
+          const ossRes = await ossClient.put(filename, blob);
+          finalImageUrl = ossRes.url;
+
+          // ✅ 设置 img 标签
+          img.src = finalImageUrl;
+          img.dataset.tempImage = '1';
+          img.dataset.ossFilename = filename;
+        } else {
+          // 普通设备：通过接口获取抓图链接
+          const response = await fetch(captureUrl);
+          const data = await response.json();
+          if (data.code === 200 && data.image_url) {
+            finalImageUrl = data.image_url;
+            img.src = finalImageUrl;
+            img.dataset.tempImage = '';
+          } else {
+            throw new Error('抓图失败: ' + (data.message || '未知错误'));
+          }
+        }
+
+        // 更新时间戳
+        const ts = img.nextElementSibling;
+        if (ts) ts.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+
+      } catch (err) {
+        console.error('抓图错误:', err);
+        alert(err.message || '抓图失败');
+      } finally {
+        snapshotBtn.textContent = '📸 抓图';
+        snapshotBtn.disabled = false;
+      }
+    };
+
+
+    const liveBtn = document.createElement('button');
+    liveBtn.textContent = '▶️ 查看直播';
+    liveBtn.className = 'bg-green-500 text-white rounded-xl px-4 py-2 text-sm hover:bg-green-600';
+    liveBtn.onclick = () => {
+      window.open(`https://your-stream-service.com/live/${device.image_device_serial}`, '_blank');
+    };
+
+    const banBtn = document.createElement('button');
+    banBtn.className = 'bg-red-500 text-white rounded-xl px-4 py-2 text-sm hover:bg-red-600';
+    banBtn.textContent = '🚫 封禁';
+    banBtn.onclick = () => {
+      const imageSrc = img.src;
+      const isTemp = img.dataset.tempImage === '1';
+      banDevice(device.device_id, imageSrc, isTemp, img); // 👈 直接传入 img 元素
+
+
+      setTimeout(() => {
+        document.getElementById('venueId').value = device.bind_site;
+        document.getElementById('imageDeviceSerial').value = device.image_device_serial;
+      }, 100);
+    };
+
+    btnGroup.append(snapshotBtn, liveBtn, banBtn);
+    card.append(imgWrapper, name, venue, violationInfo, btnGroup);
+    container.appendChild(card);
+  });
+}
+
+
+
+function banDevice(serialNumber, imageUrl, isTempImage = false, imgEl = null) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <h2>封禁操作</h2>
+      <form id="banForm">
+        <input type="hidden" id="banSerialNumber" value="${serialNumber}">
+        <div class="form-group">
+          <label for="banType">封禁类型</label>
+          <select id="banType" required>
+            <option value="device">封禁设备</option>
+            <option value="venue">封禁场地</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="banDuration">封禁时长</label>
+          <select id="banDuration" required>
+            <option value="0.1667">10分钟</option>
+            <option value="0.3333">20分钟</option>
+            <option value="0.5">半小时</option>
+            <option value="1">一小时</option>
+            <option value="6">六小时</option>
+            <option value="12">半天</option>
+            <option value="24">一天</option>
+            <option value="72">三天</option>
+            <option value="168">一周</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="banReason">封禁原因</label>
+          <textarea id="banReason" required rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="venueId">场地ID</label>
+          <input type="text" id="venueId" required>
+        </div>
+        <div class="form-group">
+          <label for="imageDeviceSerial">图传设备序列号</label>
+          <input type="text" id="imageDeviceSerial" value="${serialNumber}">
+        </div>
+        <button type="submit" class="modify-btn">确认封禁</button>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.style.display = 'flex';
+
+  modal.querySelector('.modal-close').onclick = () => document.body.removeChild(modal);
+
+  modal.querySelector('#banForm').onsubmit = async function (e) {
+    e.preventDefault();
+
+    const banType = document.getElementById('banType').value;
+    const req = {
+      ban: true,
+      id: 1,
+      serial_number: serialNumber,
+      ban_duration: document.getElementById('banDuration').value,
+      ban_reason: document.getElementById('banReason').value,
+      venue_id: document.getElementById('venueId').value,
+      image_device_serial: document.getElementById('imageDeviceSerial').value,
+      image_url: imageUrl,
+      banType: banType
+    };
+
+    imgEl = imgEl || document.querySelector(`img[data-serial="${serialNumber}"]`);
+    const imgUrl = imgEl?.src;
+    console.log("imgEl",imgEl,"imgUrl",imgUrl);
+
+    // ✅ 如果是临时图像（如 ch 设备），上传当前图像
+ // ✅ 如果是临时图像（如 ch 设备）
+if (isTempImage && imgUrl) {
+  try {
+    // 若已上传过，则直接使用
+    if (imgEl?.dataset.ossFilename && imgUrl.includes('aliyuncs.com')) {
+      console.log('[OSS] 已存在上传结果，复用:', imgEl.dataset.ossFilename);
+      req.image_url = imgUrl;
+    } else {
+      console.log('[OSS] 开始上传临时图像:', imgUrl);
+
+      // 1. 获取 OSS 配置
+      const configRes = await fetch('/api/operat/upload.php?get_config=1');
+      const configJson = await configRes.json();
+      console.log('[OSS] 获取配置返回:', configJson);
+
+      if (configJson.code !== 0) throw new Error('获取 OSS 配置失败');
+
+      const ossClient = new OSS(configJson.data);
+      console.log('[OSS] 初始化 OSS Client 成功');
+
+      // 2. 使用 proxy 中转获取 Base64
+      const proxyRes = await fetch(`/api/operat/image_proxy.php?url=${encodeURIComponent(imgUrl)}`);
+      const proxyJson = await proxyRes.json();
+
+      if (proxyJson.code !== 0) throw new Error('代理图片获取失败: ' + proxyJson.msg);
+
+      const base64Url = proxyJson.data;
+
+      // 3. Base64 → Blob
+      const blob = await (await fetch(base64Url)).blob();
+      console.log('[OSS] 使用 proxy 成功获取 Blob，大小:', blob.size);
+
+      const filename = `webtmppic/img/${Date.now()}_${serialNumber}.jpg`;
+      const ossRes = await ossClient.put(filename, blob);
+      console.log('[OSS] 上传成功，返回:', ossRes);
+
+      req.image_url = ossRes.url;
+
+      // ✅ 记录下 filename 供后续封禁识别
+      imgEl.dataset.ossFilename = filename;
+      imgEl.src = ossRes.url; // 替换 src 为 OSS 图像，确保显示的图就是要封禁的
+    }
+
+  } catch (err) {
+    console.error('[OSS] 上传失败:', err);
+    alert('图像上传失败: ' + err.message);
+    return;
+  }
+}
+
+
+
+    // ✅ 提交封禁请求
+    fetch('/api/devMgr/devMgtV2.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.code === 0) {
+        alert('封禁成功');
+        if (banType === 'device') {
+          imgEl?.closest('div')?.remove();
+        }
+      } else {
+        alert('封禁失败: ' + data.msg);
+      }
+    })
+    .catch(err => alert('请求失败：' + err));
+
+    document.body.removeChild(modal);
+  };
+}
+// ✅ 图像转 blob，优先 fetch，失败自动 fallback 到 canvas
+async function tryGetBlobFromImage(imgEl, imgUrl) {
+  try {
+    // 先尝试 fetch + CORS
+    const res = await fetch(imgUrl, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch 非 200');
+    return await res.blob();
+  } catch (e) {
+    console.warn('[fallback] fetch 获取失败，尝试 canvas 方式：', e);
+
+    // canvas fallback
+    return new Promise((resolve, reject) => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = imgEl.naturalWidth;
+        canvas.height = imgEl.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgEl, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('canvas toBlob 失败'));
+        }, 'image/jpeg', 0.95);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+}
+
+    document.getElementById('capture-all').addEventListener('click', () => {
+    captureAllDevices();
+    fetchDevices();
+});
+
+    function showImageModal(src) {
+  let existing = document.getElementById('img-preview-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'img-preview-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-70 z-[9999] flex justify-center items-center overflow-hidden';
+
+  modal.innerHTML = `
+    <div class="relative w-full h-full cursor-grab overflow-hidden">
+      <img src="${src}" id="zoomable-img"
+           style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); max-width: none; max-height: none;"
+           class="select-none" />
+      <button class="absolute top-4 right-4 bg-white text-black rounded-full p-1 text-xl font-bold shadow" onclick="document.getElementById('img-preview-modal').remove()">×</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const img = modal.querySelector('#zoomable-img');
+  const container = modal.querySelector('div');
+
+  let scale = 1;
+  let posX = 0;
+  let posY = 0;
+  let originX = 0;
+  let originY = 0;
+  let isDragging = false;
+  let lastX, lastY;
+
+  function updateTransform() {
+    img.style.transform = `translate(-50%, -50%) translate(${posX}px, ${posY}px) scale(${scale})`;
+  }
+
+  // 滚轮缩放
+  modal.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    scale = Math.min(Math.max(0.2, scale + delta), 5);
+    updateTransform();
+  });
+
+  // 拖动查看位置
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    container.classList.replace('cursor-grab', 'cursor-grabbing');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    posX += dx;
+    posY += dy;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    updateTransform();
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+    container.classList.replace('cursor-grabbing', 'cursor-grab');
+  });
+}
+
+
+
+        fetchDevices();
+    // setInterval(fetchDevices, 120000);
+
+  </script>
+  <script src="canvas-nest-colorful.js"></script>
+</body>
+</html>
