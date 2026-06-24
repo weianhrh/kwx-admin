@@ -477,3 +477,7 @@ api/operat/upload.php
 
 # gitignore 备份文件不提交
 .gitignore.bak_*
+
+# 上传/审核临时图片，不提交，Windows 会报 invalid path
+api/venue/pending_images/
+api/**/pending_images/
