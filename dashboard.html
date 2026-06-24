@@ -50,9 +50,10 @@
       top: 0;
       height: 100vh;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
       gap: 20px;
       padding: 22px 16px;
+      overflow: hidden;
       color: #eef8f7;
       background: var(--sidebar);
     }
@@ -102,6 +103,24 @@
       display: grid;
       align-content: start;
       gap: 6px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(207, 224, 227, .28) transparent;
+    }
+
+    .nav::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .nav::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .nav::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(207, 224, 227, .24);
     }
 
     .nav-section {
@@ -1289,7 +1308,7 @@
         width: min(84vw, 292px);
         height: 100vh;
         display: grid;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         gap: 18px;
         padding: 18px 14px;
         box-shadow: 24px 0 50px rgba(6, 20, 24, .24);
@@ -1334,9 +1353,7 @@
       }
 
       .nav {
-        overflow-y: auto;
         align-content: start;
-        padding-right: 4px;
       }
 
       .nav-section {
