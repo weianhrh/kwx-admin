@@ -389,6 +389,7 @@
     const form = document.getElementById('profileForm');
     const saveBtn = document.getElementById('saveBtn');
     const refreshBtn = document.getElementById('refreshBtn');
+    let profileEditable = false;
 
     const fields = {
       role: document.getElementById('role'),
@@ -417,6 +418,17 @@
       saveBtn.disabled = loading;
       refreshBtn.disabled = loading;
       stateEl.textContent = loading ? '处理中' : '可编辑';
+    }
+
+    function setProfileEditable(editable) {
+      profileEditable = editable;
+      fields.nickname.readOnly = !editable;
+      fields.cellphone.readOnly = !editable;
+      form.querySelectorAll('input[name="sex"]').forEach(function(input) {
+        input.disabled = !editable;
+      });
+      saveBtn.disabled = !editable;
+      saveBtn.textContent = editable ? '保存资料' : '暂无可保存资料';
     }
 
     function parseJsonResponse(response) {
@@ -469,8 +481,19 @@
         credentials: 'same-origin',
         cache: 'no-store'
       }).then(parseJsonResponse);
-      if (result.code !== 0) throw new Error(result.msg || '资料读取失败');
+      if (result.code !== 0) {
+        setProfileEditable(false);
+        return {
+          ok: false,
+          msg: result.msg || '未找到用户扩展资料'
+        };
+      }
       renderProfile(result.data || {});
+      setProfileEditable(true);
+      return {
+        ok: true,
+        msg: '资料已同步。'
+      };
     }
 
     async function loadAll() {
@@ -478,20 +501,29 @@
       setMessage('正在读取当前账号资料...');
       try {
         await loadAuth();
-        await loadProfile();
-        stateEl.textContent = '可编辑';
-        setMessage('资料已同步。', 'success');
+        const profileResult = await loadProfile();
+        if (profileResult.ok) {
+          stateEl.textContent = '可编辑';
+          setMessage(profileResult.msg, 'success');
+        } else {
+          stateEl.textContent = '只读资料';
+          setMessage('已显示后台账号信息；旧用户资料表没有对应记录，昵称和手机暂不可编辑。');
+        }
       } catch (error) {
         stateEl.textContent = '需检查';
         setMessage(error.message || '资料读取失败', 'error');
       } finally {
-        saveBtn.disabled = false;
         refreshBtn.disabled = false;
       }
     }
 
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
+      if (!profileEditable) {
+        setMessage('当前后台账号没有对应的用户扩展资料，暂不能保存昵称和手机。', 'error');
+        return;
+      }
+
       const nickname = fields.nickname.value.trim();
       const phone = fields.cellphone.value.trim();
       const sex = form.querySelector('input[name="sex"]:checked').value === '女' ? 1 : 0;
