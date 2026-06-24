@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="酷玩星后台管理登录页" />
+  <title>酷玩星后台管理</title>
+  <style>
+    :root {
+      --bg: #f4f7f8;
+      --panel: #ffffff;
+      --text: #172126;
+      --muted: #6b7d84;
+      --line: #dfe8eb;
+      --line-strong: #c9d8dd;
+      --primary: #0f8f8c;
+      --primary-dark: #08706e;
+      --primary-soft: #e6f6f5;
+      --accent: #ffb84d;
+      --danger-soft: #fff6e7;
+      --shadow: 0 22px 58px rgba(30, 55, 66, .12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(15, 143, 140, .08), transparent 280px),
+        var(--bg);
+    }
+
+    button, input { font: inherit; }
+
+    .page {
+      width: min(1120px, calc(100% - 40px));
+      min-height: 100vh;
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 24px;
+      padding: 28px 0;
+    }
+
+    .topbar,
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #fff;
+      background: var(--primary);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(15, 143, 140, .2);
+    }
+
+    .mark svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .env {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .72);
+      white-space: nowrap;
+    }
+
+    .env i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #21b47b;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .intro {
+      max-width: 560px;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--primary-dark);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.2vw, 52px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      max-width: 500px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .summary div {
+      min-height: 82px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .66);
+    }
+
+    .summary strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .summary span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .card {
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .card-head {
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .form {
+      display: grid;
+      gap: 17px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      color: #34464e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .input {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-items: center;
+      min-height: 50px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #fbfcfd;
+      transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .input:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(15, 143, 140, .1);
+      background: #fff;
+    }
+
+    .input svg {
+      width: 18px;
+      height: 18px;
+      justify-self: center;
+      color: #8aa0a8;
+    }
+
+    .input input {
+      width: 100%;
+      min-width: 0;
+      height: 48px;
+      padding: 0 14px 0 0;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+    }
+
+    .input input::placeholder { color: #a3b3b9; }
+
+    .options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .remember input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    a {
+      color: var(--primary-dark);
+      text-decoration: none;
+    }
+
+    .submit {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 2px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .16s ease, transform .16s ease, box-shadow .16s ease;
+    }
+
+    .submit:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(15, 143, 140, .2);
+    }
+
+    .submit svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .hint {
+      display: flex;
+      gap: 9px;
+      margin-top: 18px;
+      padding: 11px 12px;
+      border: 1px solid #f1ddad;
+      border-radius: 8px;
+      color: #876323;
+      background: var(--danger-soft);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .hint.error {
+      border-color: #f2bfbc;
+      color: #a43f3b;
+      background: #fff0f0;
+    }
+
+    .hint.success {
+      border-color: #bfe3d4;
+      color: #087056;
+      background: #edf9f4;
+    }
+
+    .hint svg {
+      width: 15px;
+      height: 15px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+
+    .footer a { color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .page {
+        width: min(620px, calc(100% - 28px));
+        padding: 20px 0;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+        gap: 26px;
+        align-items: start;
+      }
+
+      .intro {
+        max-width: none;
+        padding-top: 18px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar,
+      .footer,
+      .options {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      .env {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3l2.2 4.9 5.3.6-3.9 3.6 1 5.2-4.6-2.7-4.6 2.7 1-5.2-3.9-3.6 5.3-.6L12 3z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <strong>酷玩星后台管理</strong>
+          <span>Kuwanxing Admin</span>
+        </div>
+      </div>
+      <div class="env"><i></i>管理端入口</div>
+    </header>
+
+    <main class="main">
+      <section class="intro">
+        <div class="kicker">清爽工具风格</div>
+        <h1>专注设备、订单与运营数据管理</h1>
+        <p>这套后台主题以简洁、清晰、耐用为核心：少装饰，重层级，适合后续承载设备管理、订单管理、用户管理、财务统计等功能。</p>
+
+        <div class="summary" aria-label="系统方向">
+          <div>
+            <strong>设备</strong>
+            <span>状态、控制、维护记录</span>
+          </div>
+          <div>
+            <strong>订单</strong>
+            <span>支付、退款、流水追踪</span>
+          </div>
+          <div>
+            <strong>运营</strong>
+            <span>场地、活动、数据看板</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="登录表单">
+        <div class="card-head">
+          <h2>登录</h2>
+          <p>请输入管理员账号和密码。</p>
+        </div>
+
+        <form class="form" id="loginForm" action="./dashboard.html" method="post">
+          <div class="field">
+            <label for="account">账号</label>
+            <div class="input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+              <input id="account" name="username" type="text" autocomplete="username" placeholder="请输入账号" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="password">密码</label>
+            <div class="input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" />
+            </div>
+          </div>
+
+          <div class="options">
+            <label class="remember"><input type="checkbox" name="remember" /> 记住登录状态</label>
+            <a href="#">忘记密码</a>
+          </div>
+
+          <button class="submit" id="loginButton" type="submit">
+            进入后台
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </button>
+        </form>
+
+        <div class="hint" id="loginHint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          <span>已接入后台登录接口，请使用管理员账号登录。</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>© 2026 酷玩星</span>
+      <a href="https://kwx.rcxxzk.cn">kwx.rcxxzk.cn</a>
+    </footer>
+  </div>
+  <script>
+    const form = document.getElementById('loginForm');
+    const button = document.getElementById('loginButton');
+    const hint = document.getElementById('loginHint');
+    const hintText = hint.querySelector('span');
+
+    function setHint(type, text) {
+      hint.classList.remove('error', 'success');
+      if (type) hint.classList.add(type);
+      hintText.textContent = text;
+    }
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const username = String(formData.get('username') || '').trim();
+      const password = String(formData.get('password') || '').trim();
+
+      if (!username || !password) {
+        setHint('error', '请输入账号和密码。');
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = '登录中...';
+      setHint('', '正在验证登录信息。');
+
+      try {
+        const response = await fetch('./api/auth/login.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ username, password })
+        });
+        const result = await response.json();
+
+        if (result.code === 0) {
+          setHint('success', '登录成功，正在进入后台。');
+          window.location.href = './dashboard.html';
+          return;
+        }
+
+        setHint('error', result.msg || '登录失败，请稍后重试。');
+      } catch (error) {
+        setHint('error', '登录接口暂时不可用，请检查网络或服务状态。');
+      } finally {
+        button.disabled = false;
+        button.innerHTML = '进入后台 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
+      }
+    });
+  </script>
+</body>
+</html>

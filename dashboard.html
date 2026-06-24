@@ -1,0 +1,2245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="酷玩星后台管理模板" />
+  <title>酷玩星后台管理 - 工作台</title>
+  <style>
+    :root {
+      --bg: #f4f7f8;
+      --panel: #ffffff;
+      --text: #172126;
+      --muted: #6b7d84;
+      --line: #dfe8eb;
+      --line-strong: #c9d8dd;
+      --primary: #0f8f8c;
+      --primary-dark: #08706e;
+      --primary-soft: #e6f6f5;
+      --warning: #ffb84d;
+      --success: #20a876;
+      --danger: #df5b57;
+      --sidebar: #102226;
+      --sidebar-muted: #8aa5aa;
+      --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+    }
+
+    button, input, select { font: inherit; }
+    button { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 20px;
+      padding: 22px 16px;
+      color: #eef8f7;
+      background: var(--sidebar);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 8px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .mark svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: var(--sidebar-muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: grid;
+      align-content: start;
+      gap: 6px;
+    }
+
+    .nav-section {
+      margin: 16px 8px 6px;
+      color: var(--sidebar-muted);
+      font-size: 12px;
+    }
+
+    .nav a {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      border-radius: 8px;
+      color: #cfe0e3;
+      font-size: 14px;
+      transition: background .16s ease, color .16s ease;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      color: #fff;
+      background: rgba(15, 143, 140, .22);
+    }
+
+    .nav-group {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-parent {
+      min-height: 42px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 8px;
+      color: #cfe0e3;
+      background: transparent;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: background .16s ease, color .16s ease;
+    }
+
+    .nav-parent-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .nav-parent svg {
+      width: 18px;
+      height: 18px;
+      color: currentColor;
+      opacity: .9;
+      flex: 0 0 auto;
+    }
+
+    .nav-parent span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-parent:hover,
+    .nav-group.open .nav-parent {
+      color: #fff;
+      background: rgba(15, 143, 140, .18);
+    }
+
+    .nav-caret {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      transform: rotate(-45deg);
+      opacity: .72;
+      transition: transform .16s ease;
+      flex: 0 0 auto;
+    }
+
+    .nav-group.open .nav-caret {
+      transform: rotate(45deg);
+    }
+
+    .nav-children {
+      display: none;
+      gap: 4px;
+      padding: 2px 0 8px 8px;
+    }
+
+    .nav-group.open .nav-children {
+      display: grid;
+    }
+
+    .nav-children a {
+      min-height: 36px;
+      font-size: 13px;
+    }
+
+    .nav-empty {
+      padding: 10px 8px;
+      color: var(--sidebar-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .nav svg {
+      width: 18px;
+      height: 18px;
+      color: currentColor;
+      opacity: .9;
+    }
+
+    .sidebar-foot {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--sidebar-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 247, 248, .86);
+      backdrop-filter: blur(16px);
+    }
+
+    .crumb {
+      display: grid;
+      gap: 4px;
+    }
+
+    .crumb span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .crumb strong {
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search {
+      width: 260px;
+      min-height: 38px;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .search svg {
+      width: 17px;
+      height: 17px;
+      justify-self: center;
+      color: #8aa0a8;
+    }
+
+    .search input {
+      width: 100%;
+      min-width: 0;
+      height: 36px;
+      padding: 0 12px 0 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+    }
+
+    .icon-btn,
+    .primary-btn,
+    .ghost-btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease;
+    }
+
+    .icon-btn {
+      width: 38px;
+      border: 1px solid var(--line);
+      color: #486169;
+      background: #fff;
+    }
+
+    .icon-btn svg,
+    .primary-btn svg,
+    .ghost-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .primary-btn {
+      padding: 0 14px;
+      border: 1px solid var(--primary);
+      color: #fff;
+      background: var(--primary);
+      font-weight: 700;
+    }
+
+    .primary-btn:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+    }
+
+    .ghost-btn {
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      color: #486169;
+      background: #fff;
+    }
+
+    .user-chip {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #34464e;
+      background: #fff;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .user-chip i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .content {
+      min-width: 0;
+      padding: 26px 28px 34px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      min-height: 116px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .stat-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 18px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .stat small {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      display: grid;
+      gap: 3px;
+    }
+
+    .panel-title strong {
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .panel-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      background: #fbfcfd;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .device {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .device-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      flex: 0 0 auto;
+    }
+
+    .device-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .device b {
+      display: block;
+      line-height: 1.3;
+    }
+
+    .device span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .tag.ok {
+      color: var(--success);
+      background: #e8f7f1;
+    }
+
+    .tag.warn {
+      color: #a16d13;
+      background: #fff5df;
+    }
+
+    .tag.off {
+      color: var(--danger);
+      background: #ffefef;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .todo {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .todo-item {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      color: #34464e;
+      font-size: 13px;
+    }
+
+    .todo-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    .todo-item time {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .health {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .health-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .health-row div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #34464e;
+      font-size: 13px;
+    }
+
+    .bar {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e9f0f2;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary);
+    }
+
+    .module-empty {
+      min-height: 360px;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 14px;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .module-empty h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .module-empty p {
+      max-width: 680px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .module-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .module-meta span {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #486169;
+      background: #fbfcfd;
+      font-size: 12px;
+    }
+
+    .workbench-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .workbench-title {
+      display: grid;
+      gap: 6px;
+    }
+
+    .workbench-title h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .workbench-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .workbench-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .todo-list {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .todo-link {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      cursor: pointer;
+    }
+
+    .todo-link strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .todo-link span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .todo-count {
+      min-width: 32px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--primary);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .todo-count.warn {
+      background: var(--danger);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .quick-card {
+      min-height: 84px;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .quick-card:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .quick-card svg {
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+    }
+
+    .quick-card span {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .quick-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      min-width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--danger);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .category-page {
+      display: grid;
+      gap: 18px;
+    }
+
+    .category-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .category-title {
+      display: grid;
+      gap: 8px;
+    }
+
+    .category-title h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .category-title p {
+      max-width: 680px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .category-count {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .category-card {
+      min-height: 132px;
+      display: grid;
+      align-content: space-between;
+      gap: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: border .16s ease, transform .16s ease, box-shadow .16s ease;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(30, 55, 66, .12);
+    }
+
+    .category-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .category-card-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .category-card-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .category-card h3 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .category-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .category-card code {
+      color: #6a7d84;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .subpage {
+      display: grid;
+      gap: 18px;
+    }
+
+    .subpage-head {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .subpage-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .subpage-title {
+      display: grid;
+      gap: 8px;
+    }
+
+    .subpage-title h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .subpage-title p {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .subpage-status {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: #8a5f0a;
+      background: #fff5df;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .subpage-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .subpage-meta span {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #486169;
+      background: #fbfcfd;
+      font-size: 12px;
+    }
+
+    .subpage-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .subpage-section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .subpage-section h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .subpage-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .subpage-list li {
+      display: flex;
+      gap: 10px;
+      color: #34464e;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .subpage-list li::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      margin-top: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    .device-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .device-filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .device-input,
+    .device-select {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      outline: 0;
+    }
+
+    .device-input {
+      width: 240px;
+      padding: 0 12px;
+    }
+
+    .device-select {
+      max-width: 220px;
+      padding: 0 10px;
+    }
+
+    .device-table {
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .device-table table {
+      min-width: 0;
+    }
+
+    .device-table th,
+    .device-table td {
+      white-space: normal;
+      vertical-align: middle;
+    }
+
+    .device-cards {
+      display: none;
+      gap: 10px;
+    }
+
+    .device-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+
+    .device-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .device-card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .device-card p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .device-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .device-card-grid span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .device-card-grid b {
+      display: block;
+      margin-top: 2px;
+      color: var(--text);
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .device-pager {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .empty-state {
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .form-field label {
+      color: #34464e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .form-field input,
+    .form-field select {
+      min-height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: 0;
+      background: #fff;
+    }
+
+    .mobile-menu {
+      display: none;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 78px minmax(0, 1fr);
+      }
+
+      .brand {
+        justify-content: center;
+        padding-inline: 0;
+      }
+
+      .brand div:last-child,
+      .nav-section,
+      .nav a span,
+      .sidebar-foot {
+        display: none;
+      }
+
+      .nav a {
+        justify-content: center;
+        padding: 0;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .workbench-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .category-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .subpage-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .layout {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        display: block;
+        padding: 14px;
+      }
+
+      .brand {
+        justify-content: flex-start;
+        padding: 0;
+        border-bottom: 0;
+      }
+
+      .brand div:last-child {
+        display: block;
+      }
+
+      .nav,
+      .sidebar-foot {
+        display: none;
+      }
+
+      .mobile-menu {
+        display: inline-flex;
+      }
+
+      .topbar {
+        position: static;
+        min-height: auto;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px;
+      }
+
+      .actions {
+        width: 100%;
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      .content {
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .workbench-head {
+        flex-direction: column;
+      }
+
+      .quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .category-hero {
+        flex-direction: column;
+      }
+
+      .category-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subpage-title-row {
+        flex-direction: column;
+      }
+
+      .device-filters,
+      .device-input,
+      .device-select,
+      .device-toolbar .primary-btn,
+      .device-toolbar .ghost-btn {
+        width: 100%;
+      }
+
+      .device-table {
+        display: none;
+      }
+
+      .device-cards {
+        display: grid;
+      }
+
+      .device-pager {
+        justify-content: space-between;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3l2.2 4.9 5.3.6-3.9 3.6 1 5.2-4.6-2.7-4.6 2.7 1-5.2-3.9-3.6 5.3-.6L12 3z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <strong>酷玩星后台</strong>
+          <span>Kuwanxing Admin</span>
+        </div>
+      </div>
+
+      <nav class="nav" id="sidebarNav" aria-label="主导航">
+        <div class="nav-section">菜单加载中</div>
+      </nav>
+
+      <div class="sidebar-foot">
+        <strong>模板说明</strong>
+        <span>后续页面可复用左侧导航、顶部工具栏、面板、表格与状态标签。</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="ghost-btn mobile-menu" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+          菜单
+        </button>
+        <div class="crumb">
+          <span>首页 / 数据概览</span>
+          <strong>工作台</strong>
+        </div>
+        <div class="actions">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" placeholder="搜索设备、订单、用户" />
+          </div>
+          <button class="icon-btn" type="button" aria-label="通知">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+          </button>
+          <div class="user-chip"><i></i><span id="currentUser">加载中</span></div>
+          <button class="primary-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            新增设备
+          </button>
+          <button class="ghost-btn" id="logoutButton" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+            退出
+          </button>
+        </div>
+      </header>
+
+      <section class="content" id="pageContent">
+        <div class="stats">
+          <article class="stat">
+            <div class="stat-head">
+              <span>在线设备</span>
+              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/></svg></span>
+            </div>
+            <strong>128</strong>
+            <small>较昨日 +6 台</small>
+          </article>
+          <article class="stat">
+            <div class="stat-head">
+              <span>今日订单</span>
+              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/></svg></span>
+            </div>
+            <strong>936</strong>
+            <small>支付成功率 97.4%</small>
+          </article>
+          <article class="stat">
+            <div class="stat-head">
+              <span>今日流水</span>
+              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+            </div>
+            <strong>¥18,420</strong>
+            <small>退款金额 ¥260</small>
+          </article>
+          <article class="stat">
+            <div class="stat-head">
+              <span>异常提醒</span>
+              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span>
+            </div>
+            <strong>5</strong>
+            <small>需处理 2 条</small>
+          </article>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div class="panel-title">
+                <strong>设备运行状态</strong>
+                <span>模板表格，可直接替换为真实接口数据</span>
+              </div>
+              <button class="ghost-btn" type="button">查看全部</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>设备</th>
+                    <th>场地</th>
+                    <th>状态</th>
+                    <th>今日订单</th>
+                    <th>最后心跳</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="device">
+                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/></svg></span>
+                        <div><b>娃娃机 A-018</b><span>ID: KWX-0018</span></div>
+                      </div>
+                    </td>
+                    <td>杭州滨江店</td>
+                    <td><span class="tag ok">在线</span></td>
+                    <td>86</td>
+                    <td>刚刚</td>
+                    <td><a href="#">详情</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="device">
+                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1-7H6l-1 7z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+                        <div><b>遥控车 R-032</b><span>ID: KWX-0032</span></div>
+                      </div>
+                    </td>
+                    <td>上海浦东店</td>
+                    <td><span class="tag warn">维护</span></td>
+                    <td>24</td>
+                    <td>6 分钟前</td>
+                    <td><a href="#">详情</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="device">
+                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7 16 12l7 5V7z"/><rect width="15" height="14" x="1" y="5" rx="2"/></svg></span>
+                        <div><b>云台摄像 C-011</b><span>ID: KWX-0011</span></div>
+                      </div>
+                    </td>
+                    <td>成都高新店</td>
+                    <td><span class="tag off">离线</span></td>
+                    <td>0</td>
+                    <td>38 分钟前</td>
+                    <td><a href="#">详情</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="side-stack">
+            <section class="panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <strong>待办事项</strong>
+                  <span>运营人员每日处理</span>
+                </div>
+              </div>
+              <div class="todo">
+                <label class="todo-item"><input type="checkbox" /> <span>审核新场地接入资料</span> <time>10:30</time></label>
+                <label class="todo-item"><input type="checkbox" /> <span>处理 2 条退款申请</span> <time>11:00</time></label>
+                <label class="todo-item"><input type="checkbox" /> <span>检查离线设备工单</span> <time>14:00</time></label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <strong>系统健康度</strong>
+                  <span>示例进度组件</span>
+                </div>
+              </div>
+              <div class="health">
+                <div class="health-row">
+                  <div><span>设备在线率</span><strong>96%</strong></div>
+                  <div class="bar"><span style="width: 96%"></span></div>
+                </div>
+                <div class="health-row">
+                  <div><span>支付通道</span><strong>99%</strong></div>
+                  <div class="bar"><span style="width: 99%"></span></div>
+                </div>
+                <div class="health-row">
+                  <div><span>指令响应</span><strong>92%</strong></div>
+                  <div class="bar"><span style="width: 92%"></span></div>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const sidebarNav = document.getElementById('sidebarNav');
+    const pageContent = document.getElementById('pageContent');
+    const homeContent = pageContent.innerHTML;
+    let menuTree = [];
+    let deviceFilters = { keyword: '', venueId: '' };
+
+    const iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>';
+    const menuIcons = {
+      dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10z"/><path d="M13 21h8V11h-8v10z"/><path d="M13 3v6h8V3h-8z"/><path d="M3 21h8v-6H3v6z"/></svg>',
+      device: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/><path d="M7 9h.01"/><path d="M17 9h.01"/></svg>',
+      venue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h.01"/><path d="M9 13h.01"/><path d="M9 17h.01"/></svg>',
+      order: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+      user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
+      finance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      ops: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>',
+      audit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+      tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 1 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9z"/></svg>',
+      add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+      camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>',
+      image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>',
+      link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></svg>',
+      search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+      refund: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 14-4-4 4-4"/><path d="M5 10h11a4 4 0 0 1 0 8h-1"/></svg>',
+      wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H5a2 2 0 0 1 0-4h13"/><path d="M20 7v14H5a2 2 0 0 1-2-2V5"/><path d="M16 13h4"/></svg>',
+      message: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>',
+      gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="14" x="3" y="8" rx="2"/><path d="M12 8v13"/><path d="M3 12h18"/><path d="M7.5 8a2.5 2.5 0 1 1 2.5-2.5V8"/><path d="M16.5 8A2.5 2.5 0 1 0 14 5.5V8"/></svg>',
+      energy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/></svg>',
+      chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-3"/></svg>',
+      bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>',
+      map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>',
+      shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+      file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg>'
+    };
+
+    function menuIcon(name) {
+      return menuIcons[name] || iconSvg;
+    }
+
+    function childMenuIcon(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('add') || text.includes('添加') || text.includes('新增')) return menuIcon('add');
+      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) return menuIcon('camera');
+      if (text.includes('photo') || text.includes('image') || text.includes('img') || text.includes('图片') || text.includes('图文') || text.includes('图传')) return menuIcon('image');
+      if (text.includes('bind') || text.includes('vehicles_manage') || text.includes('绑定')) return menuIcon('link');
+      if (text.includes('fault') || text.includes('故障')) return menuIcon('audit');
+      if (text.includes('order') || text.includes('订单')) return menuIcon('order');
+      if (text.includes('refund') || text.includes('退款')) return menuIcon('refund');
+      if (text.includes('withdraw') || text.includes('pay') || text.includes('fund') || text.includes('income') || text.includes('recharge') || text.includes('amount') || text.includes('提现') || text.includes('支付') || text.includes('账户') || text.includes('充值') || text.includes('金额')) return menuIcon('wallet');
+      if (text.includes('user') || text.includes('anchor') || text.includes('franchise') || text.includes('invite') || text.includes('用户') || text.includes('主播') || text.includes('加盟') || text.includes('邀请')) return menuIcon('user');
+      if (text.includes('venue') || text.includes('zone') || text.includes('场地') || text.includes('专区')) return menuIcon('map');
+      if (text.includes('message') || text.includes('notify') || text.includes('redis') || text.includes('消息') || text.includes('通知') || text.includes('公告')) return menuIcon('message');
+      if (text.includes('gift') || text.includes('doll') || text.includes('礼物') || text.includes('娃娃')) return menuIcon('gift');
+      if (text.includes('energy') || text.includes('能量')) return menuIcon('energy');
+      if (text.includes('rank') || text.includes('stats') || text.includes('kanban') || text.includes('排行') || text.includes('数据') || text.includes('面板')) return menuIcon('chart');
+      if (text.includes('report') || text.includes('ban') || text.includes('violation') || text.includes('patrol') || text.includes('audit') || text.includes('投诉') || text.includes('违规') || text.includes('巡查') || text.includes('审核')) return menuIcon('shield');
+      if (text.includes('config') || text.includes('setting') || text.includes('tools') || text.includes('配置') || text.includes('设置') || text.includes('工具')) return menuIcon('tools');
+      if (text.includes('search') || text.includes('query') || text.includes('查询')) return menuIcon('search');
+      return iconSvg;
+    }
+
+    async function checkSession() {
+      try {
+        const response = await fetch('./api/auth/me.php', {
+          credentials: 'same-origin',
+          cache: 'no-store'
+        });
+        const result = await response.json();
+        if (result.code !== 0) {
+          window.location.replace('./index.html');
+          return;
+        }
+        document.getElementById('currentUser').textContent = result.data.username || 'Admin';
+        await loadMenus();
+      } catch (error) {
+        window.location.replace('./index.html');
+      }
+    }
+
+    function flattenMenus(items) {
+      return items.flatMap(function(item) {
+        return [item].concat(flattenMenus(item.children || []));
+      });
+    }
+
+    function renderMenus(items) {
+      if (!items.length) {
+        sidebarNav.innerHTML = '<div class="nav-empty">当前账号暂无可用菜单</div>';
+        return;
+      }
+
+      sidebarNav.innerHTML = items.map(function(item) {
+        const children = item.children || [];
+        if (children.length) {
+          return '<div class="nav-group" data-group-id="' + item.id + '">' +
+            '<button class="nav-parent" type="button" data-toggle-group="' + item.id + '">' +
+            '<span class="nav-parent-main">' + menuIcon(item.name) + '<span>' + escapeHtml(item.title) + '</span></span>' +
+            '<i class="nav-caret"></i>' +
+            '</button>' +
+            '<div class="nav-children">' + children.map(function(child) {
+              return renderMenuLink(child, item.id);
+            }).join('') + '</div>' +
+            '</div>';
+        }
+        return renderMenuLink(item);
+      }).join('');
+    }
+
+    function renderMenuLink(item, groupId) {
+      const isHome = item.jump === '' || item.jump === '/';
+      return '<a href="#menu=' + encodeURIComponent(item.id) + '" class="' + (isHome ? 'active' : '') + '" data-menu-id="' + item.id + '" data-group-id="' + (groupId || '') + '">' +
+        (groupId ? childMenuIcon(item) : menuIcon(item.name)) +
+        '<span>' + escapeHtml(item.title) + '</span>' +
+        '</a>';
+    }
+
+    async function loadMenus() {
+      const response = await fetch('./api/auth/menu.php', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+      const result = await response.json();
+      if (result.code !== 0) {
+        window.location.replace('./index.html');
+        return;
+      }
+      menuTree = result.data.menus || [];
+      renderMenus(menuTree);
+      routeFromHash();
+    }
+
+    function findMenu(id) {
+      return flattenMenus(menuTree).find(function(item) {
+        return String(item.id) === String(id);
+      });
+    }
+
+    function findTopMenu(id) {
+      return menuTree.find(function(item) {
+        return String(item.id) === String(id);
+      });
+    }
+
+    function setActive(id) {
+      sidebarNav.querySelectorAll('a').forEach(function(link) {
+        const active = link.dataset.menuId === String(id);
+        link.classList.toggle('active', active);
+        if (active && link.dataset.groupId) {
+          const group = sidebarNav.querySelector('[data-group-id="' + link.dataset.groupId + '"]');
+          if (group) group.classList.add('open');
+        }
+      });
+    }
+
+    function routeFromHash() {
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const id = params.get('menu');
+      const item = id ? findMenu(id) : null;
+      if (!item || item.jump === '' || item.jump === '/') {
+        renderWorkbench();
+        document.querySelector('.crumb span').textContent = 'Home / Dashboard';
+        document.querySelector('.crumb strong').textContent = '工作台';
+        const first = sidebarNav.querySelector('a');
+        if (first) setActive(first.dataset.menuId);
+        return;
+      }
+      setActive(item.id);
+      if (isDeviceChild(item)) {
+        renderDeviceSubpage(item);
+        return;
+      }
+      renderModule(item);
+    }
+
+    function isDeviceChild(item) {
+      const deviceGroup = menuTree.find(function(group) {
+        return group.name === 'device';
+      });
+      if (!deviceGroup || !Array.isArray(deviceGroup.children)) return false;
+      return deviceGroup.children.some(function(child) {
+        return String(child.id) === String(item.id);
+      });
+    }
+
+    function renderModule(item) {
+      document.querySelector('.crumb span').textContent = 'Menu / ' + item.name;
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="module-empty">' +
+        '<h2>' + escapeHtml(item.title) + '</h2>' +
+        '<p>该模块已从老系统菜单中单独抽出入口。下一步会按这个菜单对应的旧接口和业务逻辑，逐步改造成新后台页面。</p>' +
+        '<div class="module-meta">' +
+        '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
+        '<span>name: ' + escapeHtml(item.name || '-') + '</span>' +
+        '<span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span>' +
+        '</div>' +
+        '</section>';
+    }
+
+    function renderCategory(item) {
+      const children = item.children || [];
+      document.querySelector('.crumb span').textContent = 'Category / ' + item.name;
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="category-page">' +
+        '<div class="category-hero">' +
+        '<div class="category-title">' +
+        '<h2>' + escapeHtml(item.title) + '</h2>' +
+        '<p>' + categoryDescription(item.name) + '</p>' +
+        '</div>' +
+        '<div class="category-count">' + children.length + ' 个子功能</div>' +
+        '</div>' +
+        '<div class="category-grid">' +
+        children.map(categoryCard).join('') +
+        '</div>' +
+        '</section>';
+    }
+
+    function categoryDescription(name) {
+      const descriptions = {
+        device: '围绕设备建档、运行状态、故障审批、摄像管理、图片维护等入口整理。当前先完成分类级改造，后续每个子功能会逐步接入旧接口并重做新页面。',
+        venue: '围绕场地资料、专区、开播记录和场地配置整理。',
+        order: '围绕订单查询、订单申诉和订单处理流程整理。',
+        user: '围绕用户、加盟、主播认证和邀请相关能力整理。',
+        finance: '围绕充值、消费、退款、提现和账户流水整理。',
+        ops: '围绕活动、消息、礼物、配置和运营工具整理。',
+        audit: '围绕投诉、违规、巡查和审核处理整理。',
+        tools: '系统维护和内部工具入口。'
+      };
+      return escapeHtml(descriptions[name] || '该分类已按老系统菜单权限整理，后续逐步迁移为新后台页面。');
+    }
+
+    function categoryCard(item) {
+      return '<article class="category-card" data-menu-id="' + item.id + '" onclick="openCategoryChild(this)">' +
+        '<div class="category-card-head">' +
+        '<div><h3>' + escapeHtml(item.title) + '</h3><p>' + moduleDescription(item) + '</p></div>' +
+        '<span class="category-card-icon">' + menuIcon(categoryIconName(item)) + '</span>' +
+        '</div>' +
+        '<code>' + escapeHtml(item.jump || '-') + '</code>' +
+        '</article>';
+    }
+
+    function categoryIconName(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) return 'camera';
+      if (text.includes('fault') || text.includes('故障')) return 'audit';
+      if (text.includes('adddev') || text.includes('添加')) return 'add';
+      if (text.includes('image') || text.includes('img') || text.includes('图片')) return 'image';
+      if (text.includes('bind') || text.includes('vehicles')) return 'link';
+      return 'device';
+    }
+
+    function moduleDescription(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('devicemgt') || text.includes('设备管理')) return '设备列表、状态、绑定关系与基础维护入口。';
+      if (text.includes('adddev') || text.includes('添加')) return '新增设备资料并完成初始配置。';
+      if (text.includes('fault') || text.includes('故障')) return '查看并处理设备故障审批记录。';
+      if (text.includes('camera') || text.includes('摄像')) return '摄像头、直播画面和设备视频相关管理。';
+      if (text.includes('photo') || text.includes('图片')) return '维护设备展示图、编号图和相关素材。';
+      if (text.includes('bind') || text.includes('vehicles')) return '设备绑定、车辆资料和关联关系管理。';
+      return '来自老系统的子功能入口，后续会按接口逻辑改造成新页面。';
+    }
+
+    function openCategoryChild(el) {
+      const item = findMenu(el.dataset.menuId);
+      if (!item) return;
+      location.hash = 'menu=' + encodeURIComponent(item.id);
+    }
+
+    function renderDeviceSubpage(item) {
+      if (isDeviceListPage(item)) {
+        renderDeviceListPage(item);
+        return;
+      }
+      const type = deviceSubpageType(item);
+      if (type === 'add') return renderDeviceAddPage(item);
+      if (type === 'fault') return renderDeviceDataPage(item, 'faults', './api/device/faults.php');
+      if (type === 'camera') return renderDeviceDataPage(item, 'cameras', './api/device/cameras.php');
+      if (type === 'photo') return renderDeviceDataPage(item, 'photos', './api/device/photos.php');
+      if (type === 'binding') return renderDeviceDataPage(item, 'bindings', './api/device/bindings.php');
+      const detail = devicePageDetail(item);
+      document.querySelector('.crumb span').textContent = '设备管理 / ' + item.name;
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="subpage">' +
+        '<div class="subpage-head">' +
+        '<div class="subpage-title-row">' +
+        '<div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(detail.description) + '</p></div>' +
+        '<div class="subpage-status">待接入真实数据</div>' +
+        '</div>' +
+        '<div class="subpage-meta">' +
+        '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
+        '<span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span>' +
+        '<span>module: device</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="subpage-layout">' +
+        '<section class="subpage-section"><h3>页面结构</h3><ul class="subpage-list">' +
+        detail.sections.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
+        '</ul></section>' +
+        '<aside class="subpage-section"><h3>待接接口</h3><ul class="subpage-list">' +
+        detail.apis.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
+        '</ul></aside>' +
+        '</div>' +
+        '</section>';
+    }
+
+    function deviceSubpageType(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('adddev') || text.includes('添加')) return 'add';
+      if (text.includes('fault') || text.includes('故障')) return 'fault';
+      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) return 'camera';
+      if (text.includes('photo') || text.includes('img') || text.includes('图片')) return 'photo';
+      if (text.includes('bind') || text.includes('vehicles_manage')) return 'binding';
+      return 'other';
+    }
+
+    async function renderDeviceAddPage(item) {
+      document.querySelector('.crumb span').textContent = '设备管理 / add';
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载场地数据...</div></section>';
+      try {
+        const response = await fetch('./api/device/form-data.php', { credentials: 'same-origin', cache: 'no-store' });
+        const result = await response.json();
+        if (result.code !== 0) throw new Error(result.msg || 'form data failed');
+        const venues = (result.data && result.data.venues) || [];
+        pageContent.innerHTML = '<section class="subpage">' +
+          '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>新增设备页已接入真实场地下拉数据。当前为安全预览状态，暂不向生产库写入设备。</p></div><div class="subpage-status">表单预览</div></div></div>' +
+          '<section class="subpage-section"><h3>设备基础信息</h3><div class="form-grid">' +
+          formField('设备编号', '<input type="text" placeholder="请输入 serial_number">') +
+          formField('设备名称', '<input type="text" placeholder="请输入设备名称">') +
+          formField('所属场地', '<select><option>请选择场地</option>' + venues.map(function(v){ return '<option>' + escapeHtml(v.venue_name || ('场地 ' + v.id)) + '</option>'; }).join('') + '</select>') +
+          formField('摄像设备 ID', '<input type="text" placeholder="image_device_serial">') +
+          '</div><div class="device-pager"><span>写入接口待确认后开启</span><button class="primary-btn" type="button" disabled>保存设备</button></div></section>' +
+          '</section>';
+      } catch (error) {
+        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">新增设备表单加载失败。</div></section>';
+      }
+    }
+
+    function formField(label, control) {
+      return '<div class="form-field"><label>' + escapeHtml(label) + '</label>' + control + '</div>';
+    }
+
+    async function renderDeviceDataPage(item, type, url) {
+      document.querySelector('.crumb span').textContent = '设备管理 / ' + type;
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载' + escapeHtml(item.title) + '数据...</div></section>';
+      try {
+        const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+        const result = await response.json();
+        if (result.code !== 0) throw new Error(result.msg || 'device subpage failed');
+        const rows = (result.data && result.data.rows) || [];
+        pageContent.innerHTML = buildDeviceDataHtml(item, type, rows);
+      } catch (error) {
+        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">' + escapeHtml(item.title) + '数据加载失败。</div></section>';
+      }
+    }
+
+    function buildDeviceDataHtml(item, type, rows) {
+      const columns = deviceColumns(type);
+      return '<section class="subpage">' +
+        '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(deviceDataDescription(type)) + '</p></div><div class="subpage-status">真实数据</div></div><div class="subpage-meta"><span>记录数：' + rows.length + '</span><span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span></div></div>' +
+        '<section class="subpage-section">' +
+        (rows.length ? genericTable(columns, rows) + genericCards(columns, rows) : '<div class="empty-state">暂无数据</div>') +
+        '</section></section>';
+    }
+
+    function deviceDataDescription(type) {
+      return {
+        faults: '展示设备故障记录和处理状态，数据来自 FaultRecords 与 vehicles。',
+        cameras: '展示摄像设备、房间号、推流 ID 和关联设备信息。',
+        photos: '展示设备图片、摄像设备编号和更新时间。',
+        bindings: '展示设备 UID、绑定场地和共享状态。'
+      }[type] || '设备子功能数据列表。';
+    }
+
+    function deviceColumns(type) {
+      const maps = {
+        faults: [['serial_number','设备编号'], ['name','设备名称'], ['venue_name','场地'], ['fault_reason','故障原因'], ['resolved_status','状态'], ['created_at','时间']],
+        cameras: [['id','ID'], ['device_id','设备ID'], ['room_id','房间号'], ['rtc_user_id','RTC用户'], ['serial_number','关联设备'], ['venue_name','场地']],
+        photos: [['serial_number','设备编号'], ['name','设备名称'], ['venue_name','场地'], ['photo_url','图片'], ['image_device_serial','摄像ID'], ['updated_at','更新']],
+        bindings: [['serial_number','设备编号'], ['name','设备名称'], ['uid','UID'], ['venue_name','场地'], ['status','状态'], ['sharing_status','共享']]
+      };
+      return maps[type] || [];
+    }
+
+    function genericTable(columns, rows) {
+      return '<div class="device-table"><table><thead><tr>' + columns.map(function(c){ return '<th>' + escapeHtml(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function(row){ return '<tr>' + columns.map(function(c){ return '<td>' + escapeHtml(row[c[0]] == null ? '-' : row[c[0]]) + '</td>'; }).join('') + '</tr>'; }).join('') +
+        '</tbody></table></div>';
+    }
+
+    function genericCards(columns, rows) {
+      return '<div class="device-cards">' + rows.map(function(row) {
+        const titleKey = columns[0] ? columns[0][0] : '';
+        return '<article class="device-card"><div class="device-card-head"><div><h3>' + escapeHtml(row[titleKey] || '-') + '</h3><p>' + escapeHtml(columns[0] ? columns[0][1] : '') + '</p></div></div><div class="device-card-grid">' +
+          columns.slice(1).map(function(c){ return '<div><span>' + escapeHtml(c[1]) + '</span><b>' + escapeHtml(row[c[0]] == null ? '-' : row[c[0]]) + '</b></div>'; }).join('') +
+          '</div></article>';
+      }).join('') + '</div>';
+    }
+
+    function isDeviceListPage(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      return text.includes('devicemgt') || text.includes('devicemgtv2') || text.includes('device-list') || text.includes('设备管理');
+    }
+
+    async function renderDeviceListPage(item) {
+      document.querySelector('.crumb span').textContent = '设备管理 / list';
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="subpage"><div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>设备列表已接入真实接口。桌面端使用表格，手机端自动切换为卡片，避免横向拖动。</p></div><div class="subpage-status">真实数据</div></div></div><div class="empty-state">正在加载设备数据...</div></section>';
+      await loadDeviceList(1);
+    }
+
+    async function loadDeviceList(page) {
+      const keyword = document.getElementById('deviceKeyword') ? document.getElementById('deviceKeyword').value.trim() : '';
+      const venueId = document.getElementById('deviceVenue') ? document.getElementById('deviceVenue').value : '';
+      deviceFilters = { keyword, venueId };
+      const params = new URLSearchParams({ page: String(page || 1), limit: '20' });
+      if (keyword) params.set('keyword', keyword);
+      if (venueId) params.set('venue_id', venueId);
+
+      try {
+        const response = await fetch('./api/device/list.php?' + params.toString(), {
+          credentials: 'same-origin',
+          cache: 'no-store'
+        });
+        const result = await response.json();
+        if (result.code !== 0) {
+          throw new Error(result.msg || 'device list failed');
+        }
+        renderDeviceList(result.data || {});
+      } catch (error) {
+        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">设备数据加载失败，请稍后重试。</div></section>';
+      }
+    }
+
+    function renderDeviceList(data) {
+      const devices = data.devices || [];
+      const stats = data.stats || {};
+      const page = Number(data.page || 1);
+      const limit = Number(data.limit || 20);
+      const total = Number(data.total || 0);
+      const pages = Math.max(1, Math.ceil(total / limit));
+
+      pageContent.innerHTML = '<section class="subpage">' +
+        '<div class="subpage-head">' +
+        '<div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>查看设备运行状态、绑定场地、摄像房间号和封禁状态。</p></div><div class="subpage-status">真实数据</div></div>' +
+        '<div class="subpage-meta"><span>总设备：' + formatInt(stats.total) + '</span><span>在线：' + formatInt(stats.online) + '</span><span>离线：' + formatInt(stats.offline) + '</span><span>封禁：' + formatInt(stats.banned) + '</span></div>' +
+        '</div>' +
+        '<section class="subpage-section">' +
+        '<div class="device-toolbar">' +
+        '<div class="device-filters">' +
+        '<input class="device-input" id="deviceKeyword" type="search" placeholder="搜索设备编号、名称、场地" value="' + escapeHtml(deviceFilters.keyword || '') + '">' +
+        venueSelect(data.venues || []) +
+        '<button class="primary-btn" type="button" onclick="loadDeviceList(1)">查询</button>' +
+        '</div>' +
+        '<button class="ghost-btn" type="button" onclick="loadDeviceList(' + page + ')">刷新</button>' +
+        '</div>' +
+        (devices.length ? deviceTable(devices) + deviceCards(devices) : '<div class="empty-state">暂无设备数据</div>') +
+        '<div class="device-pager"><button class="ghost-btn" type="button" ' + (page <= 1 ? 'disabled' : '') + ' onclick="loadDeviceList(' + (page - 1) + ')">上一页</button><span>第 ' + page + ' / ' + pages + ' 页，共 ' + total + ' 条</span><button class="ghost-btn" type="button" ' + (page >= pages ? 'disabled' : '') + ' onclick="loadDeviceList(' + (page + 1) + ')">下一页</button></div>' +
+        '</section>' +
+        '</section>';
+    }
+
+    function venueSelect(venues) {
+      if (!venues.length) return '';
+      return '<select class="device-select" id="deviceVenue"><option value="">全部场地</option>' + venues.map(function(venue) {
+        const selected = String(deviceFilters.venueId || '') === String(venue.id) ? ' selected' : '';
+        return '<option value="' + escapeHtml(String(venue.id)) + '"' + selected + '>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) + '</option>';
+      }).join('') + '</select>';
+    }
+
+    function deviceTable(devices) {
+      return '<div class="device-table"><table><thead><tr><th>设备</th><th>场地</th><th>状态</th><th>摄像</th><th>电量</th><th>更新时间</th></tr></thead><tbody>' +
+        devices.map(function(device) {
+          return '<tr><td><div class="device"><span class="device-icon">' + menuIcon('device') + '</span><div><b>' + escapeHtml(device.name || device.serial_number || '-') + '</b><span>' + escapeHtml(device.serial_number || '-') + '</span></div></div></td>' +
+          '<td>' + escapeHtml(device.venue_name || device.bind_site || '-') + '</td>' +
+          '<td>' + deviceStatus(device) + '</td>' +
+          '<td>' + escapeHtml(device.image_device_room_id || device.image_device_serial || '-') + '</td>' +
+          '<td>' + escapeHtml(device.battery_level || '-') + '</td>' +
+          '<td>' + escapeHtml(device.updated_at || '-') + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
+
+    function deviceCards(devices) {
+      return '<div class="device-cards">' + devices.map(function(device) {
+        return '<article class="device-card"><div class="device-card-head"><div><h3>' + escapeHtml(device.name || device.serial_number || '-') + '</h3><p>' + escapeHtml(device.serial_number || '-') + '</p></div>' + deviceStatus(device) + '</div>' +
+          '<div class="device-card-grid">' +
+          '<div><span>场地</span><b>' + escapeHtml(device.venue_name || device.bind_site || '-') + '</b></div>' +
+          '<div><span>摄像</span><b>' + escapeHtml(device.image_device_room_id || device.image_device_serial || '-') + '</b></div>' +
+          '<div><span>电量</span><b>' + escapeHtml(device.battery_level || '-') + '</b></div>' +
+          '<div><span>更新</span><b>' + escapeHtml(device.updated_at || '-') + '</b></div>' +
+          '</div></article>';
+      }).join('') + '</div>';
+    }
+
+    function deviceStatus(device) {
+      if (Number(device.is_banned || 0) === 1) return '<span class="tag off">封禁</span>';
+      if (String(device.status || '') === '在线') return '<span class="tag ok">在线</span>';
+      return '<span class="tag warn">' + escapeHtml(device.status || '离线') + '</span>';
+    }
+
+    function devicePageDetail(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('adddev') || text.includes('添加')) {
+        return {
+          description: '用于新增设备资料、绑定场地和录入基础参数。当前先按新后台样式整理页面骨架，后续接入新增设备接口。',
+          sections: ['基础信息：设备编号、设备类型、所属场地', '连接信息：推流地址、控制协议、在线状态', '提交区：保存、重置和返回设备列表'],
+          apis: ['/api/devMgr/addDev.php', '/api/devMgr/devMgtV2.php?get_venues']
+        };
+      }
+      if (text.includes('fault') || text.includes('故障')) {
+        return {
+          description: '用于查看设备故障、审批处理结果和维护记录，后续会接入故障列表与状态更新接口。',
+          sections: ['故障概览：待处理、处理中、已完成', '故障列表：设备、场地、原因、上报时间', '处理动作：通过、驳回、备注'],
+          apis: ['/api/devMgr/getFaultDevices.php', '/api/devMgr/updateFaultStatus.php', '/api/devMgr/get_fault_summary.php']
+        };
+      }
+      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) {
+        return {
+          description: '用于管理设备摄像头、画面状态和直播相关信息，后续会接入摄像管理接口。',
+          sections: ['摄像设备列表：场地、设备、在线状态', '画面状态：最近心跳、异常提示', '维护动作：刷新、查看、重新绑定'],
+          apis: ['/api/devMgr/device_information.php', '/api/devMgr/check_stream_set_sn_status.php']
+        };
+      }
+      if (text.includes('photo') || text.includes('img') || text.includes('图片')) {
+        return {
+          description: '用于维护设备图片、编号图片和展示素材，后续接入上传与批量更新接口。',
+          sections: ['图片列表：设备编号、当前图片、更新时间', '上传区：单图上传、批量替换', '校验区：图片缺失、格式异常'],
+          apis: ['/api/devMgr/UploadImgNumber.php', '/api/devMgr/QueryImgNumber.php', '/api/operat/update_vehicle_photos.php']
+        };
+      }
+      if (text.includes('bind') || text.includes('vehicles_manage')) {
+        return {
+          description: '用于管理设备绑定关系、车辆资料和场地关联，后续会接入车辆管理接口。',
+          sections: ['绑定列表：设备、车辆、场地、状态', '筛选工具：场地、设备类型、关键词', '维护动作：绑定、解绑、同步'],
+          apis: ['/api/devMgr/vehicles_manage.php', '/api/devMgr/syncSingleVehicleToDr.php']
+        };
+      }
+      return {
+        description: '用于查看设备列表、运行状态、所属场地和基础维护操作，是设备管理模块的主页面。',
+        sections: ['指标区：在线设备、离线设备、异常设备', '设备表格：编号、场地、类型、状态、最后心跳', '操作区：详情、编辑、同步、维护记录'],
+        apis: ['/api/devMgr/devMgtV2.php', '/api/operat/online_devices.php', '/api/operat/latest_device_run.php']
+      };
+    }
+
+    async function renderWorkbench() {
+      pageContent.innerHTML = '<section class="module-empty"><h2>工作台加载中</h2><p>正在读取今日运营数据。</p></section>';
+      try {
+        const response = await fetch('./api/dashboard/summary.php', {
+          credentials: 'same-origin',
+          cache: 'no-store'
+        });
+        const result = await response.json();
+        if (result.code !== 0) {
+          throw new Error(result.msg || 'dashboard summary failed');
+        }
+        const data = result.data || {};
+        const metrics = data.metrics || {};
+        const todos = data.todos || {};
+        const actions = data.quickActions || [];
+        pageContent.innerHTML = buildWorkbenchHtml(data, metrics, todos, actions);
+      } catch (error) {
+        pageContent.innerHTML = '<section class="module-empty"><h2>工作台加载失败</h2><p>当前无法读取老系统工作台数据，请稍后重试或检查接口状态。</p></section>';
+      }
+    }
+
+    function buildWorkbenchHtml(data, metrics, todos, actions) {
+      const adminOnlyStyle = Number(data.role_id || 0) === 2 ? ' style="display:none"' : '';
+      return '' +
+        '<div class="workbench-head">' +
+        '<div class="workbench-title"><h2>' + escapeHtml(data.venue_name || '酷玩星工作台') + '</h2><p>数据来自老系统工作台接口，当前展示今日实时概览。</p></div>' +
+        '<button class="ghost-btn" type="button" onclick="location.reload()">刷新数据</button>' +
+        '</div>' +
+        '<div class="stats">' +
+        statCard('今日注册', formatInt(metrics.registerCount) + ' 人', 'APP 新注册用户', 'user') +
+        statCard('今日活跃', formatInt(metrics.activeUserCount) + ' 人', '今日活跃用户数', 'ops') +
+        statCard('平台收益', formatMoney(metrics.totalRecharge), '今日平台总收益', 'finance') +
+        statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费 + 礼物收益', 'order') +
+        '</div>' +
+        '<div class="workbench-grid">' +
+        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>快捷入口</strong><span>按老工作台入口整理，后续逐个迁移为新页面</span></div></div><div class="quick-grid">' +
+        actions.map(quickAction).join('') +
+        '</div></section>' +
+        '<aside class="side-stack">' +
+        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>待处理事项</strong><span>来自老系统统计口径</span></div></div><div class="todo-list">' +
+        todoItem('订单申诉', '待处理申诉单', todos.appealCount, '/iframe/link/order_report') +
+        todoItem('投诉处理', '设备与语音房举报', todos.reportCount, '/iframe/link/reporthand') +
+        todoItem('提现审批', '待审核提现申请', todos.withdrawCount, '/iframe/link/paylist') +
+        todoItem('图文审核', '图片、场地与设备名称审核', todos.pendingImages, '/iframe/link/pidtrueAndtextPedding') +
+        todoItem('加盟申请', '未处理加盟资料', todos.franchiseCount, '/iframe/link/FranchiseManagement') +
+        '</div></section>' +
+        '</aside>' +
+        '</div>';
+    }
+
+    function statCard(label, value, note, icon) {
+      return '<article class="stat">' + statInner(label, value, note, icon) + '</article>';
+    }
+
+    function statInner(label, value, note, icon) {
+      return '<div class="stat-head"><span>' + escapeHtml(label) + '</span><span class="stat-icon">' + menuIcon(icon) + '</span></div>' +
+        '<strong>' + escapeHtml(value) + '</strong><small>' + escapeHtml(note) + '</small>';
+    }
+
+    function quickAction(item) {
+      const badge = Number(item.badge || 0);
+      return '<div class="quick-card" data-legacy-jump="' + escapeHtml(item.jump || '') + '" onclick="openLegacyModule(this)">' +
+        menuIcon(item.group || 'tools') +
+        '<span>' + escapeHtml(item.title || '-') + '</span>' +
+        (badge > 0 ? '<i class="quick-badge">' + badge + '</i>' : '') +
+        '</div>';
+    }
+
+    function todoItem(title, text, count, jump) {
+      count = Number(count || 0);
+      return '<div class="todo-link" data-legacy-jump="' + escapeHtml(jump) + '" onclick="openLegacyModule(this)">' +
+        '<div><strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(text) + '</span></div>' +
+        '<i class="todo-count ' + (count > 0 ? 'warn' : '') + '">' + count + '</i>' +
+        '</div>';
+    }
+
+    function openLegacyModule(el) {
+      const jump = el.dataset.legacyJump || '';
+      const item = flattenMenus(menuTree).find(function(menu) {
+        return menu.jump === jump;
+      });
+      if (item) {
+        location.hash = 'menu=' + encodeURIComponent(item.id);
+        return;
+      }
+      pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p>该入口来自老工作台，后续会按旧接口重做为新后台页面。</p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
+    }
+
+    function formatMoney(value) {
+      const number = Number(value || 0);
+      return '¥' + number.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatInt(value) {
+      return Number(value || 0).toLocaleString('zh-CN');
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, function(char) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[char];
+      });
+    }
+
+    sidebarNav.addEventListener('click', function(event) {
+      const toggle = event.target.closest('[data-toggle-group]');
+      if (!toggle) return;
+      const group = toggle.closest('.nav-group');
+      if (!group) return;
+      sidebarNav.querySelectorAll('.nav-group.open').forEach(function(openGroup) {
+        if (openGroup !== group) openGroup.classList.remove('open');
+      });
+      group.classList.toggle('open');
+      const item = findTopMenu(toggle.dataset.toggleGroup);
+      if (item) {
+        renderCategory(item);
+      }
+    });
+
+    window.addEventListener('hashchange', routeFromHash);
+
+    document.getElementById('logoutButton').addEventListener('click', async function() {
+      await fetch('./api/auth/logout.php', {
+        method: 'POST',
+        credentials: 'same-origin'
+      }).catch(function() {});
+      window.location.replace('./index.html');
+    });
+
+    checkSession();
+  </script>
+</body>
+</html>
