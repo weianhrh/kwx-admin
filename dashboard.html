@@ -2424,6 +2424,17 @@
         location.hash = 'menu=' + encodeURIComponent(item.id);
         return;
       }
+      const titleEl = el.querySelector('strong') || el.querySelector('span');
+      const fallbackItem = {
+        id: 'legacy',
+        name: 'legacy',
+        title: titleEl ? titleEl.textContent.trim() : '功能页面',
+        jump: jump
+      };
+      if (legacyModuleUrl(fallbackItem)) {
+        renderLegacyModule(fallbackItem);
+        return;
+      }
       pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p>该入口来自老工作台，后续会按旧接口重做为新后台页面。</p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
     }
 
