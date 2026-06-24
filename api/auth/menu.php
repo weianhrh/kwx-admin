@@ -44,6 +44,44 @@ function menu_contains(string $text, array $needles): bool
     return false;
 }
 
+function menu_hidden_for_rebuild(array $menu): bool
+{
+    $text = menu_text($menu);
+
+    return menu_contains($text, [
+        '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
+        '金币', 'gold', 'gold_package', 'coin', 'coins',
+        '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
+        '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
+        'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage',
+    ]);
+}
+
+function menu_hidden_ids(array $menus): array
+{
+    $hiddenIds = [];
+
+    foreach ($menus as $menu) {
+        if (menu_hidden_for_rebuild($menu)) {
+            $hiddenIds[(int)$menu['id']] = true;
+        }
+    }
+
+    do {
+        $changed = false;
+        foreach ($menus as $menu) {
+            $id = (int)$menu['id'];
+            $parentId = (int)($menu['parent_id'] ?? 0);
+            if (!isset($hiddenIds[$id]) && isset($hiddenIds[$parentId])) {
+                $hiddenIds[$id] = true;
+                $changed = true;
+            }
+        }
+    } while ($changed);
+
+    return $hiddenIds;
+}
+
 function menu_group_key(array $menu): string
 {
     $text = menu_text($menu);
@@ -97,8 +135,13 @@ function menu_compact_tree(array $menus, int $roleId): array
         'tools' => ['id' => 9008, 'name' => 'tools', 'title' => '系统工具', 'icon' => 'tools', 'children' => []],
     ];
 
+    $hiddenMenuIds = menu_hidden_ids($menus);
     $seen = [];
     foreach ($menus as $menu) {
+        if (isset($hiddenMenuIds[(int)$menu['id']])) {
+            continue;
+        }
+
         if (!menu_visible_for_role($menu, $roleId)) {
             continue;
         }
