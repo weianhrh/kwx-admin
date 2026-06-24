@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>故障汇总统计</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 22px 24px 32px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+button {
+  user-select: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.page-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.page-title span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.page-title span::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  border-radius: 99px;
+  background: var(--primary);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfdfe;
+}
+
+.header label {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.header select,
+.header input[type="datetime-local"] {
+  height: 36px;
+  min-width: 180px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.header select:focus,
+.header input[type="datetime-local"]:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 143, 140, .12);
+}
+
+.header button {
+  height: 36px;
+  min-width: 82px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  transition: var(--transition);
+}
+
+.header button:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 6px 16px rgba(15, 143, 140, .16);
+}
+
+.fault-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+
+.fault-list > div:not(.fault-item) {
+  padding: 28px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfdfe;
+  text-align: center;
+  font-size: 13px;
+}
+
+.fault-item {
+  position: relative;
+  overflow: hidden;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.fault-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary);
+}
+
+.fault-item:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.fault-title {
+  padding-left: 2px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.fault-content {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .page-title {
+    min-height: auto;
+    padding: 14px;
+    font-size: 18px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .header label {
+    min-height: auto;
+  }
+
+  .header select,
+  .header input[type="datetime-local"],
+  .header button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fault-list {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fault-item {
+    padding: 13px;
+  }
+
+  .fault-title {
+    font-size: 14px;
+  }
+
+  .fault-content {
+    font-size: 12px;
+  }
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="page-title">
+            <span>故障设备记录</span>
+        </div>
+
+        <div class="header">
+            <label for="venue_id">场地：</label>
+            <select id="venue_id">
+                <option value="">请选择场地</option>
+            </select>
+            <label>开始时间：</label>
+            <input type="datetime-local" id="startTime">
+            <label>结束时间：</label>
+            <input type="datetime-local" id="endTime">
+            <button onclick="loadFaults()">筛选</button>
+        </div>
+
+        <div id="faultList" class="fault-list">
+            <!-- 加载后动态插入 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRoleId = null;
+    let currentVenueId = null;
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        setDefaultDateRange();
+
+        // 获取当前用户信息
+        const res = await fetch('/api/operat/get_current_user.php', { credentials: 'include' });
+        const userInfo = await res.json();
+
+        if (userInfo.code !== 0) {
+            alert('未登录，请重新登录');
+            return;
+        }
+
+        currentRoleId = userInfo.data.role_id;
+        currentVenueId = userInfo.data.venue_id;
+
+        const venueSelect = document.getElementById('venue_id');
+        const venueLabel = document.querySelector('label[for="venue_id"]');
+
+        if (currentRoleId == 1 || currentRoleId == 2) {
+            // 超管加载场地下拉框
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/operat/EnergyGift.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.code === 0) {
+                        response.data.forEach(venue => {
+                            const option = document.createElement('option');
+                            option.value = venue.id;
+                            option.textContent = `${venue.id} - ${venue.venue_name}`;
+                            venueSelect.appendChild(option);
+                        });
+                        venueSelect.value = '10'; // 默认选中 10
+                        venueSelect.addEventListener('change', loadFaults);
+                        loadFaults();
+                    }
+                }
+            };
+            xhr.send('action=get_venues');
+        } else {
+            // 非超管：隐藏场地下拉框
+            venueSelect.style.display = 'none';
+            venueLabel.style.display = 'none';
+            loadFaults(); // 用用户所属 venue_id 请求
+        }
+    });
+
+    async function loadFaults() {
+        const start = document.getElementById('startTime').value;
+        const end = document.getElementById('endTime').value;
+
+        let venueId = '';
+        if (currentRoleId == 1 || currentRoleId == 2) {
+            venueId = document.getElementById('venue_id').value;
+        } else {
+            venueId = currentVenueId;
+        }
+
+        const params = new URLSearchParams();
+        if (start) params.append('start', start + ':00');
+        if (end) params.append('end', end + ':59');
+        if (venueId) params.append('venue_id', venueId);
+
+        const res = await fetch(`/api/devMgr/get_fault_summary.php?` + params.toString(), {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        const list = document.getElementById('faultList');
+        list.innerHTML = '';
+
+        if (data.code !== 0 || !data.data.length) {
+            list.innerHTML = '<div>暂无数据</div>';
+            return;
+        }
+
+        data.data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'fault-item';
+            div.innerHTML = `
+                <div class="fault-title">${item.vehicle_name} (${item.serial_number})</div>
+                <div class="fault-content">
+                    故障原因（${Object.keys(item.reason_count).length}类，共${Object.values(item.reason_count).reduce((a, b) => a + b, 0)}次）：<br>
+                    ${item.fault_reasons}
+                </div>
+                
+
+
+            `;
+            list.appendChild(div);
+        });
+        // 展开收起功能绑定
+    // document.querySelectorAll('.toggle-users').forEach(btn => {
+    //     btn.addEventListener('click', function () {
+    //         const more = this.previousElementSibling;
+    //         const isExpanded = more.style.display === 'block';
+    //         more.style.display = isExpanded ? 'none' : 'block';
+    //         this.textContent = isExpanded ? '展开更多' : '收起';
+    //     });
+    // });
+    // document.querySelectorAll('.fault-item').forEach(item => {
+    //     item.addEventListener('click', function () {
+    //         const more = this.querySelector('.more-users');
+    //         if (more) {
+    //             const isExpanded = more.style.display === 'block';
+    //             const toggleLink = this.querySelector('.toggle-users');
+    //             more.style.display = isExpanded ? 'none' : 'block';
+    //             toggleLink.textContent = isExpanded ? '展开更多' : '收起';
+    //         }
+    //     });
+    // });
+
+    }
+
+    function setDefaultDateRange() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+
+        const start = `${yyyy}-${mm}-${dd}T00:00`;
+        const end = `${yyyy}-${mm}-${dd}T23:59`;
+
+        document.getElementById('startTime').value = start;
+        document.getElementById('endTime').value = end;
+    }
+</script>
+
+</body>
+</html>

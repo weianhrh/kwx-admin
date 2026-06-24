@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>当日故障设备查看</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> 
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 22px 24px 32px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+body > canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: block;
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.card-title span::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  border-radius: 99px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.card-title a {
+  height: 34px;
+  min-width: 86px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px !important;
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.card-title a:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark) !important;
+  box-shadow: 0 6px 16px rgba(15, 143, 140, .16);
+}
+
+.fault-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.fault-list > p,
+.fault-list > div:only-child:not(.fault-item) {
+  grid-column: 1 / -1;
+  padding: 28px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfdfe;
+  text-align: center;
+}
+
+.fault-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.fault-item:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.fault-item span {
+  display: block;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.fault-item .fault-title,
+.fault-item span:first-child {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.update-status-btn {
+  width: fit-content;
+  min-width: 112px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  transition: var(--transition);
+}
+
+.update-status-btn:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 6px 16px rgba(15, 143, 140, .16);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .card-title {
+    min-height: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px 14px;
+    font-size: 18px;
+  }
+
+  .card-title a {
+    width: 100%;
+  }
+
+  .fault-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fault-item {
+    padding: 13px;
+  }
+
+  .fault-item span {
+    font-size: 12px;
+  }
+
+  .update-status-btn {
+    width: 100%;
+  }
+}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>当日故障设备查看</span>
+                <a href="fault_summary.html" style="background-color: var(--primary); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none;">
+                    故障记录
+                </a>
+            </div>
+
+            <div id="fault-list" class="fault-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // 获取当日故障设备信息
+        function loadFaultRecords() {
+            fetch('/api/devMgr/getFaultDevices.php') 
+              .then(response => response.json()) 
+              .then(data => {
+                    if (data.code  === 0) {
+                        const mergedRecords = mergeFaultRecords(data.data); 
+                        displayFaultRecords(mergedRecords);
+                    } else {
+                        document.getElementById('fault-list').innerHTML  = '<p style="text-align:center;">暂无当日故障设备记录</p>';
+                    }
+                })
+              .catch(error => {
+                    console.error('  请求失败:', error);
+                    document.getElementById('fault-list').innerHTML  = '<p style="text-align:center;">加载故障设备记录失败，请重试</p>';
+                });
+        }
+
+        // 合并故障记录
+        function mergeFaultRecords(records) {
+            const merged = {};
+            records.forEach(record  => {
+                const key = `${record.serial_number}-${record.user_id}`; 
+                if (!merged[key]) {
+                    merged[key] = {
+                        ...record,
+                        reportCount: 1
+                    };
+                } else {
+                    merged[key].reportCount++;
+                }
+            });
+            return Object.values(merged); 
+        }
+
+        // 显示故障设备记录列表
+        function displayFaultRecords(records) {
+            const container = document.getElementById('fault-list'); 
+            container.innerHTML  = '';
+
+            records.forEach(record  => {
+                const item = document.createElement('div'); 
+                item.classList.add('fault-item'); 
+
+                item.innerHTML  = `
+                     <!-- 隐藏故障设备编号 <span class="fault-title">故障设备编号：${record.serial_number}</span>  -->
+                    <span>车辆名称：${record.name}</span>
+                    <span>客户 ID：${record.user_id}</span> 
+                    <span>场地 ID：${record.bind_site}</span> 
+                    <span>问题原因：${record.fault_reason}</span> 
+                    <span>处理状态：${record.resolved_status  === 0 ? '未处理' : '已处理'}</span>
+                    <span>举报次数：${record.reportCount}</span> 
+
+                    <button class="update-status-btn" data-serial="${record.serial_number}"  data-status="${record.resolved_status}"> 
+                        ${record.resolved_status  === 0 ? '标记为已处理' : '标记为未处理'}
+                    </button>
+                `;
+
+                // 为按钮绑定点击事件
+                const button = item.querySelector('.update-status-btn'); 
+                button.addEventListener('click',  function () {
+                    const serialNumber = this.dataset.serial; 
+                    const currentStatus = parseInt(this.dataset.status); 
+                    const newStatus = currentStatus === 0 ? 1 : 0;
+                    updateStatus(serialNumber, newStatus, this);
+                });
+
+                container.appendChild(item); 
+            });
+        }
+
+        // 更新处理状态
+        function updateStatus(serialNumber, newStatus, button) {
+            // 调用后端接口更新状态
+            fetch(`/api/devMgr/updateFaultStatus.php?serial_number=${serialNumber}&status=${newStatus}`) 
+              .then(response => response.json()) 
+              .then(data => {
+                    if (data.code  === 0) {
+                        // 更新按钮文本和状态
+                        button.dataset.status  = newStatus;
+                        button.textContent  = newStatus === 0 ? '标记为已处理' : '标记为未处理';
+                        // 更新列表中的处理状态文本
+                        const parent = button.parentNode; 
+                        const statusSpan = parent.querySelector('span:nth-child(5)'); 
+                        statusSpan.textContent  = `处理状态：${newStatus === 0 ? '未处理' : '已处理'}`;
+
+                        // 如果状态变为已处理，移除该项
+                        if (newStatus === 1) {
+                            parent.remove(); 
+                        }
+                    } else {
+                        alert('更新处理状态失败，请重试');
+                    }
+                })
+              .catch(error => {
+                    console.error('  请求失败:', error);
+                    alert('更新处理状态失败，请重试');
+                });
+        }
+
+        // 页面加载时获取当日故障设备信息
+        loadFaultRecords();
+    </script>
+</body>
+
+</html>
