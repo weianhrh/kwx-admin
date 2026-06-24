@@ -50,6 +50,7 @@ function menu_hidden_for_rebuild(array $menu): bool
 
     return menu_contains($text, [
         '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
+        '礼物', 'gift',
         '金币', 'gold', 'gold_package', 'coin', 'coins',
         '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
         '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
