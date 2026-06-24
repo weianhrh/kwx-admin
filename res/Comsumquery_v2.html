@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>用户变动记录（金额 / 能量 / 金币 / 礼物背包）</title>
+  <title>用户变动记录（金额 / 能量）</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
 
   <style>
@@ -289,7 +289,6 @@ select {
 .dot.red { background: var(--danger); }
 .dot.amber { background: var(--warning); }
 .dot.cyan { background: var(--blue); }
-.dot.gold { background: #d97706; }
 .dot.purple { background: var(--purple); }
 
 .list {
@@ -333,7 +332,6 @@ select {
 .badge.red { color: var(--danger); background: var(--danger-soft); border-color: rgba(223, 91, 87, .22); }
 .badge.amber { color: #a16000; background: var(--warning-soft); border-color: rgba(255, 184, 77, .30); }
 .badge.cyan { color: var(--blue); background: var(--blue-soft); border-color: rgba(47, 125, 246, .22); }
-.badge.gold { color: #b45309; background: #fff7ed; border-color: rgba(217, 119, 6, .22); }
 .badge.purple { color: var(--purple); background: var(--purple-soft); border-color: rgba(124, 92, 255, .22); }
 
 .content {
@@ -377,7 +375,6 @@ select {
 .amount.red { color: var(--danger); }
 .amount.amber { color: #a16000; }
 .amount.cyan { color: var(--blue); }
-.amount.gold { color: #b45309; }
 .amount.purple { color: var(--purple); }
 
 .kv {
@@ -455,15 +452,13 @@ select {
       <div class="header">
         <div class="title">
           <h1>用户变动记录</h1>
-          <p>支持：金额（balance_changes） / 能量（energy_changes） / 金币（gold_balance_changes） / 礼物背包（user_gift_backpack_changes）</p>
+          <p>支持：金额（balance_changes） / 能量（energy_changes）</p>
         </div>
 
         <div class="tabs">
           <button class="tab active" data-mode="all">全部</button>
           <button class="tab" data-mode="money">金额</button>
           <button class="tab" data-mode="energy">能量</button>
-          <button class="tab" data-mode="gold">金币</button>
-          <button class="tab" data-mode="backpack">礼物背包</button>
         </div>
       </div>
 
@@ -481,32 +476,6 @@ select {
             <option value="消费">消费</option>
             <option value="提现">提现</option>
             <option value="金额返还">金额返还</option>
-          </select>
-        </div>
-
-        <div class="field col-3" id="goldTypeWrap" style="display:none;">
-          <div class="label">金币变动类型</div>
-          <select id="gold_change_type">
-            <option value="">全部类型</option>
-            <option value="recharge">充值</option>
-            <option value="admin_add">后台加币</option>
-            <option value="vip_exchange">VIP兑换</option>
-            <option value="refund">退款返还</option>
-            <option value="activity_gift">活动赠送</option>
-            <option value="admin_deduct">后台扣减</option>
-          </select>
-        </div>
-
-        <div class="field col-3" id="backpackTypeWrap" style="display:none;">
-          <div class="label">礼物背包变动类型</div>
-          <select id="backpack_change_type">
-            <option value="">全部类型</option>
-            <option value="obtain">获取</option>
-            <option value="use">使用</option>
-            <option value="expire">过期</option>
-            <option value="delete">删除</option>
-            <option value="admin_add">后台增加</option>
-            <option value="admin_deduct">后台扣减</option>
           </select>
         </div>
 
@@ -555,62 +524,12 @@ select {
 
   const tabs = document.querySelectorAll('.tab');
   const moneyTypeWrap = document.getElementById('moneyTypeWrap');
-  const goldTypeWrap = document.getElementById('goldTypeWrap');
-  const backpackTypeWrap = document.getElementById('backpackTypeWrap');
 
   const changeTypeEl = document.getElementById('change_type');
-  const goldChangeTypeEl = document.getElementById('gold_change_type');
-  const backpackChangeTypeEl = document.getElementById('backpack_change_type');
-
-  const goldTypeMap = {
-    recharge: '充值',
-    admin_add: '后台加币',
-    vip_exchange: 'VIP兑换',
-    refund: '退款返还',
-    activity_gift: '活动赠送',
-    admin_deduct: '后台扣减'
-  };
-
-  const bizTypeMap = {
-    iap_order: 'IAP订单',
-    vip_exchange: 'VIP兑换',
-    manual: '手动操作'
-  };
-
-  const backpackTypeMap = {
-    obtain: '获取',
-    use: '使用',
-    expire: '过期',
-    delete: '删除',
-    admin_add: '后台增加',
-    admin_deduct: '后台扣减',
-    '获取': '获取',
-    '使用': '使用',
-    '过期': '过期',
-    '删除': '删除',
-    '后台增加': '后台增加',
-    '后台扣减': '后台扣减'
-  };
-
-  function getGoldTypeName(type){
-    return goldTypeMap[type] || type || '未知类型';
-  }
-
-  function getBizTypeName(type){
-    return bizTypeMap[type] || type || '-';
-  }
-
-  function getBackpackTypeName(type){
-    return backpackTypeMap[type] || type || '未知类型';
-  }
 
   function fmt(n){
     const x = Number(n || 0);
     return x.toFixed(2);
-  }
-
-  function fmtInt(n){
-    return String(parseInt(Number(n || 0), 10));
   }
 
   function absNum(n){
@@ -630,15 +549,9 @@ select {
 
   function syncModeUI(){
     moneyTypeWrap.style.display = 'none';
-    goldTypeWrap.style.display = 'none';
-    backpackTypeWrap.style.display = 'none';
 
     if (currentMode === 'money') {
       moneyTypeWrap.style.display = 'flex';
-    } else if (currentMode === 'gold') {
-      goldTypeWrap.style.display = 'flex';
-    } else if (currentMode === 'backpack') {
-      backpackTypeWrap.style.display = 'flex';
     }
   }
 
@@ -659,8 +572,6 @@ select {
 
     const money = data.money || [];
     const energy = data.energy || [];
-    const gold = data.gold || [];
-    const backpack = data.backpack || [];
 
     const recharge = sumBy(money.filter(x => x.type === '充值'), x => absNum(x.amount));
     const consume  = sumBy(money.filter(x => x.type === '消费'), x => absNum(x.amount));
@@ -669,12 +580,6 @@ select {
 
     const ePlus  = sumBy(energy.filter(x => Number(x.amount) > 0), x => Number(x.amount));
     const eMinus = sumBy(energy.filter(x => Number(x.amount) < 0), x => absNum(x.amount));
-
-    const gPlus  = sumBy(gold.filter(x => Number(x.amount) > 0), x => Number(x.amount));
-    const gMinus = sumBy(gold.filter(x => Number(x.amount) < 0), x => absNum(x.amount));
-
-    const bPlus  = sumBy(backpack.filter(x => Number(x.change_quantity) > 0), x => Number(x.change_quantity));
-    const bMinus = sumBy(backpack.filter(x => Number(x.change_quantity) < 0), x => absNum(x.change_quantity));
 
     const pills = [];
 
@@ -700,16 +605,6 @@ select {
       pills.push(pill('red', `能量减少 -${fmt(eMinus)}`));
     }
 
-    if (currentMode === 'all' || currentMode === 'gold'){
-      pills.push(pill('gold', `金币增加 +${fmtInt(gPlus)}`));
-      pills.push(pill('red', `金币减少 -${fmtInt(gMinus)}`));
-    }
-
-    if (currentMode === 'all' || currentMode === 'backpack'){
-      pills.push(pill('purple', `背包增加 +${fmtInt(bPlus)}`));
-      pills.push(pill('red', `背包减少 -${fmtInt(bMinus)}`));
-    }
-
     pills.forEach(p => summary.appendChild(p));
   }
 
@@ -729,8 +624,7 @@ select {
     list.forEach(item => {
       const isMoney = item.kind === 'money';
       const isEnergy = item.kind === 'energy';
-      const isGold = item.kind === 'gold';
-      const isBackpack = item.kind === 'backpack';
+      if (!isMoney && !isEnergy) return;
 
       let badgeCls = 'money';
       let icon = 'fa-yen-sign';
@@ -797,58 +691,6 @@ select {
         `;
       }
 
-      if (isGold) {
-        const raw = Number(item.amount || 0);
-
-        badgeCls = 'gold';
-        icon = 'fa-coins';
-        title = `金币｜${getGoldTypeName(item.type)}`;
-        sub = `uid: ${item.uid || ''} · 业务类型: ${getBizTypeName(item.biz_type)} · ${item.created_at || ''}`;
-
-        if (raw >= 0) {
-          amountText = `+${fmtInt(raw)}`;
-          amountCls = 'gold';
-        } else {
-          amountText = `-${fmtInt(absNum(raw))}`;
-          amountCls = 'red';
-        }
-
-        kv = `
-          <div>变动前：${fmtInt(item.before)}</div>
-          <div>变动后：${fmtInt(item.after)}</div>
-          <div>业务ID：${item.biz_id ?? '-'}</div>
-          <div class="kv-long">业务编号：${item.biz_no || '-'}</div>
-          <div>操作人：${item.operator_id ?? '-'}</div>
-          <div class="kv-long">备注：${item.remark || '-'}</div>
-        `;
-      }
-
-      if (isBackpack) {
-        const raw = Number(item.change_quantity || 0);
-
-        badgeCls = 'backpack';
-        icon = 'fa-gift';
-        title = `礼物背包｜${getBackpackTypeName(item.type)}`;
-        sub = `uid: ${item.uid || ''} · 礼物: ${item.gift_name || '-'}（ID:${item.gift_id ?? '-'}） · ${item.created_at || ''}`;
-
-        if (raw >= 0) {
-          amountText = `+${fmtInt(raw)}`;
-          amountCls = 'purple';
-        } else {
-          amountText = `-${fmtInt(absNum(raw))}`;
-          amountCls = 'red';
-        }
-
-        kv = `
-          <div>变动前：${fmtInt(item.before)}</div>
-          <div>变动后：${fmtInt(item.after)}</div>
-          <div>背包ID：${item.backpack_id ?? '-'}</div>
-          <div class="kv-long">关联订单：${item.related_order_id || '-'}</div>
-          <div>操作人：${item.operator_id ?? '-'}</div>
-          <div class="kv-long">原因：${item.reason || '-'}</div>
-        `;
-      }
-
       const card = document.createElement('div');
       card.className = 'item';
       card.innerHTML = `
@@ -884,14 +726,6 @@ select {
       url += `&change_type=${encodeURIComponent(changeTypeEl.value)}`;
     }
 
-    if (currentMode === 'gold' && goldChangeTypeEl.value){
-      url += `&gold_change_type=${encodeURIComponent(goldChangeTypeEl.value)}`;
-    }
-
-    if (currentMode === 'backpack' && backpackChangeTypeEl.value){
-      url += `&backpack_change_type=${encodeURIComponent(backpackChangeTypeEl.value)}`;
-    }
-
     const startDate = document.getElementById('start_date').value;
     const endDate = document.getElementById('end_date').value;
 
@@ -911,11 +745,9 @@ select {
       renderSummary(data);
 
       let list = [];
-      if (currentMode === 'all') list = data.merged || [];
+      if (currentMode === 'all') list = (data.merged || []).filter(item => item.kind === 'money' || item.kind === 'energy');
       if (currentMode === 'money') list = data.money || [];
       if (currentMode === 'energy') list = data.energy || [];
-      if (currentMode === 'gold') list = data.gold || [];
-      if (currentMode === 'backpack') list = data.backpack || [];
 
       list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       renderList(list);
