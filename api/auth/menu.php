@@ -158,6 +158,12 @@ function menu_compact_tree(array $menus, int $roleId): array
             continue;
         }
 
+        if (menu_contains(menu_text($menu), ['user-list', 'user/user/list', '网站用户'])) {
+            $menu['name'] = 'franchise-management';
+            $menu['title'] = '加盟管理';
+            $jump = '/iframe/link/FranchiseManagement';
+        }
+
         $featureKey = menu_feature_key($menu);
         $dedupeKey = $featureKey !== '' ? $featureKey : ($jump !== '' ? $jump : (string)$menu['name']);
         if (isset($seen[$dedupeKey])) {

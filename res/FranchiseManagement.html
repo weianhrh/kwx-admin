@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>加盟管理</title>
+  <link rel="stylesheet" href="./common/kwx-legacy-page.css">
+  <style>
+    :root {
+      --brand: #0f8f8c;
+      --brand-dark: #08706e;
+      --brand-soft: #e6f6f5;
+      --ink: #172126;
+      --muted: #667985;
+      --line: #dfe8eb;
+      --panel: #fff;
+      --page: #f4f7f8;
+      --danger: #df5b57;
+      --warn: #d98b16;
+      --shadow: 0 14px 34px rgba(30, 55, 66, .08);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    .franchise-shell {
+      width: 100%;
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .franchise-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .page-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .page-title {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .page-title h1 {
+      position: relative;
+      margin: 0;
+      padding-left: 16px;
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .page-title h1::before {
+      position: absolute;
+      left: 0;
+      top: 4px;
+      width: 6px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--brand);
+      content: "";
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(2, auto) minmax(220px, 320px);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-box {
+      min-width: 0;
+    }
+
+    .search-box input,
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: #fff;
+      outline: 0;
+    }
+
+    .search-box input:focus,
+    .form-field input:focus,
+    .form-field select:focus {
+      border-color: rgba(15, 143, 140, .48);
+      box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+    }
+
+    .btn {
+      position: relative;
+      min-height: 40px;
+      border: 1px solid rgba(15, 143, 140, .24);
+      border-radius: 8px;
+      padding: 0 16px;
+      color: var(--brand-dark);
+      background: #eefaf8;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      border-color: var(--brand);
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .btn.danger {
+      border-color: rgba(223, 91, 87, .24);
+      color: var(--danger);
+      background: #ffefef;
+    }
+
+    .badge {
+      display: none;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      padding: 0 6px;
+      color: #fff;
+      background: var(--danger);
+      font-size: 12px;
+      line-height: 20px;
+      text-align: center;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 12px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdfd;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fff;
+    }
+
+    .summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 7px;
+      color: var(--brand-dark);
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .account-list {
+      display: grid;
+      gap: 14px;
+      padding: 18px 24px 24px;
+    }
+
+    .account-card {
+      display: grid;
+      grid-template-columns: minmax(190px, 260px) 1fr auto;
+      gap: 18px;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--brand);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .account-main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .account-main h3 {
+      overflow: hidden;
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.3;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .account-main span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(130px, 1fr));
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .info-item {
+      overflow: hidden;
+      border: 1px solid #edf2f3;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: #f8fbfb;
+    }
+
+    .info-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .info-item strong {
+      display: block;
+      overflow: hidden;
+      margin-top: 4px;
+      font-size: 14px;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .empty-state {
+      padding: 42px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      padding: 24px;
+      overflow: auto;
+      background: rgba(10, 24, 30, .45);
+    }
+
+    .modal.open {
+      display: block;
+    }
+
+    .modal-content {
+      width: min(720px, 100%);
+      margin: 42px auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(10, 24, 30, .22);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 22px;
+      line-height: 32px;
+      cursor: pointer;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 20px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-field label {
+      color: #40515a;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .field-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .keep-password {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 0 20px 20px;
+    }
+
+    @media (max-width: 980px) {
+      .page-head {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .search-box {
+        grid-column: 1 / -1;
+      }
+
+      .summary-row {
+        grid-template-columns: 1fr;
+      }
+
+      .account-card {
+        grid-template-columns: 1fr;
+      }
+
+      .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card-actions {
+        justify-content: stretch;
+      }
+
+      .card-actions .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .franchise-shell {
+        padding: 12px;
+      }
+
+      .page-head,
+      .summary-row,
+      .account-list {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .toolbar,
+      .form-grid,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal {
+        padding: 12px;
+      }
+
+      .modal-content {
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body class="kwx-legacy-page franchise-page">
+  <main class="franchise-shell">
+    <section class="franchise-panel">
+      <header class="page-head">
+        <div class="page-title">
+          <h1>加盟管理</h1>
+          <p>管理加盟后台账号、绑定场地和关联用户 UID。</p>
+        </div>
+        <div class="toolbar">
+          <button id="add-btn" class="btn primary" type="button">添加加盟商</button>
+          <button id="apply-btn" class="btn" type="button">
+            加盟申请
+            <span id="franchise-count" class="badge">0</span>
+          </button>
+          <label class="search-box" for="search-input">
+            <input id="search-input" type="search" placeholder="搜索用户名 / 场地 / UID">
+          </label>
+        </div>
+      </header>
+
+      <div class="summary-row">
+        <div class="summary-card"><span>账号总数</span><strong id="total-count">0</strong></div>
+        <div class="summary-card"><span>已绑定场地</span><strong id="venue-count">0</strong></div>
+        <div class="summary-card"><span>待处理申请</span><strong id="pending-count">0</strong></div>
+      </div>
+
+      <div id="list-container" class="account-list">
+        <div class="empty-state">正在加载加盟账号...</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="add-modal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="modal-title">加盟商信息</h2>
+        <button class="close" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <form id="add-form" method="post">
+        <input type="hidden" name="id" id="user-id">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>用户名</label>
+            <input type="text" name="username" autocomplete="off" required>
+          </div>
+          <div class="form-field">
+            <label>绑定的用户 UID</label>
+            <input type="text" name="uid" autocomplete="off">
+          </div>
+          <div class="form-field full">
+            <label>密码</label>
+            <p class="field-note">新增时可输入手机号自动取后 6 位作为密码；编辑时默认不修改旧密码。</p>
+            <label id="keep-pw-wrap" class="keep-password">
+              <input type="checkbox" id="keep-password" checked>
+              本次不修改密码
+            </label>
+            <div id="pw-input-wrap">
+              <input type="password" name="password" id="password-input" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-field">
+            <label>权限角色</label>
+            <select id="role-select" name="role"></select>
+          </div>
+          <div class="form-field">
+            <label>绑定场地</label>
+            <select id="venue-select" name="venue_id"></select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" type="button" id="cancel-btn">取消</button>
+          <button class="btn primary" type="submit">提交保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const apiManagement = '/api/franchise/FranchiseManagement.php';
+      const apiApplications = '/api/franchise/FranchiesList.php';
+      const listContainer = document.getElementById('list-container');
+      const searchInput = document.getElementById('search-input');
+      const modal = document.getElementById('add-modal');
+      const modalTitle = document.getElementById('modal-title');
+      const addForm = document.getElementById('add-form');
+      const addBtn = document.getElementById('add-btn');
+      const applyBtn = document.getElementById('apply-btn');
+      const closeBtn = document.querySelector('.close');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const roleSelect = document.getElementById('role-select');
+      const venueSelect = document.getElementById('venue-select');
+      const usernameInput = document.querySelector('input[name="username"]');
+      const passwordInput = document.getElementById('password-input');
+      const uidInput = document.querySelector('input[name="uid"]');
+      const idInput = document.getElementById('user-id');
+      const keepPwWrap = document.getElementById('keep-pw-wrap');
+      const keepPwCheckbox = document.getElementById('keep-password');
+      const pwInputWrap = document.getElementById('pw-input-wrap');
+      let formMode = 'add';
+      let users = [];
+
+      function parseJson(response) {
+        return response.text().then(function (text) {
+          try {
+            return JSON.parse(text);
+          } catch (error) {
+            throw new Error((text || '接口未返回 JSON').slice(0, 160));
+          }
+        });
+      }
+
+      function postEncoded(action) {
+        return fetch(apiManagement, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'action=' + encodeURIComponent(action)
+        }).then(parseJson);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+        });
+      }
+
+      function valueOrDash(value) {
+        return value === null || value === undefined || value === '' ? '-' : value;
+      }
+
+      function openModal(mode, item) {
+        formMode = mode;
+        modalTitle.textContent = mode === 'edit' ? '编辑加盟商' : '添加加盟商';
+        idInput.value = item ? item.id || '' : '';
+        usernameInput.value = item ? item.username || '' : '';
+        uidInput.value = item ? item.uid || '' : '';
+        passwordInput.value = '';
+        roleSelect.value = item ? String(item.role_id || '') : (roleSelect.querySelector('option[value="3"]') ? '3' : roleSelect.value);
+        venueSelect.value = item ? String(item.venue_id || '') : venueSelect.value;
+        keepPwWrap.style.display = mode === 'edit' ? 'flex' : 'none';
+        keepPwCheckbox.checked = mode === 'edit';
+        pwInputWrap.style.display = mode === 'edit' ? 'none' : 'block';
+        passwordInput.required = mode !== 'edit';
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      function updateSummary() {
+        const boundVenueIds = new Set(users.filter(function (item) {
+          return item.venue_id !== null && item.venue_id !== undefined && item.venue_id !== '';
+        }).map(function (item) {
+          return String(item.venue_id);
+        }));
+        document.getElementById('total-count').textContent = users.length;
+        document.getElementById('venue-count').textContent = boundVenueIds.size;
+      }
+
+      function renderList(list) {
+        if (!list.length) {
+          listContainer.innerHTML = '<div class="empty-state">暂无加盟账号数据</div>';
+          return;
+        }
+
+        listContainer.innerHTML = list.map(function (item) {
+          return '<article class="account-card">' +
+            '<div class="account-main">' +
+              '<h3>' + escapeHtml(valueOrDash(item.username)) + '</h3>' +
+              '<span>ID: ' + escapeHtml(valueOrDash(item.id)) + '</span>' +
+            '</div>' +
+            '<div class="info-grid">' +
+              infoItem('角色ID', item.role_id) +
+              infoItem('场地名称', item.venue_name) +
+              infoItem('场地ID', item.venue_id) +
+              infoItem('绑定UID', item.uid) +
+              infoItem('创建时间', item.created_at) +
+              infoItem('更新时间', item.updated_at) +
+            '</div>' +
+            '<div class="card-actions">' +
+              '<button class="btn" type="button" data-action="edit" data-id="' + escapeHtml(item.id) + '">编辑</button>' +
+            '</div>' +
+          '</article>';
+        }).join('');
+      }
+
+      function infoItem(label, value) {
+        return '<div class="info-item"><span>' + escapeHtml(label) + '</span><strong title="' + escapeHtml(valueOrDash(value)) + '">' + escapeHtml(valueOrDash(value)) + '</strong></div>';
+      }
+
+      function applySearch() {
+        const keyword = searchInput.value.trim().toLowerCase();
+        if (!keyword) {
+          renderList(users);
+          return;
+        }
+        renderList(users.filter(function (item) {
+          return [
+            item.id,
+            item.username,
+            item.role_id,
+            item.venue_name,
+            item.venue_id,
+            item.uid,
+            item.created_at,
+            item.updated_at
+          ].join(' ').toLowerCase().includes(keyword);
+        }));
+      }
+
+      function loadUsers() {
+        listContainer.innerHTML = '<div class="empty-state">正在加载加盟账号...</div>';
+        return postEncoded('loadingdata').then(function (data) {
+          if (data.code !== 200) throw new Error(data.msg || '数据加载失败');
+          users = Array.isArray(data.data) ? data.data : [];
+          updateSummary();
+          applySearch();
+        }).catch(function (error) {
+          listContainer.innerHTML = '<div class="empty-state">加盟账号加载失败：' + escapeHtml(error.message) + '</div>';
+        });
+      }
+
+      function loadLookups() {
+        postEncoded('get_venues').then(function (data) {
+          if (data.code !== 200) throw new Error(data.msg || '场地加载失败');
+          const venues = Array.isArray(data.data) ? data.data.slice() : [];
+          venues.sort(function (a, b) { return Number(b.id || 0) - Number(a.id || 0); });
+          venueSelect.innerHTML = venues.map(function (item) {
+            return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.id + '-' + (item.venue_name || '未命名场地')) + '</option>';
+          }).join('');
+        }).catch(function (error) {
+          console.error('场地数据加载失败:', error);
+        });
+
+        postEncoded('get_role').then(function (data) {
+          if (data.code !== 200) throw new Error(data.msg || '角色加载失败');
+          const roles = Array.isArray(data.data) ? data.data : [];
+          roleSelect.innerHTML = roles.map(function (item) {
+            return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.role_name || ('角色 ' + item.id)) + '</option>';
+          }).join('');
+          if (roleSelect.querySelector('option[value="3"]')) {
+            roleSelect.value = '3';
+          }
+        }).catch(function (error) {
+          console.error('角色数据加载失败:', error);
+        });
+      }
+
+      function loadApplicationCount() {
+        fetch(apiApplications, {
+          credentials: 'same-origin',
+          cache: 'no-store'
+        }).then(parseJson).then(function (data) {
+          const count = data.code === 200 && Array.isArray(data.data) ? data.data.length : 0;
+          const badge = document.getElementById('franchise-count');
+          badge.textContent = count;
+          badge.style.display = count > 0 ? 'inline-block' : 'none';
+          document.getElementById('pending-count').textContent = count;
+        }).catch(function (error) {
+          console.error('加盟申请数量加载失败:', error);
+          document.getElementById('pending-count').textContent = '0';
+        });
+      }
+
+      usernameInput.addEventListener('input', function () {
+        if (formMode !== 'add') return;
+        const phone = this.value.trim();
+        passwordInput.value = /^\d{11}$/.test(phone) ? phone.slice(-6) : '';
+      });
+
+      keepPwCheckbox.addEventListener('change', function () {
+        pwInputWrap.style.display = this.checked ? 'none' : 'block';
+        passwordInput.required = !this.checked;
+        if (this.checked) passwordInput.value = '';
+      });
+
+      addBtn.addEventListener('click', function () {
+        openModal('add');
+      });
+
+      applyBtn.addEventListener('click', function () {
+        window.location.href = './FranchiseList.html?embed=dashboard';
+      });
+
+      closeBtn.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function (event) {
+        if (event.target === modal) closeModal();
+      });
+
+      listContainer.addEventListener('click', function (event) {
+        const button = event.target.closest('button[data-action="edit"]');
+        if (!button) return;
+        const item = users.find(function (row) {
+          return String(row.id) === String(button.dataset.id);
+        });
+        if (item) openModal('edit', item);
+      });
+
+      searchInput.addEventListener('input', applySearch);
+
+      addForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(addForm);
+        formData.append('action', formMode === 'edit' ? 'updateuser' : 'adduser');
+
+        fetch(apiManagement, {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: formData
+        }).then(parseJson).then(function (data) {
+          if (data.code === 0) {
+            alert(formMode === 'edit' ? '更新成功' : '添加成功');
+            closeModal();
+            loadUsers();
+          } else {
+            alert(data.msg || '提交失败');
+          }
+        }).catch(function (error) {
+          alert('请求出错：' + error.message);
+        });
+      });
+
+      loadLookups();
+      loadApplicationCount();
+      loadUsers();
+    })();
+  </script>
+</body>
+</html>
