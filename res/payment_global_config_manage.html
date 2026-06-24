@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付全局配置管理</title>
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  display: block;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin: 0 auto 18px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.card-title {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+  text-align: left;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.desc {
+  margin: 0;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.loading {
+  margin: 0;
+  padding: 28px 18px;
+  color: var(--primary);
+  background: var(--panel);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+#content {
+  padding: 0;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.meta > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+}
+
+.meta strong {
+  color: var(--text);
+  margin-right: 0;
+  font-weight: 800;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 18px;
+  background: var(--panel-soft);
+}
+
+.field {
+  position: relative;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(30, 55, 66, .04);
+  transition: var(--transition);
+}
+
+.field:hover {
+  border-color: var(--line-strong);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.field-title {
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.field-desc {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.switch-label {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #d4e0e4;
+  border-radius: 999px;
+  background: #dfe8eb;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  top: 2px;
+  left: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 3px 9px rgba(20, 45, 55, .18);
+  transition: var(--transition);
+}
+
+.switch input:checked + .slider {
+  border-color: rgba(15, 143, 140, .3);
+  background: var(--primary);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(24px);
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+.text-input,
+.readonly-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: var(--transition);
+}
+
+.text-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 143, 140, .12);
+}
+
+.readonly-input {
+  background: #f2f6f7;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+.edit-btn,
+.ghost-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.edit-btn:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.ghost-btn {
+  border-color: rgba(15, 143, 140, .25);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.ghost-btn:hover {
+  border-color: rgba(15, 143, 140, .35);
+  background: #d9f0ef;
+  color: var(--primary-dark);
+}
+
+.message {
+  display: none;
+  margin: 0 18px 18px;
+  padding: 11px 13px;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.message.success {
+  display: block;
+  border: 1px solid rgba(32, 168, 118, .22);
+  background: var(--success-soft);
+  color: #13795a;
+}
+
+.message.error {
+  display: block;
+  border: 1px solid rgba(223, 91, 87, .24);
+  background: var(--danger-soft);
+  color: #b93631;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .card-title {
+    min-height: 56px;
+    padding: 14px;
+    font-size: 19px;
+  }
+
+  .desc,
+  .meta,
+  .btn-row {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 12px;
+  }
+
+  .meta > div {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 7px;
+  }
+
+  .field {
+    padding: 14px;
+  }
+
+  .switch-row {
+    align-items: flex-start;
+  }
+
+  .edit-btn,
+  .ghost-btn {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-title">支付全局配置管理</div>
+        <div class="desc">这里控制 payment_global_config 表里的默认配置。</div>
+
+        <div id="loading" class="loading">加载中...</div>
+
+        <div id="content" style="display:none;">
+            <div class="meta">
+                <div><strong>配置ID：</strong><span id="configId">-</span></div>
+                <div><strong>配置标识：</strong><span id="configKey">default</span></div>
+                <div><strong>更新时间：</strong><span id="updatedAt">-</span></div>
+            </div>
+
+            <div class="form-grid">
+                <div class="field">
+                    <div class="field-title">show_xykpay</div>
+                    <div class="switch-row">
+                        <div class="switch-label">信用卡支付开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_xykpay">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-title">show_line</div>
+                    <div class="switch-row">
+                        <div class="switch-label">Line 支付开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_line">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-title">show_jkpay</div>
+                    <div class="switch-row">
+                        <div class="switch-label">JkPay 支付开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_jkpay">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-title">show_payment_web</div>
+                    <div class="switch-row">
+                        <div class="switch-label">网页支付入口开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_payment_web">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-title">show_exchange</div>
+                    <div class="switch-row">
+                        <div class="switch-label">兑换入口开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_exchange">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field">
+                    <div class="field-title">show_text</div>
+                    <div class="switch-row">
+                        <div class="switch-label">文案显示开关</div>
+                        <label class="switch">
+                            <input type="checkbox" id="show_text">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="field-desc">1 显示，0 隐藏</div>
+                </div>
+
+                <div class="field full-row">
+                    <div class="field-title">text</div>
+                    <input type="text" id="text" class="text-input" maxlength="255" placeholder="请输入提示文案">
+                    <div class="field-desc">当 show_text = 1 时，前端展示这个文案。</div>
+                </div>
+
+                <div class="field full-row">
+                    <div class="field-title">config_key</div>
+                    <input type="text" id="config_key_readonly" class="readonly-input" value="default" readonly>
+                    <div class="field-desc">当前固定使用 default 配置。</div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="edit-btn" onclick="saveConfig()">保存配置</button>
+                <button class="edit-btn ghost-btn" onclick="loadConfig()">刷新</button>
+            </div>
+
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const apiUrl = '/api/config/payment_global_config_api.php';
+
+    function showMessage(text, type) {
+        const box = document.getElementById('message');
+        box.className = 'message ' + type;
+        box.textContent = text;
+    }
+
+    function fillForm(data) {
+        document.getElementById('configId').textContent = data.id ?? '-';
+        document.getElementById('configKey').textContent = data.config_key ?? 'default';
+        document.getElementById('updatedAt').textContent = data.updated_at ?? '-';
+
+        document.getElementById('show_xykpay').checked = Number(data.show_xykpay) === 1;
+        document.getElementById('show_line').checked = Number(data.show_line) === 1;
+        document.getElementById('show_jkpay').checked = Number(data.show_jkpay) === 1;
+        document.getElementById('show_payment_web').checked = Number(data.show_payment_web) === 1;
+        document.getElementById('show_exchange').checked = Number(data.show_exchange) === 1;
+        document.getElementById('show_text').checked = Number(data.show_text) === 1;
+        document.getElementById('text').value = data.text ?? '';
+        document.getElementById('config_key_readonly').value = data.config_key ?? 'default';
+    }
+
+    async function loadConfig() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('content').style.display = 'none';
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+
+            if (data.code !== 200) {
+                showMessage(data.msg || '加载失败', 'error');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                return;
+            }
+
+            fillForm(data.data || {});
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            showMessage('请求失败：' + e.message, 'error');
+        }
+    }
+
+    async function saveConfig() {
+        const payload = {
+            show_xykpay: document.getElementById('show_xykpay').checked ? 1 : 0,
+            show_line: document.getElementById('show_line').checked ? 1 : 0,
+            show_jkpay: document.getElementById('show_jkpay').checked ? 1 : 0,
+            show_payment_web: document.getElementById('show_payment_web').checked ? 1 : 0,
+            show_exchange: document.getElementById('show_exchange').checked ? 1 : 0,
+            show_text: document.getElementById('show_text').checked ? 1 : 0,
+            text: document.getElementById('text').value.trim()
+        };
+
+        showMessage('正在保存...', 'success');
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.code !== 200) {
+                showMessage(data.msg || '保存失败', 'error');
+                return;
+            }
+
+            fillForm(data.data || {});
+            showMessage(data.msg || '保存成功', 'success');
+        } catch (e) {
+            showMessage('请求失败：' + e.message, 'error');
+        }
+    }
+
+    loadConfig();
+</script>
+</body>
+</html>

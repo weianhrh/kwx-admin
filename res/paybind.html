@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>绑定收款账号</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --danger: #df5b57;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  display: block;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+button {
+  user-select: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin: 0 auto 18px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+#bindForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  padding: 18px;
+  background: var(--panel-soft);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.field label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.field input {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: var(--transition);
+}
+
+.field input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 143, 140, .12);
+}
+
+.field input[readonly],
+.field input:disabled {
+  background: #f2f6f7;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.field:last-child {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.field button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.field button:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+}
+
+.field button:disabled {
+  border-color: #c7d5da;
+  background: #c7d5da;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 14px;
+  }
+
+  .card-title {
+    min-height: 56px;
+    padding: 14px;
+    font-size: 19px;
+  }
+
+  #bindForm {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .field button {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">绑定收款账号</div>
+      <form id="bindForm">
+        <div class="field">
+          <label>账号类型</label>
+          <input type="text" id="account_type" name="account_type" value="银行卡" readonly>
+        </div>
+        <div class="field">
+          <label>账户姓名</label>
+          <input type="text" id="account_name" name="account_name" required>
+        </div>
+        <div class="field">
+          <label>提现卡号</label>
+          <input type="text" id="withdrawal_account" name="withdrawal_account" required>
+        </div>
+        <div class="field">
+          <label>银行名称</label>
+          <input type="text" id="bank_name" name="bank_name" required>
+        </div>
+        <div class="field">
+          <label>银行行号（可选）</label>
+          <input type="text" id="bank_number" name="bank_number">
+        </div>
+        <div class="field">
+          <label>备注（可选）</label>
+          <input type="text" id="remarks" name="remarks">
+        </div>
+        <div class="field">
+          <button type="submit" id="submitBtn">提交绑定</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('bindForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // 页面加载时检查是否已绑定
+    fetch('/api/pay/BindPaymentAccount.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === 0 && data.data) {
+          // 自动填充字段
+          document.getElementById('account_type').value = data.data.account_type || '银行卡';
+          document.getElementById('account_name').value = data.data.account_name || '';
+          document.getElementById('withdrawal_account').value = data.data.withdrawal_account || '';
+          document.getElementById('bank_name').value = data.data.bank_name || '';
+          document.getElementById('bank_number').value = data.data.bank_number || '';
+          document.getElementById('remarks').value = data.data.remarks || '';
+
+          // 禁用表单
+          document.querySelectorAll('#bindForm input').forEach(el => el.disabled = true);
+          submitBtn.disabled = true;
+
+          alert('已绑定账号，不能再次绑定');
+        }
+      });
+
+    // 首次提交绑定
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      fetch('/api/pay/BindPaymentAccount.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === 0) {
+          alert('绑定成功');
+          location.reload();
+        } else {
+          alert('绑定失败：' + data.msg);
+        }
+      })
+      .catch(err => {
+        alert('提交失败，请稍后再试');
+        console.error(err);
+      });
+    });
+  </script>
+</body>
+</html>
