@@ -67,12 +67,11 @@ if (
     $period = 'day';
 }
 
-// ===== 排行方式：total 总收入 / drive 驾驶收入 / gift 礼物收入 =====
+// ===== 排行方式：total/drive 都按驾驶订单业绩收入统计，不再合并礼物收入 =====
 $rankType = $_GET['rank_type'] ?? 'total';
 $rankFieldMap = [
     'total' => 'totalPayment',
     'drive' => 'driveIncome',
-    'gift'  => 'giftIncome',
 ];
 if (!isset($rankFieldMap[$rankType])) {
     $rankType = 'total';
@@ -101,10 +100,7 @@ foreach ($venueList as $venue) {
         // 驾驶收入：orders 表
         'driveIncome' => '0.00',
 
-        // 礼物收入：gift_orders 金币 / 10 * 60%
-        'giftIncome' => '0.00',
-
-        // 总收入：驾驶收入 + 礼物收入
+        // 业绩收入：只统计驾驶订单收入，不含礼物收入
         'totalPayment' => '0.00',
     ];
 }
@@ -115,7 +111,6 @@ if (empty($venueMap)) {
         'msg' => '无数据',
         'totalIncome' => '0.00',
         'totalDriveIncome' => '0.00',
-        'totalGiftIncome' => '0.00',
         'rankType' => $rankType,
         'rankField' => $rankField,
         'rankTotal' => '0.00',
@@ -178,40 +173,17 @@ foreach ($paymentRows as $row) {
     }
 }
 
-// 批量查礼物收入：gift_orders 金币 / 10 * 60%
-// 用 send_time >= ? AND send_time < ?，避免 DATE(send_time) 导致索引失效
-$giftSql = "
-    SELECT reservation_id, COALESCE(SUM(payment_amount) / 10 * 0.6, 0) AS gift_income
-    FROM gift_orders
-    WHERE send_time >= ?
-      AND send_time < ?
-      AND status = '已完成'
-    GROUP BY reservation_id
-";
-$giftRows = $database->query($giftSql, [$date, $dateEnd]);
-
-foreach ($giftRows as $row) {
-    $rid = $row['reservation_id'];
-    if (isset($venueMap[$rid])) {
-        $giftIncome = (float)$row['gift_income'];
-        $venueMap[$rid]['giftIncome'] = number_format($giftIncome, 2, '.', '');
-    }
-}
-
-// 计算每个场地总收入：驾驶收入 + 礼物收入，同时计算三种累计合计
+// 计算每个场地业绩收入：只取驾驶订单收入
 $totalDriveIncome = 0.0;
-$totalGiftIncome = 0.0;
 $totalIncome = 0.0;
 
 foreach ($venueMap as $rid => $venue) {
     $driveIncome = (float)$venue['driveIncome'];
-    $giftIncome  = (float)$venue['giftIncome'];
-    $totalPayment = $driveIncome + $giftIncome;
+    $totalPayment = $driveIncome;
 
     $venueMap[$rid]['totalPayment'] = number_format($totalPayment, 2, '.', '');
 
     $totalDriveIncome += $driveIncome;
-    $totalGiftIncome += $giftIncome;
     $totalIncome += $totalPayment;
 }
 
@@ -232,7 +204,6 @@ usort($venueData, function ($a, $b) use ($rankField) {
 $rankTotalMap = [
     'total' => $totalIncome,
     'drive' => $totalDriveIncome,
-    'gift'  => $totalGiftIncome,
 ];
 
 echo json_encode([
@@ -245,12 +216,11 @@ echo json_encode([
     'rankType' => $rankType,
     'rankField' => $rankField,
 
-    // 兼容原来的总收入字段
+    // 兼容原来的总收入字段；当前不含礼物收入
     'totalIncome' => number_format($totalIncome, 2, '.', ''),
 
-    // 新增：三种收入累计
+    // 业绩收入累计
     'totalDriveIncome' => number_format($totalDriveIncome, 2, '.', ''),
-    'totalGiftIncome' => number_format($totalGiftIncome, 2, '.', ''),
     'rankTotal' => number_format($rankTotalMap[$rankType], 2, '.', ''),
 
     'data' => $venueData

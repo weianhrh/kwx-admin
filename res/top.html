@@ -552,7 +552,7 @@ button:hover {
       <div class="card-title">
         <span>
 <span id="ranking-title">当日场地业绩排行榜</span>
-<span id="total-income" style="margin-left: 12px; font-size: 16px;">总收入: 0.00 元</span>
+<span id="total-income" style="margin-left: 12px; font-size: 16px;">总业绩收入: 0.00 元</span>
         </span>
 
         <div class="controls">
@@ -565,9 +565,8 @@ button:hover {
         
           
           <select id="rank-type" class="select-input rank-type-select" title="排行方式">
-            <option value="total">总收入排行</option>
+            <option value="total">业绩收入排行</option>
             <option value="drive">驾驶收入排行</option>
-            <option value="gift">礼物收入排行</option>
           </select>
 
 <!-- 自定义下拉包装 -->
@@ -608,26 +607,20 @@ let currentPeriod = 'day';     // 'day' | 'week' | 'month'
 let currentDateKey = 'today';  // today | yesterday | YYYY-MM-DD，单日用
 let currentStartDate = '';     // 区间开始日期
 let currentEndDate = '';       // 区间结束日期，开区间，不包含当天
-    let currentRankType = 'total'; // 'total' | 'drive' | 'gift'
+    let currentRankType = 'total'; // 'total' | 'drive'
 
     const rankTypeConfig = {
       total: {
         field: 'totalPayment',
-        name: '总收入',
-        totalLabel: '总收入',
-        filterLabel: '筛选总收入'
+        name: '业绩收入',
+        totalLabel: '总业绩收入',
+        filterLabel: '筛选业绩收入'
       },
       drive: {
         field: 'driveIncome',
         name: '驾驶收入',
         totalLabel: '总驾驶收入',
         filterLabel: '筛选驾驶收入'
-      },
-      gift: {
-        field: 'giftIncome',
-        name: '礼物收入',
-        totalLabel: '总礼物收入',
-        filterLabel: '筛选礼物收入'
       }
     };
 
@@ -714,15 +707,13 @@ function updateDateTitle() {
 }
     function normalizeVenueRow(v) {
       const driveIncome = toNumber(v.driveIncome);
-      const giftIncome = toNumber(v.giftIncome);
       const totalPayment = v.totalPayment === undefined || v.totalPayment === null
-        ? driveIncome + giftIncome
+        ? driveIncome
         : toNumber(v.totalPayment);
 
       return {
         ...v,
         driveIncome: driveIncome.toFixed(2),
-        giftIncome: giftIncome.toFixed(2),
         totalPayment: totalPayment.toFixed(2)
       };
     }
@@ -781,7 +772,7 @@ function updateURLState() {
   history.replaceState({}, '', u.toString());
 }
 
-// URL 预选逻辑（支持 ?date=YYYY-MM-DD&venue_id=xxx&rank_type=drive|gift|total）
+// URL 预选逻辑（支持 ?date=YYYY-MM-DD&venue_id=xxx&rank_type=drive|total）
 (function presetFromURL() {
   const params = new URLSearchParams(location.search);
   const vid = params.get('venue_id');
@@ -1005,11 +996,9 @@ function loadRankingData(dateKey) {
         card.onclick = () => goToDetail(venue.venue_id);
 
         const driveIncome = toNumber(venue.driveIncome);
-        const giftIncome = toNumber(venue.giftIncome);
         const totalIncome = toNumber(venue.totalPayment);
 
         const driveClass = currentRankType === 'drive' ? 'rank-metric' : '';
-        const giftClass = currentRankType === 'gift' ? 'rank-metric' : '';
         const totalClass = currentRankType === 'total' ? 'rank-metric' : '';
 
         card.innerHTML = `
@@ -1019,8 +1008,7 @@ function loadRankingData(dateKey) {
             <span>订单数: ${venue.orderCount}</span>
             <span>预约人数: ${venue.reservationCount}</span>
             <span class="${driveClass}">驾驶收入: ${driveIncome.toFixed(2)} 元</span>
-            <span class="${giftClass}">礼物收入: ${giftIncome.toFixed(2)} 元</span>
-            <span class="${totalClass}">总收入: ${totalIncome.toFixed(2)} 元</span>
+            <span class="${totalClass}">业绩收入: ${totalIncome.toFixed(2)} 元</span>
           </div>
         `;
         rankingList.appendChild(card);
@@ -1086,4 +1074,3 @@ loadRankingData();
   </script>
 </body>
 </html>
-

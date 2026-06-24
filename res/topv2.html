@@ -553,7 +553,7 @@ button:hover {
       <div  class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
      <span>
           当日场地业绩排行榜
-          <span id="total-income" style="margin-left: 20px; font-size: 16px;">总收入: 0.00 元</span>
+          <span id="total-income" style="margin-left: 20px; font-size: 16px;">总业绩收入: 0.00 元</span>
         </span>
         <div>
           
@@ -579,9 +579,9 @@ button:hover {
         .then(response => response.json()) 
         .then(data => {
           if (data.code === 0 && data.data && data.data.length > 0) {
-            // 更新总收入显示
-            document.getElementById('total-income').innerText = `总收入: ${data.totalIncome} 元`;
-            // 将数据按总收入降序排序，注意 totalPayment 为字符串
+            // 更新业绩收入显示
+            document.getElementById('total-income').innerText = `总业绩收入: ${data.totalIncome} 元`;
+            // 将数据按业绩收入降序排序，注意 totalPayment 为字符串
             const sortedData = data.data.sort((a,  b) => parseFloat(b.totalPayment)  - parseFloat(a.totalPayment)); 
             displayRanking(sortedData);
           } else {
@@ -611,7 +611,7 @@ button:hover {
             <span>订单数: ${venue.orderCount}</span> 
             <span>预约人数: ${venue.reservationCount}</span> 
             <span>排队人数: ${venue.queue_length}</span> 
-            <span>总收入: ${venue.totalPayment}  元</span>
+            <span>业绩收入: ${venue.totalPayment} 元</span>
           </div>
         `;
         rankingList.appendChild(card); 

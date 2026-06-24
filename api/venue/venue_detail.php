@@ -17,29 +17,14 @@ switch ($period) {
     case 'week':
         $sql = "
             SELECT
-                YEARWEEK(time_value, 1) AS label,
-                MIN(DATE(time_value)) AS start_date,
-                MAX(DATE(time_value)) AS end_date,
-                SUM(amount) AS total
-            FROM (
-                SELECT
-                    COALESCE(end_time, start_time) AS time_value,
-                    payment_amount AS amount
-                FROM orders
-                WHERE reservation_id = ?
-                  AND TRIM(IFNULL(pays_type, '')) <> '能量'
-                  AND (end_time IS NOT NULL OR start_time IS NOT NULL)
-
-                UNION ALL
-
-                SELECT
-                    send_time AS time_value,
-                    payment_amount / 10 * 0.6 AS amount
-                FROM gift_orders
-                WHERE reservation_id = ?
-                  AND status = '已完成'
-                  AND send_time IS NOT NULL
-            ) t
+                YEARWEEK(COALESCE(end_time, start_time), 1) AS label,
+                MIN(DATE(COALESCE(end_time, start_time))) AS start_date,
+                MAX(DATE(COALESCE(end_time, start_time))) AS end_date,
+                SUM(payment_amount) AS total
+            FROM orders
+            WHERE reservation_id = ?
+              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
         ";
@@ -48,27 +33,12 @@ switch ($period) {
     case 'month':
         $sql = "
             SELECT
-                DATE_FORMAT(time_value, '%Y-%m') AS label,
-                SUM(amount) AS total
-            FROM (
-                SELECT
-                    COALESCE(end_time, start_time) AS time_value,
-                    payment_amount AS amount
-                FROM orders
-                WHERE reservation_id = ?
-                  AND TRIM(IFNULL(pays_type, '')) <> '能量'
-                  AND (end_time IS NOT NULL OR start_time IS NOT NULL)
-
-                UNION ALL
-
-                SELECT
-                    send_time AS time_value,
-                    payment_amount / 10 * 0.6 AS amount
-                FROM gift_orders
-                WHERE reservation_id = ?
-                  AND status = '已完成'
-                  AND send_time IS NOT NULL
-            ) t
+                DATE_FORMAT(COALESCE(end_time, start_time), '%Y-%m') AS label,
+                SUM(payment_amount) AS total
+            FROM orders
+            WHERE reservation_id = ?
+              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
         ";
@@ -78,27 +48,12 @@ switch ($period) {
     default:
         $sql = "
             SELECT
-                DATE(time_value) AS label,
-                SUM(amount) AS total
-            FROM (
-                SELECT
-                    COALESCE(end_time, start_time) AS time_value,
-                    payment_amount AS amount
-                FROM orders
-                WHERE reservation_id = ?
-                  AND TRIM(IFNULL(pays_type, '')) <> '能量'
-                  AND (end_time IS NOT NULL OR start_time IS NOT NULL)
-
-                UNION ALL
-
-                SELECT
-                    send_time AS time_value,
-                    payment_amount / 10 * 0.6 AS amount
-                FROM gift_orders
-                WHERE reservation_id = ?
-                  AND status = '已完成'
-                  AND send_time IS NOT NULL
-            ) t
+                DATE(COALESCE(end_time, start_time)) AS label,
+                SUM(payment_amount) AS total
+            FROM orders
+            WHERE reservation_id = ?
+              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
         ";
@@ -107,7 +62,7 @@ switch ($period) {
 
 
 // 这行留着执行查询
-$data = $database->query($sql, [$venue_id, $venue_id]);
+$data = $database->query($sql, [$venue_id]) ?: [];
 
 
 
@@ -122,122 +77,154 @@ $database->close();
   <title>场地收益详情</title>
   <style>
     :root{
-      --primary:#5b8cff;
-      --primary-dark:#2a66e0;
-      --bg1:#f8f9ff;
-      --bg2:#f0f3ff;
-      --text:#111827;
-      --muted:#6b7280;
+      --primary:#0f8f8c;
+      --primary-dark:#08706e;
+      --primary-soft:#e6f6f5;
+      --page:#f4f7f8;
+      --line:#dfe8eb;
+      --text:#172126;
+      --muted:#667985;
       --card:#ffffff;
-      --shadow: 0 8px 24px rgba(17,24,39,.08);
-      --radius: 14px;
+      --shadow:0 12px 34px rgba(30,55,66,.08);
+      --radius:8px;
     }
 
     *{ box-sizing:border-box; }
     body{
       margin:0;
       font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
-      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      background: var(--page);
       color: var(--text);
-      padding: 18px 14px 28px;
+      padding: 22px;
     }
 
     .wrap{
-      max-width: 420px; /* 手机看着像App页面 */
+      width: 100%;
+      max-width: none;
       margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     h2{
-      margin: 10px 0 14px;
-      font-size: 20px;
+      position: relative;
+      margin: 0;
+      padding: 20px 22px 8px 38px;
+      font-size: 22px;
       font-weight: 800;
-      text-align:center;
-      letter-spacing: .5px;
+      line-height: 1.3;
+      text-align:left;
+      letter-spacing: 0;
     }
 
-    /* 胶囊按钮组 */
+    h2::before{
+      position:absolute;
+      left:22px;
+      top:23px;
+      width:6px;
+      height:22px;
+      border-radius:999px;
+      background:var(--primary);
+      content:"";
+    }
+
+    .sub-title{
+      margin:0;
+      padding:0 22px 18px 38px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
     .toolbar{
       display:flex;
+      flex-wrap:wrap;
       gap:10px;
-      justify-content:center;
-      padding: 10px;
-      background: rgba(255,255,255,.7);
-      border: 1px solid rgba(0,0,0,.06);
-      border-radius: 999px;
-      box-shadow: 0 6px 18px rgba(17,24,39,.06);
-      position: sticky;
-      top: 10px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 10;
-      margin-bottom: 14px;
+      justify-content:flex-start;
+      padding: 16px 22px;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      background:#fbfdfd;
     }
 
     .toolbar button{
-      flex:1;
-      min-width: 0;
-      border:none;
-      border-radius: 999px;
-      padding: 10px 0;
+      min-width: 90px;
+      border:1px solid rgba(15,143,140,.24);
+      border-radius: var(--radius);
+      padding: 9px 16px;
       font-size: 14px;
       font-weight: 700;
-      background: rgba(91,140,255,.12);
+      background: var(--primary-soft);
       color: var(--primary-dark);
       cursor:pointer;
-      transition: .2s;
     }
     .toolbar button.active{
       background: var(--primary);
       color:#fff;
-      box-shadow: 0 10px 20px rgba(91,140,255,.25);
-    }
-    .toolbar button:active{
-      transform: scale(.98);
+      border-color:var(--primary);
     }
 
     .card-container{
-      display:flex;
-      flex-direction: column;
+      display:grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
       gap: 12px;
+      padding: 18px 22px 22px;
     }
 
     .card{
       background: var(--card);
       border-radius: var(--radius);
       padding: 14px 16px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(0,0,0,.05);
+      border: 1px solid var(--line);
+      box-shadow: none;
     }
 
     .card-label{
       font-size: 13px;
       color: var(--muted);
       margin-bottom: 8px;
-      text-align:center;
+      text-align:left;
+      font-weight:700;
     }
 
     .card-value{
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 900;
-      text-align:center;
-      color: #0f172a;
+      text-align:left;
+      color: var(--text);
     }
 
-    /* 大一点屏幕（比如横屏/平板）再变两列 */
-    @media (min-width: 520px){
-      .wrap{ max-width: 760px; }
+    .empty{
+      grid-column: 1 / -1;
+      padding: 36px 16px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    @media (max-width: 1100px){
       .card-container{
-        display:grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
       }
+    }
+
+    @media (max-width: 640px){
+      body{ padding: 12px; }
+      h2{ padding: 18px 16px 8px 32px; font-size: 20px; }
+      h2::before{ left:16px; top:21px; }
+      .sub-title{ padding:0 16px 16px 32px; }
+      .toolbar{ padding:14px 16px; }
+      .toolbar button{ flex:1; }
+      .card-container{ grid-template-columns: 1fr; padding:14px 16px 16px; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <h2><?= htmlspecialchars($venue_name) ?> 收益趋势</h2>
+    <h2><?= htmlspecialchars($venue_name) ?> 业绩趋势</h2>
+    <p class="sub-title">仅统计驾驶订单收入，不包含礼物收入。</p>
 
     <div class="toolbar">
       <button onclick="changePeriod('day')" class="<?= $period == 'day' ? 'active' : '' ?>">按天</button>
@@ -246,6 +233,9 @@ $database->close();
     </div>
 
     <div class="card-container">
+     <?php if (empty($data)): ?>
+        <div class="empty">暂无业绩数据</div>
+     <?php endif; ?>
      <?php foreach ($data as $row):
     if ($period === 'week') {
         $label = date("m月d日", strtotime($row['start_date'])) . ' ~ ' . date("m月d日", strtotime($row['end_date']));
