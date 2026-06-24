@@ -292,8 +292,7 @@ select.form-input {
 }
 
 .badge-deleted,
-.badge-streamer,
-.badge-muted {
+.badge-streamer {
   flex: 0 0 auto;
   min-height: 22px;
   display: inline-flex;
@@ -312,8 +311,7 @@ select.form-input {
   background: var(--warning-soft);
 }
 
-.badge-deleted,
-.badge-muted {
+.badge-deleted {
   color: var(--danger);
   border: 1px solid rgba(223, 91, 87, .28);
   background: var(--danger-soft);
@@ -398,12 +396,6 @@ select.form-input {
   background: var(--primary-dark);
 }
 
-.btn-gold-recharge {
-  color: #8a5a09;
-  border-color: rgba(255, 184, 77, .36);
-  background: var(--warning-soft);
-}
-
 .btn-consume {
   color: #486169;
   border-color: var(--line);
@@ -411,22 +403,10 @@ select.form-input {
 }
 
 .btn-delete,
-.btn-mute {
-  color: var(--danger);
-  border-color: rgba(223, 91, 87, .30);
-  background: var(--danger-soft);
-}
-
-.btn-undelete,
-.btn-unmute {
+.btn-undelete {
   color: var(--success);
   border-color: rgba(32, 168, 118, .30);
   background: var(--success-soft);
-}
-
-.user-actions .btn-mute,
-.user-actions .btn-unmute {
-  grid-column: span 2;
 }
 
 .loading {
@@ -496,10 +476,6 @@ select.form-input {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
-  .user-actions .btn-mute,
-  .user-actions .btn-unmute {
-    grid-column: span 2;
-  }
 }
 
 @media (max-width: 768px) {
@@ -579,9 +555,7 @@ select.form-input {
     font-size: 12px;
   }
 
-  .streamer-select,
-  .user-actions .btn-mute,
-  .user-actions .btn-unmute {
+  .streamer-select {
     grid-column: 1 / -1;
   }
 
@@ -672,9 +646,6 @@ select.form-input {
       </div>
 
       <div class="button-group">
-        <button type="button" class="czcx-btn" id="filter-streamer-btn">
-         <i class="fas fa-video"></i> 只看主播
-        </button>
         <button class="form-button" type="submit">
           <i class="fas fa-search"></i> 搜索
         </button>
@@ -706,16 +677,11 @@ select.form-input {
   const nextPageButton = document.getElementById('next-page');
   const pageInfo = document.getElementById('page-info');
   const loading = document.getElementById('loading');
-  const filterStreamerBtn = document.getElementById('filter-streamer-btn');
 const venueSearchFilter = document.getElementById('venue_search_filter');
 const streamerVenueFilter = document.getElementById('streamer_venue_filter');
 
 let venueFilterEventsBound = false;
 
-    let streamerFilterType = 0; 
-    // 0 = 全部用户
-    // 1 = 只看主播
-    // 2 = 只看管理员
   let venueList = [];
   let currentPage = 1;
   let totalPages = 1;
@@ -733,7 +699,7 @@ function goRechargeQuery(uid){
 
 function goDriveRecord(uid){
   // 你按你实际页面改这里的路径即可
-  window.location.href = `/res/views/venues/AdminDrivingOrders.html?user_id=${encodeURIComponent(uid)}`;
+  window.location.href = `/res/AdminDrivingOrders.html?user_id=${encodeURIComponent(uid)}`;
 }
   function buildQuery(params) {
     return Object.entries(params)
@@ -754,27 +720,7 @@ function collectSearchParams() {
     }
   });
 
-  // 原来的主播/管理员筛选
-  // 1 = 主播，2 = 管理员
-  if (streamerFilterType === 1 || streamerFilterType === 2) {
-    params.is_streamer = String(streamerFilterType);
-  }
-
   return params;
-}
-
-function updateStreamerFilterButton() {
-  if (!filterStreamerBtn) return;
-
-  filterStreamerBtn.classList.toggle('filter-active', streamerFilterType !== 0);
-
-  if (streamerFilterType === 0) {
-    filterStreamerBtn.innerHTML = '<i class="fas fa-video"></i> 只看主播';
-  } else if (streamerFilterType === 1) {
-    filterStreamerBtn.innerHTML = '<i class="fas fa-user-shield"></i> 只看管理员';
-  } else {
-    filterStreamerBtn.innerHTML = '<i class="fas fa-users"></i> 显示全部用户';
-  }
 }
 function fetchVenueList() {
   if (venueList.length > 0) {
@@ -1035,7 +981,6 @@ async function loadTableData(params = {}) {
                             ? '<span class="badge-streamer">主播</span>'
                             : (Number(item.is_streamer) === 2 ? '<span class="badge-streamer">管理员</span>' : '')
                         }
-                      ${Number(item.is_mute) === 1 ? '<span class="badge-muted">禁言</span>' : ''}
                       ${item.username || '-'}
                       ${isDeleted ? '<span class="badge-deleted">已注销</span>' : ''}
                     </span>
@@ -1045,7 +990,6 @@ async function loadTableData(params = {}) {
                   <span>分配场地: ${getVenueName(item.streamer_venue)}</span>
                   <span>注册方式: ${registerWay}</span>
                   <span>用户余额: ¥${item.wallet || '0.00'}</span>
-                  <span>用户金币: $${item.gold_balance || '0.00'}</span>
                   <span>加入时间: ${item.jointime || '-'}</span>
                 </div>
 
@@ -1069,19 +1013,10 @@ async function loadTableData(params = {}) {
       </select>
       `
       : `
-      <div class="action-row">
-        <button class="action-btn btn-streamer" onclick="toggleUserStreamer(${item.id}, 1)">
-          <i class="fas fa-video"></i> 设为主播
+      <div class="action-row action-row-full">
+        <button class="action-btn btn-nickname" onclick="changeNicknameByAdmin(${item.id}, '${safeUsername}')">
+          <i class="fas fa-user-edit"></i> 改昵称
         </button>
-        
-        <button class="action-btn btn-assign" onclick="toggleUserStreamer(${item.id}, 2)">
-          <i class="fas fa-user-shield"></i> 设为管理员
-        </button>
-        <div class="action-row action-row-full">
-          <button class="action-btn btn-nickname" onclick="changeNicknameByAdmin(${item.id}, '${safeUsername}')">
-            <i class="fas fa-user-edit"></i> 改昵称
-          </button>
-        </div>
       </div>
       `
   }
@@ -1089,10 +1024,6 @@ async function loadTableData(params = {}) {
 <div class="action-row">
   <button class="action-btn btn-recharge" onclick="rechargeUser(${item.id})">
     <i class="fas fa-battery-half"></i> 电池充值
-  </button>
-
-  <button class="action-btn btn-gold-recharge" onclick="goldRechargeUser(${item.id})">
-    <i class="fas fa-coins"></i> 金币充值
   </button>
 </div>
 
@@ -1115,15 +1046,6 @@ async function loadTableData(params = {}) {
           onclick="toggleUserDeleted(${item.id}, ${isDeleted})">
     <i class="fas ${isDeleted ? 'fa-user-check' : 'fa-user-slash'}"></i>
     ${isDeleted ? '取消注销' : '注销'}
-  </button>
-</div>
-
-<!-- 暂时隐藏禁言、取消禁言按钮-->
-<div class="action-row action-row-full">
-  <button class="action-btn ${Number(item.is_mute) === 1 ? 'btn-unmute' : 'btn-mute'}"
-          onclick="toggleUserMute(${item.id}, ${Number(item.is_mute)})">
-    <i class="fas ${Number(item.is_mute) === 1 ? 'fa-comment-slash' : 'fa-ban'}"></i>
-    ${Number(item.is_mute) === 1 ? '取消禁言' : '禁言'}
   </button>
 </div>
 
@@ -1200,39 +1122,6 @@ searchButton.addEventListener('click', function (event) {
       alert('请求失败，请稍后重试');
     });
 }
-    function goldRechargeUser(uid) {
-  const amount = prompt('请输入金币充值数量（输入 -100 表示扣减 100）');
-  if (amount === null) return;
-
-  const value = String(amount).trim();
-  if (!/^-?\d+$/.test(value)) {
-    alert('金币数量必须是整数，例如 100 或 -100');
-    return;
-  }
-
-  const url = '/api/user/gold_recharge.php';
-  const formData = new FormData();
-  formData.append('uid', uid);
-  formData.append('amount', value);
-
-  fetch(url, { method: 'POST', body: formData })
-    .then(r => {
-      if (!r.ok) throw new Error('网络响应异常');
-      return r.json();
-    })
-    .then(res => {
-      if (res.success) {
-        alert('金币变动成功');
-        loadTableData(lastParams);
-      } else {
-        alert('金币变动失败: ' + (res.message || '未知错误'));
-      }
-    })
-    .catch(e => {
-      console.error(e);
-      alert('请求失败，请稍后重试');
-    });
-}
   // ✅ 移植：注销 / 取消注销逻辑（按你第一个页面的写法）
   async function toggleUserDeleted(uid, isDeleted) {
     const actionText = isDeleted ? '取消注销' : '注销';
@@ -1259,31 +1148,6 @@ searchButton.addEventListener('click', function (event) {
       alert('操作失败，请稍后再试');
     }
   }
-async function toggleUserMute(uid, isMute) {
-  const actionText = Number(isMute) === 1 ? '取消禁言' : '禁言';
-  if (!confirm(`确认要${actionText}该用户吗？`)) return;
-
-  const form = new FormData();
-  form.append('uid', String(uid));
-
-  try {
-    const r = await fetch('/api/user/toggleUserMute.php', {
-      method: 'POST',
-      body: form,
-      credentials: 'include'
-    });
-
-    const d = await r.json();
-    alert(d.message || '操作完成');
-
-    if (d.success) {
-      loadTableData(lastParams);
-    }
-  } catch (e) {
-    console.error(e);
-    alert('操作失败，请稍后再试');
-  }
-}
   // 改昵称（保持你原逻辑）
   async function changeNicknameByAdmin(uid, current='') {
     const n = prompt('新昵称（≤25个字符）', current || '')?.trim();
@@ -1307,24 +1171,6 @@ async function toggleUserMute(uid, isMute) {
   // 初始化：优先读 URL invitation_code
   const used = applyInvitationFromUrl();
   if (!used) loadTableData();
-  if (filterStreamerBtn) {
-  updateStreamerFilterButton();
-
-    filterStreamerBtn.addEventListener('click', function () {
-      streamerFilterType++;
-    
-      if (streamerFilterType > 2) {
-        streamerFilterType = 0;
-      }
-    
-      updateStreamerFilterButton();
-      currentPage = 1;
-    
-      const params = collectSearchParams();
-      lastParams = params;
-      loadTableData(params);
-    });
-}
 </script>
 </body>
 </html>
