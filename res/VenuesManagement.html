@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场地管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.add-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 18px 12px;
+  padding: 0 14px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.add-btn::before {
+  content: "+";
+  font-size: 18px;
+  line-height: 1;
+}
+
+.add-btn:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+#venue_search,
+.venue-level-filter {
+  width: calc(50% - 22px) !important;
+  min-width: 260px;
+  height: 38px !important;
+  margin: 0 0 12px 18px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border .16s ease, box-shadow .16s ease;
+  vertical-align: top;
+}
+
+.venue-level-filter {
+  width: 180px !important;
+  min-width: 180px;
+  margin-left: 8px !important;
+  cursor: pointer;
+}
+
+#venue_search::placeholder {
+  color: #9aabb2;
+}
+
+#venue_search:focus,
+.venue-level-filter:focus,
+.add-venue-form input:focus,
+.add-venue-form select:focus,
+.ban-form-group input:focus,
+.ban-form-group select:focus,
+.ban-form-group textarea:focus,
+.form-group textarea:focus {
+  border-color: rgba(15, 143, 140, .48) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.add-venue-form {
+  display: none;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  margin: 0 18px 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.add-venue-form[style*="block"] {
+  display: grid !important;
+}
+
+.add-venue-form input,
+.add-venue-form select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+}
+
+.add-venue-form label {
+  grid-column: 1 / -1;
+}
+
+.add-venue-form label input[type="checkbox"] {
+  width: auto !important;
+  height: auto !important;
+  accent-color: var(--primary);
+}
+
+.add-venue-form button[type="submit"] {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.add-venue-form button[type="submit"]:hover {
+  background: var(--primary-dark);
+}
+
+.venue-toolbar {
+  display: block;
+  padding: 0 18px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.venue-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  transition: border .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.stat-card:hover,
+.stat-card.active {
+  border-color: rgba(15, 143, 140, .38);
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.stat-value {
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.stat-live .stat-value { color: var(--primary); }
+.stat-open .stat-value { color: var(--success); }
+.stat-rest .stat-value { color: #a16d13; }
+
+#venue-list {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: var(--panel);
+}
+
+.loading {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.venue-card {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--subtle);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: border .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.venue-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 16px 34px rgba(30, 55, 66, .11);
+  transform: translateY(-1px);
+}
+
+.venue-card.status-open { border-left-color: var(--success); }
+.venue-card.status-rest { border-left-color: var(--warning); }
+.venue-card.status-build { border-left-color: var(--danger); }
+
+.venue-card-top {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+.venue-img {
+  width: 132px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #eef3f4;
+}
+
+.venue-info {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.venue-name {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.venue-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.venue-status-badge,
+.venue-live-badge,
+.venue-review-badge,
+.venue-room-badge,
+.venue-live-log-badge,
+.venue-level-control {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.venue-status-badge,
+.venue-live-log-badge {
+  cursor: pointer;
+}
+
+.venue-status-badge.open,
+.venue-live-badge {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.venue-status-badge.rest {
+  color: #a16d13;
+  background: var(--warning-soft);
+}
+
+.venue-status-badge.build,
+.venue-review-badge {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.venue-room-badge {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.venue-live-log-badge {
+  color: #486169;
+  background: #f3f7f8;
+  border-color: var(--line);
+}
+
+.venue-live-log-badge:hover {
+  color: var(--primary);
+  border-color: rgba(15, 143, 140, .28);
+  background: var(--primary-soft);
+}
+
+.venue-level-control {
+  color: #486169;
+  background: #fbfcfd;
+  border-color: var(--line);
+}
+
+.venue-level-control span {
+  color: var(--muted);
+}
+
+.venue-level-select {
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  color: var(--text);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.review-time-row,
+.live-time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.review-time-label,
+.live-time-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.review-time-value,
+.live-time-value {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.venue-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.venue-pill {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #486169;
+  background: #fbfcfd;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.venue-pill {
+  cursor: pointer;
+}
+
+button.venue-pill:hover {
+  border-color: rgba(15, 143, 140, .28);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.venue-pill-desc {
+  grid-column: span 2;
+}
+
+.venue-pill-green {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(32, 168, 118, .18);
+}
+
+.venue-pill-red {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(223, 91, 87, .18);
+}
+
+.venue-pill-orange,
+.venue-pill-amber {
+  color: #a16d13;
+  background: var(--warning-soft);
+  border-color: rgba(255, 184, 77, .32);
+}
+
+.venue-pill-cyan,
+.venue-pill-blue,
+.venue-pill-scene-indoor,
+.venue-pill-voice-room {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: rgba(15, 143, 140, .18);
+}
+
+.venue-pill-scene-outdoor,
+.venue-pill-mic,
+.venue-pill-sound,
+.venue-pill-spending {
+  border-color: rgba(47, 125, 246, .18);
+}
+
+.venue-pill-gray {
+  color: #667985;
+  background: #f3f7f8;
+}
+
+.venue-action-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.venue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.venue-actions-ban {
+  justify-content: flex-end;
+}
+
+.edit-btn,
+.unban-btn,
+.ban-btn,
+.sound-ban-btn,
+.sound-unban-btn,
+.voice-room-ban-btn,
+.voice-room-unban-btn,
+.live-btn,
+.spending-alert-off-btn,
+.spending-alert-on-btn,
+.ban-submit-btn,
+.form-group button,
+#unbanForm button[type="submit"] {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.edit-btn,
+.live-btn,
+.spending-alert-on-btn,
+.sound-unban-btn,
+.voice-room-unban-btn,
+#unbanForm button[type="submit"] {
+  color: #fff !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.edit-btn:hover,
+.live-btn:hover,
+.spending-alert-on-btn:hover,
+.sound-unban-btn:hover,
+.voice-room-unban-btn:hover,
+#unbanForm button[type="submit"]:hover {
+  background: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+}
+
+.live-btn.cancel,
+.spending-alert-off-btn {
+  color: #486169 !important;
+  background: #fff !important;
+  border-color: var(--line) !important;
+}
+
+.live-btn.cancel:hover,
+.spending-alert-off-btn:hover {
+  color: var(--primary) !important;
+  border-color: rgba(15, 143, 140, .28) !important;
+  background: var(--primary-soft) !important;
+}
+
+.ban-btn,
+.sound-ban-btn,
+.voice-room-ban-btn {
+  color: #fff !important;
+  background: var(--warning) !important;
+  border-color: var(--warning) !important;
+}
+
+.ban-btn:hover,
+.sound-ban-btn:hover,
+.voice-room-ban-btn:hover {
+  box-shadow: 0 10px 24px rgba(255, 184, 77, .20);
+  transform: translateY(-1px);
+}
+
+.unban-btn {
+  color: #fff !important;
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
+
+.unban-btn:hover {
+  box-shadow: 0 10px 24px rgba(223, 91, 87, .20);
+  transform: translateY(-1px);
+}
+
+.modal {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(16, 34, 38, .46) !important;
+  z-index: 1000 !important;
+  overflow-y: auto;
+  padding: 24px 14px;
+}
+
+.ban-modal-content,
+.modal-content {
+  position: relative !important;
+  width: min(92vw, 560px) !important;
+  margin: 6vh auto !important;
+  padding: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: 0 22px 56px rgba(16, 34, 38, .18) !important;
+}
+
+.modal-content h2,
+.ban-modal-title {
+  margin: 0 32px 16px 0;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.modal-close,
+.unban-modal-close,
+.voice-room-ban-modal-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 14px !important;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 24px !important;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover,
+.unban-modal-close:hover,
+.voice-room-ban-modal-close:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.ban-form-group,
+.form-group {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.ban-form-group label,
+.form-group label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ban-form-group input,
+.ban-form-group select,
+.ban-form-group textarea,
+.form-group textarea {
+  width: 100% !important;
+  min-height: 38px;
+  padding: 9px 11px;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+}
+
+.ban-form-group textarea,
+.form-group textarea {
+  min-height: 96px !important;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.ban-desc-tips {
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ban-template-list {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+.ban-desc-option {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #486169;
+  background: #fbfcfd;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ban-desc-option:hover,
+.ban-desc-option.active {
+  color: var(--primary);
+  border-color: rgba(15, 143, 140, .28);
+  background: var(--primary-soft);
+}
+
+.ban-preview-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ban-preview-img,
+.ban-preview-video {
+  width: 100%;
+  max-height: 130px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.ban-submit-btn {
+  width: 100%;
+  min-height: 40px;
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.ban-submit-btn:hover {
+  background: var(--primary-dark);
+}
+
+@media (max-width: 1180px) {
+  .venue-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .venue-pill-desc {
+    grid-column: span 2;
+  }
+
+  .venue-action-area {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-actions-ban {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 14px 10px 22px;
+  }
+
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+
+  .add-btn {
+    width: calc(100% - 28px);
+    margin: 14px 14px 10px;
+  }
+
+  #venue_search,
+  .venue-level-filter {
+    width: calc(100% - 28px) !important;
+    min-width: 0;
+    margin: 0 14px 10px !important;
+  }
+
+  .add-venue-form {
+    grid-template-columns: 1fr;
+    margin: 0 14px 14px;
+    padding: 14px;
+  }
+
+  .venue-toolbar,
+  #venue-list {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .venue-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    min-height: 64px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .venue-card-top {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .venue-img {
+    width: 100%;
+    height: 180px;
+  }
+
+  .venue-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-pill-desc {
+    grid-column: auto;
+  }
+
+  .venue-pill {
+    width: 100%;
+  }
+
+  .venue-action-area {
+    padding: 12px 14px;
+  }
+
+  .venue-actions,
+  .venue-actions-ban {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .edit-btn,
+  .unban-btn,
+  .ban-btn,
+  .sound-ban-btn,
+  .sound-unban-btn,
+  .voice-room-ban-btn,
+  .voice-room-unban-btn,
+  .live-btn,
+  .spending-alert-off-btn,
+  .spending-alert-on-btn {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .ban-modal-content,
+  .modal-content {
+    width: calc(100vw - 24px) !important;
+    margin: 4vh auto !important;
+    padding: 16px !important;
+  }
+}
+  </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-title">场地管理</div>
+            <button class="add-btn" id="add-venue-btn">添加场地</button>
+
+            <input list="venue_options" id="venue_search" placeholder="输入场地名称搜索" autocomplete="off"
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
+            <datalist id="venue_options"></datalist>
+<select id="venue_level_filter" class="venue-level-filter">
+    <option value="">全部评级</option>
+    <option value="A">评级 A</option>
+    <option value="B">评级 B</option>
+    <option value="C">评级 C</option>
+    <option value="D">评级 D</option>
+</select>
+            <form class="add-venue-form" id="add-venue-form">
+                <input type="text" name="venue_name" placeholder="场地名称">
+                <input type="text" name="image_url" value="https://ruoche.oss-cn-beijing.aliyuncs.com/app/img/wj.jpg" placeholder="场地图片链接">
+                <input type="text" name="venue_description" value="新开场地，敬请期待" placeholder="场地描述">
+
+                <select name="venue_tags">
+                    <option value="自营">自营</option>
+                    <option value="推荐">推荐</option>
+                    <option value="内测">内测</option>
+                </select>
+
+                <select name="venue_type">
+                    <option value="1">默认</option>
+                    <option value="2">竞速</option>
+                    <option value="3">工程车</option>
+                </select>
+<div style="margin-bottom: 6px; color: #333; font-size: 10px;">场地评级</div>
+<select name="venue_level">
+    <option value="S">S（预留）</option>
+    <option value="A" selected>A（80%）</option>
+    <option value="B">B（预留）</option>
+    <option value="C">C（60%）</option>
+    <option value="D">D（预留）</option>
+</select>
+
+<div style="margin-bottom: 6px; color: #333; font-size: 10px;">是否娃娃机场地</div>
+<select name="is_claw_machine_venue" id="is_claw_machine_venue">
+    <option value="0" selected>否</option>
+    <option value="1">是</option>
+</select>
+                <input type="text" name="start_time" value="10:00-21:00" placeholder="开放时间（格式：10:00 - 21:00）">
+
+                <select name="venue_status">
+                    <option value="休息中">休息中</option>
+                    <option value="营业中">营业中</option>
+                    <!--<option value="建设中">建设中</option>-->
+                </select>
+
+                <input type="text" name="live_stream_url" value="snssdk1128://user/profile/" placeholder="直播链接">
+                <input type="number" name="show_live_stream" value="0" placeholder="是否显示直播（0或1）">
+                <label style="
+                    display:flex;
+                    align-items:center;
+                    gap:8px;
+                    margin:8px 0 12px;
+                    padding:10px 12px;
+                    border:1px solid #dbe4ff;
+                    border-radius:8px;
+                    background:#f6f8ff;
+                    color:#333;
+                    font-size:14px;
+                ">
+                    <input type="checkbox" name="sync_overseas" value="1" style="width:auto; margin:0;">
+                    同步创建到海外 DR
+                </label>
+                <button type="submit">提交</button>
+            </form>
+
+            <!-- 新增：顶部统计筛选 -->
+<div class="venue-toolbar">
+    <div class="venue-stats">
+        <div class="stat-card stat-live" data-status="直播中">
+            <span class="stat-label">直播中</span>
+            <span class="stat-value" id="live-count">0</span>
+        </div>
+
+        <div class="stat-card stat-open" data-status="营业中">
+            <span class="stat-label">营业中</span>
+            <span class="stat-value" id="open-count">0</span>
+        </div>
+
+        <div class="stat-card stat-rest" data-status="休息中">
+            <span class="stat-label">休息中</span>
+            <span class="stat-value" id="rest-count">0</span>
+        </div>
+    </div>
+</div>
+
+            <div id="venue-list"></div>
+            <div id="loading" class="loading" style="display: none;">正在加载...</div>
+        </div>
+    </div>
+
+    <script>
+const BAN_DESC_TEMPLATES = {
+    1: '主播服装/行为/动作严重违反平台内容安全条例，请尽快调整，否则将面临场地长时间处罚。',
+    2: '主播服装/行为/动作严重违反平台内容安全条例，请整改直播内容。',
+    3: '场地存在违规行为,依照安全管理条例给予相应处罚,请尽快更改调整!'
+};
+
+function setBanDescriptionTemplate(type) {
+    const reasonEl = document.getElementById('banReason');
+    if (reasonEl) {
+        reasonEl.value = BAN_DESC_TEMPLATES[type] || '';
+    }
+
+    document.querySelectorAll('.ban-desc-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.template === String(type));
+    });
+}
+
+function openBanModal(venueId) {
+    document.getElementById('banVenueId').value = venueId;
+
+    // 默认封禁时长：10分钟
+    document.getElementById('banDuration').value = '600';
+
+    // 默认使用选项3的封禁描述
+    setBanDescriptionTemplate(3);
+
+    // 每次打开时清空已选图片/视频预览
+    const fileInput = document.getElementById('banImage');
+    const previewList = document.getElementById('banPreviewList');
+    
+    if (fileInput) fileInput.value = '';
+    if (previewList) previewList.innerHTML = '';
+
+    document.getElementById('banModal').style.display = 'block';
+}
+function openVoiceRoomBanModal(venueId) {
+    document.getElementById('voiceRoomBanVenueId').value = venueId;
+    document.getElementById('voiceRoomBanDuration').value = '86400';
+    document.getElementById('voiceRoomBanReason').value = '直播内容存在违规，已关闭语音房功能';
+    document.getElementById('voiceRoomBanModal').style.display = 'block';
+}
+
+window.setVoiceRoomUnban = function (venueId) {
+    if (!confirm('确定要解除该场地语音房封禁吗？')) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_voice_room_unban');
+    formData.append('venue_id', venueId);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '语音房已解除封禁');
+            window.loadVenues ? window.loadVenues() : location.reload();
+            // loadVenues();
+        } else {
+            alert(data.msg || '操作失败');
+        }
+    })
+    .catch(err => {
+        console.error('解除语音房封禁失败:', err);
+        alert('请求异常');
+    });
+};
+        // 保存场地映射表（id -> name）
+        const venueMap = new Map();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const addVenueBtn = document.getElementById('add-venue-btn');
+            const addVenueForm = document.getElementById('add-venue-form');
+            const venueList = document.getElementById('venue-list');
+            const loading = document.getElementById('loading');
+            const venueSearch = document.getElementById('venue_search');
+            const venueLevelFilter = document.getElementById('venue_level_filter');
+            const statCards = document.querySelectorAll('.stat-card');
+
+            let allVenues = [];
+    let currentStatus = '营业中';
+
+            addVenueBtn.addEventListener('click', function () {
+                const isHidden = window.getComputedStyle(addVenueForm).display === 'none';
+                addVenueForm.style.display = isHidden ? 'block' : 'none';
+
+                document.getElementById('venue_search').style.display = isHidden ? 'none' : 'block';
+                document.getElementById('venue_level_filter').style.display = isHidden ? 'none' : 'block';
+                document.querySelector('.venue-toolbar').style.display = isHidden ? 'none' : 'block';
+            });
+
+            function escapeHtml(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+            
+function normalizeVenueLevel(level) {
+    const v = String(level || 'A').trim().toUpperCase();
+    return ['S', 'A', 'B', 'C', 'D'].includes(v) ? v : 'A';
+}
+
+function getVenueLevelRateText(level) {
+    const v = normalizeVenueLevel(level);
+
+    if (v === 'A') return '80%';
+    if (v === 'C') return '60%';
+
+    return '预留';
+}
+
+function getVenueLevelClass(level) {
+    const v = normalizeVenueLevel(level);
+
+    if (v === 'A') return 'venue-level-a';
+    if (v === 'C') return 'venue-level-c';
+
+    return 'venue-level-reserved';
+}
+
+function renderVenueLevelOptions(currentLevel) {
+    const current = normalizeVenueLevel(currentLevel);
+    const levels = ['S', 'A', 'B', 'C', 'D'];
+
+    return levels.map(level => {
+        const selected = level === current ? 'selected' : '';
+        return `<option value="${level}" ${selected}>${level}</option>`;
+    }).join('');
+}
+function getVoiceRoomSceneType(venue) {
+    return Number(venue.voice_room_scene_type) === 2 ? 2 : 1;
+}
+
+function getVoiceRoomSceneText(sceneType) {
+    return Number(sceneType) === 2 ? '户外' : '室内';
+}
+
+function getVoiceRoomSceneClass(sceneType) {
+    return Number(sceneType) === 2 ? 'venue-pill-scene-outdoor' : 'venue-pill-scene-indoor';
+}
+
+function canEditVoiceRoomSceneType() {
+    return Number(window.role || 0) === 1 || Number(window.role || 0) === 2;
+}
+            
+function isRecommendTop(venue) {
+    return Number(venue.is_live || 0) === 1 && Number(venue.is_recommend || 0) === 1;
+}
+
+function formatLiveMarkedAt(value) {
+    if (!value) return '';
+    const str = String(value).replace('T', ' ');
+    return str.length >= 16 ? str.slice(0, 16) : str;
+}
+function getStatusOrder(venue) {
+    if (needPriorityReview(venue)) return -1; // 优先检测排最前
+    if (isRecommendTop(venue)) return 0;
+    if (isVenueLive(venue)) return 1;
+    if ((venue.venue_status || '').trim() === '营业中') return 2;
+    if (getVenueStatusGroup(venue) === '休息中') return 3;
+    return 99;
+}
+
+function getLiveMarkedTimestamp(venue) {
+    if (!venue.live_marked_at) return Number.MAX_SAFE_INTEGER;
+    const t = new Date(String(venue.live_marked_at).replace(' ', 'T')).getTime();
+    return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
+}
+function isVenueLive(venue) {
+    return (venue.venue_status || '').trim() === '营业中'
+        && Number(venue.is_live || 0) === 1;
+}
+
+function getVenueStatusGroup(venue) {
+    const status = (venue.venue_status || '').trim();
+
+    // 建设中也归到休息中
+    if (status === '建设中') {
+        return '休息中';
+    }
+
+    return status;
+}
+function needPriorityReview(venue) {
+    return Number(venue.need_live_review || 0) === 1;
+}
+
+function formatReviewTime(value) {
+    if (!value) return '';
+    const str = String(value).replace('T', ' ');
+    return str.length >= 16 ? str.slice(0, 16) : str;
+}
+function updateStats(venues) {
+    const openCount = venues.filter(v => getVenueStatusGroup(v) === '营业中').length;
+    const restCount = venues.filter(v => getVenueStatusGroup(v) === '休息中').length;
+    const liveCount = venues.filter(v => isVenueLive(v)).length;
+
+    document.getElementById('open-count').textContent = openCount;
+    document.getElementById('rest-count').textContent = restCount;
+    document.getElementById('live-count').textContent = liveCount;
+}
+function renderVenues(list) {
+    if (!list.length) {
+        venueList.innerHTML = `<div class="loading">暂无符合条件的场地</div>`;
+        return;
+    }
+
+    const venueHTML = list.map(venue => {
+        const status = (venue.venue_status || '').trim();
+        const isOpen = status === '营业中';
+        const isBuild = status === '建设中';
+        const venueTypeNum = Number(venue.venue_type);
+        const isLive = isVenueLive(venue);
+        const isPriorityReview = needPriorityReview(venue);
+
+        const isSoundDisabled = Number(venue.is_disabled_sound || 0) === 1;
+        const isVoiceRoomBanned = Number(venue.is_voice_room_banned || 0) === 1;
+        const isSpendingAlert = Number(venue.is_spending_alert || 0) === 1;
+        const venueLevel = normalizeVenueLevel(venue.venue_level);
+        const venueLevelRateText = getVenueLevelRateText(venueLevel);
+        // const isDrSynced = String(venue.dr_venue_id || '').trim() !== '';
+        
+        const userMicValue = venue.is_user_mic_enabled === null || venue.is_user_mic_enabled === undefined
+            ? 1
+            : venue.is_user_mic_enabled;
+        const isUserMicEnabled = Number(userMicValue) === 1;
+        
+        const voiceRoomSceneType = getVoiceRoomSceneType(venue);
+        const nextVoiceRoomSceneType = voiceRoomSceneType === 1 ? 2 : 1;
+        const voiceRoomSceneText = getVoiceRoomSceneText(voiceRoomSceneType);
+        const nextVoiceRoomSceneText = getVoiceRoomSceneText(nextVoiceRoomSceneType);
+        const showVoiceRoomSceneBtn = canEditVoiceRoomSceneType();
+        return `
+            <div class="venue-card ${isOpen ? 'status-open' : (isBuild ? 'status-build' : 'status-rest')}">
+                <div class="venue-card-top">
+                    <img class="venue-img" src="${escapeHtml(venue.image_url || 'default-image.jpg')}">
+
+                    <div class="venue-info">
+                        <span class="venue-name">ID:${venue.id}-${escapeHtml(venue.venue_name)}</span>
+
+<div class="venue-meta-row">
+    <button type="button"
+        class="venue-status-badge venue-status-switch ${isOpen ? 'open' : (isBuild ? 'build' : 'rest')}"
+        onclick="setVenueStatus(${venue.id}, '${status || '休息中'}')"
+        title="点击切换场地状态">
+    ${escapeHtml(status || '未知')}
+</button>
+<label class="venue-level-control venue-level-control-meta">
+    <span>评级</span>
+    <select class="venue-level-select" onchange="setVenueLevel(${venue.id}, this.value)">
+        ${renderVenueLevelOptions(venueLevel)}
+    </select>
+</label>
+    ${isLive ? `<span class="venue-live-badge">直播中</span>` : ''}
+    ${isPriorityReview ? `<span class="venue-review-badge">优先检测</span>` : ''}
+    ${venue.venue_room_id ? `<span class="venue-room-badge">房间号：${escapeHtml(venue.venue_room_id)}</span>` : ''}
+    <div class="live-log-row">
+        <button type="button" class="venue-live-log-badge" onclick="openVenueLiveLogs(${venue.id})">查看直播记录</button>
+    </div>
+</div>
+
+${isPriorityReview ? `
+<div class="review-time-row">
+    <span class="review-time-label">待复检时间</span>
+    <span class="review-time-value">
+        ${venue.last_live_cleared_at ? escapeHtml(formatReviewTime(venue.last_live_cleared_at)) : '刚进入待检测'}
+    </span>
+</div>
+` : ''}
+
+${isLive ? `
+<div class="live-time-row">
+    <span class="live-time-label">上位时间</span>
+    <span class="live-time-value">
+        ${venue.live_marked_at ? escapeHtml(formatLiveMarkedAt(venue.live_marked_at)) : '暂无或者测试场地'}
+    </span>
+</div>
+` : ''}
+
+<div class="venue-detail-grid">
+    <span class="venue-pill venue-pill-blue venue-pill-desc" title="${escapeHtml(venue.venue_description || '')}">
+        ${escapeHtml(venue.venue_description || '暂无描述')}
+    </span>
+
+    <span class="venue-pill venue-pill-amber venue-pill-tag">
+        标签：${escapeHtml(venue.venue_tags || '未设置')}
+    </span>
+
+    <span class="venue-pill venue-pill-cyan venue-pill-time">
+        开放时间：${escapeHtml(venue.start_time || '未设置')}
+    </span>
+
+    <span class="venue-pill venue-pill-sound ${isSoundDisabled ? 'venue-pill-red' : 'venue-pill-green'}">
+        喇叭麦克风：${isSoundDisabled ? '已封禁' : '正常'}
+    </span>
+
+    <span class="venue-pill venue-pill-spending ${isSpendingAlert ? 'venue-pill-orange' : 'venue-pill-gray'}">
+        高消费：${isSpendingAlert ? '已开启' : '未开启'}
+    </span>
+
+<button type="button"
+    class="venue-pill venue-pill-mic venue-pill-mic-switch ${isUserMicEnabled ? 'venue-pill-green' : 'venue-pill-red'}"
+    onclick="setVenueUserMicEnabled(${venue.id}, ${isUserMicEnabled ? 0 : 1})"
+    title="点击${isUserMicEnabled ? '关闭' : '开启'}用户上麦">
+    用户上麦：${isUserMicEnabled ? '已开启' : '已关闭'}
+</button>
+<span class="venue-pill venue-pill-voice-room ${isVoiceRoomBanned ? 'venue-pill-red' : 'venue-pill-green'}">
+    语音房：${isVoiceRoomBanned ? '已封禁' : '正常'}
+</span>
+
+${showVoiceRoomSceneBtn ? `
+    <button type="button"
+        class="venue-pill venue-pill-scene ${getVoiceRoomSceneClass(voiceRoomSceneType)}"
+        onclick="setVoiceRoomSceneType(${venue.id}, ${nextVoiceRoomSceneType})"
+        title="点击切换为${nextVoiceRoomSceneText}">
+        场景：${voiceRoomSceneText}
+    </button>
+` : ''}
+</div>
+                    </div>
+                </div>
+
+<div class="venue-action-area">
+    <div class="venue-actions venue-actions-main">
+        ${isLive
+            ? `<button class="live-btn cancel" onclick="setVenueLiveStream(${venue.id}, 0)">取消直播中</button>`
+            : `<button class="live-btn" onclick="setVenueLiveStream(${venue.id}, 1)">标记直播中</button>`
+        }
+
+        <button class="edit-btn" onclick="editVenue(${venue.id})">修改场地信息</button>
+
+        ${Number(venue.is_spending_alert || 0) === 1
+            ? `<button class="spending-alert-off-btn" onclick="setVenueSpendingAlert(${venue.id}, 0)">关闭高消费提示</button>`
+            : `<button class="spending-alert-on-btn" onclick="setVenueSpendingAlert(${venue.id}, 1)">开启高消费提示</button>`
+        }
+    </div>
+
+    <div class="venue-actions venue-actions-ban">
+        ${venue.is_banned_venue
+            ? `<button class="unban-btn" onclick="openUnbanModal(${venue.id})">解封场地</button>`
+            : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁场地</button>`
+        }
+
+        ${isVoiceRoomBanned
+            ? `<button class="voice-room-unban-btn" onclick="setVoiceRoomUnban(${venue.id})">解除语音房封禁</button>`
+            : `<button class="voice-room-ban-btn" onclick="openVoiceRoomBanModal(${venue.id})">封禁语音房</button>`
+        }
+
+        ${Number(venue.is_disabled_sound || 0) === 1
+            ? `<button class="sound-unban-btn" onclick="setVenueSoundDisabled(${venue.id}, 0)">解封喇叭麦克风</button>`
+            : `<button class="sound-ban-btn" onclick="setVenueSoundDisabled(${venue.id}, 1)">封禁喇叭麦克风</button>`
+        }
+    </div>
+</div>
+            </div>
+        `;
+    }).join('');
+
+    venueList.innerHTML = venueHTML;
+}
+
+            function updateStatCardActive() {
+                statCards.forEach(card => {
+                    const status = card.getAttribute('data-status');
+                    card.classList.toggle('active', currentStatus === status);
+                });
+            }
+
+function applyFilters() {
+    const keyword = venueSearch.value.trim().toLowerCase();
+    const selectedLevel = venueLevelFilter.value.trim().toUpperCase();
+    let filtered = [...allVenues];
+
+    if (currentStatus === '直播中') {
+        filtered = filtered.filter(v => isVenueLive(v));
+    } else {
+        filtered = filtered.filter(v => getVenueStatusGroup(v) === currentStatus);
+    }
+
+    if (keyword) {
+        filtered = filtered.filter(v => {
+            const idText = String(v.id || '');
+            const nameText = String(v.venue_name || '').toLowerCase();
+            const mixText = `${v.id} - ${v.venue_name}`.toLowerCase();
+            return idText.includes(keyword) || nameText.includes(keyword) || mixText.includes(keyword);
+        });
+    }
+
+    if (selectedLevel) {
+        filtered = filtered.filter(v => normalizeVenueLevel(v.venue_level) === selectedLevel);
+    }
+
+    updateStatCardActive();
+    renderVenues(filtered);
+}
+
+statCards.forEach(card => {
+    card.addEventListener('click', function () {
+        currentStatus = this.getAttribute('data-status');
+        applyFilters();
+    });
+});
+window.openVenueLiveLogs = function (venueId) {
+    const url = `/res/venueLiveStatusLogs.html?venue_id=${encodeURIComponent(venueId)}`;
+    window.open(url, '_blank');
+};
+window.setVenueLiveStream = function (venueId, showLiveStream) {
+    const formData = new FormData();
+    formData.append('action', 'set_live_stream_flag');
+    formData.append('venue_id', venueId);
+    formData.append('show_live_stream', showLiveStream);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0) {
+            alert(showLiveStream === 1 ? '已标记为直播中' : '已取消直播中');
+            loadVenues();
+        } else {
+            alert(data.msg || '操作失败');
+        }
+    })
+    .catch(err => {
+        console.error('设置直播状态失败:', err);
+        alert('请求异常');
+    });
+};
+window.setVenueStatus = function (venueId, currentStatus) {
+    const current = String(currentStatus || '').trim() === '营业中' ? '营业中' : '休息中';
+    const nextStatus = current === '营业中' ? '休息中' : '营业中';
+
+    if (!confirm(`确定把该场地状态从【${current}】改为【${nextStatus}】吗？`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_venue_status');
+    formData.append('venue_id', venueId);
+    formData.append('venue_status', nextStatus);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '状态修改成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '状态修改失败');
+        }
+    })
+    .catch(err => {
+        console.error('设置场地状态失败:', err);
+        alert('请求异常');
+    });
+};
+window.setVenueSoundDisabled = function (venueId, isDisabledSound) {
+    const actionText = isDisabledSound === 1 ? '封禁该场地喇叭麦克风' : '解除该场地喇叭麦克风封禁';
+
+    if (!confirm(`确定要${actionText}吗？`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_venue_sound_disabled');
+    formData.append('venue_id', venueId);
+    formData.append('is_disabled_sound', isDisabledSound);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '操作成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '操作失败');
+        }
+    })
+    .catch(err => {
+        console.error('设置场地声音封禁失败:', err);
+        alert('请求异常');
+    });
+};
+window.setVenueUserMicEnabled = function (venueId, isUserMicEnabled) {
+    isUserMicEnabled = Number(isUserMicEnabled);
+
+    if (![0, 1].includes(isUserMicEnabled)) {
+        alert('用户上麦参数错误');
+        return;
+    }
+
+    const actionText = isUserMicEnabled === 1 ? '开启该场地用户上麦' : '关闭该场地用户上麦';
+
+    if (!confirm(`确定要${actionText}吗？`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_user_mic_enabled');
+    formData.append('venue_id', venueId);
+    formData.append('is_user_mic_enabled', isUserMicEnabled);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '用户上麦状态修改成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '用户上麦状态修改失败');
+            loadVenues();
+        }
+    })
+    .catch(err => {
+        console.error('设置用户上麦失败:', err);
+        alert('请求异常');
+        loadVenues();
+    });
+};
+window.setVoiceRoomSceneType = function (venueId, sceneType) {
+    sceneType = Number(sceneType);
+
+    if (![1, 2].includes(sceneType)) {
+        alert('语音房场景参数错误');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_voice_room_scene_type');
+    formData.append('venue_id', venueId);
+    formData.append('voice_room_scene_type', sceneType);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            loadVenues();
+        } else {
+            alert(data.msg || '语音房场景修改失败');
+            loadVenues();
+        }
+    })
+    .catch(err => {
+        console.error('设置语音房场景失败:', err);
+        alert('请求异常');
+        loadVenues();
+    });
+};
+
+window.setVenueLevel = function (venueId, venueLevel) {
+    const level = normalizeVenueLevel(venueLevel);
+    const rateText = getVenueLevelRateText(level);
+
+    if (!confirm(`确定把该场地评级修改为 ${level}（${rateText}）吗？`)) {
+        loadVenues();
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'set_venue_level');
+    formData.append('venue_id', venueId);
+    formData.append('venue_level', level);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '评级修改成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '评级修改失败');
+            loadVenues();
+        }
+    })
+    .catch(err => {
+        console.error('设置场地评级失败:', err);
+        alert('请求异常');
+        loadVenues();
+    });
+};
+window.setVenueSpendingAlert = function (venueId, isSpendingAlert) {
+    const actionText = isSpendingAlert === 1 ? '开启该场地高消费提示' : '关闭该场地高消费提示';
+
+    if (!confirm(`确定要${actionText}吗？`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('venue_id', venueId);
+    formData.append('is_spending_alert', isSpendingAlert);
+
+    fetch('/api/venue/set_venue_spending_alert.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '操作成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '操作失败');
+        }
+    })
+    .catch(err => {
+        console.error('设置高消费提示失败:', err);
+        alert('请求异常');
+    });
+};
+            function loadVenues() {
+                loading.style.display = 'block';
+                venueList.innerHTML = '';
+
+                const formData = new FormData();
+                formData.append('action', 'loadingdata');
+
+                fetch('/api/venue/VenuesManagement.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+
+                    if (data.code === 200) {
+                        const venues = Array.isArray(data.data) ? data.data : [];
+                        window.role = data.role;
+
+                        const venueOptions = document.getElementById('venue_options');
+                        venueOptions.innerHTML = '';
+                        venueMap.clear();
+
+                        venues.forEach(venue => {
+                            const option = document.createElement('option');
+                            option.value = `${venue.id} - ${venue.venue_name}`;
+                            venueOptions.appendChild(option);
+                            venueMap.set(venue.id, venue.venue_name);
+                        });
+
+allVenues = venues.sort((a, b) => {
+    const statusDiff = getStatusOrder(a) - getStatusOrder(b);
+    if (statusDiff !== 0) return statusDiff;
+
+    // 两个都是推荐位直播时，按上位时间排
+    if (isRecommendTop(a) && isRecommendTop(b)) {
+        const timeDiff = getLiveMarkedTimestamp(a) - getLiveMarkedTimestamp(b);
+        if (timeDiff !== 0) return timeDiff; // 越早上位越靠前 return -timeDiff;
+    }
+
+    return Number(a.id) - Number(b.id);
+});
+
+                        updateStats(allVenues);
+                        applyFilters();
+                    } else {
+                        venueList.innerHTML = `<div class="loading">加载失败：${data.msg || '未知错误'}</div>`;
+                        console.error(data.msg);
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    venueList.innerHTML = `<div class="loading">数据加载出错</div>`;
+                    console.error('数据加载出错:', error);
+                });
+                
+               
+            }
+             window.loadVenues = loadVenues;
+            addVenueForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                formData.append('action', 'addvenues');
+
+                fetch('/api/venue/VenuesManagement.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 0) {
+                        let msg = data.msg || '场地添加成功';
+                    
+                        if (data.sync_overseas) {
+                            if (data.sync_overseas.ok) {
+                                const drVenueId = data.dr_venue_id || data.sync_overseas.dr_venue_id || '';
+                                msg += '\n海外 DR 同步成功' + (drVenueId ? `，DR场地ID：${drVenueId}` : '');
+                            }else {
+                                msg += '\n海外 DR 同步失败：' + (data.sync_overseas.error || data.sync_overseas.msg || '未知错误');
+                            }
+                        }
+                    
+                        alert(msg);
+                    
+                        addVenueForm.reset();
+                        addVenueForm.style.display = 'none';
+                        document.getElementById('venue_search').style.display = 'block';
+                        document.getElementById('venue_level_filter').style.display = 'block';
+                        document.querySelector('.venue-toolbar').style.display = 'block';
+                        loadVenues();
+                    } else {
+                        alert(data.msg);
+                    }
+                })
+                .catch(error => {
+                    console.error('添加场地出错:', error);
+                });
+            });
+
+            venueSearch.addEventListener('input', applyFilters);
+            venueLevelFilter.addEventListener('change', applyFilters);
+
+            loadVenues();
+            // 新增：封禁描述模板点击事件
+            document.querySelectorAll('.ban-desc-option').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    setBanDescriptionTemplate(this.dataset.template);
+                });
+            });
+            document.querySelector('.modal-close').addEventListener('click', () => {
+                document.getElementById('banModal').style.display = 'none';
+            });
+
+            window.addEventListener('click', function (event) {
+                const banModal = document.getElementById('banModal');
+                if (event.target === banModal) banModal.style.display = 'none';
+            });
+
+            // 图片/视频预览
+            // 图片/视频预览，最多3个
+            const banInput = document.getElementById('banImage');
+            const previewList = document.getElementById('banPreviewList');
+            
+            function renderBanPreviews(files) {
+                previewList.innerHTML = '';
+            
+                files.forEach(file => {
+                    const url = URL.createObjectURL(file);
+                    const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
+            
+                    let el;
+                    if (isMp4) {
+                        el = document.createElement('video');
+                        el.controls = true;
+                        el.src = url;
+                    } else {
+                        el = document.createElement('img');
+                        el.src = url;
+                    }
+            
+                    previewList.appendChild(el);
+                });
+            }
+            
+            banInput.addEventListener('change', function () {
+                const files = Array.from(this.files || []);
+            
+                if (files.length > 3) {
+                    alert('最多只能上传3个文件');
+                    this.value = '';
+                    previewList.innerHTML = '';
+                    return;
+                }
+            
+                renderBanPreviews(files);
+            });
+            
+            async function uploadBanFile(file) {
+                const fd = new FormData();
+                fd.append('file', file);
+            
+                const upRes = await fetch('/api/devMgr/upload_violation_image.php', {
+                    method: 'POST',
+                    body: fd
+                });
+            
+                const upJson = await upRes.json();
+            
+                if (!upRes.ok || upJson.code !== 0) {
+                    throw new Error(upJson.msg || upRes.status);
+                }
+            
+                const imageUrl = upJson.data && upJson.data.image_url ? upJson.data.image_url : '';
+            
+                if (!imageUrl) {
+                    throw new Error('上传接口未返回 image_url');
+                }
+            
+                return imageUrl;
+            }
+            
+            // 提交封禁：先上传最多3个文件，再封禁
+            document.getElementById('banForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+            
+                const venueId = document.getElementById('banVenueId').value;
+                const duration = document.getElementById('banDuration').value;
+                const reason = document.getElementById('banReason').value;
+            
+                if (!reason.trim()) {
+                    alert('请填写封禁描述');
+                    return;
+                }
+            
+                const fileInput = document.getElementById('banImage');
+                const files = Array.from(fileInput.files || []);
+            
+                if (files.length > 3) {
+                    alert('最多只能上传3个文件');
+                    return;
+                }
+            
+                let imageUrls = [];
+            
+                if (files.length > 0) {
+                    try {
+                        for (const file of files) {
+                            const url = await uploadBanFile(file);
+                            imageUrls.push(url);
+                        }
+                    } catch (err) {
+                        alert('文件上传异常：' + err.message);
+                        return;
+                    }
+                }
+            
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/devMgr/devMgtV2.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+            
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.code === 0) {
+                                    alert('封禁成功');
+                                    document.getElementById('banModal').style.display = 'none';
+                                    loadVenues();
+                                } else {
+                                    alert('封禁失败: ' + response.msg);
+                                }
+                            } catch (err) {
+                                console.error('响应解析失败:', err);
+                                alert('服务器响应格式错误');
+                            }
+                        } else {
+                            alert('请求失败，状态码: ' + xhr.status);
+                        }
+                    }
+                };
+            
+                const data = {
+                    ban: true,
+                    id: 1,
+                    venue_id: venueId,
+                    banType: 'venue',
+                    ban_duration: parseInt(duration, 10),
+                    ban_reason: reason.trim(),
+            
+                    // 兼容后端单字段
+                    image_url: imageUrls[0] || null,
+                    image_url_2: imageUrls[1] || null,
+                    image_url_3: imageUrls[2] || null,
+            
+                    // 也传数组，后端以后扩展更方便
+                    image_urls: imageUrls
+                };
+            
+                xhr.send(JSON.stringify(data));
+            });
+        });
+
+        function editVenue(venueId) {
+            window.location.href = `venue.html?id=${venueId}`;
+        }
+
+        function openUnbanModal(venueId) {
+            document.getElementById('unbanVenueId').value = venueId;
+            document.getElementById('unbanReason').value = '场地已完成整改，申请解除封禁并承诺后续合规运营。';
+            document.getElementById('unbanModal').style.display = 'block';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const voiceRoomCloseBtn = document.querySelector('.voice-room-ban-modal-close');
+
+            if (voiceRoomCloseBtn) {
+                voiceRoomCloseBtn.addEventListener('click', () => {
+                    document.getElementById('voiceRoomBanModal').style.display = 'none';
+                });
+            }
+            
+            window.addEventListener('click', function (event) {
+                const modal = document.getElementById('voiceRoomBanModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('voiceRoomBanForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+            
+                const venueId = document.getElementById('voiceRoomBanVenueId').value;
+                const duration = document.getElementById('voiceRoomBanDuration').value;
+                const reason = document.getElementById('voiceRoomBanReason').value.trim();
+                const submitBtn = this.querySelector('button[type="submit"]');
+            
+                if (!reason) {
+                    alert('请填写语音房封禁原因');
+                    return;
+                }
+            
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = '封禁中...';
+                }
+            
+                const formData = new FormData();
+                formData.append('action', 'set_voice_room_ban');
+                formData.append('venue_id', venueId);
+                formData.append('ban_duration', duration);
+                formData.append('ban_reason', reason);
+            
+                fetch('/api/venue/VenuesManagement.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 0 || data.code === 200) {
+                        alert(data.msg || '语音房已封禁');
+                        document.getElementById('voiceRoomBanModal').style.display = 'none';
+                        window.loadVenues ? window.loadVenues() : location.reload();
+                    } else {
+                        alert(data.msg || '封禁失败');
+                    }
+                })
+                .catch(err => {
+                    console.error('语音房封禁失败:', err);
+                    alert('请求异常');
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '确认封禁语音房';
+                    }
+                });
+            });
+            const closeBtn = document.querySelector('.unban-modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    document.getElementById('unbanModal').style.display = 'none';
+                });
+            }
+
+            window.addEventListener('click', function (event) {
+                const modal = document.getElementById('unbanModal');
+                if (event.target === modal) modal.style.display = 'none';
+            });
+
+            document.getElementById('unbanForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+            
+                const venueId = document.getElementById('unbanVenueId').value;
+                const reason = document.getElementById('unbanReason').value.trim();
+                const submitBtn = this.querySelector('button[type="submit"]');
+            
+                if (!reason) {
+                    alert('请填写解封原因');
+                    return;
+                }
+            
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = '解封中...';
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+            
+                const formData = new FormData();
+                formData.append('action', 'unban_venue');
+                formData.append('venue_id', venueId);
+                formData.append('unban_reason', reason);
+            
+                fetch('/api/venue/VenuesManagement.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    // 兼容后端返回 code=0 或 code=200
+                    if (data.code === 0 || data.code === 200) {
+                        document.getElementById('unbanModal').style.display = 'none';
+                        alert('解封成功');
+            
+                        // 稍微延迟一下，避免弹窗状态没来得及更新
+                        setTimeout(() => {
+                            location.reload();
+                        }, 300);
+                    } else {
+                        alert('解封失败：' + (data.msg || data.message || '未知错误'));
+                    }
+                })
+                .catch(err => {
+                    alert('请求异常：' + err);
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '确认解封';
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                    }
+                });
+            });
+        });
+    </script>
+
+<!-- 封禁模态框 -->
+<div id="banModal" class="modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000;">
+    
+    <div class="ban-modal-content">
+        <span class="modal-close"
+            style="position: absolute; top: 14px; right: 18px; font-size: 24px; cursor: pointer;">&times;</span>
+
+        <div class="ban-modal-title">封禁场地</div>
+
+        <form id="banForm">
+            <input type="hidden" id="banVenueId">
+
+            <div class="ban-form-group">
+                <label for="banDuration">封禁时长</label>
+                <select id="banDuration" required>
+                    <option value="600">10分钟</option>
+                    <option value="1800">30分钟</option>
+                    <option value="3600">1小时</option>
+                    <option value="10800">3小时</option>
+                    <option value="86400">一天</option>
+                    <option value="259200">三天</option>
+                    <option value="604800">一周</option>
+                    <option value="1296000">半个月</option>
+                    <option value="2592000">1月</option>
+                    <option value="31536000">1年</option>
+                </select>
+            </div>
+
+            <div class="ban-form-group">
+                <label for="banReason">封禁描述</label>
+
+                <div class="ban-desc-tips">选择下方模板后，可在输入框内继续自定义修改。</div>
+
+                <div class="ban-template-list">
+                    <button type="button" class="ban-desc-option" data-template="1">
+                        选项1：严重违规，提示可能面临长时间处罚
+                    </button>
+
+                    <button type="button" class="ban-desc-option" data-template="2">
+                        选项2：要求整改直播内容
+                    </button>
+
+                    <button type="button" class="ban-desc-option active" data-template="3">
+                        选项3：通用违规处罚描述
+                    </button>
+                </div>
+
+                <textarea id="banReason" placeholder="请输入封禁描述">场地存在违规行为,依照安全管理条例给予相应处罚,请尽快更改调整!</textarea>
+            </div>
+
+            <!--<div class="ban-form-group">-->
+            <!--    <label for="banImage">违规图片/视频（可选）</label>-->
+            <!--    <input type="file" id="banImage" accept="image/*,video/mp4" />-->
+            <!--    <img id="banImagePreview" class="ban-preview-img" />-->
+            <!--    <video id="banVideoPreview" class="ban-preview-video" controls></video>-->
+            <!--</div>-->
+            <div class="ban-form-group">
+                <label for="banImage">违规图片/视频（可选，最多3个）</label>
+                <input type="file" id="banImage" accept="image/*,video/mp4" multiple />
+                <div id="banPreviewList" class="ban-preview-list"></div>
+            </div>
+            <button type="submit" class="ban-submit-btn">确认封禁</button>
+        </form>
+    </div>
+</div>
+
+<!-- 语音房封禁模态框 -->
+<div id="voiceRoomBanModal" class="modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000;">
+
+    <div class="ban-modal-content">
+        <span class="voice-room-ban-modal-close"
+            style="position:absolute; top:14px; right:18px; font-size:24px; cursor:pointer;">&times;</span>
+
+        <div class="ban-modal-title">封禁语音房</div>
+
+        <form id="voiceRoomBanForm">
+            <input type="hidden" id="voiceRoomBanVenueId">
+
+            <div class="ban-form-group">
+                <label for="voiceRoomBanDuration">封禁时长</label>
+                <select id="voiceRoomBanDuration" required>
+                    <option value="600">10分钟</option>
+                    <option value="1800">30分钟</option>
+                    <option value="3600">1小时</option>
+                    <option value="10800">3小时</option>
+                    <option value="86400" selected>一天</option>
+                    <option value="259200">三天</option>
+                    <option value="604800">一周</option>
+                    <option value="1296000">半个月</option>
+                    <option value="2592000">1月</option>
+                    <option value="31536000">1年</option>
+                </select>
+            </div>
+
+            <div class="ban-form-group">
+                <label for="voiceRoomBanReason">封禁原因</label>
+                <textarea id="voiceRoomBanReason" style="width:100%; min-height:120px;"
+                    placeholder="请输入语音房封禁原因">直播内容存在违规，已关闭语音房功能</textarea>
+            </div>
+
+            <button type="submit" class="ban-submit-btn">确认封禁语音房</button>
+        </form>
+    </div>
+</div>
+    <!-- 解封模态框 -->
+    <div id="unbanModal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 1000;">
+        <div class="modal-content"
+            style="background:#fff; width:400px; margin:10% auto; padding:20px; border-radius:8px; position:relative;">
+            <span class="unban-modal-close"
+                style="position:absolute; top:10px; right:15px; font-size:20px; cursor:pointer;">&times;</span>
+            <h2>解封场地</h2>
+            <form id="unbanForm">
+                <input type="hidden" id="unbanVenueId">
+                <div class="form-group">
+                    <label for="unbanReason">解封原因</label>
+                    <textarea id="unbanReason" rows="3" style="width:100%;" placeholder="请填写解封原因（必填）"></textarea>
+                </div>
+                <button type="submit"
+                    style="margin-top:10px; background-color:#5b8cff; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">
+                    确认解封
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
