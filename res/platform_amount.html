@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>平台金额查询</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 26px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.card-title::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.form-container {
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-soft);
+}
+
+#queryForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.form-item {
+  min-width: 210px;
+  margin: 0;
+  display: block;
+}
+
+.form-item:last-child {
+  min-width: auto;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.form-input,
+input[type="date"] {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: #fff !important;
+  font-size: 13px;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.form-input:focus,
+input[type="date"]:focus {
+  border-color: rgba(15, 143, 140, .48) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+.form-button,
+button[type="submit"] {
+  height: 38px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  border: 1px solid var(--primary) !important;
+  border-radius: var(--radius) !important;
+  color: #fff !important;
+  background: var(--primary) !important;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease, opacity .16s ease;
+}
+
+.form-button:hover,
+button[type="submit"]:hover {
+  border-color: var(--primary-dark) !important;
+  background: var(--primary-dark) !important;
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .20);
+  transform: translateY(-1px);
+}
+
+.amount-card {
+  position: relative;
+  margin: 18px;
+  padding: 22px 24px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 143, 140, .16);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #ffffff 0%, #f4fbfb 100%);
+  box-shadow: var(--shadow-sm);
+}
+
+.amount-card::after {
+  content: "￥";
+  position: absolute;
+  right: 24px;
+  top: 12px;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 900;
+  opacity: .85;
+}
+
+.amount-title {
+  position: relative;
+  z-index: 1;
+  margin: 0 74px 10px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.amount-value {
+  position: relative;
+  z-index: 1;
+  margin-right: 74px;
+  color: var(--text);
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 950;
+  letter-spacing: -.02em;
+}
+
+.amount-value::first-letter {
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 14px 12px 24px;
+  }
+
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+
+  .form-container {
+    padding: 14px;
+  }
+
+  #queryForm {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-item,
+  .form-item:last-child {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .form-button,
+  button[type="submit"] {
+    width: 100%;
+  }
+
+  .amount-card {
+    margin: 14px;
+    padding: 18px;
+  }
+
+  .amount-card::after {
+    right: 18px;
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  .amount-title,
+  .amount-value {
+    margin-right: 58px;
+  }
+
+  .amount-value {
+    font-size: 28px;
+  }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">平台金额统计</h2>
+            
+            <div class="form-container">
+                <form id="queryForm">
+                    <div class="form-item">
+                        <label class="form-label">开始日期</label>
+                        <input type="date" class="form-input" id="startDate" name="start_date">
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">结束日期</label>
+                        <input type="date" class="form-input" id="endDate" name="end_date">
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="form-button">
+                            <i class="fas fa-search"></i> 查询
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="amount-card">
+                <div class="amount-title" id="amountTitle">近7天总充值金额</div>
+                <div class="amount-value" id="totalAmount">¥ 0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 格式化日期函数
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // 计算两个日期之间的天数差
+        function getDaysDifference(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = Math.abs(end - start);
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 因为包含起始日期
+        }
+
+        // 查询数据函数
+        async function queryAmount() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // 计算天数并更新标题
+            const days = getDaysDifference(startDate, endDate);
+            document.getElementById('amountTitle').textContent = `近${days}天总充值金额`;
+            
+            try {
+                const response = await fetch(`/api/finance/platform_amount.php?start_date=${startDate}&end_date=${endDate}`);
+                const data = await response.json();
+                
+                if (data.code === 0) {
+                    const formattedAmount = new Intl.NumberFormat('zh-CN', {
+                        style: 'currency',
+                        currency: 'CNY'
+                    }).format(data.data.total_payment || 0);
+                    
+                    document.getElementById('totalAmount').textContent = formattedAmount;
+                } else {
+                    alert(data.msg);
+                }
+            } catch (error) {
+                console.error('查询失败:', error);
+                alert('查询失败，请稍后重试');
+            }
+        }
+
+        // 设置默认日期范围为最近7天
+        window.addEventListener('load', function() {
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 6);
+            
+            document.getElementById('startDate').value = formatDate(sevenDaysAgo);
+            document.getElementById('endDate').value = formatDate(today);
+
+            // 页面加载时自动查询
+            queryAmount();
+        });
+
+        // 表单提交事件
+        document.getElementById('queryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            queryAmount();
+        });
+    </script>
+</body>
+</html> 
