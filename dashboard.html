@@ -1599,7 +1599,7 @@
                     <td>
                       <div class="device">
                         <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/></svg></span>
-                        <div><b>娃娃机 A-018</b><span>ID: KWX-0018</span></div>
+                        <div><b>工程车 A-018</b><span>ID: KWX-0018</span></div>
                       </div>
                     </td>
                     <td>杭州滨江店</td>
@@ -1801,6 +1801,43 @@
       });
     }
 
+    const deferredMenuKeywords = [
+      '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
+      '礼物', 'gift',
+      '金币', 'gold', 'gold_package', 'coin', 'coins',
+      '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
+      '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
+      'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage'
+    ];
+
+    function deferredText(value) {
+      return [
+        value && value.name,
+        value && value.title,
+        value && value.jump,
+        value && value.group,
+        value && value.text
+      ].join(' ').toLowerCase();
+    }
+
+    function isDeferredEntry(value) {
+      const text = deferredText(value);
+      return deferredMenuKeywords.some(function(keyword) {
+        return text.includes(keyword.toLowerCase());
+      });
+    }
+
+    function filterDeferredMenus(items, parentHidden) {
+      return (items || []).reduce(function(list, item) {
+        const hidden = parentHidden || isDeferredEntry(item);
+        if (hidden) return list;
+        const clone = Object.assign({}, item);
+        clone.children = filterDeferredMenus(item.children || [], false);
+        list.push(clone);
+        return list;
+      }, []);
+    }
+
     function renderMenus(items) {
       if (!items.length) {
         sidebarNav.innerHTML = '<div class="nav-empty">当前账号暂无可用菜单</div>';
@@ -1842,7 +1879,7 @@
         window.location.replace('./index.html');
         return;
       }
-      menuTree = result.data.menus || [];
+      menuTree = filterDeferredMenus(result.data.menus || [], false);
       renderMenus(menuTree);
       routeFromHash();
     }
@@ -1972,7 +2009,7 @@
         order: '围绕订单查询、订单申诉和订单处理流程整理。',
         user: '围绕用户、加盟、主播认证和邀请相关能力整理。',
         finance: '围绕充值、消费、退款、提现和账户流水整理。',
-        ops: '围绕活动、消息、礼物、配置和运营工具整理。',
+        ops: '围绕活动、消息、配置和运营工具整理。',
         audit: '围绕投诉、违规、巡查和审核处理整理。',
         tools: '系统维护和内部工具入口。'
       };
@@ -2317,6 +2354,9 @@
 
     function buildWorkbenchHtml(data, metrics, todos, actions) {
       const adminOnlyStyle = Number(data.role_id || 0) === 2 ? ' style="display:none"' : '';
+      const visibleActions = (actions || []).filter(function(action) {
+        return !isDeferredEntry(action);
+      });
       return '' +
         '<div class="workbench-head">' +
         '<div class="workbench-title"><h2>' + escapeHtml(data.venue_name || '酷玩星工作台') + '</h2><p>数据来自老系统工作台接口，当前展示今日实时概览。</p></div>' +
@@ -2326,16 +2366,16 @@
         statCard('今日注册', formatInt(metrics.registerCount) + ' 人', 'APP 新注册用户', 'user') +
         statCard('今日活跃', formatInt(metrics.activeUserCount) + ' 人', '今日活跃用户数', 'ops') +
         statCard('平台收益', formatMoney(metrics.totalRecharge), '今日平台总收益', 'finance') +
-        statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费 + 礼物收益', 'order') +
+        statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费汇总', 'order') +
         '</div>' +
         '<div class="workbench-grid">' +
         '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>快捷入口</strong><span>按老工作台入口整理，后续逐个迁移为新页面</span></div></div><div class="quick-grid">' +
-        actions.map(quickAction).join('') +
+        visibleActions.map(quickAction).join('') +
         '</div></section>' +
         '<aside class="side-stack">' +
         '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>待处理事项</strong><span>来自老系统统计口径</span></div></div><div class="todo-list">' +
         todoItem('订单申诉', '待处理申诉单', todos.appealCount, '/iframe/link/order_report') +
-        todoItem('投诉处理', '设备与语音房举报', todos.reportCount, '/iframe/link/reporthand') +
+        todoItem('投诉处理', '设备与内容举报', todos.reportCount, '/iframe/link/reporthand') +
         todoItem('提现审批', '待审核提现申请', todos.withdrawCount, '/iframe/link/paylist') +
         todoItem('图文审核', '图片、场地与设备名称审核', todos.pendingImages, '/iframe/link/pidtrueAndtextPedding') +
         todoItem('加盟申请', '未处理加盟资料', todos.franchiseCount, '/iframe/link/FranchiseManagement') +
