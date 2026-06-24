@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>场地资金账号管理</title>
+
+  <style>
+:root {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: #fbfcfd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --danger: #df5b57;
+  --danger-soft: #ffefef;
+  --blue: #2f7df6;
+  --blue-soft: #eef5ff;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+  --radius: 8px;
+  --transition: all .16s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 28px 34px;
+  color: var(--text);
+  background: var(--bg);
+  display: block;
+  overflow-x: hidden;
+}
+
+body > canvas,
+canvas {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.card {
+  width: 100%;
+  margin: 0 auto 18px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.card-title {
+  min-height: 64px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: .01em;
+  flex-wrap: wrap;
+}
+
+.card-title > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-title > span:first-child::before {
+  content: "";
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex: 0 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-soft);
+}
+
+.toolbar .field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.toolbar .field[style*="flex:1"] {
+  min-width: 260px;
+}
+
+.muted {
+  color: var(--muted) !important;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+select,
+input[type="text"],
+input:not([type]),
+textarea {
+  min-width: 220px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: #fff !important;
+  font-size: 13px;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+textarea {
+  height: auto;
+  min-height: 82px;
+  padding: 10px 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+select:focus,
+input[type="text"]:focus,
+input:not([type]):focus,
+textarea:focus {
+  border-color: rgba(15, 143, 140, .48) !important;
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+select:disabled {
+  opacity: .62;
+  cursor: not-allowed;
+  background: #f6f8f9 !important;
+}
+
+.btn,
+.edit-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 15px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease, opacity .16s ease;
+}
+
+.btn:hover,
+.edit-btn:hover {
+  border-color: rgba(15, 143, 140, .35) !important;
+  background: var(--primary-soft) !important;
+  color: var(--primary-dark) !important;
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .12) !important;
+  transform: translateY(-1px);
+  filter: none;
+}
+
+.btn.primary,
+.edit-btn {
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  background: var(--primary) !important;
+}
+
+.btn.primary:hover,
+.edit-btn:hover {
+  border-color: var(--primary-dark) !important;
+  color: #fff !important;
+  background: var(--primary-dark) !important;
+}
+
+.btn.danger {
+  border-color: rgba(223, 91, 87, .18) !important;
+  color: var(--danger) !important;
+  background: var(--danger-soft) !important;
+}
+
+.btn.danger:hover {
+  border-color: rgba(223, 91, 87, .35) !important;
+  color: #fff !important;
+  background: var(--danger) !important;
+  box-shadow: 0 8px 18px rgba(223, 91, 87, .16) !important;
+}
+
+#list {
+  padding: 18px;
+}
+
+#list:empty {
+  display: none;
+}
+
+.venue-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  margin: 0 0 12px;
+  padding: 16px;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text);
+  background: var(--panel-soft) !important;
+  box-shadow: none !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.venue-card:last-child {
+  margin-bottom: 0;
+}
+
+.venue-card:hover {
+  border-color: rgba(15, 143, 140, .30) !important;
+  background: #fff !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.venue-info {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.venue-info > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.venue-info b {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.venue-info .venue-name {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 180px;
+  min-height: 24px;
+  padding: 3px 9px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venue-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+
+.loading {
+  display: block;
+  padding: 26px 18px !important;
+  color: var(--primary) !important;
+  text-align: center;
+  font-size: 14px !important;
+  font-weight: 800;
+}
+
+#pagerInfo {
+  margin: 0 !important;
+  padding: 0 18px 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  padding: 22px;
+  background: rgba(8, 22, 26, .46) !important;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  width: 480px;
+  max-width: 100%;
+  max-height: calc(100vh - 44px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(7, 31, 39, .22);
+}
+
+.modal-content h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: #fff;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.modal-content > label,
+.modal-content > div:not(.modal-actions):not(.muted) {
+  margin: 0 18px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+  width: 100%;
+  min-width: 0;
+}
+
+.close-x {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 800;
+  transition: color .16s ease, background .16s ease;
+}
+
+.close-x:hover {
+  color: var(--text);
+  background: var(--panel-soft);
+}
+
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+#modalHint {
+  padding: 0 18px 16px;
+}
+
+@media (max-width: 860px) {
+  body {
+    padding: 16px 12px 28px;
+  }
+
+  .card-title {
+    padding: 14px;
+    font-size: 18px;
+  }
+
+  .toolbar {
+    padding: 14px;
+    align-items: stretch;
+  }
+
+  .toolbar .field,
+  .toolbar .field[style*="flex:1"] {
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+  }
+
+  select,
+  input[type="text"],
+  input:not([type]),
+  textarea {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .btn,
+  .edit-btn {
+    flex: 1;
+  }
+
+  #list {
+    padding: 14px;
+  }
+
+  .venue-card {
+    flex-direction: column;
+    padding: 14px;
+  }
+
+  .venue-info {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-actions {
+    flex-direction: row;
+    padding-left: 0;
+    padding-top: 12px;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .modal {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .modal-content {
+    max-height: calc(100vh - 24px);
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">
+        <span>场地资金账号管理</span>
+        <button class="btn primary" id="btnAdd">+ 新增账号</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="field" id="venueField">
+          <span class="muted">场地筛选：</span>
+          <select id="venue_id">
+            <option value="">全部场地</option>
+          </select>
+        </div>
+
+        <div class="field" style="flex:1;">
+          <input type="text" id="kw" placeholder="搜索：卡号/类型/姓名/银行/备注..." />
+        </div>
+
+        <button class="btn" id="btnSearch">搜索</button>
+        <button class="btn" id="btnReset">重置</button>
+      </div>
+
+      <div id="loading" class="loading" style="display:none;">加载中...</div>
+      <div id="list"></div>
+      <div class="muted" id="pagerInfo" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3>
+        <span id="modalTitle">新增账号</span>
+        <span class="close-x" id="modalClose">×</span>
+      </h3>
+
+      <div id="adminVenueWrap" style="display:none;">
+        <label>场地ID（管理员可选）</label>
+        <select id="form_venue_id">
+          <option value="">请选择场地</option>
+        </select>
+      </div>
+
+      <label>提现账号（必填）</label>
+      <input id="withdrawal_account" placeholder="银行卡号 / 支付宝 / 微信等" />
+
+      <label>账号类型（必填）</label>
+      <input id="account_type" placeholder="例如：银行卡 / 支付宝 / 微信" />
+
+      <label>姓名（必填）</label>
+      <input id="account_name" placeholder="持卡人 / 收款人姓名" />
+
+      <label>银行名称</label>
+      <input id="bank_name" placeholder="例如：招商银行" />
+
+      <label>银行卡号（可与提现账号不同，用于识别分行等）</label>
+      <input id="bank_number" placeholder="例如：6222..." />
+
+      <!--<label>账户余额</label>-->
+      <!--<input id="account_balance" placeholder="默认 0.00" />-->
+
+      <label>备注</label>
+      <textarea id="remarks" placeholder="可选：说明/用途/注意事项"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn" id="btnCancel">取消</button>
+        <button class="btn primary" id="btnSave">保存</button>
+      </div>
+
+      <div class="muted" id="modalHint"></div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ====== 你需要改这里：接口地址 ======
+  const API_BASE = '/api/operat/venue_funds_api.php';
+
+  // 如果你已经有 get_venues 的接口（你示例的 EnergyGift.php?action=get_venues），可以复用：
+  const VENUE_LIST_API = '/api/operat/EnergyGift.php'; // action=get_venues
+
+  // ====== 状态 ======
+  let page = 1;
+  const pageSize = 50;
+  let currentVenueId = '';     // 筛选用
+  let isAdmin = false;         // 由后端返回推断（如果你愿意也可做 /me 接口）
+  let editingId = null;        // 当前编辑记录 id
+
+  const $ = (id) => document.getElementById(id);
+
+  function showLoading(show) {
+    $('loading').style.display = show ? 'block' : 'none';
+  }
+
+  function openModal(title) {
+    $('modalTitle').textContent = title;
+    $('modalHint').textContent = '';
+    $('modal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    $('modal').style.display = 'none';
+    editingId = null;
+  }
+
+    function fillForm(row) {
+      $('withdrawal_account').value = row?.withdrawal_account ?? '';
+      $('account_type').value = row?.account_type ?? '';
+      $('account_name').value = row?.account_name ?? '';
+      $('bank_name').value = row?.bank_name ?? '';
+      $('bank_number').value = row?.bank_number ?? '';
+      $('remarks').value = row?.remarks ?? '';
+      if (isAdmin) $('form_venue_id').value = row?.venue_id ?? '';
+    }
+
+    function readForm() {
+  const payload = {
+    withdrawal_account: $('withdrawal_account').value.trim(),
+    account_type: $('account_type').value.trim(),
+    account_name: $('account_name').value.trim(),
+    bank_name: $('bank_name').value.trim(),
+    bank_number: $('bank_number').value.trim(),
+    remarks: $('remarks').value.trim()
+  };
+
+  if (isAdmin) {
+    const vid = $('form_venue_id').value.trim();
+    if (vid) payload.venue_id = parseInt(vid, 10);
+  }
+
+  return payload;
+}
+
+  function requireFields(payload) {
+    if (!payload.withdrawal_account) return '提现账号必填';
+    if (!payload.account_type) return '账号类型必填';
+    if (!payload.account_name) return '姓名必填';
+    return '';
+  }
+
+  // ====== AJAX（保持你 XMLHttpRequest 风格）======
+  function postJson(url, obj, cb) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.withCredentials = true; // 让 cookie 带上（session_token）
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        try {
+          const res = JSON.parse(xhr.responseText || '{}');
+          cb(res, xhr.status);
+        } catch (e) {
+          cb({code: -1, msg: '响应解析失败'}, xhr.status);
+        }
+      }
+    };
+    xhr.send(JSON.stringify(obj || {}));
+  }
+
+  function getJson(url, cb) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        try {
+          const res = JSON.parse(xhr.responseText || '{}');
+          cb(res, xhr.status);
+        } catch (e) {
+          cb({code: -1, msg: '响应解析失败'}, xhr.status);
+        }
+      }
+    };
+    xhr.send(null);
+  }
+
+  // ====== 拉场地下拉（复用你已有接口）======
+  function loadVenues() {
+    const venueSelect = $('venue_id');
+    const formVenue = $('form_venue_id');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', VENUE_LIST_API, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        try {
+          const response = JSON.parse(xhr.responseText || '{}');
+          // 你旧接口是 code===0，我这里兼容 code===0 / 200
+          const ok = (response.code === 0 || response.code === 200);
+          if (ok && Array.isArray(response.data)) {
+            response.data.forEach(v => {
+              const opt1 = document.createElement('option');
+              opt1.value = v.id;
+              opt1.textContent = `${v.id} - ${v.venue_name}`;
+              venueSelect.appendChild(opt1);
+
+              const opt2 = document.createElement('option');
+              opt2.value = v.id;
+              opt2.textContent = `${v.id} - ${v.venue_name}`;
+              formVenue.appendChild(opt2);
+            });
+          }
+        } catch(e) {}
+      }
+    };
+    xhr.send('action=get_venues');
+  }
+
+  // ====== 渲染列表 ======
+  function renderList(rows) {
+    const wrap = $('list');
+    wrap.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      wrap.innerHTML = `<div class="muted" style="padding:12px;">暂无数据</div>`;
+      return;
+    }
+
+    rows.forEach(row => {
+      const venueTitle = row.venue_name
+        ? `${row.venue_id} - ${row.venue_name}`
+        : `场地ID：${row.venue_id}`;
+
+      const el = document.createElement('div');
+      el.className = 'venue-card';
+
+      el.innerHTML = `
+        <div class="venue-info">
+<div class="venue-name">
+  <span class="tag">${escapeHtml(row.account_type || '未知类型')}</span>
+  <span>${escapeHtml(venueTitle)}</span>
+</div>
+          <span><b>提现账号：</b>${escapeHtml(row.withdrawal_account || '')}</span>
+          <span><b>姓名：</b>${escapeHtml(row.account_name || '')}</span>
+          <span><b>银行：</b>${escapeHtml(row.bank_name || '')} ${row.bank_number ? (' / ' + escapeHtml(row.bank_number)) : ''}</span>
+          <span><b>余额：</b>${escapeHtml(row.account_balance || '0.00')}</span>
+          ${row.remarks ? `<span class="muted"><b>备注：</b>${escapeHtml(row.remarks)}</span>` : ''}
+          <span class="muted">创建：${escapeHtml(row.created_at || '')}　更新：${escapeHtml(row.updated_at || '')}</span>
+        </div>
+
+        <div class="venue-actions">
+          <button class="edit-btn" data-act="edit" data-id="${row.id}">编辑</button>
+          <button class="btn danger" data-act="del" data-id="${row.id}">删除</button>
+        </div>
+      `;
+
+      wrap.appendChild(el);
+    });
+
+    // 绑定按钮事件（事件代理也行，这里简单绑）
+    wrap.querySelectorAll('button[data-act="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => onEdit(btn.dataset.id));
+    });
+    wrap.querySelectorAll('button[data-act="del"]').forEach(btn => {
+      btn.addEventListener('click', () => onDelete(btn.dataset.id));
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  // ====== 拉列表（关键：顺便探测是否 admin）======
+  function loadList() {
+    showLoading(true);
+
+    const kw = $('kw').value.trim();
+    const venueParam = currentVenueId ? `&venue_id=${encodeURIComponent(currentVenueId)}` : '';
+    const kwParam = kw ? `&kw=${encodeURIComponent(kw)}` : '';
+
+    const url = `${API_BASE}?action=list&page=${page}&page_size=${pageSize}${venueParam}${kwParam}`;
+
+    getJson(url, (res, status) => {
+      showLoading(false);
+
+      if (status !== 200) {
+        $('list').innerHTML = `<div class="muted" style="padding:12px;">请求失败：HTTP ${status}</div>`;
+        return;
+      }
+      if (res.code !== 200) {
+        // 这里如果后端提示无权限/未登录
+        $('list').innerHTML = `<div class="muted" style="padding:12px;">${escapeHtml(res.msg || '加载失败')}</div>`;
+        return;
+      }
+
+      const rows = res.data?.list || [];
+      renderList(rows);
+
+      $('pagerInfo').textContent = `共 ${res.data?.total ?? rows.length} 条，当前页 ${res.data?.page ?? page}`;
+
+      // 通过数据推断管理员：
+      // 如果当前下拉可选“全部场地”且后端返回了多个不同 venue_id，基本就是管理员
+      const venueIds = new Set(rows.map(r => String(r.venue_id)));
+      if (venueIds.size > 1 || currentVenueId === '') {
+        // 不能完全 100% 推断，但够用。更严谨你可以做 /me 接口返回 role_id。
+        isAdmin = true;
+      }
+      applyAdminUI();
+    });
+  }
+
+  function applyAdminUI() {
+    // 非管理员：隐藏/禁用场地筛选，下拉表单也隐藏
+    // （更严谨建议你做一个 /me 接口返回 role_id）
+    if (!isAdmin) {
+      $('venueField').style.display = 'none';
+      $('adminVenueWrap').style.display = 'none';
+    } else {
+      $('venueField').style.display = 'flex';
+      $('adminVenueWrap').style.display = 'block';
+    }
+  }
+
+  // ====== CRUD ======
+  function onAdd() {
+    editingId = null;
+    fillForm(null);
+    openModal('新增账号');
+  }
+
+  function onEdit(id) {
+    const url = `${API_BASE}?action=get&id=${encodeURIComponent(id)}${currentVenueId ? `&venue_id=${encodeURIComponent(currentVenueId)}` : ''}`;
+    showLoading(true);
+    getJson(url, (res) => {
+      showLoading(false);
+      if (res.code !== 200) return alert(res.msg || '加载失败');
+      editingId = res.data.id;
+      fillForm(res.data);
+      openModal('编辑账号');
+    });
+  }
+
+  function onDelete(id) {
+    if (!confirm('确定要删除这条记录吗？')) return;
+    postJson(`${API_BASE}?action=delete`, {id: parseInt(id,10)}, (res) => {
+      if (res.code !== 200) return alert(res.msg || '删除失败');
+      loadList();
+    });
+  }
+
+  function onSave() {
+    const payload = readForm();
+    const err = requireFields(payload);
+    if (err) { $('modalHint').textContent = err; return; }
+
+    if (editingId) {
+      payload.id = editingId;
+      postJson(`${API_BASE}?action=update`, payload, (res) => {
+        if (res.code !== 200) { $('modalHint').textContent = res.msg || '更新失败'; return; }
+        closeModal();
+        loadList();
+      });
+    } else {
+      postJson(`${API_BASE}?action=create`, payload, (res) => {
+        if (res.code !== 200) { $('modalHint').textContent = res.msg || '新增失败'; return; }
+        closeModal();
+        loadList();
+      });
+    }
+  }
+
+  // ====== 事件绑定 ======
+  $('btnAdd').addEventListener('click', onAdd);
+  $('btnSearch').addEventListener('click', () => { page = 1; loadList(); });
+  $('btnReset').addEventListener('click', () => {
+    $('kw').value = '';
+    $('venue_id').value = '';
+    currentVenueId = '';
+    page = 1;
+    loadList();
+  });
+
+  $('venue_id').addEventListener('change', () => {
+    currentVenueId = $('venue_id').value;
+    page = 1;
+    loadList();
+  });
+
+  $('modalClose').addEventListener('click', closeModal);
+  $('btnCancel').addEventListener('click', closeModal);
+  $('btnSave').addEventListener('click', onSave);
+
+// 禁止点击黑色遮罩关闭弹窗，避免误点导致已填写内容丢失
+$('modal').addEventListener('click', (e) => {
+  if (e.target === $('modal')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+  // ====== 初始化 ======
+  loadVenues();
+  loadList();
+});
+</script>
+
+</body>
+</html>
