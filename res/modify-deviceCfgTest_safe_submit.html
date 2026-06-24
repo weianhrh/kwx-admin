@@ -1,0 +1,904 @@
+<!DOCTYPE html> 
+<html lang="zh-CN"> 
+ 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>酷玩星修改设备配置</title> 
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
+    <link rel="stylesheet" href="/res/common/device-console.css?v=2.0.7">
+    <style> 
+        :root { 
+            --primary: #5b8cff; 
+            --secondary: #7f8fa4; 
+            --background-gradient-start: #f8f9ff; 
+            --background-gradient-end: #f0f3ff; 
+            --card-bg: #ffffff; 
+            --border-color: #ddd; 
+            --text-color: #333; 
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08); 
+            --transition: all 0.3s ease; 
+        } 
+ 
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: "PingFang SC", system-ui; 
+        } 
+ 
+        body { 
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
+        } 
+ 
+        .container { 
+            max-width: 600px; 
+            width: 100%; 
+        } 
+ 
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: var(--shadow); 
+            margin-bottom: 20px; 
+            transition: var(--transition); 
+        } 
+ 
+        .card-title { 
+            font-size: 24px; 
+            color: var(--text-color); 
+            margin-bottom: 20px; 
+            font-weight: 600; 
+            border-bottom: 2px solid var(--primary); 
+            padding-bottom: 10px; 
+            text-align: center; 
+        } 
+ 
+        .form-field { 
+            margin-bottom: 16px; 
+            display: flex; 
+            align-items: center; 
+        } 
+ 
+        .form-field label { 
+            display: block; 
+            font-size: 14px; 
+            color: var(--secondary); 
+            margin-bottom: 6px; 
+            margin-right: 10px; 
+            flex: 0 0 auto; 
+        } 
+ 
+        .form-field input[type="text"], 
+        .form-field input[type="range"], 
+        .form-field input[type="number"], 
+        .form-field select { 
+            padding: 10px; 
+            font-size: 14px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+        } 
+ 
+        .form-field input[type="range"] { 
+            margin-right: 10px; 
+            flex: 1; 
+        } 
+ 
+        /* 缩小输入框宽度 */ 
+        .form-field input[type="number"] { 
+            width: 80px; 
+        } 
+ 
+        .form-field select { 
+            width: 100%; 
+        } 
+ 
+        .submit-btn { 
+            background-color: var(--primary); 
+            color: #fff; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: var(--transition); 
+            width: 120px; /* 设置按钮宽度 */ 
+            margin-right: 10px; /* 添加右外边距，使按钮之间有间隔 */ 
+        } 
+ 
+        .submit-btn:hover { 
+            background-color: #4a77e4; 
+        } 
+ 
+ 
+        .form-field.radio-group   { 
+            display: flex; 
+            align-items: center; 
+        } 
+ 
+        .form-field.radio-group   label { 
+            display: inline-block; 
+            margin-right: 10px; 
+            margin-bottom: 0; 
+        } 
+ 
+        .form-field.radio-group   input[type="radio"] { 
+            width: auto; 
+            margin-right: 5px; 
+        } 
+        /* —— 通道行：大屏横排，小屏自动换行 —— */
+.channel-row{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:6px 0;
+  flex-wrap:wrap;       /* 空间不足时自动换行 */
+  border-bottom: 1px dashed #eee;
+}
+.channel-label{
+  width:60px;
+  color:var(--secondary);
+  flex:0 0 auto;
+}
+.channel-status{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:0 0 auto;
+}
+.channel-inputs{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:1 1 auto;        /* 占据剩余空间 */
+  min-width:280px;      /* 保证三格不挤到一起 */
+}
+.channel-field{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.channel-field span{
+  width:28px;
+  color:#7f8fa4;
+}
+/* 输入框宽度：在 72~120px 间随屏幕变化 */
+.channel-field input[type="number"]{
+  width: clamp(72px, 9vw, 120px);
+}
+/* 让“更新固件”按钮更小、更透气；在它下方留出分隔感 */
+#fw-update-row {
+  border-bottom: 1px dashed #eee;   /* 轻分隔线 */
+  padding-bottom: 10px;             /* 分隔线内边距 */
+  margin-bottom: 16px;              /* 与下面的表单留空 */
+}
+
+#btn-fw-update {
+  width: auto;           /* 覆盖 .submit-btn 的 120px 固定宽 */
+  padding: 8px 12px;     /* 更紧凑 */
+  font-size: 14px;       /* 更小字 */
+  border-radius: 6px;    /* 更小圆角 */
+}
+/* —— 小屏优化（≤640px）：上下堆叠更易点选 —— */
+@media (max-width: 640px){
+  .channel-row{ align-items:flex-start; }
+  .channel-status{ order:2; }
+  .channel-inputs{ order:3; width:100%; }
+}
+/* —— 通道里的数字输入：统一高度/圆角/阴影 —— */
+.channel-field input[type="number"]{
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+  font-size: 14px;
+  line-height: 36px;
+  box-sizing: border-box;
+  transition: border-color .2s ease, box-shadow .2s ease;
+  /* 原来有宽度 clamp；保留： */
+  width: clamp(72px, 9vw, 120px);
+}
+
+/* 聚焦时的主色高亮，与全局风格一致 */
+.channel-field input[type="number"]:focus{
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91,140,255,0.12);
+}
+
+/* 去掉数字输入的小箭头（各浏览器） */
+.channel-field input[type="number"]::-webkit-outer-spin-button,
+.channel-field input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.channel-field input[type="number"]{
+  -moz-appearance: textfield;
+}
+
+/* 标签对齐更紧凑一些 */
+.channel-field span{
+  width: auto;
+  min-width: 28px;
+  text-align: right;
+  color:#7f8fa4;
+}
+
+/* 行间距稍紧，PC 不拥挤 */
+.channel-inputs{ gap: 12px; }
+
+@media (max-width: 640px){
+  /* 手机上输入框可拉满，避免拥挤 */
+  .channel-inputs{ gap: 10px; }
+  .channel-field input[type="number"]{ width: 100%; }
+}
+
+/* ✅ 发射配置分组框 */
+.shoot-group{
+  border: 1px solid rgba(91,140,255,0.35);
+  background: rgba(91,140,255,0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 14px 0 18px;
+}
+
+.shoot-group-title{
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 600;
+  margin: 0 0 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.shoot-group-title::before{
+  content:"";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  display:inline-block;
+}
+
+/* 分组内部的 form-field 间距更紧凑一点 */
+.shoot-group .form-field{ margin-bottom: 12px; }
+.shoot-group .form-field:last-child{ margin-bottom: 0; }
+
+    </style> 
+</head> 
+ 
+<body class="device-config-page"> 
+<script>
+if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+    document.body.classList.add('embedded-admin');
+}
+</script>
+    <div class="device-form-shell">
+        <aside class="device-side-panel">
+            <div class="device-side-logo">KX</div>
+            <h1 class="device-side-title">设备配置</h1>
+            <p class="device-side-text" id="config-device-name">设备运行参数</p>
+            <div class="device-side-list">
+                <div class="device-side-item"><i class="fas fa-barcode"></i><span id="config-device-sn">序列号：-</span></div>
+                <div class="device-side-item"><i class="fas fa-tachometer-alt"></i><span>油门与方向</span></div>
+                <div class="device-side-item"><i class="fas fa-broadcast-tower"></i><span>通道配置</span></div>
+            </div>
+            <button type="button" class="device-side-back" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i><span>返回设备管理</span>
+            </button>
+        </aside>
+
+    <div class="container"> 
+        <div class="card"> 
+            <div class="card-title">修改设备配置</div> 
+            <form id="modify-form"> 
+                <div class="form-field"> 
+                    <label for="name">设备名称</label> 
+                    <input type="text" id="name" name="name" required disabled> 
+                </div> 
+                <input type="hidden" id="device_id" name="device_id"> 
+                <div class="form-field"> 
+                    <label for="throttle_max">油门最大值</label> 
+                    <input type="range" id="throttle_max_range" min="0" max="100" oninput="updateThrottleMaxValue(this.value)">   
+                    <input type="number" id="throttle_max" name="throttle_max" readonly> 
+                 
+                </div> 
+                <div class="form-field"> 
+                    <label for="direction_mid">方向中位值</label> 
+                    <input type="range" id="direction_mid_range" min="0" max="100" oninput="updateValue('direction_mid', this.value)">   
+                    <input type="number" id="direction_mid" name="direction_mid" readonly> 
+                </div> 
+                <div class="form-field" id="throttle-mid-field" style="display: none">
+                    <label for="throttle_mid">油门中位值</label>
+                    <input type="range" id="throttle_mid_range" min="0" max="100" oninput="updateThrottleMidValue(this.value)">
+                    <input type="number" id="throttle_mid" name="throttle_mid" readonly>
+                </div>
+
+                <div class="form-field"> 
+                    <label for="throttle_min">油门最小值</label> 
+                    <input type="range" id="throttle_min_range" min="0" max="100" oninput="updateThrottleMinValue(this.value)">   
+                    <input type="number" id="throttle_min" name="throttle_min" readonly> 
+                    
+                </div> 
+                <div class="form-field radio-group"> 
+                    <label>方向</label> 
+                    <input type="radio" id="direction_false" name="direction" value="true"> 
+                    <label for="direction_false">正向</label> 
+                    <input type="radio" id="direction_true" name="direction" value="false"> 
+                    <label for="direction_true">反向</label> 
+                </div> 
+                <div class="form-field radio-group"> 
+                    <label>油门</label> 
+                    <input type="radio" id="throttle_false" name="throttle" value="true"> 
+                    <label for="throttle_false">正向</label> 
+                    <input type="radio" id="throttle_true" name="throttle" value="false"> 
+                    <label for="throttle_true">反向</label> 
+                </div> 
+                <!-- ✅ 挪到这里：role=1/2/3 都可见可改（由 JS 控制显示） -->
+            <!-- ✅ 发射配置分组（默认隐藏，JS 控制显示） -->
+<div class="shoot-group" id="shoot-group" style="display:none;">
+  <div class="shoot-group-title">发射配置</div>
+
+  <div class="form-field radio-group" id="is_display-field" style="display:none;">
+    <label>按钮发射展示</label>
+    <input type="radio" id="is_display_true" name="is_display" value="1">
+    <label for="is_display_true">展示</label>
+    <input type="radio" id="is_display_false" name="is_display" value="0">
+    <label for="is_display_false">不展示</label>
+  </div>
+
+  <div class="form-field" id="cooldown-field" style="display:none;">
+    <label for="cooldown">冷却时间</label>
+    <input type="range" id="cooldown_range" min="100" max="500" oninput="updateCooldownValue(this.value)">
+    <input type="number" id="cooldown" name="cooldown" readonly>
+  </div>
+
+  <div class="form-field" id="bullet_channel-field" style="display:none;">
+    <label for="bullet_channel">子弹发射通道</label>
+    <select id="bullet_channel" name="bullet_channel">
+      <option value="C1">C1</option>
+      <option value="C2">C2</option>
+      <option value="C3">C3</option>
+      <option value="C4">C4</option>
+      <option value="C5">C5</option>
+      <option value="C6">C6</option>
+    </select>
+  </div>
+</div>
+
+                <div id="channel-switches" style="display: none;">
+                    <div class="card-title" style="margin-top: 20px;">通道开关配置 (仅管理员)</div>
+                    <div id="ch-toggle-fields">
+                        <!-- 每个ch独立div，将由 JS 插入 -->
+                    </div>
+                     <!-- ✅ 新增：更新固件按钮（默认隐藏，JS按权限显示） -->
+                  <div id="fw-update-row" style="display:none; margin-top:12px; text-align:center;">
+                    <button type="button" id="btn-fw-update" class="submit-btn">更新固件</button>
+                  </div>
+                </div>
+
+
+                <div class="form-field">
+                    <label for="car_type">车辆类型</label>
+                    <select id="car_type" name="car_type">
+                        <option value="1">汽车</option>
+                        <option value="2">坦克</option>
+                        <option value="3">挖掘机</option>
+                        <option value="4">推土机</option>
+                        <option value="5">翻斗车</option>
+                        <option value="6">娃娃机</option>
+                        <option value="7">液压推土机</option>
+                        <option value="8">液压自卸车</option>
+                        <option value="9">液压挖掘机</option>
+                    </select>
+                </div>
+                <div class="form-field" id="audio-source-field" style="display:none;">
+                    <label for="audio_source_type">音频来源</label>
+                    <select id="audio_source_type" name="audio_source_type" disabled>
+                        <option value="0">环境音（设备）</option>
+                        <option value="1">主播音（语音房间）</option>
+                    </select>
+                </div>
+                <div class="form-field radio-group" id="achievement-field" style="display:none;">
+                    <label>驾驶页成绩</label>
+                
+                    <input type="radio" id="is_show_achievements_true" name="is_show_achievements" value="1">
+                    <label for="is_show_achievements_true">展示</label>
+                
+                    <input type="radio" id="is_show_achievements_false" name="is_show_achievements" value="0">
+                    <label for="is_show_achievements_false">不展示</label>
+                </div>
+                <div class="form-field" id="driver_type-field" style="display:none;">
+                    <label for="driver_type">操作方式</label>
+                    <select id="driver_type" name="driver_type">
+                        <option value="0">APP控制</option>
+                        <option value="1">方向盘控制</option>
+                    </select>
+                </div>
+     
+
+
+                <button type="submit" class="submit-btn">保存修改</button> 
+                <button type="button" class="submit-btn" id="restore-default-btn">恢复默认</button> 
+            </form> 
+        </div> 
+    </div> 
+    </div>
+ 
+<script>
+const channels = ['ch1','ch2','ch3','ch4','ch5','ch6'];
+let CURRENT_ROLE_ID = null;   // 保存当前用户角色
+let DEVICE_DATA = null;       // 保存设备配置
+const isPlatformAdmin = () => (Number(CURRENT_ROLE_ID) === 1 || Number(CURRENT_ROLE_ID) === 2);
+const isSiteRole = () => [3, 4].includes(Number(CURRENT_ROLE_ID));
+
+// ✅ 只记录用户真正动过的字段；页面回填时不算修改
+let IS_FILLING = false;
+const DIRTY_FIELDS = new Set();
+
+function markDirty(field) {
+  if (!IS_FILLING && field) DIRTY_FIELDS.add(field);
+}
+
+function sameValue(a, b) {
+  return String(a ?? '') === String(b ?? '');
+}
+
+function getCheckedValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+
+// 兼容你现在的历史反向映射：页面 true/false 与 DB true/false 是反着存的
+function uiBoolToDbBool(v) {
+  return v === 'true' ? 'false' : 'true';
+}
+
+function addChanged(data, key, newValue, oldValue) {
+  if (!DIRTY_FIELDS.has(key)) return;
+  if (!sameValue(newValue, oldValue)) data[key] = newValue;
+}
+
+/** 工具：从 "ch1#1000-2000#false#1500" 解析 */
+function parseChannel(raw) {
+  if (!raw || typeof raw !== 'string') {
+    return { label: '', min: 1000, max: 2000, mid: 1500, status: 'false' };
+  }
+  const parts = raw.split('#');
+  const label = parts[0] || '';
+  const range = (parts[1] || '1000-2000').split('-');
+  const min = Number(range[0]) || 1000;
+  const max = Number(range[1]) || 2000;
+  const status = (parts[2] === 'true') ? 'true' : 'false';
+  const mid = Number(parts[3]) || 1500;
+  return { label, min, max, mid, status };
+}
+function buildChannelString(info) {
+  const label = info.label || 'ch';
+  const min = Math.round(info.min);
+  const max = Math.round(info.max);
+  const mid = Math.round(info.mid);
+  const status = (info.status === 'true') ? 'true' : 'false';
+  return `${label}#${min}-${max}#${status}#${mid}`;
+}
+
+/* 映射函数 */
+function mapThrottleMaxToRange(v){ return ((v-1500)/500)*100; }
+function mapThrottleMaxFromRange(v){ return (v/100)*500+1500; }
+function mapThrottleMinToRange(v){ return ((v-1000)/500)*100; }
+function mapThrottleMinFromRange(v){ return (v/100)*500+1000; }
+function mapToRange(v){ return ((v-1000)/1000)*100; }
+function mapFromRange(v){ return (v/100)*1000+1000; }
+function mapThrottleMidToRange(v){ return ((v-1000)/1000)*100; }
+function mapThrottleMidFromRange(v){ return (v/100)*1000+1000; }
+
+/* 输入更新 */
+function updateThrottleMaxValue(v){ document.getElementById('throttle_max').value = Math.round(mapThrottleMaxFromRange(v)); markDirty('throttle_max'); }
+function updateThrottleMinValue(v){ document.getElementById('throttle_min').value = Math.round(mapThrottleMinFromRange(v)); markDirty('throttle_min'); }
+function updateValue(id, v){ document.getElementById(id).value = Math.round(mapFromRange(v)); markDirty(id); }
+function updateThrottleMidValue(v){ document.getElementById('throttle_mid').value = Math.round(mapThrottleMidFromRange(v)); markDirty('throttle_mid'); }
+function updateCooldownValue(v){ document.getElementById('cooldown').value = v; markDirty('cooldown'); }
+
+/** 根据角色与车种决定是否显示 CH1~CH6 容器 */
+function refreshChannelVisibility() {
+  const box = document.getElementById('channel-switches');
+  if (!box) return;
+
+  const carType = Number(DEVICE_DATA?.car_type);
+  const admin = isPlatformAdmin();
+  const role3  = isSiteRole();
+
+  // ✅ 通道容器显示规则：保留你原本逻辑
+  const canSeeChannels = admin || (role3 && (carType === 7 || carType === 9));
+  box.style.display = canSeeChannels ? 'block' : 'none';
+
+  // ✅ 这三个字段：管理员 + role=3 都可见可改
+  const canEditShoot = admin || role3;
+  // ✅ 分组框显示/隐藏
+const group = document.getElementById('shoot-group');
+if (group) group.style.display = canEditShoot ? 'block' : 'none';
+
+  ['is_display-field', 'cooldown-field', 'bullet_channel-field'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = canEditShoot ? (id === 'is_display-field' ? 'flex' : 'flex') : 'none';
+    // 也可加：不可见时禁用输入，避免误提交（可选）
+    el.querySelectorAll('input,select').forEach(x => x.disabled = !canEditShoot);
+  });
+
+  // ✅ 仍然只有管理员可见
+// const adminOnlyIds = ['throttle-mid-field', 'fw-update-row', 'audio-source-field'];
+const adminOnlyIds = ['throttle-mid-field', 'fw-update-row', 'audio-source-field', 'achievement-field'];
+
+adminOnlyIds.forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.style.display = admin ? (id === 'fw-update-row' ? 'block' : 'flex') : 'none';
+  el.querySelectorAll('input,select,button').forEach(x => x.disabled = !admin);
+});
+  const dt = document.getElementById('driver_type-field');
+if (dt) {
+  const admin = isPlatformAdmin();
+  dt.style.display = admin ? 'flex' : 'none';
+  dt.querySelectorAll('select,input').forEach(x => x.disabled = !admin);
+}
+
+}
+
+
+/** 渲染 CH1~CH6 行 */
+function renderChannels(data){
+  let html = '';
+  channels.forEach(ch => {
+    const info = parseChannel(data[ch]);
+    html += `
+      <div class="channel-row">
+        <div class="channel-label">${ch.toUpperCase()}</div>
+
+        <div class="channel-status">
+          <label><input type="radio" name="${ch}_status" value="true"  ${info.status==='true' ? 'checked':''}> 启用</label>
+          <label style="margin-left:10px;"><input type="radio" name="${ch}_status" value="false" ${info.status==='false'? 'checked':''}> 禁用</label>
+        </div>
+
+        <div id="${ch}_inputs" class="channel-inputs" style="display:${info.status==='true'?'flex':'none'};">
+          <div class="channel-field">
+            <span>最大</span>
+            <input type="number" id="${ch}_max" value="${info.max}" min="1000" max="2500" step="1">
+          </div>
+          <div class="channel-field">
+            <span>最小</span>
+            <input type="number" id="${ch}_min" value="${info.min}" min="800"  max="2000" step="1">
+          </div>
+          <div class="channel-field">
+            <span>中位</span>
+            <input type="number" id="${ch}_mid" value="${info.mid}" min="900"  max="2100" step="1">
+          </div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('ch-toggle-fields').innerHTML = html;
+
+  // 事件委托：切换显示/禁用
+  const chContainer = document.getElementById('ch-toggle-fields');
+  chContainer.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el && el.name && el.name.endsWith('_status')) {
+      markDirty(el.name);
+      const ch = el.name.replace('_status','');
+      toggleChannelInputs(ch, el.value === 'true');
+    }
+  });
+
+  chContainer.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el && /^ch[1-6]_(max|min|mid)$/.test(el.id || '')) {
+      markDirty(el.id);
+    }
+  });
+
+  // 初始化禁用/启用状态
+  channels.forEach(ch => {
+    const statusEl = document.querySelector(`input[name="${ch}_status"]:checked`);
+    toggleChannelInputs(ch, statusEl && statusEl.value === 'true');
+  });
+}
+
+/** 启用/禁用某个通道输入框 */
+function toggleChannelInputs(ch, enabled) {
+  const box = document.getElementById(`${ch}_inputs`);
+  const max = document.getElementById(`${ch}_max`);
+  const min = document.getElementById(`${ch}_min`);
+  const mid = document.getElementById(`${ch}_mid`);
+  if (!box) return;
+  if (enabled) {
+    box.style.display = 'flex';
+    [max,min,mid].forEach(i => i && (i.disabled = false));
+  } else {
+    box.style.display = 'none';
+    [max,min,mid].forEach(i => i && (i.disabled = true));
+  }
+}
+
+/** 恢复默认 */
+function restoreDefaultValues() {
+  const defaultThrottleMax = 1620;
+  const defaultDirectionMid = 1500;
+  const defaultThrottleMin = 1350;
+  const defaultThrottleMid = 1500;
+  const defaultDirection = 'true';
+  const defaultThrottle  = 'true';
+
+  document.getElementById('throttle_max_range').value = mapThrottleMaxToRange(defaultThrottleMax);
+  document.getElementById('throttle_max').value = defaultThrottleMax;
+
+  document.getElementById('direction_mid_range').value = mapToRange(defaultDirectionMid);
+  document.getElementById('direction_mid').value = defaultDirectionMid;
+
+  document.getElementById('throttle_mid_range').value = mapThrottleMidToRange(defaultThrottleMid);
+  document.getElementById('throttle_mid').value = defaultThrottleMid;
+
+  document.getElementById('throttle_min_range').value = mapThrottleMinToRange(defaultThrottleMin);
+  document.getElementById('throttle_min').value = defaultThrottleMin;
+
+  document.querySelector(`input[name="direction"][value="${defaultDirection}"]`).checked = true;
+  document.querySelector(`input[name="throttle"][value="${defaultThrottle}"]`).checked  = true;
+
+  ['throttle_max', 'direction_mid', 'throttle_min', 'throttle_mid', 'direction', 'throttle'].forEach(markDirty);
+}
+
+// 普通 select/radio/input 的用户改动记录
+const modifyFormEl = document.getElementById('modify-form');
+modifyFormEl.addEventListener('change', (e) => {
+  const el = e.target;
+  if (!el) return;
+
+  if (el.name === 'direction' || el.name === 'throttle') {
+    markDirty(el.name);
+    return;
+  }
+
+  if (el.name && !el.name.startsWith('ch')) {
+    markDirty(el.name);
+  }
+});
+
+/** 页面加载：先取用户，再拉设备，再按规则显示 */
+/** 页面加载：先取用户，再拉设备，再按规则显示 */
+window.addEventListener('DOMContentLoaded',  async function () {
+  // 1) 获取当前用户角色
+  try {
+    const res = await fetch('/api/operat/get_current_user.php', { credentials: 'include' });
+    const user = await res.json();
+    if (user?.code === 0 && user?.data?.role_id) {
+      CURRENT_ROLE_ID = Number(user.data.role_id);
+    }
+  } catch (err) {
+    console.warn('获取用户信息失败:', err);
+  }
+
+  // 2) URL 参数
+  const urlParams = new URLSearchParams(window.location.search);
+  const device = {};
+  urlParams.forEach((v, k) => device[k] = v);
+  if (!Object.keys(device).length) { alert('未获取到设备序列号'); return; }
+  const sideName = document.getElementById('config-device-name');
+  const sideSn = document.getElementById('config-device-sn');
+  if (sideName) sideName.textContent = device.name || '设备运行参数';
+  if (sideSn) sideSn.textContent = `序列号：${device.serial_number || '-'}`;
+  document.getElementById('name').value = device.name;
+  document.getElementById('device_id').value = device.serial_number;
+
+  // 3) 拉取设备配置
+  try {
+    const resp = await fetch('/api/vehicle/modifDevicecfg.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          action: 'get',
+          device_id: device.serial_number
+        })
+    });
+    const result = await resp.json();
+    if (result.code !== 200) { alert('获取设备配置信息失败：' + result.msg); return; }
+
+    DEVICE_DATA = result.data;
+    IS_FILLING = true;
+
+    // 渲染 CH1~CH6（先渲染，再决定显示逻辑）
+    renderChannels(DEVICE_DATA);
+
+    // 其他字段回填
+    document.getElementById('car_type').value = DEVICE_DATA.car_type;
+    const audioSourceEl = document.getElementById('audio_source_type');
+    if (audioSourceEl) {
+      audioSourceEl.value = String(DEVICE_DATA.audio_source_type ?? 0) === '1' ? '1' : '0';
+    }
+    const achievementTrueEl = document.getElementById('is_show_achievements_true');
+    const achievementFalseEl = document.getElementById('is_show_achievements_false');
+    
+    if (achievementTrueEl && achievementFalseEl) {
+      const isShowAchievements = Number(DEVICE_DATA.is_show_achievements || 0) === 1;
+      achievementTrueEl.checked = isShowAchievements;
+      achievementFalseEl.checked = !isShowAchievements;
+    }
+    document.getElementById('direction_mid_range').value = ((DEVICE_DATA.direction_mid-1000)/1000)*100;
+    document.getElementById('direction_mid').value = DEVICE_DATA.direction_mid;
+
+    document.getElementById('throttle_mid_range').value = (((DEVICE_DATA.throttle_mid||1500)-1000)/1000)*100;
+    document.getElementById('throttle_mid').value = DEVICE_DATA.throttle_mid||1500;
+
+    document.getElementById('driver_type').value = DEVICE_DATA.driver_type;
+    document.getElementById('throttle_max_range').value = ((DEVICE_DATA.throttle_max-1500)/500)*100;
+    document.getElementById('throttle_max').value = DEVICE_DATA.throttle_max;
+    document.getElementById('throttle_min_range').value = ((DEVICE_DATA.throttle_min-1000)/500)*100;
+    document.getElementById('throttle_min').value = DEVICE_DATA.throttle_min;
+
+    document.querySelector(`input[name="direction"][value="${DEVICE_DATA.direction==='true'?'false':'true'}"]`).checked = true;
+    document.querySelector(`input[name="throttle"][value="${DEVICE_DATA.throttle==='true'?'false':'true'}"]`).checked = true;
+
+    const cooldownDisplay = (DEVICE_DATA.cooldown === null || DEVICE_DATA.cooldown === undefined || DEVICE_DATA.cooldown === '') ? 100 : DEVICE_DATA.cooldown;
+    document.getElementById('cooldown_range').value = cooldownDisplay;
+    document.getElementById('cooldown').value       = cooldownDisplay;
+    document.getElementById('bullet_channel').value = DEVICE_DATA.bullet_channel || 'C1';
+document.getElementById('is_display_true').checked  = Number(DEVICE_DATA.is_display) === 1;
+document.getElementById('is_display_false').checked = Number(DEVICE_DATA.is_display) === 0;
+
+    // 4) 按角色 + 车种 刷新可见性
+    refreshChannelVisibility();
+    IS_FILLING = false;
+    DIRTY_FIELDS.clear();
+
+    // （可选）绑定“更新固件”占位逻辑
+// （替换你现在的“更新固件”按钮占位逻辑）
+const btnFW = document.getElementById('btn-fw-update');
+if (btnFW) {
+  btnFW.addEventListener('click', async () => {
+    try {
+      // serial_number 就是你页面里 device_id（你已经塞进隐藏 input 了）
+      const serial_number = document.getElementById('device_id').value;
+      if (!serial_number) { alert('缺少设备序列号'); return; }
+
+      btnFW.disabled = true;
+      btnFW.innerText = '下发中...';
+
+      const resp = await fetch('/api/vehicle/firmware_update.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ serial_number })
+      });
+
+      const result = await resp.json();
+      if (result.code === 200) {
+        alert('固件更新指令已下发：' + (result.msg || 'OK'));
+      } else {
+        alert('下发失败：' + (result.msg || 'unknown'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('下发失败：网络或服务异常');
+    } finally {
+      btnFW.disabled = false;
+      btnFW.innerText = '更新固件';
+    }
+  });
+}
+  } catch(e) {   // ←← 这里能顺利匹配到上面的 try 了
+    IS_FILLING = false;
+    console.error('获取设备配置信息失败:', e);
+    alert('获取设备配置信息失败，请重试');
+  }
+});
+
+
+/** 表单提交 */
+document.getElementById('modify-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+        if (!DEVICE_DATA) {
+          alert('设备配置还没有加载完成');
+          return;
+        }
+
+        const data = {
+          action: 'save',
+          device_id: document.getElementById('device_id').value
+        };
+
+        // ✅ 基础字段：只有用户动过，并且和 DEVICE_DATA 不一致时才提交
+        addChanged(data, 'car_type',       document.getElementById('car_type').value,       DEVICE_DATA.car_type);
+        addChanged(data, 'direction_mid',  document.getElementById('direction_mid').value,  DEVICE_DATA.direction_mid);
+        addChanged(data, 'throttle_max',   document.getElementById('throttle_max').value,   DEVICE_DATA.throttle_max);
+        addChanged(data, 'throttle_min',   document.getElementById('throttle_min').value,   DEVICE_DATA.throttle_min);
+        addChanged(data, 'direction',      uiBoolToDbBool(getCheckedValue('direction')),    DEVICE_DATA.direction);
+        addChanged(data, 'throttle',       uiBoolToDbBool(getCheckedValue('throttle')),     DEVICE_DATA.throttle);
+
+        // ✅ 管理员字段
+        if (isPlatformAdmin()) {
+          addChanged(data, 'throttle_mid',         document.getElementById('throttle_mid').value,         DEVICE_DATA.throttle_mid);
+          addChanged(data, 'driver_type',          document.getElementById('driver_type').value,          DEVICE_DATA.driver_type);
+          addChanged(data, 'audio_source_type',    document.getElementById('audio_source_type').value,    DEVICE_DATA.audio_source_type);
+          addChanged(data, 'is_show_achievements', getCheckedValue('is_show_achievements'),              DEVICE_DATA.is_show_achievements);
+        }
+
+        // ✅ 发射配置：管理员 / role=3/4 才提交
+        if (isPlatformAdmin() || isSiteRole()) {
+          addChanged(data, 'is_display',     getCheckedValue('is_display'),                    DEVICE_DATA.is_display);
+          addChanged(data, 'cooldown',       document.getElementById('cooldown').value,          DEVICE_DATA.cooldown);
+          addChanged(data, 'bullet_channel', document.getElementById('bullet_channel').value,    DEVICE_DATA.bullet_channel);
+        }
+        
+        // ✅ 通道配置：只提交真正变化的 CH 字段
+        const canSubmitChannels = (() => {
+          const oldCarType = Number(DEVICE_DATA?.car_type || 0);
+          return isPlatformAdmin() || (isSiteRole() && (oldCarType === 7 || oldCarType === 9));
+        })();
+        
+        if (canSubmitChannels) {
+          channels.forEach(ch => {
+            const oldInfo = parseChannel(DEVICE_DATA[ch]);
+            const statusEl = document.querySelector(`input[name="${ch}_status"]:checked`);
+            if (!statusEl) return;
+
+            const statusKey = `${ch}_status`;
+            if (DIRTY_FIELDS.has(statusKey) && statusEl.value !== oldInfo.status) {
+              data[statusKey] = statusEl.value;
+            }
+
+            // 当前通道启用时，才允许提交数值
+            if (statusEl.value === 'true') {
+              ['max', 'min', 'mid'].forEach(part => {
+                const key = `${ch}_${part}`;
+                const el = document.getElementById(key);
+                if (!el || !DIRTY_FIELDS.has(key)) return;
+
+                const newValue = String(Number(el.value));
+                const oldValue = String(Number(oldInfo[part]));
+                if (newValue !== oldValue) data[key] = el.value;
+              });
+            }
+          });
+        }
+
+        if (Object.keys(data).length <= 2) {
+          alert('没有检测到需要保存的修改');
+          return;
+        }
+
+
+  try {
+    const resp = await fetch('/api/vehicle/modifDevicecfg_safe_transaction.php', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    if (result.code === 200) {
+      alert('设备信息修改成功');
+      localStorage.removeItem('deviceData');
+      if (document.referrer) { location.href=document.referrer; } else { history.back(); }
+    } else {
+      alert('修改失败：' + result.msg);
+    }
+  } catch(e) {
+    console.error('修改设备信息失败:', e);
+    alert('修改设备信息失败，请重试');
+  }
+});
+
+// 绑定“恢复默认”
+document.getElementById('restore-default-btn').addEventListener('click', restoreDefaultValues);
+</script>
+
+</body> 
+ 
+</html> 

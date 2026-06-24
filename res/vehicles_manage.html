@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>车辆绑定管理</title>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            background: #fff;
+            padding: 20px;
+        }
+
+        .panel {
+            border: 3px solid black;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .vehicle-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .vehicle-table th, .vehicle-table td {
+            border: 2px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .vehicle-table th {
+            background-color: #f2f2f2;
+        }
+
+        .hand-button {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 20px;
+            padding: 8px 20px;
+            border: 3px solid black;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            margin: 10px 10px 0 0;
+        }
+
+    /* 1. 下拉和输入框全宽 */
+input[type="text"],
+input[type="number"],
+select {
+    font-family: 'ZCOOL KuaiLe', cursive;
+    font-size: 16px;
+    padding: 6px 10px;
+    margin: 8px 0;
+    width: 100%;
+    border: 2px solid black;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+.card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 2. 卡片横向布局（图左文右） */
+.card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border: 3px solid black;
+    border-radius: 20px;
+    padding: 10px;
+    background: #fff;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 10px;
+}
+
+/* 3. 图片左侧布局 */
+.vehicle-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 2px solid black;
+    margin-right: 10px;
+}
+.card-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* 4. 文本内容容器 */
+.card-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    word-break: break-word;
+}
+
+/* 5. 全选按钮样式 */
+.checkbox-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.checkbox-area input[type="checkbox"] {
+    transform: scale(1.2);
+}
+
+.card-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+}
+.card-check input[type="checkbox"] {
+    transform: scale(1.4);
+}
+
+.form-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.form-group input[type="number"] {
+    flex: 1;
+    font-size: 16px;
+    padding: 6px 10px;
+    border: 2px solid black;
+    border-radius: 10px;
+}
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.small-button {
+    font-size: 16px;
+    padding: 6px 16px;
+}
+
+body.dark-mode {
+    background-color: #121212;
+    color: #f5f5f5;
+}
+
+body.dark-mode .panel {
+    background-color: #1e1e1e;
+    border-color: #888;
+}
+
+body.dark-mode .card {
+    background-color: #2a2a2a;
+    border-color: #888;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: #1a1a1a;
+    color: #f5f5f5;
+    border-color: #888;
+}
+
+body.dark-mode .hand-button {
+    background-color: #1a1a1a;
+    color: #f5f5f5;
+    border-color: #888;
+}
+
+body.dark-mode a {
+    color: #80d4ff;
+}
+
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <div class="header-bar">
+        <h2>车辆绑定管理</h2>
+        <a href="update_device_photol.html" class="hand-button small-button">修改设备图片</a>
+    </div>
+
+
+    <div class="top-controls">
+        <label for="venue_id">按场地筛选：</label>
+        
+        <select id="venue_id" onchange="filterByVenue()">
+            <option value="">全部场地</option>
+        </select>
+        <input type="text" id="keyword" placeholder="搜索 UID/序列号/名称/场地ID" oninput="filterByVenue()" />
+
+    </div>
+   <div class="form-group">
+        <input type="number" id="newUid" placeholder="新的 UID">
+        <button class="hand-button" onclick="batchUpdate('uid')">修改绑定用户</button>
+    </div>
+    
+    <div class="form-group">
+        <input type="number" id="newSite" placeholder="新的 场地ID">
+        <button class="hand-button" onclick="batchUpdate('bind_site')">修改场地ID</button>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <label class="checkbox-area">
+            <input type="checkbox" onclick="toggleAll(this)">
+            <strong>全选 / 取消全选</strong>
+        </label>
+    </div>
+
+    <div id="vehicleBody" class="card-container"></div>
+
+<div id="modeIndicator" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: black; color: white; padding: 6px 12px; border-radius: 8px; font-size: 14px; display: none;">🌙 已切换深色模式</div>
+
+    
+</div>
+
+<script>
+    let allVehicles = [];
+
+    // 加载车辆信息
+    async function loadVehicles(preSelected = []) {
+    const res = await fetch('/api/devMgr/vehicles_manage.php');
+    const data = await res.json();
+
+    if (data.code === 0) {
+        allVehicles = data.data;
+        renderVehicles(allVehicles, preSelected);
+        filterByVenue(); // 如果选中过滤条件也保留
+    } else {
+        alert(data.msg);
+    }
+}
+
+function renderVehicles(vehicles, selectedSNs = []) {
+    const container = document.getElementById('vehicleBody');
+    container.innerHTML = '';
+    vehicles.forEach(v => {
+        const isChecked = selectedSNs.includes(v.serial_number) ? 'checked' : '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <img src="${v.photo_url}" class="vehicle-img">
+            <div class="card-right">
+                <div><strong>序列号：</strong> ${v.serial_number}</div>
+                <div><strong>名称：</strong> ${v.name}</div>
+                <div><strong>状态：</strong> ${v.status}</div>
+                <div><strong>UID：</strong> ${v.uid}</div>
+                <div><strong>场地：</strong> ${v.bind_site}</div>
+            </div>
+            <div class="card-check">
+                <input type="checkbox" value="${v.serial_number}" ${isChecked}>
+            </div>
+        `;
+
+
+
+        container.appendChild(card);
+    });
+}
+
+
+
+    // 全选 / 取消全选
+    function toggleAll(source) {
+        document.querySelectorAll('#vehicleBody input[type="checkbox"]').forEach(cb => {
+            cb.checked = source.checked;
+        });
+    }
+
+    // 批量修改绑定值
+    async function batchUpdate(type) {
+    const value = type === 'uid'
+        ? document.getElementById('newUid').value.trim()
+        : document.getElementById('newSite').value.trim();
+
+    if (!value) {
+        alert("请输入要修改的值");
+        return;
+    }
+
+    const selectedCheckboxes = Array.from(document.querySelectorAll('#vehicleBody input[type="checkbox"]:checked'));
+    const selected = selectedCheckboxes.map(cb => cb.value);
+
+    if (selected.length === 0) {
+        alert("请至少选择一项车辆");
+        return;
+    }
+
+    const updates = selected.map(sn => ({
+        serial_number: sn,
+        [type]: parseInt(value)
+    }));
+
+    const res = await fetch('/api/devMgr/vehicles_manage.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ updates })
+    });
+
+    const result = await res.json();
+    alert(result.msg);
+
+    if (result.code === 0) {
+        // 局部刷新 + 恢复选中状态
+        await loadVehicles(selected);
+    }
+}
+
+
+    // 过滤车辆（按场地）
+    function filterByVenue() {
+    const selectedVenueId = document.getElementById('venue_id').value.trim();
+    const keyword = document.getElementById('keyword').value.trim().toLowerCase();
+
+    const filtered = allVehicles.filter(v => {
+        const matchVenue = selectedVenueId === '' || String(v.bind_site) === selectedVenueId;
+        const matchKeyword = keyword === '' ||
+            v.serial_number.toLowerCase().includes(keyword) ||
+            String(v.uid).includes(keyword) ||
+            v.name.toLowerCase().includes(keyword) ||
+            String(v.bind_site).includes(keyword);
+
+        return matchVenue && matchKeyword;
+    });
+
+    renderVehicles(filtered);
+}
+
+
+    // 使用你提供的 POST 请求加载场地列表
+    document.addEventListener('DOMContentLoaded', function () {
+        const venueSelect = document.getElementById('venue_id');
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/operat/EnergyGift.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.code === 0 && response.data.length > 0) {
+                    response.data.forEach(venue => {
+                        const option = document.createElement('option');
+                        option.value = venue.id;
+                        option.textContent = `${venue.id} - ${venue.venue_name}`;
+                        venueSelect.appendChild(option);
+                    });
+                }
+            }
+        };
+        xhr.send('action=get_venues');
+
+        // 加载车辆
+        loadVehicles();
+        const savedMode = localStorage.getItem('theme');
+        const seenTip = localStorage.getItem('seenThemeTip');
+        if (savedMode === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+         // 首次访问提示快捷键功能
+        if (!seenTip) {
+            alert("提示：按下 Shift + A 可切换深色 / 浅色模式！");
+            localStorage.setItem('seenThemeTip', '1');
+        }
+    });
+    function showModeTip(msg) {
+        const el = document.getElementById('modeIndicator');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => {
+            el.style.display = 'none';
+        }, 1500);
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.shiftKey && e.key.toLowerCase() === 'a') {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            showModeTip(isDark ? '🌙 已切换深色模式' : '☀️ 已切换浅色模式');
+        }
+    });
+
+
+</script>
+
+</body>
+</html>

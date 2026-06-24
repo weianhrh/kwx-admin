@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>酷玩星全场地在线设备</title>
+  <link rel="stylesheet" href="/res/fa/css/all.min.css">
+  <style>
+    :root{
+      --primary:#5b8cff; --secondary:#7f8fa4;
+      --bg1:#f8f9ff; --bg2:#f0f3ff;
+      --card:#fff; --border:#ddd; --text:#333;
+      --shadow:0 4px 24px rgba(91,140,255,.08);
+      --transition:all .3s ease;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui;}
+    body{background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start;}
+    .container{max-width:1200px;width:100%;}
+    .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:var(--shadow);}
+    .topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .title{font-size:22px;font-weight:700;color:var(--text);}
+    .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+    .btn{
+      background:var(--primary);color:#fff;border:none;border-radius:8px;
+      padding:8px 12px;cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+    }
+    .btn:hover{background:#4a77e4;}
+    .btn.gray{background:#6c757d;}
+    .btn.gray:hover{background:#5a6268;}
+    .input{
+      padding:8px 10px;border:1px solid var(--border);border-radius:8px;outline:none;min-width:220px;
+    }
+    .meta{color:var(--secondary);font-size:13px;}
+    .list{margin-top:12px;}
+    .device-card{
+      background:#fff;border:1px solid var(--border);border-radius:10px;
+      padding:14px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;
+    }
+    .device-img{width:92px;height:92px;object-fit:cover;border-radius:10px;flex-shrink:0;}
+    .info{flex:1;display:flex;flex-direction:column;gap:6px;color:var(--text);font-size:14px;}
+    .name{font-size:16px;font-weight:700;color:var(--primary);}
+    .kv{display:flex;flex-wrap:wrap;gap:12px;color:#333;}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:2px 8px;border-radius:999px;background:rgba(40,167,69,.12);color:#1f7a34;font-weight:700;font-size:12px;
+    }
+    .loading{padding:20px;text-align:center;color:var(--primary);font-weight:700;}
+    @media (max-width:768px){
+      .device-card{flex-direction:column;align-items:center;}
+      .device-img{width:80px;height:80px;}
+      .info{text-align:center;align-items:center;}
+      .kv{justify-content:center;}
+      .input{width:100%;}
+      .tools{width:100%;}
+    }
+  </style>
+  <link rel="stylesheet" href="/res/common/device-console.css?v=2.0.7">
+</head>
+<body class="online-device-page">
+<script>
+if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+  document.body.classList.add('embedded-admin');
+}
+</script>
+  <div class="container">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <div class="device-page-kicker"><i class="fas fa-signal"></i> 酷玩星在线监控</div>
+          <div class="title">全场地在线设备</div>
+          <div class="meta" id="meta">正在加载...</div>
+        </div>
+        <div class="tools">
+          <input id="kw" class="input" placeholder="按序列号/名称/场地ID 搜索">
+          <button class="btn" id="refreshBtn"><i class="fas fa-sync-alt"></i>刷新</button>
+          <a class="btn gray" href="devMgtV2.html"><i class="fas fa-arrow-left"></i>返回设备管理</a>
+        </div>
+      </div>
+
+      <div id="list" class="list"></div>
+      <div id="loading" class="loading" style="display:none;">正在加载...</div>
+    </div>
+  </div>
+
+<script>
+  let all = [];
+
+  function esc(s){
+    return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(devices){
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+
+    if (!devices.length){
+      list.innerHTML = `<div class="loading">当前没有在线设备</div>`;
+      return;
+    }
+
+    for (const d of devices){
+      const img = d.photo_url || 'https://via.placeholder.com/120x120?text=Device';
+      const name = d.name || '未命名设备';
+      const serial = d.serial_number || '';
+      const bindSite = d.bind_site ?? d.bind_site_id ?? d.bind_site ?? '';
+      const voltage = d.redis?.voltage ?? d.voltage ?? '';
+      const ttl = d.redis?.ttl ?? d.ttl ?? '';
+
+      const card = document.createElement('div');
+      card.className = 'device-card';
+      card.innerHTML = `
+        <img class="device-img" src="${esc(img)}" alt="device">
+        <div class="info">
+          <div class="name"><span class="badge"><i class="fas fa-wifi"></i>在线</span>${esc(name)} </div>
+          <div>序列号：<b>${esc(serial)}</b></div>
+          <div class="kv">
+            <div>场地ID：<b>${esc(bindSite)}</b></div>
+            ${voltage!=='' ? `<div>电压：<b>${esc(voltage)}</b>V</div>` : ''}
+            ${ttl!=='' ? `<div>TTL：<b>${esc(ttl)}</b>s</div>` : ''}
+          </div>
+          <div class="kv">
+            <div>前图传：<b>${esc(d.image_device_serial ?? '')}</b></div>
+            ${d.bk_image_device_serial ? `<div>后图传：<b>${esc(d.bk_image_device_serial)}</b></div>` : ''}
+            <div>绑定用户：<b>${esc(d.uid ?? '未绑定')}</b></div>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+  }
+
+  function applyFilter(){
+    const kw = document.getElementById('kw').value.trim().toLowerCase();
+    if (!kw) return render(all);
+
+    const filtered = all.filter(d => {
+      const s = (d.serial_number||'').toLowerCase();
+      const n = (d.name||'').toLowerCase();
+      const b = String(d.bind_site ?? '').toLowerCase();
+      return s.includes(kw) || n.includes(kw) || b.includes(kw);
+    });
+    render(filtered);
+  }
+
+  async function load(){
+    const loading = document.getElementById('loading');
+    const meta = document.getElementById('meta');
+    loading.style.display = 'block';
+
+    try{
+      // 这里改成你的真实接口路径（看你接口放哪）
+      const resp = await fetch('/api/operat/online_devices.php', { cache: 'no-store' });
+      const data = await resp.json();
+
+      if (data.code === 0){
+        all = data.data?.devices || [];
+        meta.textContent = `在线数量：${all.length}  |  更新时间：${data.data?.server_time || ''}`;
+        applyFilter();
+      }else{
+        meta.textContent = '加载失败';
+        document.getElementById('list').innerHTML = `<div class="loading">加载失败：${esc(data.msg || '未知错误')}</div>`;
+      }
+    }catch(e){
+      meta.textContent = '加载失败';
+      document.getElementById('list').innerHTML = `<div class="loading">请求失败，请检查接口路径/服务器日志</div>`;
+    }finally{
+      loading.style.display = 'none';
+    }
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', load);
+  document.getElementById('kw').addEventListener('input', applyFilter);
+
+  // 自动刷新：每 5 秒拉一次（你可改 3000/10000）
+  setInterval(load, 60000);
+
+  load();
+</script>
+</body>
+</html>

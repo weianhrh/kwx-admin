@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<!--open.rcwulian.cn/single/res/modify-device.html-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>酷玩星修改设备信息</title>
+  <link rel="stylesheet" href="/res/fa/css/all.min.css">
+  <link rel="stylesheet" href="/res/common/device-console.css?v=2.0.7">
+  <style>
+    :root {
+      --primary: #5b8cff;
+      --secondary: #7f8fa4;
+      --background-gradient-start: #f8f9ff;
+      --background-gradient-end: #f0f3ff;
+      --card-bg: #ffffff;
+      --border-color: #ddd;
+      --text-color: #333;
+      --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", system-ui;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+
+    .card-title {
+      font-size: 24px;
+      color: var(--text-color);
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 10px;
+      text-align: center;
+    }
+
+    .form-field {
+      margin-bottom: 16px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 14px;
+      color: var(--secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .form-field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .submit-btn {
+      background-color: var(--primary);
+      color: #fff;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .submit-btn:hover {
+      background-color: #4a77e4;
+    }
+
+    /* ✅ 娃娃机编辑区补充样式（不影响原页面） */
+    .row{ display:flex; gap:12px; align-items:flex-end; }
+    .row>.col{ flex:1; }
+    .field-tip,
+    .helper{ font-size:12px; color:#999; margin-top:6px; line-height:1.4; }
+    .preview{ margin-top:10px; border:1px solid #eee; border-radius:10px; overflow:hidden; display:none; }
+    .preview img{ width:100%; max-height:240px; object-fit:cover; display:block; }
+    .btn{
+      border: 1px solid var(--border-color);
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+    }
+    .btn i { margin-right: 6px; color: var(--primary); }
+    .btn:hover { border-color:#c8d6ff; box-shadow:0 4px 18px rgba(91,140,255,0.12); }
+
+    .info-list{
+      background:#f2f6ff;
+      border:1px solid #e2ebff;
+      border-radius:12px;
+      padding:12px 14px;
+      margin-bottom:16px;
+    }
+    .info-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      line-height:1.4;
+    }
+    .info-label{
+      color:#3b66d6;
+      font-weight:600;
+      white-space:nowrap;
+    }
+    .info-value{
+      color:#1f2d4d;
+      font-weight:600;
+      word-break:break-all;
+    }
+  </style>
+</head>
+
+<body class="device-edit-page">
+<script>
+if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+  document.body.classList.add('embedded-admin');
+}
+</script>
+  <div class="device-form-shell">
+    <aside class="device-side-panel">
+      <div class="device-side-logo">KX</div>
+      <h1 class="device-side-title">设备资料</h1>
+      <p class="device-side-text" id="edit-device-name">设备基础信息</p>
+      <div class="device-side-list">
+        <div class="device-side-item"><i class="fas fa-barcode"></i><span id="edit-device-sn">序列号：-</span></div>
+        <div class="device-side-item"><i class="fas fa-camera"></i><span>图传绑定</span></div>
+        <div class="device-side-item"><i class="fas fa-share-alt"></i><span>分享状态</span></div>
+      </div>
+      <button type="button" class="device-side-back" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i><span>返回设备管理</span>
+      </button>
+    </aside>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">修改设备信息</div>
+
+      <form id="modify-form">
+<div class="form-field">
+  <label for="name">设备名称</label>
+  <input
+    type="text"
+    id="name"
+    name="name"
+    required
+    maxlength="10"
+    placeholder="最多10个字"
+  >
+  <div class="helper">最多 10 个中文字</div>
+</div>
+
+<div class="form-field">
+  <label for="share_name">设备分享名称</label>
+  <input
+    type="text"
+    id="share_name"
+    name="share_name"
+    required
+    maxlength="10"
+    placeholder="最多10个字"
+  >
+  <div class="helper">最多 10 个中文字</div>
+</div>
+
+ <div id="photo_field_wrap" class="form-field" style="display:none;">
+  <label for="photo_url">设备图片</label>
+  <select id="photo_url" name="photo_url">
+    <option value="https://rcwulian.cn/img/m1282.jpg">🚗 汽车图片</option>
+    <option value="https://rcwulian.cn/app/img/tl.png">🛡️ 坦克图片</option>
+    <option value="https://rcwulian.cn/img/wj01.jpg">⛏️ 挖掘机图片</option>
+    <option value="https://rcwulian.cn/app/img/583.jpg">🚜 推土机图片</option>
+    <option value="https://rcwulian.cn/app/img/573.jpg">🚚 翻斗车图片</option>
+    <option value="https://rcwulian.cn/img/wj01.png">⛏️ 液压挖掘机图片</option>
+    <option value="https://rcwulian.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png">🚜 液压推土机图片</option>
+    <option value="https://rcwulian.cn/img/latuche.png">🚚 液压翻斗车图片</option>
+  </select>
+
+  <div class="helper">可以直接选择预设图片，也可以上传自定义图片。</div>
+
+  <div class="row" style="margin-top:10px;">
+    <div class="col" style="max-width:240px;">
+      <input type="file" id="photo_image_file" accept="image/*" style="display:none;">
+      <button type="button" id="photo_btn_upload" class="btn">
+        <i class="fas fa-upload"></i>上传自定义图片
+      </button>
+    </div>
+  </div>
+  </div>
+
+  <div class="preview" id="photo_img_preview_wrap">
+    <img id="photo_img_preview" src="" alt="设备图片预览">
+  </div>
+</div>
+
+<div class="form-field">
+  <label for="image_device_serial">前图传ID / 房间号</label>
+  <input type="text" id="image_device_serial" name="image_device_serial" required readonly>
+  <div id="image-device-tip" class="helper">
+    可填写 device_information.id 或 room_id，保存时会自动转换为对应的 id
+  </div>
+</div>
+
+<div class="form-field">
+  <label for="image_device_room_id">当前前图传房间号</label>
+  <input type="text" id="image_device_room_id" readonly>
+</div>
+
+<div class="form-field">
+  <label for="bk_image_device_serial">后图传</label>
+  <input type="text" id="bk_image_device_serial" name="bk_image_device_serial" readonly>
+</div>
+
+        <div class="form-field">
+          <label for="sharing_status">分享状态</label>
+          <select id="sharing_status" name="sharing_status" required>
+            <option value="正在共享">正在共享</option>
+            <option value="未共享">未共享</option>
+          </select>
+        </div>
+        <div id="status_wrap" class="form-field" style="display:none;">
+          <label for="status">设备状态</label>
+          <select id="status" name="status">
+            <option value="在线">在线</option>
+            <option value="离线">离线</option>
+          </select>
+          <div class="helper">在线会写入 Redis DB4 且设为永久；离线会删除 Redis DB4 对应 key。</div>
+        </div>
+        <!-- ✅ 仅 car_type === 6 显示：娃娃机记录编辑区 -->
+        <div id="claw_wrap" style="display:none;">
+          <div style="margin: 16px 0 10px; border-top:1px dashed #e6ecff;"></div>
+
+          <div class="card-title" style="font-size:18px;margin-bottom:12px;border-bottom:none;padding-bottom:0;">
+            娃娃机信息
+          </div>
+
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">娃娃设备序列号：</span>
+              <span class="info-value" id="claw_sn_text">-</span>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="claw_product_name">品名</label>
+            <input type="text" id="claw_product_name" placeholder="例如：毛绒1">
+          </div>
+
+          <div class="form-field">
+            <label for="claw_billing_plan">资费套餐</label>
+            <select id="claw_billing_plan">
+              <option value="1">套餐价格 1</option>
+              <option value="2">套餐价格 2</option>
+              <option value="3">套餐价格 3</option>
+            </select>
+            <div class="helper"></div>
+          </div>
+
+          <div class="form-field">
+            <label>图片（保持原图：不改就别动）</label>
+
+            <div class="row">
+              <div class="col">
+                <input type="text" id="claw_product_image" placeholder="输入图片URL（不改就保持原图）">
+                <div class="helper">如果不想更新图片，保持输入框不变（默认会填原图）。</div>
+              </div>
+
+              <div class="col" style="max-width:240px;">
+                <input type="file" id="claw_image_file" accept="image/*" style="display:none;">
+                <button type="button" id="claw_btn_upload" class="btn">
+                  <i class="fas fa-upload"></i>上传并填入
+                </button>
+                <div class="helper">上传到 rcwulian.cn 后自动写入URL。</div>
+              </div>
+            </div>
+
+            <div class="preview" id="claw_img_preview_wrap">
+              <img id="claw_img_preview" src="" alt="预览">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="claw_product_intro">介绍</label>
+            <textarea id="claw_product_intro" placeholder="例如：玩法说明..."></textarea>
+          </div>
+        </div>
+
+        <!-- 隐藏字段，设备ID -->
+        <input type="hidden" id="device_id" name="device_id">
+        <input type="hidden" id="original_image_device_room_id" name="original_image_device_room_id">
+        <button type="submit" class="submit-btn">保存修改</button>
+      </form>
+    </div>
+  </div>
+  </div>
+
+<script>
+const CAR_TYPE_TO_PHOTO = {
+  1: "https://rcwulian.cn/img/m1282.jpg",        // 汽车
+  2: "https://rcwulian.cn/app/img/tl.png",       // 坦克
+  3: "https://rcwulian.cn/img/wj01.jpg",         // 挖掘机
+  4: "https://rcwulian.cn/app/img/583.jpg",      // 推土机
+  5: "https://rcwulian.cn/app/img/573.jpg",      // 翻斗车
+  6: "https://rcwulian.cn/img/m1282.jpg",        // 娃娃机（你有专用图就换）
+  7: "https://rcwulian.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png", // 液压推土机
+  8: "https://rcwulian.cn/img/latuche.png",      // 液压翻斗
+  9: "https://rcwulian.cn/img/wj01.png"          // 液压挖掘机
+};
+// ✅ 娃娃机 serial_number 白名单
+const CLAW_SN_SET = new Set([
+  '00700727C1FC',
+  '1CC3ABE0C178',
+  '3C8A1F0A6BB8',
+  'A4F00F534F4C',
+  'E08CFE302C58',
+  'EC334458D3C2'
+]);
+let userCanEditImage = false;
+let userCanEditPhoto = false;
+let userCanEditStatus = false;
+let initialPhotoValue = '';
+
+function getTextLen(str) {
+  return Array.from((str || '').trim()).length;
+}
+
+function trimToMaxLen(str, maxLen = 10) {
+  return Array.from((str || '').trim()).slice(0, maxLen).join('');
+}
+
+function bindMaxLen(inputId, label, maxLen = 10) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+
+  el.addEventListener('input', function () {
+    const current = this.value || '';
+    const fixed = trimToMaxLen(current, maxLen);
+    if (current !== fixed) {
+      this.value = fixed;
+      alert(label + '不能超过' + maxLen + '个中文字');
+    }
+  });
+}
+
+function validateNameFields() {
+  const nameEl = document.getElementById('name');
+  const shareNameEl = document.getElementById('share_name');
+
+  const name = (nameEl?.value || '').trim();
+  const shareName = (shareNameEl?.value || '').trim();
+
+  if (!name) {
+    alert('请输入设备名称');
+    nameEl?.focus();
+    return false;
+  }
+
+  if (!shareName) {
+    alert('请输入设备分享名称');
+    shareNameEl?.focus();
+    return false;
+  }
+
+  if (getTextLen(name) > 10) {
+    alert('设备名称不能超过10个中文字');
+    nameEl?.focus();
+    return false;
+  }
+
+  if (getTextLen(shareName) > 10) {
+    alert('设备分享名称不能超过10个中文字');
+    shareNameEl?.focus();
+    return false;
+  }
+
+  return true;
+}
+function normalizeImageUrl(u) {
+  u = (u || '').toString().trim();
+  if (!u) return '';
+  return u.replace(/^http:\/\//i, 'https://');
+}
+
+function setDevicePhotoPreview(url) {
+  const wrap = document.getElementById('photo_img_preview_wrap');
+  const img = document.getElementById('photo_img_preview');
+  const u = normalizeImageUrl(url);
+  if (!wrap || !img) return;
+
+  if (!u) {
+    wrap.style.display = 'none';
+    img.src = '';
+    return;
+  }
+
+  img.src = u;
+  wrap.style.display = '';
+}
+
+function setDevicePhotoValue(url, label = '📌 自定义上传图片') {
+  const photoSel = document.getElementById('photo_url');
+  if (!photoSel) return;
+
+  const normalizedUrl = normalizeImageUrl(url);
+  if (!normalizedUrl) return;
+
+  let matched = Array.from(photoSel.options).find(
+    opt => normalizeImageUrl(opt.value) === normalizedUrl
+  );
+
+  if (!matched) {
+    matched = document.createElement('option');
+    matched.value = normalizedUrl;
+    matched.textContent = label;
+    photoSel.insertBefore(matched, photoSel.firstChild);
+  } else {
+    matched.textContent = label;
+  }
+
+  photoSel.value = normalizedUrl;
+  setDevicePhotoPreview(normalizedUrl);
+}
+
+function initDevicePhotoUpload() {
+  const photoSel = document.getElementById('photo_url');
+  const uploadBtn = document.getElementById('photo_btn_upload');
+  const fileInput = document.getElementById('photo_image_file');
+
+  if (!photoSel || !uploadBtn || !fileInput) return;
+
+  photoSel.addEventListener('change', function () {
+    setDevicePhotoPreview(this.value);
+  });
+
+  uploadBtn.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', async function () {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>上传中...';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('https://rcwulian.cn/app/img/userimg/upload_profile.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      const url = result && result.url ? String(result.url).trim() : '';
+
+      if (!url) {
+        alert('上传失败：接口未返回 url');
+        return;
+      }
+
+      setDevicePhotoValue(url, '📌 自定义上传图片');
+    } catch (err) {
+      console.error('设备图片上传失败:', err);
+      alert('设备图片上传失败，请重试');
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = '<i class="fas fa-upload"></i>上传自定义图片';
+      fileInput.value = '';
+    }
+  });
+}
+
+async function fetchCurrentUserRole() {
+  try {
+    const res = await fetch('/api/operat/get_current_user.php', { credentials: 'include' });
+    const result = await res.json();
+    const roleId = Number(result?.data?.role_id || 0);
+    userCanEditImage = (roleId === 1);
+    userCanEditPhoto = (roleId === 1 || roleId === 2);
+    userCanEditStatus = (roleId === 1 || roleId === 2);
+  } catch (err) {
+    console.warn('获取用户角色失败:', err);
+  }
+}
+
+/* =========================
+   ✅ 娃娃机模块（car_type===6）
+========================= */
+const CLAW_API = '/api/devMgr/claw_machine_record.php';
+
+function clawSetPreview(url) {
+  const wrap = document.getElementById('claw_img_preview_wrap');
+  const img = document.getElementById('claw_img_preview');
+  const u = (url || '').trim();
+  if (!u) { wrap.style.display = 'none'; img.src = ''; return; }
+  img.src = u;
+  wrap.style.display = '';
+}
+
+async function initClawSection(serialNumber) {
+  const wrap = document.getElementById('claw_wrap');
+  wrap.style.display = '';
+
+  document.getElementById('claw_sn_text').textContent = serialNumber;
+
+  // 拉取娃娃机记录
+  try {
+    const res = await fetch(`${CLAW_API}?serial_number=${encodeURIComponent(serialNumber)}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+    const result = await res.json();
+    if (result.code !== 0) {
+      console.warn('娃娃机记录拉取失败:', result.msg);
+      return;
+    }
+    const r = result.data;
+    if (!r) return;
+
+    document.getElementById('claw_product_name').value = r.product_name || '';
+    document.getElementById('claw_billing_plan').value = String(r.billing_plan ?? '1');
+    document.getElementById('claw_product_image').value = r.product_image || '';
+    document.getElementById('claw_product_intro').value = r.product_introduction || '';
+    clawSetPreview(r.product_image || '');
+  } catch (e) {
+    console.warn('娃娃机记录拉取异常:', e);
+  }
+
+  // 预览联动
+  document.getElementById('claw_product_image').addEventListener('input', (e) => {
+    clawSetPreview(e.target.value);
+  });
+
+  // 上传并填入
+  document.getElementById('claw_btn_upload').addEventListener('click', async () => {
+    const fileInput = document.getElementById('claw_image_file');
+    fileInput.click();
+
+    fileInput.onchange = async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      const btn = document.getElementById('claw_btn_upload');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>上传中...';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('https://rcwulian.cn/app/img/userimg/upload_profile.php', {
+          method: 'POST',
+          body: formData
+        });
+        const up = await response.json();
+
+        const url = (up && up.url) ? String(up.url).trim() : '';
+        if (!url) {
+          alert('上传失败：接口未返回 url');
+          return;
+        }
+
+        document.getElementById('claw_product_image').value = url;
+        clawSetPreview(url);
+      } catch (e) {
+        console.error(e);
+        alert('上传失败，请重试');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload"></i>上传并填入';
+        fileInput.value = '';
+      }
+    };
+  });
+}
+
+async function updateClawRecord(serialNumber) {
+  const wrap = document.getElementById('claw_wrap');
+  if (!wrap || wrap.style.display === 'none') return { code: 0, msg: 'skipped' };
+
+  const product_name = document.getElementById('claw_product_name').value.trim();
+  const billing_plan = document.getElementById('claw_billing_plan').value;
+  const product_image = document.getElementById('claw_product_image').value.trim();
+  const product_introduction = document.getElementById('claw_product_intro').value.trim();
+
+  const payload = {
+    action: 'update',
+    serial_number: serialNumber,
+    product_name,
+    billing_plan,
+    product_introduction
+  };
+  if (product_image) payload.product_image = product_image;
+
+  const res = await fetch(CLAW_API, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+/* =========================
+   页面加载：读取 URL 参数填充
+========================= */
+window.addEventListener('DOMContentLoaded', async function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const device = {};
+  urlParams.forEach((value, key) => { device[key] = value; });
+
+  const sideName = document.getElementById('edit-device-name');
+  const sideSn = document.getElementById('edit-device-sn');
+  if (sideName) sideName.textContent = device.name || '设备基础信息';
+  if (sideSn) sideSn.textContent = `序列号：${device.serial_number || '-'}`;
+
+  await fetchCurrentUserRole();
+bindMaxLen('name', '设备名称', 10);
+bindMaxLen('share_name', '设备分享名称', 10);
+  // 权限显示/隐藏“设备图片”
+  const photoWrap = document.getElementById('photo_field_wrap');
+  if (photoWrap) photoWrap.style.display = userCanEditPhoto ? '' : 'none';
+
+  if (userCanEditPhoto) {
+    initDevicePhotoUpload();
+  }
+
+  if (Object.keys(device).length > 0) {
+    document.getElementById('device_id').value = device.serial_number || '';
+    document.getElementById('name').value = device.name || '';
+    document.getElementById('share_name').value = device.share_name || '';
+    
+    const currentImageSerial = (device.image_device_serial || '').trim();
+    const currentRoomId = (device.image_device_room_id || '').trim();
+    
+    document.getElementById('image_device_serial').value = currentImageSerial;
+    document.getElementById('image_device_room_id').value = currentRoomId;
+    document.getElementById('original_image_device_room_id').value = currentRoomId;
+    document.getElementById('bk_image_device_serial').value = device.bk_image_device_serial || '';
+    document.getElementById('sharing_status').value = device.sharing_status || '正在共享';
+    
+    const tipEl = document.getElementById('image-device-tip');
+    if (tipEl) {
+      if (userCanEditImage) {
+        tipEl.textContent =
+          `当前保存的前图传：${currentImageSerial || '无'}，当前房间号：${currentRoomId || '无'}。可填写 device_information.id 或 room_id；匹配到后会自动保存为对应 id，匹配不到则按原值保存。`;
+      } else {
+        tipEl.textContent =
+          `当前保存的前图传：${currentImageSerial || '无'}，当前房间号：${currentRoomId || '无'}。仅管理员可修改图传。`;
+      }
+    }
+
+    const photoSel = document.getElementById('photo_url');
+
+    const carTypeRaw = (device.car_type ?? '').toString().trim();
+    const carType = parseInt(carTypeRaw || '0', 10);
+
+    const defaultPhoto = normalizeImageUrl(CAR_TYPE_TO_PHOTO[carType] || "https://rcwulian.cn/img/m1282.jpg");
+    let incomingPhoto = normalizeImageUrl(device.photo_url);
+    
+    if (incomingPhoto === 'null' || incomingPhoto === 'undefined') incomingPhoto = '';
+
+    function optionExists(url) {
+      const u = normalizeImageUrl(url);
+      return Array.from(photoSel.options).some(opt => normalizeImageUrl(opt.value) === u);
+    }
+
+    const want = (incomingPhoto && optionExists(incomingPhoto)) ? incomingPhoto : defaultPhoto;
+
+    if (!optionExists(want)) {
+      const opt = document.createElement('option');
+      opt.value = want;
+      opt.textContent = '📌 当前图片';
+      photoSel.insertBefore(opt, photoSel.firstChild);
+    }
+    photoSel.value = want;
+    initialPhotoValue = normalizeImageUrl(photoSel.value);
+    setDevicePhotoPreview(photoSel.value);
+    document.getElementById('sharing_status').value = device.sharing_status || '正在共享';
+
+    // 根据权限设置图传是否可编辑
+    if (userCanEditImage) {
+      document.getElementById('image_device_serial').removeAttribute('readonly');
+      document.getElementById('bk_image_device_serial').removeAttribute('readonly');
+    }
+
+    const snUpper = String(device.serial_number || '').trim().toUpperCase();
+    const isClaw = (carType === 6) || CLAW_SN_SET.has(snUpper);
+
+    // 设备状态赋值
+    // 设备状态赋值：只允许 role_id == 1 显示和提交
+    const statusEl = document.getElementById('status');
+    const statusWrap = document.getElementById('status_wrap');
+    const currentStatus = String(device.status || '').trim();
+    
+    if (statusEl) {
+      statusEl.value = (currentStatus === '在线') ? '在线' : '离线';
+      statusEl.disabled = !userCanEditStatus;
+    }
+    
+    if (statusWrap) {
+      statusWrap.style.display = userCanEditStatus ? '' : 'none';
+    }
+    
+    // 只有娃娃机才展示娃娃机信息
+    if (isClaw) {
+      await initClawSection(device.serial_number);
+    }
+
+  } else {
+    alert('未获取到设备信息');
+  }
+});
+
+/* =========================
+   提交表单：先保存设备，再保存娃娃机
+========================= */
+document.getElementById('modify-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!validateNameFields()) {
+    return;
+  }
+  const submitBtn = document.querySelector('.submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '提交中...';
+
+  // 如果无权限编辑 photo_url，则禁用以免 FormData 收集不到/或误提交
+  if (!userCanEditPhoto) {
+    const sel = document.getElementById('photo_url');
+    if (sel) sel.disabled = true;
+  }
+
+  const formData = new FormData(this);
+  const data = {};
+  formData.forEach((value, key) => data[key] = value);
+
+const currentPhotoValue = (() => {
+  const sel = document.getElementById('photo_url');
+  if (!sel) return '';
+  return normalizeImageUrl(sel.value || '');
+})();
+
+if (userCanEditPhoto && currentPhotoValue === initialPhotoValue) {
+  delete data.photo_url;
+}
+// 非管理员不允许提交设备状态，避免隐藏字段误提交
+if (!userCanEditStatus) {
+  delete data.status;
+}
+  // car_type 从 URL 里取（因为 form 里没有）
+  const urlParams = new URLSearchParams(window.location.search);
+  const carType = parseInt((urlParams.get('car_type') || '0'), 10);
+  const serialNumber = (urlParams.get('serial_number') || data.device_id || '').toString().trim();
+
+  fetch('/api/vehicle/modifyDevice.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(async (result) => {
+    if (result.code === 0) {
+      // ✅ 设备保存成功后：如果是娃娃机，再保存娃娃机记录
+ const snUpper2 = String(serialNumber || '').trim().toUpperCase();
+const isClaw2 = (carType === 6) || CLAW_SN_SET.has(snUpper2);
+
+if (isClaw2 && serialNumber) {
+  const clawRes = await updateClawRecord(serialNumber);
+  if (clawRes && clawRes.code !== 0) {
+    alert('设备信息已保存，但娃娃机信息保存失败：' + (clawRes.msg || '未知错误'));
+    return;
+  }
+}
+
+      alert(result.msg || '保存成功');
+      history.back();
+      return;
+    }
+
+    if (result.code === 1008) {
+      alert(result.msg);
+      window.location.reload();
+      return;
+    }
+    if (result.code === 1009) {
+      alert(result.msg);
+      history.back();
+      return;
+    }
+    alert('修改失败：' + (result.msg || '未知错误'));
+  })
+  .catch(error => {
+    console.error('修改设备信息失败:', error);
+    alert('修改设备信息失败，请重试');
+  })
+  .finally(() => {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '保存修改';
+  });
+});
+</script>
+</body>
+</html>

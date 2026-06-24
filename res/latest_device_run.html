@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>酷玩星设备面板</title>
+<link rel="stylesheet" href="/res/fa/css/all.min.css">
+
+<style>
+  :root{
+    --primary:#5b8cff;--secondary:#7f8fa4;
+    --background-gradient-start:#f8f9ff;--background-gradient-end:#f0f3ff;
+    --card-bg:#fff;--border-color:#ddd;--text-color:#333;
+    --shadow:0 4px 24px rgba(91,140,255,.08);--transition:.3s all ease;--hover-bg:#f9f9f9;
+    --online:#18c08f;--offline:#ff4d4f;--busy:#ffb020;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui}
+  body{background:linear-gradient(135deg,var(--background-gradient-start) 0%,var(--background-gradient-end) 100%);
+      min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start}
+  .container{max-width:1200px;width:100%}
+  .card{background:var(--card-bg);border-radius:12px;padding:20px;box-shadow:var(--shadow);margin-bottom:20px;transition:var(--transition)}
+  .card-title{font-size:20px;color:var(--text-color);margin-bottom:16px;font-weight:600;border-bottom:2px solid var(--primary);padding-bottom:10px;text-align:left}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .toolbar select,.toolbar button{padding:8px 10px;border:1px solid var(--border-color);border-radius:8px;background:#fff;cursor:pointer;}
+
+  .status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:1050px){.status-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:720px){.status-grid{grid-template-columns:1fr}}
+  .status-card{border:1px solid var(--border-color);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+  .status-card:hover{background:var(--hover-bg)}
+  .kv{font-size:14px;color:var(--text-color)}
+  .kv b{color:#111}
+  .status-text{font-weight:600;}
+  .online{color:var(--online)} .offline{color:var(--offline)} .busy{color:var(--busy)}
+  .wrap{word-break:break-word;overflow-wrap:anywhere;}
+
+  .table-wrap{overflow:auto;border:1px solid var(--border-color);border-radius:12px}
+  table{width:100%;border-collapse:collapse;background:#fff}
+  thead th{position:sticky;top:0;background:#f6f8ff;border-bottom:1px solid var(--border-color);
+    text-align:left;padding:10px 12px;font-weight:600;color:#334}
+  tbody td{border-top:1px solid #eee;padding:10px 12px;font-size:14px;color:#222}
+  tbody tr:hover{background:#fafcff}
+  .money{font-weight:700}
+  .muted{color:var(--secondary);font-size:12px}
+  .loading,.empty{text-align:center;color:var(--primary);padding:16px}
+  .warn{color:#ff7a45;font-size:14px}
+
+  @media (max-width:768px){
+    .toolbar{flex-direction:column;align-items:stretch;gap:8px}
+    .toolbar select,.toolbar button{width:100%}
+    #lastUpdate{display:block;text-align:left}
+
+    .table-wrap table, .table-wrap thead, .table-wrap tbody,
+    .table-wrap th, .table-wrap td, .table-wrap tr{display:block;width:100%}
+    .table-wrap thead{display:none}
+    .table-wrap tbody tr{
+      border:1px solid var(--border-color);border-radius:12px;background:#fff;
+      margin:12px 0;padding:10px 12px;box-shadow:var(--shadow)
+    }
+    .table-wrap tbody td{
+      border:0;padding:6px 0;display:flex;justify-content:space-between;gap:12px;font-size:14px
+    }
+    .table-wrap tbody td::before{
+      content:attr(data-label);font-weight:600;color:#555;margin-right:8px;flex:0 0 auto
+    }
+    .table-wrap tbody td>span{flex:1 1 auto;min-width:0;text-align:right}
+  }
+</style>
+<link rel="stylesheet" href="/res/common/device-console.css?v=2.0.7">
+</head>
+<body class="device-panel-page">
+<script>
+if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+    document.body.classList.add('embedded-admin');
+}
+</script>
+<div class="container">
+
+  <div class="card">
+    <div class="device-page-kicker"><i class="fas fa-chart-line"></i> 酷玩星设备面板</div>
+    <div class="card-title">设备最新驾驶记录</div>
+    <div class="device-page-subtitle">实时运行状态 / 驾驶记录 / 场地筛选</div>
+    <div class="toolbar">
+      <select id="venue_id"></select>
+      <button id="refreshBtn"><i class="fas fa-sync-alt"></i><span>立即刷新</span></button>
+      <span id="lastUpdate" class="muted"></span>
+      <span id="permHint" class="warn" style="display:none;"></span>
+    </div>
+    <div id="statusGrid" class="status-grid"></div>
+  </div>
+
+  <div id="listCard" class="card" style="display:none;">
+    <div class="card-title">驾驶记录列表</div>
+    <div id="loading" class="loading" style="display:none;">加载中…</div>
+    <div id="empty" class="empty" style="display:none;">暂无数据</div>
+    <div class="table-wrap">
+      <table id="listTable">
+        <thead>
+          <tr>
+            <th>场地名称</th>
+            <th>设备名称</th>
+            <th>在线状态</th>
+            <th>操作状态</th>
+            <th>用户昵称</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>驾驶时长</th>
+            <th>订单金额</th>
+            <th>支付方式</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const AUTO_VENUE_IDS = ['86', '94']; // 86、94 场地启用 8 秒自动刷新（不看角色）
+let selectedVenueId = null;
+let currentRoleId = null;
+let autoTimer = null;
+
+/* 工具 */
+function fmtTime(s){ return s ? s.replace('T',' ').replace('.000Z','') : '-' }
+function fmtDuration(sec){ if(sec==null) return '-'; sec=Math.max(0,parseInt(sec,10)); const m=Math.floor(sec/60), s=sec%60; return (m? (m+'分'):'')+s+'秒'; }
+function colorStatus(text){
+  if(text==='在线') return `<span class="status-text online">${text}</span>`;
+  if(text==='离线') return `<span class="status-text offline">${text}</span>`;
+  if(text==='使用中'|| text === '占用') return `<span class="status-text busy">${text}</span>`;
+  return text || '-';
+}
+
+/* 权限与刷新策略 */
+function isAdmin(){ return String(currentRoleId) === '1'; }
+// 显示列表：管理员 或 场地 86
+function shouldShowList(){
+  return isAdmin() || AUTO_VENUE_IDS.includes(String(selectedVenueId));
+}
+// 自动刷新：只要场地 86（不看角色）
+function shouldAutoRefresh(){
+  return AUTO_VENUE_IDS.includes(String(selectedVenueId));
+}
+
+function applyVisibilityAndTimer(){
+  const listCard = document.getElementById('listCard');
+  const hint = document.getElementById('permHint');
+
+  // 列表可见性
+  listCard.style.display = shouldShowList() ? '' : 'none';
+
+  // 提示语
+if (shouldAutoRefresh()) {
+  hint.textContent = `场地 ${selectedVenueId}：已启用 8 秒静态刷新。`;
+  hint.style.display = '';
+} else if (isAdmin()) {
+    hint.textContent = '非 86 场地：显示历史驾驶记录（不自动刷新）。';
+    hint.style.display = 'none';
+  } else {
+    hint.textContent = '非管理员仅可查看场地 86 的驾驶记录。';
+    hint.style.display = 'none';
+  }
+
+  // 自动刷新控制
+  if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+  if(shouldAutoRefresh()){
+    autoTimer = setInterval(()=>fetchData(selectedVenueId, /*silent*/true), 8000);
+  }
+}
+
+/* 顶部卡片 */
+function renderTop(data){
+  const grid=document.getElementById('statusGrid');
+  const topN = Array.isArray(data) ? data.slice(0, data.length) : [];
+  grid.innerHTML=topN.map(r=>`
+    <div class="status-card">
+      <div class="kv"><b class="wrap">${r.venue_name||'-'}</b> / <span class="wrap">${r.device_name||'-'}</span></div>
+      <div class="kv">在线状态：${colorStatus(r.online_status)}</div>
+      <div class="kv">操作状态：${colorStatus(r.operation_status)}</div>
+      <div class="kv">驾驶人：<span class="wrap">${r.driver_nickname||'-'}</span></div>
+      <div class="kv">开始时间：${fmtTime(r.start_time)}</div>
+      <div class="kv">结束时间：${fmtTime(r.end_time)}</div>
+    </div>`).join('');
+}
+
+/* 表格 */
+function renderTable(data){
+  const tbody=document.querySelector('#listTable tbody');
+  tbody.innerHTML=(Array.isArray(data)?data:[]).map(r=>{
+    const dur   = fmtDuration(r.duration_seconds);
+    const money = (r.order_amount!=null)?Number(r.order_amount).toFixed(2):'-';
+    const pay   = r.pay_type || '-';
+    return `
+      <tr>
+        <td data-label="场地名称"><span class="wrap">${r.venue_name||'-'}</span></td>
+        <td data-label="设备名称"><span class="wrap">${r.device_name||'-'}</span></td>
+        <td data-label="在线状态"><span>${colorStatus(r.online_status)}</span></td>
+        <td data-label="操作状态"><span>${colorStatus(r.operation_status)}</span></td>
+        <td data-label="用户昵称"><span class="wrap">${r.driver_nickname||'-'}</span></td>
+        <td data-label="开始时间"><span>${fmtTime(r.start_time)}</span></td>
+        <td data-label="结束时间"><span>${fmtTime(r.end_time)}</span></td>
+        <td data-label="驾驶时长"><span>${dur}</span></td>
+        <td data-label="订单金额"><span class="money">${money}</span></td>
+        <td data-label="支付方式"><span class="wrap">${pay}</span></td>
+      </tr>`;
+  }).join('');
+}
+
+/* 加载场地下拉（只给管理员显示下拉；非管理员按后端绑定场地） */
+function loadVenues(){
+  return fetch(`/api/devMgr/devMgtV2.php?get_venues`)
+    .then(r=>r.json()).then(res=>{
+      const sel=document.getElementById('venue_id'); sel.innerHTML='';
+      if(res.code===0 && res.data && Array.isArray(res.data.venues)){
+        res.data.venues.forEach(v=>{
+          const o=document.createElement('option');
+          o.value=String(v.id);
+          o.textContent=`${v.id}-${v.venue_name}`;
+          sel.appendChild(o);
+        });
+        const saved=sessionStorage.getItem('selectedVenueId');
+        sel.value=(saved && sel.querySelector(`option[value="${saved}"]`)) ? saved : (sel.options[0]?.value||'');
+        selectedVenueId=sel.value;
+      }
+    }).catch(()=>{ /* 忽略下拉失败 */ });
+}
+
+/* 拉数据（返回里带 role_id / venue_id） */
+function fetchData(venueId, silent=false){
+  const url = venueId ? `/api/operat/latest_device_run.php?id=${encodeURIComponent(venueId)}`
+                      : `/api/operat/latest_device_run.php`;
+  if(!silent){
+    document.getElementById('loading').style.display='';
+    document.getElementById('empty').style.display='none';
+  }
+
+  return fetch(url,{credentials:'include'})
+    .then(r=>r.json())
+    .then(res=>{
+      if(!silent) document.getElementById('loading').style.display='none';
+      if(res.code!==0){
+        if(!silent) document.getElementById('empty').style.display='';
+        return null;
+      }
+      const data = Array.isArray(res.data) ? res.data : [];
+      // 使用中优先
+      data.sort((a,b)=>{
+        const sa=a.operation_status==='使用中'?1:0, sb=b.operation_status==='使用中'?1:0;
+        if(sa!==sb) return sb-sa;
+        return (b.vehicle_id||0)-(a.vehicle_id||0);
+      });
+
+      renderTop(data);
+
+      // 满足 shouldShowList() 才渲染底部表格
+      if(shouldShowList()){
+        renderTable(data);
+        document.getElementById('empty').style.display = data.length ? 'none' : '';
+      }
+
+      document.getElementById('lastUpdate').textContent=`上次更新：${new Date().toLocaleString()}`;
+      return { role_id: res.role_id, venue_id: String(res.venue_id) };
+    })
+    .catch(()=>{
+      if(!silent){
+        document.getElementById('loading').style.display='none';
+        document.getElementById('empty').style.display='';
+      }
+      return null;
+    });
+}
+
+/* 初始化 */
+async function init(){
+  const meta = await fetchData(null); // 后端用绑定场地
+  if(!meta) return;
+
+  currentRoleId = meta.role_id;
+  const sel = document.getElementById('venue_id');
+
+  if (isAdmin()) {
+    // 管理员：显示下拉并加载场地
+    sel.style.display = '';
+    await loadVenues();
+
+    // 优先使用本次 meta 场地（若存在）
+    if (sel.querySelector(`option[value="${meta.venue_id}"]`)) {
+      sel.value = meta.venue_id;
+      selectedVenueId = meta.venue_id;
+      sessionStorage.setItem('selectedVenueId', selectedVenueId);
+    } else {
+      selectedVenueId = sel.value || meta.venue_id;
+    }
+  } else {
+    // 非管理员：隐藏下拉，固定为绑定场地（可能是 86，也可能不是）
+    sel.style.display = 'none';
+    selectedVenueId = meta.venue_id;
+  }
+
+  applyVisibilityAndTimer();
+
+  // 首次如果需要显示列表，再拉一次静默刷新表格
+  if (shouldShowList()) {
+    await fetchData(selectedVenueId, /*silent*/true);
+  }
+}
+
+/* 手动刷新 & 切场地 */
+document.getElementById('refreshBtn').onclick = ()=> { fetchData(selectedVenueId); };
+document.getElementById('venue_id').onchange = async (e)=>{
+  selectedVenueId = String(e.target.value);
+  sessionStorage.setItem('selectedVenueId', selectedVenueId);
+  applyVisibilityAndTimer();
+  await fetchData(selectedVenueId);
+};
+
+/* 启动 */
+init();
+</script>
+
+</body>
+</html>

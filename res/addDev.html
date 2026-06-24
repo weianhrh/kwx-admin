@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>酷玩星添加设备</title>
+    <link rel="stylesheet" href="/res/fa/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --hover-bg: #f9f9f9;
+            --highlight-bg: #eff4ff;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+        }
+
+        .card-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 24px;
+            color: var(--text-color);
+            font-weight: 600;
+            padding-bottom: 10px;
+            flex-grow: 1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            background-color: #f8f9ff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 100%;
+            outline: none;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.12);
+        }
+
+        .action-button {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+            min-width: 96px;
+        }
+
+        .action-button:hover:not(:disabled) {
+            background-color: #4a77e4;
+        }
+
+        .action-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .photo-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .photo-select-wrap {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .photo-upload-wrap {
+            flex: 0 0 auto;
+        }
+
+        .photo-upload-wrap .action-button {
+            margin-right: 0;
+            white-space: nowrap;
+        }
+
+        .required-star {
+            color: #ff4d4f;
+            margin-left: 4px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .tip-box {
+            background: #f8fbff;
+            border: 1px solid rgba(91,140,255,.18);
+            color: #475569;
+            font-size: 13px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            line-height: 1.7;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 16px;
+            }
+
+            .form-group label {
+                font-size: 12px;
+            }
+
+            .action-button {
+                font-size: 12px;
+            }
+
+            .photo-row {
+                flex-wrap: wrap;
+                align-items: stretch;
+            }
+
+            .photo-select-wrap,
+            .photo-upload-wrap {
+                width: 100%;
+            }
+
+            .photo-upload-wrap .action-button {
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/res/common/device-console.css?v=2.0.7">
+</head>
+
+<body class="device-add-page">
+<script>
+if (window.self !== window.top || new URLSearchParams(window.location.search).get('embed') === 'dashboard') {
+    document.body.classList.add('embedded-admin');
+}
+</script>
+    <div class="container">
+        <div class="card">
+            <div class="card-title-container">
+                <div>
+                    <div class="device-page-kicker"><i class="fas fa-plus-circle"></i> 酷玩星设备录入</div>
+                    <h2 class="card-title">添加设备</h2>
+                    <div class="device-page-subtitle">批量序列号 / 场地绑定 / 图传匹配</div>
+                </div>
+                <button type="submit" form="addDeviceForm" class="action-button" id="submitBtn">
+                    <i class="fas fa-check"></i><span>提交</span>
+                </button>
+            </div>
+
+            <div class="tip-box">
+                说明：<br>
+                1. 设备序列号为主列，每个非空设备序列号都会生成一台设备。<br>
+                2. 图像设备序列号、rtc_user_id 都按<strong>原始行号</strong>与设备序列号对应，允许中间留空，不会再因为空行错位。<br>
+                3. 如果某一行填写了 rtc_user_id，则该行建议同时填写图像设备序列号，并且该图像设备序列号应能匹配到 device_information 的 id 或 room_id。
+            </div>
+
+            <form id="addDeviceForm">
+                <div class="form-group">
+                    <label for="serial_number">设备序列号（每行一个）<span class="required-star">*</span></label>
+                    <textarea id="serial_number" name="serial_number" rows="8" required placeholder="例如：&#10;car001&#10;car002&#10;car003"></textarea>
+                    <div class="hint">主列。只有这一列非空的行，才会真正创建设备。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="image_device_serial">图像设备序列号 / 房间号（每行一个）</label>
+                    <textarea id="image_device_serial" name="image_device_serial" rows="8" placeholder="可留空；按设备序列号逐行对应"></textarea>
+                    <div class="hint">后端会先按 device_information.id 查，查不到再按 room_id 查；查到后统一保存为对应的 device_information.id。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rtc_user_id">rtc_user_id（每行一个）</label>
+                    <textarea id="rtc_user_id" name="rtc_user_id" rows="8" placeholder="可留空；按设备序列号逐行对应，例如：&#10;web_voice_10001&#10;user_talk_a02"></textarea>
+                    <div class="hint">如果该行填写了 rtc_user_id，则该行图像设备序列号也建议填写，并且要能匹配到 device_information 记录，后端才会回写到 device_information.rtc_user_id。</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">设备名称前缀<span class="required-star">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="例如：测试车">
+                </div>
+
+                <div class="form-group">
+                    <label for="bind_site">绑定场地 ID<span class="required-star">*</span></label>
+                    <select id="bind_site" name="bind_site" required>
+                        <option value="">请选择场地</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sharing_status">共享状态</label>
+                    <select id="sharing_status" name="sharing_status">
+                        <option value="正在共享">正在共享</option>
+                        <option value="未共享">未共享</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="car_type">车辆类型（car_type）</label>
+                    <select id="car_type" name="car_type">
+                        <option value="1" selected>1 - 汽车</option>
+                        <option value="2">2 - 坦克</option>
+                        <option value="3">3 - 挖掘机</option>
+                        <option value="4">4 - 推土机</option>
+                        <option value="5">5 - 翻斗车</option>
+                        <option value="6">6 - 娃娃机</option>
+                        <option value="7">7 - 液压推土机</option>
+                        <option value="8">8 - 液压翻斗</option>
+                        <option value="9">9 - 液压挖掘机</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo_url">照片类型</label>
+
+                    <div class="photo-row">
+                        <div class="photo-select-wrap">
+                            <select id="photo_url" name="photo_url">
+                                <option value="https://rcwulian.cn/img/m1282.jpg" selected>🚗 汽车图片</option>
+                                <option value="https://rcwulian.cn/app/img/tl.png">🛡️ 坦克图片</option>
+                                <option value="https://rcwulian.cn/img/wj01.jpg">⛏️ 挖掘机图片</option>
+                                <option value="https://rcwulian.cn/app/img/583.jpg">🚜 推土机图片</option>
+                                <option value="https://rcwulian.cn/app/img/573.jpg">🚚 翻斗车图片</option>
+                                <option value="https://rcwulian.cn/app/imgv2/img/upload_1747900530_682ed8725a309.png">🧸 娃娃机图片</option>
+                                <option value="https://rcwulian.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png">🚜 液压推土机图片</option>
+                                <option value="https://rcwulian.cn/img/latuche.png">🚚 液压翻斗图片</option>
+                                <option value="https://rcwulian.cn/img/wj01.png">⛏️ 液压挖掘机图片</option>
+                            </select>
+                        </div>
+
+                        <div class="photo-upload-wrap">
+                            <input type="file" id="photo_image_file" accept="image/*" style="display:none;">
+                            <button type="button" id="photo_btn_upload" class="action-button" hidden>
+                                上传自定义图片
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uid">UID</label>
+                    <input type="number" id="uid" name="uid" value="10107" onwheel="this.blur()">
+                </div>
+
+                <div class="form-group">
+                    <label for="throttle_max">最大油门</label>
+                    <input type="number" id="throttle_max" name="throttle_max" value="1640" onwheel="this.blur()">
+                </div>
+
+                <div class="form-group">
+                    <label for="throttle_min">最小油门</label>
+                    <input type="number" id="throttle_min" name="throttle_min" value="1305" onwheel="this.blur()">
+                </div>
+
+                <div class="form-group">
+                    <label for="direction">方向</label>
+                    <select id="direction" name="direction">
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const CAR_TYPE_TO_PHOTO = {
+            1: "https://rcwulian.cn/img/m1282.jpg",
+            2: "https://rcwulian.cn/app/img/tl.png",
+            3: "https://rcwulian.cn/img/wj01.jpg",
+            4: "https://rcwulian.cn/app/img/583.jpg",
+            5: "https://rcwulian.cn/app/img/573.jpg",
+            6: "https://rcwulian.cn/app/imgv2/img/upload_1747900530_682ed8725a309.png",
+            7: "https://rcwulian.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png",
+            8: "https://rcwulian.cn/img/latuche.png",
+            9: "https://rcwulian.cn/img/wj01.png"
+        };
+
+        const CLAW_CAR_TYPE = '6';
+        const CLAW_VENUE_ID = '60';
+
+        const form = document.getElementById('addDeviceForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const carTypeSelect = document.getElementById('car_type');
+        const photoUrlSelect = document.getElementById('photo_url');
+        const photoUploadBtn = document.getElementById('photo_btn_upload');
+        const photoFileInput = document.getElementById('photo_image_file');
+        const venueSelect = document.getElementById('bind_site');
+
+        const serialTextarea = document.getElementById('serial_number');
+        const imageTextarea = document.getElementById('image_device_serial');
+        const rtcTextarea = document.getElementById('rtc_user_id');
+
+        let isSubmitting = false;
+
+        function normalizeImageUrl(u) {
+            u = (u || '').toString().trim();
+            if (!u) return '';
+            return u.replace(/^http:\/\//i, 'https://');
+        }
+
+        const CLAW_PHOTO_URL = normalizeImageUrl(CAR_TYPE_TO_PHOTO[6]);
+
+        function setPhotoValue(url, label = '📌 自定义上传图片') {
+            const normalizedUrl = normalizeImageUrl(url);
+            if (!normalizedUrl) return;
+
+            let option = Array.from(photoUrlSelect.options).find(
+                opt => normalizeImageUrl(opt.value) === normalizedUrl
+            );
+
+            if (!option) {
+                option = document.createElement('option');
+                option.value = normalizedUrl;
+                option.textContent = label;
+                photoUrlSelect.insertBefore(option, photoUrlSelect.firstChild);
+            } else {
+                option.textContent = label;
+            }
+
+            photoUrlSelect.value = normalizedUrl;
+        }
+
+        function setUploadVisible(visible) {
+            photoUploadBtn.hidden = !visible;
+        }
+
+        function setVenue60IfExists() {
+            const hasVenue60 = Array.from(venueSelect.options).some(opt => String(opt.value) === CLAW_VENUE_ID);
+            if (hasVenue60) {
+                venueSelect.value = CLAW_VENUE_ID;
+            }
+        }
+
+        function switchAllToClaw() {
+            carTypeSelect.value = CLAW_CAR_TYPE;
+            setVenue60IfExists();
+            setPhotoValue(CAR_TYPE_TO_PHOTO[6], '🧸 娃娃机图片');
+            setUploadVisible(true);
+        }
+
+        function handleCarTypeChange() {
+            const carType = String(carTypeSelect.value || '');
+
+            if (carType === CLAW_CAR_TYPE) {
+                switchAllToClaw();
+                return;
+            }
+
+            const normalPhoto = CAR_TYPE_TO_PHOTO[parseInt(carType, 10)];
+            if (normalPhoto) {
+                photoUrlSelect.value = normalizeImageUrl(normalPhoto);
+            }
+
+            setUploadVisible(false);
+        }
+
+        function handleVenueChange() {
+            const venueId = String(venueSelect.value || '');
+            if (venueId === CLAW_VENUE_ID) {
+                switchAllToClaw();
+            }
+        }
+
+        function handlePhotoChange() {
+            const currentPhoto = normalizeImageUrl(photoUrlSelect.value || '');
+            if (currentPhoto === CLAW_PHOTO_URL) {
+                switchAllToClaw();
+                return;
+            }
+
+            setUploadVisible(String(carTypeSelect.value || '') === CLAW_CAR_TYPE);
+        }
+
+        carTypeSelect.addEventListener('change', handleCarTypeChange);
+        venueSelect.addEventListener('change', handleVenueChange);
+        photoUrlSelect.addEventListener('change', handlePhotoChange);
+
+        photoUploadBtn.addEventListener('click', function () {
+            photoFileInput.click();
+        });
+
+        photoFileInput.addEventListener('change', async function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+
+            photoUploadBtn.disabled = true;
+            photoUploadBtn.textContent = '上传中...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('https://rcwulian.cn/app/img/userimg/upload_profile.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                const url = result && result.url ? String(result.url).trim() : '';
+
+                if (!url) {
+                    alert('上传失败：接口未返回 url');
+                    return;
+                }
+
+                carTypeSelect.value = CLAW_CAR_TYPE;
+                setVenue60IfExists();
+                setPhotoValue(url, '📌 娃娃机自定义图片');
+                setUploadVisible(true);
+            } catch (err) {
+                console.error('上传失败:', err);
+                alert('上传失败，请重试');
+            } finally {
+                photoUploadBtn.disabled = false;
+                photoUploadBtn.textContent = '上传自定义图片';
+                this.value = '';
+            }
+        });
+
+        function splitLinesKeepPosition(text) {
+            return String(text || '')
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n')
+                .split('\n');
+        }
+
+        function collectRows() {
+            const serialLines = splitLinesKeepPosition(serialTextarea.value);
+            const imageLines = splitLinesKeepPosition(imageTextarea.value);
+            const rtcLines = splitLinesKeepPosition(rtcTextarea.value);
+
+            const maxLines = Math.max(serialLines.length, imageLines.length, rtcLines.length);
+            const rows = [];
+            const orphanLines = [];
+            const rtcMissingImageLines = [];
+
+            for (let i = 0; i < maxLines; i++) {
+                const serial = (serialLines[i] || '').trim();
+                const image = (imageLines[i] || '').trim();
+                const rtc = (rtcLines[i] || '').trim();
+
+                if (!serial) {
+                    if (image || rtc) {
+                        orphanLines.push({
+                            lineNo: i + 1,
+                            image,
+                            rtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (rtc && !image) {
+                    rtcMissingImageLines.push({
+                        lineNo: i + 1,
+                        serial,
+                        rtc
+                    });
+                }
+
+                rows.push({
+                    lineNo: i + 1,
+                    serial,
+                    image,
+                    rtc
+                });
+            }
+
+            return {
+                rows,
+                orphanLines,
+                rtcMissingImageLines
+            };
+        }
+
+        function getDuplicateSerials(rows) {
+            const counter = new Map();
+            const duplicates = [];
+
+            rows.forEach(row => {
+                counter.set(row.serial, (counter.get(row.serial) || 0) + 1);
+            });
+
+            counter.forEach((count, serial) => {
+                if (count > 1) duplicates.push(serial);
+            });
+
+            return duplicates;
+        }
+
+        handleCarTypeChange();
+
+        fetch('/api/franchise/FranchiseManagement.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'action=get_venues'
+        })
+        .then(response => response.json())
+        .then(venueData => {
+            if (venueData.code === 200) {
+                const venues = venueData.data.sort((a, b) => b.id - a.id);
+        
+                venues.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${item.id}-${item.venue_name}`;
+                    venueSelect.appendChild(option);
+                });
+        
+                // 默认选中 venue_id 最大的那个
+                if (venues.length > 0) {
+                    venueSelect.value = String(venues[0].id);
+                }
+        
+                const currentCarType = String(carTypeSelect.value || '');
+                const currentPhoto = normalizeImageUrl(photoUrlSelect.value || '');
+        
+                if (currentCarType === CLAW_CAR_TYPE || currentPhoto === CLAW_PHOTO_URL) {
+                    switchAllToClaw();
+                }
+            } else {
+                console.error(venueData.msg);
+            }
+        })
+        .catch(error => {
+            console.error('请求出错:', error);
+        });
+
+        document.querySelectorAll('input[type="number"]').forEach(function (input) {
+            input.addEventListener('wheel', function (e) {
+                e.preventDefault();
+                this.blur();
+            }, { passive: false });
+        });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (isSubmitting) return;
+
+            const serialNumber = serialTextarea.value.trim();
+            const bindSite = document.getElementById('bind_site').value;
+            const name = document.getElementById('name').value.trim();
+
+            if (!serialNumber || !bindSite || !name) {
+                alert('缺少必要参数，请检查输入！');
+                return;
+            }
+
+            const { rows, orphanLines, rtcMissingImageLines } = collectRows();
+
+            if (!rows.length) {
+                alert('至少要填写一行有效的设备序列号！');
+                serialTextarea.focus();
+                return;
+            }
+
+            if (orphanLines.length > 0) {
+                const msg = orphanLines
+                    .slice(0, 8)
+                    .map(item => `第 ${item.lineNo} 行：设备序列号为空，但填写了图像设备序列号或 rtc_user_id`)
+                    .join('\n');
+
+                alert(`检测到未对齐的填写：\n${msg}\n\n请保证图像设备序列号 / rtc_user_id 只填写在有设备序列号的同一行。`);
+                return;
+            }
+
+            if (rtcMissingImageLines.length > 0) {
+                const msg = rtcMissingImageLines
+                    .slice(0, 8)
+                    .map(item => `第 ${item.lineNo} 行：设备 ${item.serial} 填了 rtc_user_id，但未填写图像设备序列号`)
+                    .join('\n');
+
+                alert(`检测到 rtc_user_id 缺少对应图像设备序列号：\n${msg}`);
+                return;
+            }
+
+            const duplicateSerials = getDuplicateSerials(rows);
+            if (duplicateSerials.length > 0) {
+                alert('你本次输入的设备序列号里有重复：' + duplicateSerials.join(', '));
+                return;
+            }
+
+            const formData = new FormData(this);
+
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+
+            fetch('/api/devMgr/addDev.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.msg || '提交完成');
+                if (data.code === 200) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                alert('请求发生错误：' + error.message);
+            })
+            .finally(() => {
+                isSubmitting = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交';
+            });
+        });
+    </script>
+</body>
+
+</html>

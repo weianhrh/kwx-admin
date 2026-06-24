@@ -1883,12 +1883,12 @@
         return;
       }
       setActive(item.id);
-      if (isDeviceChild(item)) {
-        renderDeviceSubpage(item);
-        return;
-      }
       if (legacyModuleUrl(item)) {
         renderLegacyModule(item);
+        return;
+      }
+      if (isDeviceChild(item)) {
+        renderDeviceSubpage(item);
         return;
       }
       renderModule(item);
@@ -1932,6 +1932,7 @@
       }
 
       pageName = pageName.replace(/\/+$/, '').split('/').pop().replace(/\.html$/i, '');
+      if (pageName.toLowerCase() === 'devicemgt') pageName = 'devMgtV2';
       if (!pageName || pageName.includes('..')) return '';
 
       return './res/' + encodeURIComponent(pageName) + '.html?embed=dashboard';
