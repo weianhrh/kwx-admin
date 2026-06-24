@@ -5,9 +5,13 @@ require_once '../Database.php'; // 引入数据库连接类
 // 日志记录函数 
 function logMessage($message) {
     $logFile = __DIR__ . '/operation_log.txt';
+    if ((file_exists($logFile) && !is_writable($logFile)) || (!file_exists($logFile) && !is_writable(__DIR__))) {
+        return;
+    }
+
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[$timestamp] $message\n";
-    file_put_contents($logFile, $logEntry, FILE_APPEND);
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
 }
 
 $database = new Database();
