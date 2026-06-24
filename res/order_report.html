@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>订单申诉处理</title>
+  <link rel="stylesheet" href="/res/fa/css/all.min.css">
+  <style>
+:root {
+  --primary: #5b8cff;
+  --secondary: #7f8fa4;
+  --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+  --background-gradient-start: #f8f9ff;
+  --background-gradient-end: #f0f3ff;
+  --card-bg: #ffffff;
+  --border-color: #ddd;
+  --text-color: #333;
+  --hover-bg: #f9f9f9;
+  --highlight-bg: #eff4ff;
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "PingFang SC", system-ui;
+}
+
+body {
+  background: linear-gradient(135deg, var(--background-gradient-start), var(--background-gradient-end));
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  max-width: 1000px;
+  width: 100%;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 24px;
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 10px;
+}
+
+.appeal-item {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 16px;
+  background-color: white;
+}
+
+.appeal-item span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+}
+
+.appeal-item img {
+  display: block;
+  margin: 10px auto 0 auto; /* 上 10px，其余 auto 自动居中 */
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 6px;
+  cursor: zoom-in;
+}
+
+
+.button-group {
+  display: flex;
+  justify-content: center; /* 按钮组整体居中 */
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 8px 20px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.action-button.approve {
+  background-color: var(--primary);
+  color: white;
+}
+
+.action-button.reject {
+  background-color: #e74c3c;
+  color: white;
+}
+.action-button.compensate {
+  background-color: #16baaa;
+  color: white;
+}
+.action-button:hover {
+  opacity: 0.85;
+}
+
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+#modalImage {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 36px;
+  color: white;
+  cursor: pointer;
+}
+
+/* 响应式优化：移动端更紧凑 */
+@media (max-width: 600px) {
+  .card-title {
+    font-size: 20px;
+  }
+  .appeal-item span {
+    font-size: 14px;
+  }
+  .action-button {
+    flex: 1;
+    text-align: center;
+  }
+}
+/*.rotate-preview {*/
+/*  transform: rotate(90deg);*/
+/*  transform-origin: center center;*/
+/*  max-height: 250px;  限高以避免撑大页面 */
+/*  max-width: 300px;*/
+/*}*/
+
+
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+  <div class="container">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>订单申诉列表</span>
+      <a href="order_appeals_history.html"
+         style="background:var(--primary);color:#fff;padding:6px 12px;border-radius:6px;
+                font-size:14px;text-decoration:none;transition:var(--transition);">
+        订单申诉处理历史
+      </a>
+    </div>
+      <div id="appeal-list"></div>
+    </div>
+  </div>
+<!-- 放大图片模态框 -->
+<div class="modal" id="imageModal" onclick="closeImageModal()">
+  <span class="close-btn">&times;</span>
+  <img id="modalImage" src="" alt="放大图" />
+</div>
+
+  <script>
+     function markPortrait(img) {
+      if (img.naturalHeight > img.naturalWidth) {
+        img.classList.add('rotate-preview');
+      }
+    }
+
+    async function loadAppeals() {
+      const res = await fetch('/api/orders/get_appeals.php');
+      const data = await res.json();
+      const container = document.getElementById('appeal-list');
+
+      if (data.code !== 0 || !data.data.length) {
+        container.innerHTML = '<p style="text-align:center;">暂无待处理申诉</p>';
+        return;
+      }
+
+      data.data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'appeal-item';
+        div.innerHTML = `
+          <span><strong>订单号：</strong>${item.order_id}</span>
+          <span><strong>订单开始时间：</strong>${item.start_time}</span>
+          <span><strong>订单结束时间：</strong>${item.end_time}</span>
+          <span><strong>支付方式-金额：</strong>${item.pays_type}:${item.payment_amount}</span>
+          <span><strong>投诉场地：</strong>${item.reservation_id}:${item.venue_name}</span>
+          <span><strong>申诉人UID：</strong>${item.user_id}</span>
+          <span><strong>原因：</strong>${item.reason}</span>
+          ${item.image_url ? `<img src="https://ruoche.oss-cn-beijing.aliyuncs.com/${item.image_url}" onclick="showImageModal('https://ruoche.oss-cn-beijing.aliyuncs.com/${item.image_url}')" />` : ''}
+          <div class="button-group">
+              <button class="action-button approve" onclick="handleAppeal(${item.id}, 'approve')">通过</button>
+              <button class="action-button reject" onclick="handleAppeal(${item.id}, 'reject')">驳回</button>
+              <button class="action-button compensate" onclick="handleAppeal(${item.id}, 'compensate')">补偿能量</button>
+          </div>
+
+        `;
+            //onload="markPortrait(this)"
+        container.appendChild(div);
+      });
+    }
+
+    // async function handleAppeal(id, action) {
+    // //   const result = prompt(`请输入处理说明（${action === 'approve' ? '通过' : '驳回'}）：`);
+    // //   if (!result) return;
+    //   let result = '';
+    //   if (action === 'reject') {
+    //     const defaultReason = '申诉理由不成立';
+    //     const input = prompt(`请输入处理说明（驳回）：`, defaultReason);
+    //     if (input === null) return; // 用户点击“取消”
+    //     result = input;
+    //   }
+    //   const formData = new FormData();
+    //   formData.append('appeal_id', id);
+    //   formData.append('action', action);
+    //   formData.append('result', result);
+
+    //   const res = await fetch('/api/orders/handle_appeal.php', {
+    //     method: 'POST',
+    //     body: formData
+    //   });
+
+    //   const data = await res.json();
+    //   if (data.code === 0) {
+    //     alert('处理成功');
+    //     location.reload();
+    //   } else {
+    //     alert('处理失败: ' + data.msg);
+    //   }
+    // }
+async function handleAppeal(id, action) {
+  const button = event.target;
+  const appealItem = button.closest('.appeal-item');
+
+  const spans = appealItem.querySelectorAll('span');
+  const userIdText = Array.from(spans).find(s => s.innerText.includes('申诉人UID：'))?.innerText || '';
+  const venueText = Array.from(spans).find(s => s.innerText.includes('投诉场地：'))?.innerText || '';
+  const amountText = Array.from(spans).find(s => s.innerText.includes('支付方式-金额：'))?.innerText || '';
+
+  const userId = userIdText.match(/申诉人UID：(.+)/)?.[1] ?? '';
+  const venueMatch = venueText.match(/投诉场地：(\d+):(.+)/);
+  const venueId = venueMatch?.[1] ?? '';
+  const venueName = venueMatch?.[2] ?? '某场地';
+  const paymentAmount = amountText.match(/:(\d+(\.\d+)?)/)?.[1] ?? '0.00';
+
+  let result = '';
+
+  if (action === 'reject') {
+    const input = prompt(`请输入处理说明（驳回）：`, '申诉理由不成立');
+    if (input === null) return;
+    result = input;
+  } else if (action === 'approve') {
+    const defaultResult = `经核查，该订单存在异常，已为你在投诉的${venueName}场地补偿${paymentAmount}能量,可后续使用补偿能量重选套餐驾驶体验。`;
+    const input = prompt(`请输入处理说明（通过）：`, defaultResult);
+    if (input === null) return;
+    result = input;
+  } else if (action === 'compensate') {
+    const defaultText = `确认为 UID ${userId} 在 ${venueName} 补偿 ${paymentAmount} 能量，备注可编辑：`;
+    const input = prompt(defaultText, `为用户 UID ${userId} 补偿 ${paymentAmount} 能量`);
+    if (input === null) return;
+
+    const compensateData = new URLSearchParams();
+    compensateData.append('action', 'gift_energy');
+    compensateData.append('user_id', userId);
+    compensateData.append('venue_id', venueId);
+    compensateData.append('energy_amount', paymentAmount);
+
+    const res = await fetch('/api/operat/EnergyGift.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: compensateData.toString()
+    });
+
+    const data = await res.json();
+    if (data.code === 0) {
+      alert(`补偿成功！\n${input}`);
+    } else {
+      alert('补偿失败: ' + data.msg);
+    }
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('appeal_id', id);
+  formData.append('action', action);
+  formData.append('result', result);
+  formData.append('user_id', userId);
+  formData.append('venue_id', venueId);
+  formData.append('energy_amount', paymentAmount);
+
+  if (action === 'approve') {
+    formData.append('submit_amount', paymentAmount);
+  }
+
+  const res = await fetch('/api/orders/handle_appeal.php', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.code === 0) {
+    alert('处理成功');
+    location.reload();
+  } else {
+    alert('处理失败: ' + data.msg);
+  }
+}
+
+
+    loadAppeals();
+  </script>
+  <script>
+  function showImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageUrl;
+    // modalImg.classList.remove('rotate-preview'); // 恢复正常方向
+    modal.classList.add('show');
+  }
+
+  function closeImageModal() {
+    document.getElementById('imageModal').classList.remove('show');
+  }
+</script>
+
+</body>
+
+</html>

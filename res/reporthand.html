@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>投诉处理</title>
+    <style>
+        :root {
+            --primary: #5b8cff;
+            --secondary: #7f8fa4;
+            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+            --background-gradient-start: #f8f9ff;
+            --background-gradient-end: #f0f3ff;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --hover-bg: #f9f9f9;
+            --highlight-bg: #eff4ff;
+            --transition: all 0.3s ease;
+            --tag-blue-bg: #eef4ff;
+            --tag-blue-color: #2f6bff;
+            --tag-green-bg: #ebfff2;
+            --tag-green-color: #17a05d;
+            --tag-orange-bg: #fff5e8;
+            --tag-orange-color: #d9822b;
+            --tag-red-bg: #ffefef;
+            --tag-red-color: #df4d4d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", system-ui;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+        }
+
+        .card-title {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .complaint-list {
+            margin-top: 30px;
+        }
+
+        .complaint-item {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .complaint-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .complaint-top-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+        .badge-blue {
+            background: var(--tag-blue-bg);
+            color: var(--tag-blue-color);
+        }
+
+        .badge-green {
+            background: var(--tag-green-bg);
+            color: var(--tag-green-color);
+        }
+
+        .badge-orange {
+            background: var(--tag-orange-bg);
+            color: var(--tag-orange-color);
+        }
+
+        .badge-red {
+            background: var(--tag-red-bg);
+            color: var(--tag-red-color);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 16px;
+        }
+
+        .detail-item {
+            background: #fafbff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            line-height: 1.6;
+            word-break: break-all;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--secondary);
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .content-box {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 12px 14px;
+            line-height: 1.7;
+            word-break: break-word;
+            border: 1px solid #edf0f7;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 9px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .action-button:hover {
+            background-color: #4a77e4;
+        }
+
+        .action-button.red {
+            background: #ff5b5b;
+        }
+
+        .action-button.green {
+            background: #22a06b;
+        }
+
+        .action-button.gray {
+            background: #96a0b5;
+        }
+
+        .image-thumb {
+            max-width: 220px;
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid #edf0f7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-button {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .image-thumb {
+                max-width: 100%;
+            }
+        }
+
+        .ban-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ban-modal-content {
+            position: relative;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .ban-modal-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            cursor: zoom-out;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .readonly-tip {
+            background: #fff7e6;
+            color: #d48806;
+            border: 1px solid #ffe58f;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+    <div class="container">
+        <div class="card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span>投诉处理</span>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <span id="roleReadonlyTip" class="readonly-tip" style="display:none; margin-bottom:0;">
+                        当前账号仅可查看，不能修改处理状态
+                    </span>
+                    <button class="action-button" onclick="window.location.href='reporthandrecord.html'">
+                        查看处理记录
+                    </button>
+                </div>
+            </div>
+
+            <div id="complaint-records" class="complaint-list"></div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <img id="modalImg">
+    </div>
+
+    <div id="banModal" class="ban-modal" style="display: none;">
+        <div class="ban-modal-content">
+            <span class="ban-modal-close" onclick="closeBanModal()">&times;</span>
+            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">封禁操作</h2>
+            <form id="banForm">
+                <input type="hidden" id="banSerialNumber">
+                <input type="hidden" id="banReportId">
+                <input type="hidden" id="banSourceTable">
+                <input type="hidden" id="venueId">
+                <input type="hidden" id="banImageUrl">
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="banType" style="display:block; margin-bottom: 5px; font-weight: bold;">封禁类型</label>
+                    <select id="banType" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                        <option value="device">封禁设备</option>
+                        <option value="venue">封禁场地</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="banDuration" style="display:block; margin-bottom: 5px; font-weight: bold;">封禁时长</label>
+<select id="banDuration" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+    <option value="600">10分钟</option>
+    <option value="1800">半小时</option>
+    <option value="3600">1小时</option>
+    <option value="43200">半天</option>
+    <option value="86400">1天</option>
+    <option value="259200">3天</option>
+    <option value="604800">1周</option>
+</select>
+                </div>
+
+                <div id="imageDeviceSerialWrapper" style="margin-bottom: 15px;">
+                    <label for="imageDeviceSerial" style="display:block; margin-bottom: 5px; font-weight: bold;">图传序列号</label>
+                    <input type="text" id="imageDeviceSerial" readonly style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="banReason" style="display:block; margin-bottom: 5px; font-weight: bold;">封禁原因</label>
+                    <textarea id="banReason" rows="4" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;"></textarea>
+                </div>
+
+                <button type="submit" class="modify-btn" style="width: 100%; padding: 10px; background-color: blue; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;">
+                    确认封禁
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const STATUS_ENUM = {
+            '未处理': '未处理',
+            '处理中': '处理中',
+            '已处理': '已处理'
+        };
+
+        let currentUserRole = 0;
+        const complaintCache = {};
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getStatusBadge(status) {
+            if (status === '未处理') return '<span class="badge badge-red">未处理</span>';
+            if (status === '处理中') return '<span class="badge badge-orange">处理中</span>';
+            return '<span class="badge badge-green">已处理</span>';
+        }
+
+        function getSourceBadge(sourceTable, reportTypeText) {
+            if (sourceTable === 'voice_reports') {
+                return `<span class="badge badge-green">${escapeHtml(reportTypeText || '语音房举报')}</span>`;
+            }
+            return '<span class="badge badge-blue">设备举报</span>';
+        }
+
+        function detailItem(label, value) {
+            return `
+                <div class="detail-item">
+                    <div class="detail-label">${escapeHtml(label)}</div>
+                    <div class="detail-value">${escapeHtml(value || '-')}</div>
+                </div>
+            `;
+        }
+
+        function loadComplaintRecords() {
+            const url = '/api/operat/ReporthandV2.php';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 0 && data.data && data.data.length > 0) {
+                        displayComplaintRecords(data.data);
+                    } else {
+                        document.getElementById('complaint-records').innerHTML = '<p style="text-align:center;">暂无投诉记录</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('投诉记录加载失败:', error);
+                    document.getElementById('complaint-records').innerHTML = '<p style="text-align:center;color:red;">投诉记录加载失败</p>';
+                });
+        }
+
+function renderDeviceComplaint(complaint) {
+    let html = `
+        <div class="complaint-top">
+            <div class="complaint-top-left">
+                ${getSourceBadge(complaint.source_table, complaint.report_type_text)}
+                ${getStatusBadge(complaint.status)}
+            </div>
+            <div style="color:#7f8fa4;font-size:13px;">${escapeHtml(complaint.insert_time)}</div>
+        </div>
+        <div class="detail-grid">
+            ${detailItem('设备 ID', complaint.device_id)}
+            ${detailItem('设备名称', complaint.vehicle_name)}
+            ${detailItem('绑定场地', complaint.bind_site)}
+            ${detailItem('举报人 UID', complaint.reporter_uid)}
+            ${detailItem('处理人 ID', complaint.handler_uid)}
+        </div>
+        <div>
+            <div class="detail-label" style="margin-bottom:8px;">举报内容</div>
+            <div class="content-box">${escapeHtml(complaint.report_content || '-')}</div>
+        </div>
+    `;
+
+    if (complaint.image_url && complaint.image_url.trim() !== '') {
+        html += `
+            <div>
+                <div class="detail-label" style="margin-bottom:8px;">举报截图</div>
+                <img src="${escapeHtml(complaint.image_url)}" alt="违规截图" class="image-thumb" onclick="showModal('${escapeHtml(complaint.image_url)}')" />
+            </div>
+        `;
+    }
+
+    html += renderActionButtons(complaint);
+    return html;
+}
+
+        function renderVoiceComplaint(complaint) {
+            const isRoomReport = String(complaint.report_type) === '0';
+            const targetTitle = isRoomReport ? '被举报场地' : '被举报用户';
+            const targetName = complaint.target_name ? `${complaint.target_name}` : '-';
+
+            let html = `
+                <div class="complaint-top">
+                    <div class="complaint-top-left">
+                        ${getSourceBadge(complaint.source_table, complaint.report_type_text)}
+                        ${getStatusBadge(complaint.status)}
+                    </div>
+                    <div style="color:#7f8fa4;font-size:13px;">${escapeHtml(complaint.insert_time)}</div>
+                </div>
+                <div class="detail-grid">
+                    ${detailItem('举报人 UID', complaint.reporter_uid)}
+                    ${detailItem('举报人昵称', complaint.reporter_name)}
+                    ${detailItem(targetTitle + ' ID', complaint.target_id || complaint.handler_uid)}
+                    ${detailItem(targetTitle + ' 名称', targetName)}
+                </div>
+                <div>
+                    <div class="detail-label" style="margin-bottom:8px;">举报内容</div>
+                    <div class="content-box">${escapeHtml(complaint.report_content || '-')}</div>
+                </div>
+            `;
+
+            if (complaint.image_url && complaint.image_url.trim() !== '') {
+                html += `
+                    <div>
+                        <div class="detail-label" style="margin-bottom:8px;">举报截图</div>
+                        <img src="${escapeHtml(complaint.image_url)}" alt="举报截图" class="image-thumb" onclick="showModal('${escapeHtml(complaint.image_url)}')" />
+                    </div>
+                `;
+            }
+
+            html += renderActionButtons(complaint);
+            return html;
+        }
+
+        function renderActionButtons(complaint) {
+            if (!(currentUserRole === 1 || currentUserRole === 2)) return '';
+
+            const sourceTable = complaint.source_table || 'Reports';
+            const canBan = sourceTable === 'Reports' || (sourceTable === 'voice_reports' && String(complaint.report_type) === '0');
+            const cacheKey = complaint.__cacheKey || '';
+            const validActionHtml = canBan
+                ? `<button class="action-button green" onclick="openBanModalByKey('${escapeHtml(cacheKey)}')">有效</button>`
+                : `<button class="action-button green" onclick="modifyComplaintStatus(${Number(complaint.id)}, '${escapeHtml(complaint.status)}', '已处理', '${escapeHtml(sourceTable)}')">标记已处理</button>`;
+
+            return `
+                <div class="action-row">
+                    <button class="action-button" onclick="modifyComplaintStatus(${Number(complaint.id)}, '${escapeHtml(complaint.status)}', null, '${escapeHtml(sourceTable)}')">修改处理状态</button>
+                    <button class="action-button red" onclick="deleteComplaint(${Number(complaint.id)}, '${escapeHtml(sourceTable)}')">无效</button>
+                    ${validActionHtml}
+                </div>
+            `;
+        }
+
+        function displayComplaintRecords(records) {
+            const container = document.getElementById('complaint-records');
+            container.innerHTML = '';
+
+            records.forEach(complaint => {
+                const item = document.createElement('div');
+                item.classList.add('complaint-item');
+
+                const cacheKey = `${complaint.source_table || 'Reports'}_${complaint.id}`;
+                complaint.__cacheKey = cacheKey;
+                complaintCache[cacheKey] = complaint;
+
+                if (complaint.source_table === 'voice_reports') {
+                    item.innerHTML = renderVoiceComplaint(complaint);
+                } else {
+                    item.innerHTML = renderDeviceComplaint(complaint);
+                }
+
+                container.appendChild(item);
+            });
+        }
+
+        function modifyComplaintStatus(report_id, currentStatus, overrideStatus = null, sourceTable = 'Reports') {
+            if (currentUserRole === 3) {
+                alert('当前角色仅可查看，不能修改处理状态');
+                return;
+            }
+
+            let newStatus;
+            if (overrideStatus && STATUS_ENUM[overrideStatus]) {
+                newStatus = overrideStatus;
+            } else {
+                if (currentStatus === '未处理') {
+                    newStatus = '处理中';
+                } else if (currentStatus === '处理中') {
+                    newStatus = '已处理';
+                } else {
+                    newStatus = '未处理';
+                }
+            }
+
+            const url = '/api/operat/ReporthandV2.php';
+            const formData = new FormData();
+            formData.append('report_id', report_id);
+            formData.append('status', newStatus);
+            formData.append('source_table', sourceTable);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 0) {
+                        alert('处理状态修改成功');
+                        loadComplaintRecords();
+                    } else {
+                        alert('状态修改失败，请稍后重试: ' + (data.msg || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('状态修改失败:', error);
+                    alert('处理状态修改失败，请重试');
+                });
+        }
+
+        function showModal(imgUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            modal.style.display = 'flex';
+            modalImg.src = imgUrl;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function deleteComplaint(id, sourceTable = 'Reports') {
+            if (currentUserRole === 3) {
+                alert('当前角色仅可查看，不能处理投诉');
+                return;
+            }
+
+            if (!confirm('确定要将此条投诉标记为无效吗？')) return;
+
+            fetch('/api/operat/ReporthandV2.php', {
+                method: 'POST',
+                body: new URLSearchParams({ delete_id: id, source_table: sourceTable })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 0) {
+                        alert('处理成功');
+                        loadComplaintRecords();
+                    } else {
+                        alert('处理失败: ' + (data.msg || '未知错误'));
+                    }
+                })
+                .catch(err => {
+                    console.error('处理失败:', err);
+                    alert('处理失败，请稍后重试');
+                });
+        }
+
+        function openBanModalByKey(cacheKey) {
+            const complaint = complaintCache[cacheKey];
+            if (!complaint) {
+                alert('未找到投诉记录');
+                return;
+            }
+            openBanModal(complaint);
+        }
+
+        function openBanModal(complaint) {
+            if (currentUserRole === 3) {
+                alert('当前角色仅可查看，不能处理投诉');
+                return;
+            }
+
+            if (complaint.source_table === 'voice_reports' && String(complaint.report_type) === '1') {
+                alert('弹幕举报当前版本只支持标记处理，暂不支持直接封禁用户');
+                return;
+            }
+
+            const modal = document.getElementById('banModal');
+            modal.style.display = 'flex';
+
+            document.getElementById('banReportId').value = complaint.id;
+            document.getElementById('banSourceTable').value = complaint.source_table || 'Reports';
+            document.getElementById('banReason').value = complaint.report_content || '';
+document.getElementById('banDuration').value = '600';
+            document.getElementById('banImageUrl').value = complaint.image_url || '';
+
+            const imageSerial = getImageDeviceSerial(complaint);
+            const wrapper = document.getElementById('imageDeviceSerialWrapper');
+            const imageDeviceInput = document.getElementById('imageDeviceSerial');
+            const banTypeSelect = document.getElementById('banType');
+
+            if (complaint.source_table === 'voice_reports' && String(complaint.report_type) === '0') {
+                document.getElementById('banSerialNumber').value = '';
+                document.getElementById('venueId').value = complaint.target_id || complaint.handler_uid || '';
+                banTypeSelect.value = 'venue';
+                wrapper.style.display = 'none';
+                imageDeviceInput.value = '';
+            } else {
+                document.getElementById('banSerialNumber').value = complaint.device_id || '';
+                document.getElementById('venueId').value = complaint.bind_site || '';
+                banTypeSelect.value = 'device';
+
+                if (imageSerial) {
+                    imageDeviceInput.value = imageSerial;
+                    wrapper.style.display = 'block';
+                } else {
+                    imageDeviceInput.value = '';
+                    wrapper.style.display = 'none';
+                }
+            }
+
+            banTypeSelect.onchange = function () {
+                if (this.value === 'venue') {
+                    if (complaint.source_table === 'voice_reports' && String(complaint.report_type) === '0') {
+                        document.getElementById('venueId').value = complaint.target_id || complaint.handler_uid || '';
+                    } else {
+                        document.getElementById('venueId').value = complaint.bind_site || '';
+                    }
+                } else {
+                    document.getElementById('venueId').value = '';
+                }
+            };
+        }
+
+        function getImageDeviceSerial(complaint) {
+            if (!complaint.image_url || !complaint.image_url.trim()) return null;
+            const match = complaint.image_url.match(/\/([^\/_]+)_/);
+            return match ? match[1] : null;
+        }
+
+        function closeBanModal() {
+            document.getElementById('banModal').style.display = 'none';
+        }
+
+        document.getElementById('banForm').onsubmit = function (e) {
+            e.preventDefault();
+
+            if (currentUserRole === 3) {
+                alert('当前角色仅可查看，不能处理投诉');
+                return;
+            }
+
+            const sourceTable = document.getElementById('banSourceTable').value || 'Reports';
+            const req = {
+                ban: true,
+                id: 1,
+                serial_number: document.getElementById('banSerialNumber').value,
+                ban_duration: document.getElementById('banDuration').value,
+                ban_reason: document.getElementById('banReason').value,
+                banType: document.getElementById('banType').value,
+                venue_id: document.getElementById('venueId').value,
+                image_url: document.getElementById('banImageUrl').value
+            };
+
+            fetch('/api/devMgr/devMgtV2.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(req)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 0) {
+                        modifyComplaintStatus(document.getElementById('banReportId').value, null, '已处理', sourceTable);
+                        setTimeout(() => {
+                            alert('封禁成功');
+                            closeBanModal();
+                        }, 500);
+                    } else {
+                        alert('封禁失败: ' + (data.msg || '未知错误'));
+                    }
+                })
+                .catch(err => {
+                    console.error('封禁失败:', err);
+                    alert('封禁失败，请稍后重试');
+                });
+        };
+
+        fetch('/api/operat/get_current_user.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 0) {
+                    currentUserRole = parseInt(data.data.role_id || 0, 10);
+
+                    if (currentUserRole === 3 || currentUserRole === 4) {
+                        document.getElementById('roleReadonlyTip').style.display = 'inline-block';
+                    }
+
+                    loadComplaintRecords();
+                } else {
+                    alert('未登录');
+                    location.href = '/login.html';
+                }
+            })
+            .catch(err => {
+                console.error('获取当前用户失败:', err);
+                alert('获取当前用户信息失败');
+            });
+    </script>
+</body>
+
+</html>

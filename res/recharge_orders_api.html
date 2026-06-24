@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>最新充值记录</title>
+
+  <style>
+      :root {
+          --primary: #5b8cff;
+          --secondary: #7f8fa4;
+          --background-gradient-start: #f8f9ff;
+          --background-gradient-end: #f0f3ff;
+          --card-bg: #ffffff;
+          --border-color: #ddd;
+          --text-color: #333;
+          --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+          --transition: all 0.3s ease;
+          --hover-bg: #f9f9f9;
+      }
+
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+          background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+          min-height: 100vh;
+          padding: 20px;
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+      }
+
+      .container {
+          max-width: 1320px;
+          width: 100%;
+      }
+
+      .card {
+          background: var(--card-bg);
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: var(--shadow);
+          margin-bottom: 20px;
+          transition: var(--transition);
+      }
+
+      .card-title {
+          font-size: 24px;
+          color: var(--text-color);
+          margin-bottom: 20px;
+          font-weight: 600;
+          border-bottom: 2px solid var(--primary);
+          padding-bottom: 10px;
+          text-align: left;
+      }
+
+      .loading {
+          text-align: center;
+          font-size: 16px;
+          color: var(--primary);
+          padding: 20px;
+      }
+
+      .toolbar{
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px;
+        align-items:flex-end;
+      }
+
+      .field{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+        min-width:200px;
+      }
+
+      .field label{
+        font-size:12px;
+        color:var(--secondary);
+      }
+
+      .field input,
+      .field select{
+        width:100%;
+        padding:8px 10px;
+        font-size:14px;
+        border:1px solid var(--border-color);
+        border-radius:6px;
+        transition: var(--transition);
+        background:#fff;
+        height: 38px;
+      }
+
+      .field input:focus,
+      .field select:focus{
+        outline:none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(91,140,255,.12);
+      }
+
+      .btn{
+        background-color: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 9px 14px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: var(--transition);
+        height: 38px;
+      }
+
+      .btn:hover{
+        background-color:#4a77e4;
+      }
+
+      .btn:disabled{
+        opacity:.6;
+        cursor:not-allowed;
+      }
+
+      .btn.secondary{
+        background:#fff;
+        color:var(--primary);
+        border:1px solid rgba(91,140,255,.35);
+      }
+
+      .btn.secondary:hover{
+        background: var(--hover-bg);
+      }
+
+      .meta-row{
+        margin-top:12px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        color:var(--secondary);
+        font-size:12px;
+        gap:10px;
+        flex-wrap:wrap;
+      }
+
+      .table-wrap{
+        margin-top:14px;
+        overflow:auto;
+        border:1px solid #eef0f5;
+        border-radius:10px;
+      }
+
+      table{
+        width:100%;
+        border-collapse:collapse;
+        min-width: 1180px;
+        background:#fff;
+      }
+
+      thead th{
+        position:sticky;
+        top:0;
+        background:#fafbff;
+        color:#2b2f36;
+        font-weight:600;
+        font-size:13px;
+        padding:10px 10px;
+        border-bottom:1px solid #eef0f5;
+        white-space:nowrap;
+        text-align:left;
+      }
+
+      tbody td{
+        padding:10px 10px;
+        border-bottom:1px solid #f1f3f7;
+        font-size:13px;
+        color:var(--text-color);
+        white-space:nowrap;
+        vertical-align: middle;
+      }
+
+      tbody tr:hover{
+        background: var(--hover-bg);
+      }
+
+      .tag{
+        display:inline-block;
+        padding:2px 10px;
+        border-radius:999px;
+        font-size:12px;
+        background: rgba(76,175,80,.12);
+        color:#2e7d32;
+        border:1px solid rgba(76,175,80,.18);
+      }
+
+      .type-tag{
+        display:inline-block;
+        padding:2px 10px;
+        border-radius:999px;
+        font-size:12px;
+        border:1px solid transparent;
+      }
+
+      .type-tag.battery{
+        background: rgba(91,140,255,.12);
+        color:#2f6fe4;
+        border-color: rgba(91,140,255,.18);
+      }
+
+      .type-tag.gold{
+        background: rgba(255,193,7,.16);
+        color:#a36b00;
+        border-color: rgba(255,193,7,.28);
+      }
+
+      .pager{
+        display:flex;
+        gap:10px;
+        align-items:center;
+      }
+
+      .pager .info{
+        color:var(--secondary);
+        font-size:12px;
+      }
+
+      .error{
+        margin-top:12px;
+        color:#d32f2f;
+        background: rgba(211,47,47,.08);
+        border: 1px solid rgba(211,47,47,.18);
+        padding:10px 12px;
+        border-radius:10px;
+        font-size:13px;
+      }
+
+      .sum-box{
+        margin-left:auto;
+        background:#fff;
+        border:1px solid #eef0f5;
+        border-radius:10px;
+        padding:8px 12px;
+        color:var(--text-color);
+        font-size:13px;
+        box-shadow: 0 2px 10px rgba(91,140,255,0.06);
+      }
+
+      .sum-box span{
+        font-weight:700;
+        color:var(--primary);
+        margin-left:6px;
+      }
+
+      .muted{
+        color: var(--secondary);
+      }
+
+      @media (max-width: 768px){
+        body{
+          padding: 12px;
+        }
+        .card{
+          padding: 14px;
+        }
+        .card-title{
+          font-size: 20px;
+        }
+        .field{
+          min-width: 100%;
+        }
+        .sum-box{
+          margin-left: 0;
+        }
+      }
+  </style>
+  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+</head>
+
+<body class="kwx-legacy-page">
+  <div class="container">
+    <div class="card">
+      <div class="card-title">最新充值记录</div>
+
+      <div class="toolbar">
+        <div class="field">
+          <label>开始时间</label>
+          <input id="startTime" type="datetime-local">
+        </div>
+
+        <div class="field">
+          <label>结束时间</label>
+          <input id="endTime" type="datetime-local">
+        </div>
+
+        <div class="field">
+          <label>充值类型</label>
+          <select id="rechargeType">
+            <option value="all">全部</option>
+            <option value="battery">电池</option>
+            <option value="gold">金币</option>
+          </select>
+        </div>
+<div class="field">
+  <label>支付渠道</label>
+  <select id="paymentChannel">
+    <option value="all">全部渠道</option>
+    <option value="微信">微信</option>
+    <option value="支付宝">支付宝</option>
+    <option value="拉卡拉微信">拉卡拉微信</option>
+    <option value="苹果IAP">苹果IAP</option>
+    <option value="苹果IAP(Sandbox)">苹果IAP(Sandbox)</option>
+  </select>
+</div>
+        <button class="btn" id="btnSearch">查询</button>
+        <button class="btn secondary" id="btnToday">今日</button>
+      </div>
+
+      <div class="meta-row">
+        <div id="rangeText">时间范围：-</div>
+
+        <div class="sum-box">
+          今日累计金额：<span id="todaySum">0.00</span>
+        </div>
+
+        <div class="pager">
+          <button class="btn secondary" id="btnPrev">上一页</button>
+          <div class="info" id="pageInfo">第 - / - 页（共 - 条）</div>
+          <button class="btn secondary" id="btnNext">下一页</button>
+        </div>
+      </div>
+
+      <div id="errorBox" class="error" style="display:none;"></div>
+      <div id="loading" class="loading" style="display:none;">加载中...</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>UID</th>
+              <th>类型</th>
+              <th>订单号</th>
+              <th>商品</th>
+              <th>到账内容</th>
+              <th>实付</th>
+              <th>渠道</th>
+              <th>状态</th>
+              <th>创建时间</th>
+              <th>支付时间</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="11" class="loading">暂无数据</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // 仍然沿用你当前页面里的接口地址
+  const API_URL = '/api/index/recharge_orders_api.php';
+
+let state = {
+  page: 1,
+  page_size: 15,
+  start_time: '',
+  end_time: '',
+  recharge_type: 'all',
+  payment_channel: 'all',
+  total_pages: 1,
+  total: 0,
+};
+
+  const $ = (id) => document.getElementById(id);
+
+  function pad2(n){
+    return String(n).padStart(2, '0');
+  }
+
+  function todayRange(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+
+    return {
+      start: `${y}-${m}-${day} 00:00:00`,
+      end: `${y}-${m}-${day} 23:59:59`
+    };
+  }
+
+  function showLoading(on){
+    $('loading').style.display = on ? 'block' : 'none';
+  }
+
+  function showError(msg){
+    const box = $('errorBox');
+    if (!msg){
+      box.style.display = 'none';
+      box.textContent = '';
+      return;
+    }
+    box.style.display = 'block';
+    box.textContent = msg;
+  }
+
+  function setPagerButtons(){
+    $('btnPrev').disabled = (state.page <= 1);
+    $('btnNext').disabled = (state.page >= state.total_pages);
+  }
+
+  function setMeta(res){
+    $('rangeText').textContent = `时间范围：${res.start_time} ~ ${res.end_time}`;
+    $('pageInfo').textContent = `第 ${res.page} / ${res.total_pages} 页（共 ${res.total} 条）`;
+    $('todaySum').textContent = Number(res.today_sum ?? 0).toFixed(2);
+
+    state.total_pages = res.total_pages || 1;
+    state.total = res.total || 0;
+    state.page = res.page || 1;
+    setPagerButtons();
+  }
+
+  function dtLocalToSql(v){
+    if (!v) return '';
+    return v.replace('T', ' ') + ':00';
+  }
+
+  function sqlToDtLocal(v){
+    if (!v) return '';
+    return v.replace(' ', 'T').slice(0, 16);
+  }
+
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[c]));
+  }
+
+  function getTypeTag(type){
+    const t = String(type || '').trim();
+    if (t === '金币') {
+      return `<span class="type-tag gold">金币</span>`;
+    }
+    return `<span class="type-tag battery">电池</span>`;
+  }
+
+  function renderRows(rows){
+    const tb = $('tbody');
+
+    if (!rows || rows.length === 0){
+      tb.innerHTML = `<tr><td colspan="11" class="loading">暂无数据</td></tr>`;
+      return;
+    }
+
+    tb.innerHTML = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.id)}</td>
+        <td>${escapeHtml(r.uid)}</td>
+        <td>${getTypeTag(r.recharge_type)}</td>
+        <td>${escapeHtml(r.order_number)}</td>
+        <td style="white-space:normal;min-width:220px;">${escapeHtml(r.product_name)}</td>
+        <td>${escapeHtml(r.value)}</td>
+        <td>${escapeHtml(r.payer_total)}</td>
+        <td>${escapeHtml(r.payment_channel)}</td>
+        <td><span class="tag">${escapeHtml(r.status)}</span></td>
+        <td>${escapeHtml(r.created_at)}</td>
+        <td>${escapeHtml(r.paid_at)}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadData(){
+    showError('');
+    showLoading(true);
+
+    const params = new URLSearchParams();
+    params.set('page', String(state.page));
+    params.set('page_size', String(state.page_size));
+    params.set('recharge_type', state.recharge_type || 'all');
+    params.set('payment_channel', state.payment_channel || 'all');
+
+    if (state.start_time) params.set('start_time', state.start_time);
+    if (state.end_time) params.set('end_time', state.end_time);
+
+    try{
+      const resp = await fetch(`${API_URL}?${params.toString()}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      const json = await resp.json();
+
+      if (json.code !== 0){
+        showError(json.msg || '请求失败');
+        renderRows([]);
+        showLoading(false);
+        return;
+      }
+
+      const d = json.data || {};
+      setMeta(d);
+      renderRows(d.rows || []);
+    }catch(e){
+      showError('网络错误：' + (e && e.message ? e.message : e));
+      renderRows([]);
+    }finally{
+      showLoading(false);
+    }
+  }
+
+  function applyInputs(resetPage = true){
+    const st = $('startTime').value;
+    const et = $('endTime').value;
+
+    state.start_time = dtLocalToSql(st);
+    state.end_time = dtLocalToSql(et);
+    state.recharge_type = $('rechargeType').value || 'all';
+    state.payment_channel = $('paymentChannel').value || 'all';
+    if (resetPage) state.page = 1;
+  }
+
+  $('btnSearch').addEventListener('click', () => {
+    applyInputs(true);
+    loadData();
+  });
+
+  $('btnToday').addEventListener('click', () => {
+    const t = todayRange();
+    $('startTime').value = sqlToDtLocal(t.start);
+    $('endTime').value = sqlToDtLocal(t.end);
+    applyInputs(true);
+    loadData();
+  });
+
+  $('btnPrev').addEventListener('click', () => {
+    if (state.page > 1){
+      state.page -= 1;
+      loadData();
+    }
+  });
+
+  $('btnNext').addEventListener('click', () => {
+    if (state.page < state.total_pages){
+      state.page += 1;
+      loadData();
+    }
+  });
+
+  $('rechargeType').addEventListener('change', () => {
+    applyInputs(true);
+    loadData();
+  });
+
+$('paymentChannel').addEventListener('change', () => {
+  applyInputs(true);
+  loadData();
+});
+  (function init(){
+    const t = todayRange();
+    $('startTime').value = sqlToDtLocal(t.start);
+    $('endTime').value = sqlToDtLocal(t.end);
+    $('rechargeType').value = 'all';
+    $('paymentChannel').value = 'all';
+    applyInputs(true);
+    loadData();
+  })();
+</script>
+</body>
+</html>
