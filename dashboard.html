@@ -38,7 +38,23 @@
     button, input, select { font: inherit; }
     button { font-family: inherit; }
     a { color: inherit; text-decoration: none; }
+.sidebar,
+.sidebar *,
+.nav,
+.nav *,
+.nav-parent,
+.nav-parent-main,
+.nav a,
+.nav span {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
 
+.nav-parent,
+.nav a {
+  -webkit-touch-callout: none;
+}
     .layout {
       min-height: 100vh;
       display: grid;
@@ -1228,6 +1244,7 @@
       backdrop-filter: blur(3px);
     }
 
+
     .notice-modal-mask.show {
       display: flex;
     }
@@ -1304,6 +1321,128 @@
       background: #fbfcfd;
     }
 
+
+.logout-confirm-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(16, 34, 38, .46);
+  backdrop-filter: blur(2px);
+}
+
+.logout-confirm-mask.show {
+  display: flex;
+}
+
+.logout-confirm-box {
+  width: min(420px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 22px 58px rgba(16, 34, 38, .22);
+}
+
+.logout-confirm-head {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.logout-confirm-head strong {
+  display: block;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.logout-confirm-head span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.logout-confirm-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #52666d;
+  background: #fff;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.logout-confirm-close:hover {
+  color: var(--danger);
+  border-color: rgba(223, 91, 87, .3);
+  background: var(--danger-soft, #ffefef);
+}
+
+.logout-confirm-body {
+  padding: 18px;
+  color: #34464e;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.logout-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.logout-danger-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--danger);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.logout-danger-btn:hover:not(:disabled) {
+  background: #c84d4a;
+  border-color: #c84d4a;
+  box-shadow: 0 10px 24px rgba(223, 91, 87, .18);
+}
+
+.logout-danger-btn:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .logout-confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .logout-confirm-actions .ghost-btn,
+  .logout-danger-btn {
+    width: 100%;
+  }
+}
     .quick-card:hover {
       border-color: var(--primary);
       background: var(--primary-soft);
@@ -2172,7 +2311,26 @@
       </div>
     </div>
   </div>
+  <div class="logout-confirm-mask" id="logoutConfirmModal" role="presentation">
+  <div class="logout-confirm-box" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">
+    <div class="logout-confirm-head">
+      <div>
+        <strong id="logoutConfirmTitle">确认退出登录？</strong>
+        <span>退出后需要重新登录后台。</span>
+      </div>
+      <button class="logout-confirm-close" id="logoutCancelX" type="button" aria-label="关闭">×</button>
+    </div>
 
+    <div class="logout-confirm-body">
+      当前账号会结束登录状态，确认要退出吗？
+    </div>
+
+    <div class="logout-confirm-actions">
+      <button class="ghost-btn" id="logoutCancelButton" type="button">取消</button>
+      <button class="logout-danger-btn" id="logoutConfirmButton" type="button">确认退出</button>
+    </div>
+  </div>
+</div>
   <script>
     const sidebarNav = document.getElementById('sidebarNav');
     const sidebar = document.querySelector('.sidebar');
@@ -2490,7 +2648,7 @@
       document.querySelector('.crumb strong').textContent = item.title;
       pageContent.innerHTML = '<section class="module-empty">' +
         '<h2>' + escapeHtml(item.title) + '</h2>' +
-        '<p>该模块已从老系统菜单中单独抽出入口。下一步会按这个菜单对应的旧接口和业务逻辑，逐步改造成新后台页面。</p>' +
+        '<p></p>' +
         '<div class="module-meta">' +
         '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
         '<span>name: ' + escapeHtml(item.name || '-') + '</span>' +
@@ -2718,11 +2876,11 @@
 
     function deviceDataDescription(type) {
       return {
-        faults: '展示设备故障记录和处理状态，数据来自 FaultRecords 与 vehicles。',
-        cameras: '展示摄像设备、房间号、推流 ID 和关联设备信息。',
-        photos: '展示设备图片、摄像设备编号和更新时间。',
-        bindings: '展示设备 UID、绑定场地和共享状态。'
-      }[type] || '设备子功能数据列表。';
+        faults: '展示设备故障记录和处理状态',
+        cameras: '展示摄像设备、房间号、推流 ID 和关联设备信息',
+        photos: '展示设备图片、摄像设备编号和更新时间',
+        bindings: '展示设备 UID、绑定场地和共享状态'
+      }[type] || '设备子功能数据列表';
     }
 
     function deviceColumns(type) {
@@ -2917,7 +3075,7 @@
         await loadDashboardMessages();
         await checkDashboardUnreadNotices();
       } catch (error) {
-        pageContent.innerHTML = '<section class="module-empty"><h2>工作台加载失败</h2><p>当前无法读取老系统工作台数据，请稍后重试或检查接口状态。</p></section>';
+        pageContent.innerHTML = '<section class="module-empty"><h2>工作台加载失败</h2><p>当前无法读取工作台数据，请稍后重试或检查接口状态。</p></section>';
       }
     }
 const DASHBOARD_MSG_API = './api/index/Msg.php';
@@ -3261,7 +3419,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
       });
       return '' +
         '<div class="workbench-head">' +
-        '<div class="workbench-title"><h2>' + escapeHtml(data.venue_name || '酷玩星工作台') + '</h2><p>数据来自老系统工作台接口，当前展示今日实时概览。</p></div>' +
+        '<div class="workbench-title"><h2>' + escapeHtml(data.venue_name || '酷玩星工作台') + '</h2><p>当前展示今日实时概览</p></div>' +
         '<button class="ghost-btn" type="button" onclick="location.reload()">刷新数据</button>' +
         '</div>' +
         '<div class="stats">' +
@@ -3271,11 +3429,11 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费汇总', 'order') +
         '</div>' +
         '<div class="workbench-grid">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>快捷入口</strong><span>按老工作台入口整理，后续逐个迁移为新页面</span></div></div><div class="quick-grid">' +
+        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>快捷入口</strong><span></span></div></div><div class="quick-grid">' +
         visibleActions.map(quickAction).join('') +
         '</div></section>' +
         '<aside class="side-stack">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>待处理事项</strong><span>来自老系统统计口径</span></div></div><div class="todo-list">' +
+        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>待处理事项</strong><span></span></div></div><div class="todo-list">' +
         todoItem('订单申诉', '待处理申诉单', todos.appealCount, '/iframe/link/order_report') +
         todoItem('投诉处理', '设备与内容举报', todos.reportCount, '/iframe/link/reporthand') +
         todoItem('提现审批', '待审核提现申请', todos.withdrawCount, '/iframe/link/paylist') +
@@ -3447,7 +3605,7 @@ function franchiseOverviewItem(label, value, icon) {
         renderLegacyModule(fallbackItem);
         return;
       }
-      pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p>该入口来自老工作台，后续会按旧接口重做为新后台页面。</p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
+      pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p></p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
     }
 
     function noticeBody(action, extra) {
@@ -3604,34 +3762,50 @@ function franchiseOverviewItem(label, value, icon) {
       }
     });
 
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') {
-        closeNoticeModal();
-        closeSidebar();
-      }
-    });
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeNoticeModal();
+    closeLogoutConfirm();
+    closeSidebar();
+  }
+});
 
-    sidebarNav.addEventListener('click', function(event) {
-      const link = event.target.closest('a[data-menu-id]');
-      if (link) {
-        event.preventDefault();
-        navigateToMenu(link.dataset.menuId);
-        return;
-      }
-      const toggle = event.target.closest('[data-toggle-group]');
-      if (!toggle) return;
-      event.preventDefault();
-      const group = toggle.closest('.nav-group');
-      if (!group) return;
-      sidebarNav.querySelectorAll('.nav-group.open').forEach(function(openGroup) {
-        if (openGroup !== group) openGroup.classList.remove('open');
-      });
-      group.classList.toggle('open');
-      const item = findTopMenu(toggle.dataset.toggleGroup);
-      if (item) {
-        navigateToMenu(item.id);
-      }
-    });
+sidebarNav.addEventListener('click', function(event) {
+  const link = event.target.closest('a[data-menu-id]');
+  if (link) {
+    event.preventDefault();
+    navigateToMenu(link.dataset.menuId);
+    return;
+  }
+
+  const toggle = event.target.closest('[data-toggle-group]');
+  if (!toggle) return;
+
+  event.preventDefault();
+
+  const group = toggle.closest('.nav-group');
+  if (!group) return;
+
+  const isOpen = group.classList.contains('open');
+
+  // 已经展开时：只收起，不再 navigateToMenu，否则 routeFromHash/setActive 会重新展开
+  if (isOpen) {
+    group.classList.remove('open');
+    return;
+  }
+
+  // 未展开时：先收起其他父级，再展开当前父级，并进入父级分类页
+  sidebarNav.querySelectorAll('.nav-group.open').forEach(function(openGroup) {
+    if (openGroup !== group) openGroup.classList.remove('open');
+  });
+
+  group.classList.add('open');
+
+  const item = findTopMenu(toggle.dataset.toggleGroup);
+  if (item) {
+    navigateToMenu(item.id);
+  }
+});
 
     window.addEventListener('hashchange', routeFromHash);
 
@@ -3665,13 +3839,65 @@ function franchiseOverviewItem(label, value, icon) {
       });
     }
 
-    document.getElementById('logoutButton').addEventListener('click', async function() {
-      await fetch('./api/auth/logout.php', {
-        method: 'POST',
-        credentials: 'same-origin'
-      }).catch(function() {});
-      window.location.replace('./index.html');
-    });
+const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+const logoutCancelButton = document.getElementById('logoutCancelButton');
+const logoutCancelX = document.getElementById('logoutCancelX');
+const logoutConfirmButton = document.getElementById('logoutConfirmButton');
+
+function openLogoutConfirm() {
+  if (logoutConfirmModal) {
+    logoutConfirmModal.classList.add('show');
+  }
+}
+
+function closeLogoutConfirm() {
+  if (logoutConfirmModal) {
+    logoutConfirmModal.classList.remove('show');
+  }
+
+  if (logoutConfirmButton) {
+    logoutConfirmButton.disabled = false;
+    logoutConfirmButton.textContent = '确认退出';
+  }
+}
+
+async function doLogout() {
+  if (!logoutConfirmButton) return;
+
+  logoutConfirmButton.disabled = true;
+  logoutConfirmButton.textContent = '正在退出...';
+
+  await fetch('./api/auth/logout.php', {
+    method: 'POST',
+    credentials: 'same-origin'
+  }).catch(function() {});
+
+  window.location.replace('./index.html');
+}
+
+document.getElementById('logoutButton').addEventListener('click', function() {
+  openLogoutConfirm();
+});
+
+if (logoutCancelButton) {
+  logoutCancelButton.addEventListener('click', closeLogoutConfirm);
+}
+
+if (logoutCancelX) {
+  logoutCancelX.addEventListener('click', closeLogoutConfirm);
+}
+
+if (logoutConfirmButton) {
+  logoutConfirmButton.addEventListener('click', doLogout);
+}
+
+if (logoutConfirmModal) {
+  logoutConfirmModal.addEventListener('click', function(event) {
+    if (event.target === logoutConfirmModal) {
+      closeLogoutConfirm();
+    }
+  });
+}
 
     checkSession();
   </script>
