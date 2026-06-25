@@ -52,7 +52,7 @@ $params = [];
 $venueFields = "id, venue_name, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock";
 $where = [];
 
-if ($role_id == 1 || $role_id == 2) {
+if ($role_id == 1 || $role_id == 2 ||  $role_id == 3) {
     if (!empty($get_venue_id) && is_numeric($get_venue_id)) {
         // 管理员传了有效 id，就查指定场地
         $where[] = "id = ?";

@@ -785,6 +785,12 @@ textarea.input {
     };
     const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
     const isPlatformAdmin = () => (state.roleId === 1 || state.roleId === 2);
+    const getCurrentVenueId = () => {
+      const urlVenueId = Number(pageVenueId || 0);
+      if (urlVenueId > 0) return urlVenueId;
+      if (isPlatformAdmin()) return Number(state.venueFilter || 0);
+      return Number(state.venueId || 0);
+    };
 
     // 列表加载
     async function loadList(){
@@ -904,7 +910,9 @@ $('#btnAssign').addEventListener('click', ()=>{
       const reasonEl = $('#addReason');
       const uid = Number(uidEl.value.trim());
       const reason = reasonEl.value.trim();
+      const venue_id = getCurrentVenueId();
       if(!uid || uid < 1){ toast('请输入正确的 UID', false); return; }
+      if(!venue_id || venue_id < 1){ toast('当前场地不明确，请从场地总览重新进入', false); return; }
       if(!reason){ reasonEl.setCustomValidity('请输入拉黑原因'); } else { reasonEl.setCustomValidity(''); }
       if(!reasonEl.checkValidity()){ reasonEl.reportValidity(); reasonEl.focus(); return; }
       if (isDenyUid(uid)) { toast(`UID ${uid} 为受保护账号，禁止拉黑`, false); uidEl.classList.add('invalid'); return; }
@@ -917,6 +925,7 @@ try{
     credentials: 'include',
     body: JSON.stringify({
       uid,
+      venue_id,
       reason
     })
   });

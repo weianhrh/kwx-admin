@@ -9,7 +9,13 @@ function venue_scope_has_table(Database $db, string $table): bool
         return $cache[$key];
     }
 
-    $rows = $db->query('SHOW TABLES LIKE ?', [$table]);
+    // MySQL 不支持用 mysqli prepare 给 SHOW TABLES LIKE ? 绑定参数，
+    // 会导致“预处理SQL语句失败 ... near '?'”，然后多场地关系表被误判为不存在。
+    // 改查 information_schema，既能安全绑定参数，也能兼容当前 Database::query()。
+    $rows = $db->query(
+        'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1',
+        [$table]
+    );
     $cache[$key] = !empty($rows);
     return $cache[$key];
 }
@@ -22,7 +28,11 @@ function venue_scope_has_column(Database $db, string $table, string $column): bo
         return $cache[$key];
     }
 
-    $rows = $db->query("SHOW COLUMNS FROM `$table` LIKE ?", [$column]);
+    // 同上，避免 SHOW COLUMNS ... LIKE ? 在 mysqli prepare 下失败。
+    $rows = $db->query(
+        'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1',
+        [$table, $column]
+    );
     $cache[$key] = !empty($rows);
     return $cache[$key];
 }

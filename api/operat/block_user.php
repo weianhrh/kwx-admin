@@ -1,5 +1,6 @@
 <?php // api/operat/block_user.php
 require_once __DIR__.'/_bootstrap.php';
+require_once __DIR__.'/../lib/venue_scope.php';
 define('OPEN_INTERNAL_KEY', 'open_send_zego_internal_20260529_xxxxxxxx');
 $db   = new Database();
 $user = auth_or_die($db);
@@ -8,13 +9,15 @@ if(!can_block($user)) json_err('无权执行拉黑操作', 1003);
 $req = input_array();
 $target_uid  = isset($req['uid']) ? intval($req['uid']) : 0;
 $reason      = trim($req['reason'] ?? '此用户违反该场地正常运营条例,特此拉黑!');
-$venue_id    = intval($user['venue_id'] ?? 0);
+$requested_venue_id = isset($req['venue_id']) ? intval($req['venue_id']) : 0;
+$venue_id    = venue_scope_resolve_single_id($db, $user, $requested_venue_id);
 $handler_uid = intval($user['uid'] ?? 0);
 $remove_voice_room = intval($req['remove_voice_room'] ?? 0);
 
 
 
 if ($target_uid <= 0) json_err('参数错误：uid 必填且为正整数', 1002);
+if ($requested_venue_id > 0 && $venue_id <= 0) json_err('无权操作该场地', 1006);
 if ($reason === '')   $reason = '未填写原因';
 
 // === 新增：一键拉黑所有场地，仅管理员（role_id == 1）可用 ===
