@@ -164,7 +164,32 @@ function menu_append_system_tools(array &$groups, int $roleId): void
         'sort' => 9102,
     ]);
 }
+function menu_append_user_blacklist_menu(array &$groups, int $roleId): void
+{
+    if (!in_array($roleId, [1, 2], true) || !isset($groups['user'])) {
+        return;
+    }
 
+    $targetJump = '/iframe/link/black_user_gmt';
+
+    foreach ($groups as $group) {
+        foreach (($group['children'] ?? []) as $child) {
+            if (($child['jump'] ?? '') === $targetJump) {
+                return;
+            }
+        }
+    }
+
+    $groups['user']['children'][] = [
+        'id' => 9201,
+        'parent_id' => (int)$groups['user']['id'],
+        'name' => 'user-blacklist',
+        'title' => '用户拉黑管理',
+        'icon' => 'user',
+        'jump' => $targetJump,
+        'sort' => 9201,
+    ];
+}
 function menu_franchise_tree(): array
 {
     return [
@@ -294,6 +319,7 @@ function menu_compact_tree(array $menus, int $roleId): array
         ];
     }
 
+    menu_append_user_blacklist_menu($groups, $roleId);
     menu_append_system_tools($groups, $roleId);
 
     $tree = [[
