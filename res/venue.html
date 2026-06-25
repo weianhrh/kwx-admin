@@ -1,1741 +1,3645 @@
 <!DOCTYPE html>
+
 <!-- venue.html -->
+
 <html lang="zh-CN">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>场地信息管理</title>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+
 :root {
+
   --bg: #f4f7f8;
+
   --panel: #ffffff;
+
   --text: #172126;
+
   --muted: #6b7d84;
+
   --subtle: #8aa0a8;
+
   --line: #dfe8eb;
+
   --line-strong: #c9d8dd;
+
   --primary: #0f8f8c;
+
   --primary-dark: #08706e;
+
   --primary-soft: #e6f6f5;
+
   --warning: #ffb84d;
+
   --warning-soft: #fff5df;
+
   --success: #20a876;
+
   --success-soft: #e8f7f1;
+
   --danger: #df5b57;
+
   --danger-soft: #ffefef;
+
   --blue: #2f7df6;
+
   --blue-soft: #eef5ff;
+
   --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+
   --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+
 }
+
+
 
 * {
+
   margin: 0;
+
   padding: 0;
+
   box-sizing: border-box;
+
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+
   -webkit-tap-highlight-color: transparent;
+
 }
+
+
 
 html,
-body {
-  width: 100%;
-  min-height: 100%;
-}
 
 body {
-  min-width: 320px;
-  min-height: 100vh;
-  padding: 26px 28px 34px;
-  color: var(--text);
-  background: var(--bg);
-  overflow-x: hidden;
+
+  width: 100%;
+
+  min-height: 100%;
+
 }
+
+
+
+body {
+
+  min-width: 320px;
+
+  min-height: 100vh;
+
+  padding: 26px 28px 34px;
+
+  color: var(--text);
+
+  background: var(--bg);
+
+  overflow-x: hidden;
+
+}
+
+
 
 button,
+
 input,
+
 select,
+
 textarea {
+
   font: inherit;
+
 }
+
+
 
 button {
+
   user-select: none;
+
 }
+
+
 
 input,
+
 select,
+
 textarea {
+
   outline: none;
+
 }
+
+
 
 .container {
+
   width: 100%;
+
   max-width: none;
+
   margin: 0 auto;
+
 }
+
+
 
 .page-hero {
+
   min-height: 58px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 16px;
+
   margin-bottom: 18px;
+
   padding: 0 18px;
+
   border: 1px solid var(--line);
+
   border-radius: 8px;
+
   background: var(--panel);
+
   box-shadow: var(--shadow);
+
 }
+
+
 
 .page-title {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   color: var(--text);
+
   font-size: 20px;
+
   line-height: 1.2;
+
   font-weight: 900;
+
 }
+
+
 
 .page-title::before {
+
   content: "";
+
   width: 8px;
+
   height: 20px;
+
   border-radius: 999px;
+
   background: var(--primary);
+
 }
+
+
 
 .page-subtitle {
+
   margin-top: 4px;
+
   color: var(--muted);
+
   font-size: 12px;
+
 }
+
+
 
 .venue-dashboard {
+
   display: grid;
+
   gap: 18px;
+
 }
+
+
 
 .venue-top-grid {
+
   display: grid;
-  grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr);
+
+  grid-template-columns: 1fr;
+
   gap: 18px;
+
   align-items: start;
+
 }
+
+
+
+.venue-overview-card {
+
+  width: 100%;
+
+  padding: 18px;
+
+  overflow: hidden;
+
+}
+
+
+
+.venue-overview-grid {
+
+  display: grid;
+
+  grid-template-columns: minmax(340px, .9fr) minmax(0, 1.1fr);
+
+  gap: 18px;
+
+  align-items: start;
+
+}
+
+
+
+.venue-overview-card .venue-image-panel,
+
+.venue-overview-card .basic-card {
+
+  min-width: 0;
+
+  border: 0;
+
+  border-radius: 0;
+
+  background: transparent;
+
+  box-shadow: none;
+
+  padding: 0;
+
+}
+
+
+
+.venue-overview-card .basic-card {
+
+  padding-left: 18px;
+
+  border-left: 1px solid var(--line);
+
+}
+
+
+
+.venue-overview-card .cover-box {
+
+  aspect-ratio: 16 / 9;
+
+}
+
+
 
 .settings-grid {
+
   display: grid;
+
   grid-template-columns: minmax(0, 1fr);
+
   gap: 18px;
+
   align-items: stretch;
+
 }
+
+
 
 /* 直播设置：在内容承载区里占满整行，不再以半列小卡片展示 */
+
 .settings-grid .live-card {
+
   grid-column: 1 / -1;
+
   width: 100%;
+
   max-width: none;
+
   min-height: 0;
+
 }
+
+
 
 @media (min-width: 921px) {
+
   .settings-grid .live-card {
+
     display: grid;
+
     grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+
     gap: 18px;
+
     align-items: stretch;
+
   }
+
+
 
   .settings-grid .live-card > div:first-child {
+
     min-width: 0;
+
   }
+
+
 
   .settings-grid .live-card .live-ban-box {
+
     margin-top: 0;
+
     padding-top: 0;
+
     padding-left: 18px;
+
     border-top: 0;
+
     border-left: 1px solid var(--line);
+
     align-items: stretch;
+
     justify-content: center;
+
     flex-direction: column;
+
   }
+
+
 
   .settings-grid .live-card .live-ban-desc {
+
     max-width: none;
+
   }
+
+
 
   .settings-grid .live-card #liveBanBtn {
+
     width: 100%;
+
   }
+
 }
+
+
 
 .glass-pane,
-.panel,
-.card {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
 
 .panel,
+
 .card {
-  padding: 18px;
+
+  border: 1px solid var(--line);
+
+  border-radius: 8px;
+
+  background: var(--panel);
+
+  box-shadow: var(--shadow);
+
 }
+
+
+
+.panel,
+
+.card {
+
+  padding: 18px;
+
+}
+
+
 
 .panel-title {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   margin-bottom: 16px;
+
   color: var(--text);
+
   font-size: 16px;
+
   line-height: 1.2;
+
   font-weight: 900;
+
 }
+
+
 
 .panel-title i {
+
   width: 34px;
+
   height: 34px;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   border-radius: 8px;
+
   color: var(--primary);
+
   background: var(--primary-soft);
+
   font-size: 15px;
+
   flex: 0 0 auto;
+
 }
+
+
 
 .venue-image-panel,
+
 .venue-cover-card {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 12px;
+
 }
 
+
+
 .cover-box {
+
   position: relative;
+
   width: 100%;
-  min-height: 240px;
-  max-height: 330px;
+
+  aspect-ratio: 16 / 9;
+
+  min-height: 0;
+
+  max-height: none;
+
   overflow: hidden;
+
   border: 1px solid var(--line);
+
   border-radius: 8px;
+
   background: #eef3f4;
+
   cursor: pointer;
+
+}
+
+
+
+.cover-box img {
+
+  width: 100%;
+
+  height: 100%;
+
+  min-height: 0;
+
+  display: block;
+
+  object-fit: cover;
+
+  object-position: center;
+
 }
 
 .cover-box:active {
+
   transform: scale(.998);
+
 }
+
+
 
 .cover-box img {
+
   width: 100%;
+
   height: 100%;
-  min-height: 240px;
+
+  min-height: 0;
+
   display: block;
+
   object-fit: cover;
+
+  object-position: center;
+
 }
+
+
 
 .cover-hover {
+
   position: absolute;
+
   inset: 0;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 8px;
+
   color: #fff;
+
   background: rgba(16, 34, 38, .42);
+
   opacity: 0;
+
   font-size: 14px;
+
   font-weight: 900;
+
   transition: opacity .16s ease;
+
 }
+
+
 
 .cover-box:hover .cover-hover {
+
   opacity: 1;
+
 }
+
+
 
 #imageUploadInput {
+
   display: none !important;
+
 }
+
+
 
 .status-strip {
+
   min-height: 42px;
+
   display: flex;
+
   align-items: center;
+
   gap: 8px;
+
   padding: 10px 12px;
+
   border: 1px solid var(--line);
+
   border-radius: 8px;
+
   color: var(--muted);
+
   background: #fbfcfd;
+
   font-size: 13px;
+
   line-height: 1.5;
+
   font-weight: 700;
+
 }
+
+
 
 .status-strip::before {
+
   content: "";
+
   width: 8px;
+
   height: 8px;
+
   border-radius: 50%;
+
   background: var(--primary);
+
   flex: 0 0 auto;
+
 }
+
+
 
 .venue-info {
+
   width: 100%;
+
   display: block;
+
 }
+
+
 
 .form-grid {
+
   display: grid;
+
   grid-template-columns: repeat(2, minmax(0, 1fr));
+
   gap: 14px;
+
 }
+
+
 
 .field {
+
   min-width: 0;
+
 }
+
+
 
 .field.full {
+
   grid-column: 1 / -1;
+
 }
+
+
 
 .label {
+
   display: block;
+
   margin-bottom: 7px;
+
   color: var(--muted);
+
   font-size: 12px;
+
   line-height: 1.2;
+
   font-weight: 800;
+
 }
+
+
 
 .value {
+
   color: var(--text);
+
   font-size: 13px;
+
   line-height: 1.55;
+
   min-width: 0;
+
 }
+
+
 
 .value.readonly-text {
+
   min-height: 42px;
+
   padding: 10px 12px;
+
   border: 1px solid var(--line);
+
   border-radius: 8px;
+
   background: #fbfcfd;
+
 }
+
+
 
 #venue-tags {
+
   min-height: 30px;
+
   display: inline-flex;
+
   align-items: center;
+
   padding: 0 10px;
+
   border-radius: 999px;
+
   color: var(--primary);
+
   background: var(--primary-soft);
+
   font-size: 12px;
+
   font-weight: 900;
+
 }
+
+
 
 .edit-input,
+
 .edit-select,
+
 .edit-control,
+
 input.edit-input,
+
 select.edit-select {
+
   width: 100% !important;
+
   height: 38px !important;
+
   min-height: 38px !important;
+
   padding: 0 12px !important;
+
   border: 1px solid var(--line) !important;
+
   border-radius: 8px !important;
+
   color: var(--text) !important;
+
   background: #fff !important;
+
   font-size: 13px !important;
+
   line-height: 38px !important;
+
   outline: none !important;
+
   transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+
 }
+
+
 
 .edit-input:focus,
+
 .edit-select:focus,
+
 .edit-control:focus {
+
   border-color: rgba(15, 143, 140, .48) !important;
+
   box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+
 }
+
+
 
 .edit-input:disabled,
+
 .edit-select:disabled,
+
 .edit-control:disabled,
+
 .edit-input[readonly],
+
 .edit-select[readonly] {
+
   color: #657881 !important;
+
   background: #f3f7f8 !important;
+
   opacity: 1 !important;
+
 }
+
+
 
 #venue-time {
+
   display: grid !important;
+
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+
   gap: 8px !important;
+
   align-items: center;
+
 }
+
+
 
 #venue-time span {
+
   color: var(--muted);
+
   font-size: 12px;
+
   font-weight: 900;
+
 }
+
+
 
 .setting-card {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 14px;
+
   min-height: 100%;
+
 }
+
+
 
 .setting-head {
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 12px;
+
   margin-bottom: 2px;
+
 }
+
+
 
 .setting-title {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   color: var(--text);
+
   font-size: 16px;
+
   line-height: 1.2;
+
   font-weight: 900;
+
 }
+
+
 
 .setting-icon {
+
   width: 34px;
+
   height: 34px;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   border-radius: 8px;
+
   color: var(--primary) !important;
+
   background: var(--primary-soft) !important;
+
   flex: 0 0 auto;
+
 }
+
+
 
 .setting-field {
+
   margin: 0 0 12px 0;
+
 }
+
+
 
 .setting-field:last-child {
+
   margin-bottom: 0;
+
 }
+
+
 
 .inline-action {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   flex-wrap: wrap;
+
 }
+
+
 
 .hint {
+
   margin-top: 6px;
+
   color: var(--subtle);
+
   font-size: 12px;
+
   line-height: 1.45;
+
 }
+
+
 
 .live-ban-box {
+
   margin-top: auto;
+
   padding-top: 14px;
+
   border-top: 1px solid var(--line);
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 14px;
+
 }
+
+
 
 .live-ban-desc {
+
   max-width: 320px;
+
   color: var(--muted);
+
   font-size: 12px;
+
   line-height: 1.55;
+
 }
+
+
 
 #liveBanTip {
+
   display: inline-block;
+
   margin-top: 8px;
+
   line-height: 1.5;
+
 }
+
+
 
 .voice-bg-line {
+
   width: 100%;
+
   display: flex;
+
   align-items: stretch;
+
   gap: 10px;
+
 }
+
+
 
 .voice-bg-line .edit-input {
+
   flex: 1 1 auto;
+
   min-width: 0;
+
 }
+
+
 
 .voice-bg-line .mini-btn {
+
   flex: 0 0 auto;
+
   min-width: 92px;
+
   height: 38px !important;
+
   min-height: 38px !important;
+
   margin: 0 !important;
+
   padding: 0 14px !important;
+
 }
+
+
 
 .restriction-card {
+
   grid-column: 1 / -1;
+
 }
+
+
 
 .restriction-list {
+
   display: grid;
+
   gap: 10px;
+
 }
+
+
 
 .restriction-row {
+
   min-height: 64px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 12px;
+
   padding: 12px;
+
   border: 1px solid var(--line);
+
   border-radius: 8px;
+
   background: #fbfcfd;
+
 }
+
+
 
 .restriction-row.danger-row {
+
   border-color: rgba(223, 91, 87, .18);
+
   background: var(--danger-soft);
+
 }
+
+
 
 #lock30dBadge {
+
   min-height: 24px;
+
   display: inline-flex !important;
+
   align-items: center;
+
   padding: 0 8px !important;
+
   border-radius: 999px;
+
   color: var(--danger) !important;
+
   background: #fff !important;
+
   font-size: 12px !important;
+
   font-weight: 900 !important;
+
 }
+
+
 
 .mini-btn,
+
 .edit-btn,
+
 .save-btn,
+
 button.mini-btn,
+
 button.edit-btn,
+
 button.save-btn {
+
   min-height: 38px;
+
   display: inline-flex !important;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 8px;
+
   padding: 0 14px;
+
   border: 1px solid var(--primary) !important;
+
   border-radius: 8px !important;
+
   color: #fff !important;
+
   background: var(--primary) !important;
+
   font-size: 13px;
+
   line-height: 1;
+
   font-weight: 900;
+
   cursor: pointer;
+
   transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+
 }
+
+
 
 .mini-btn:hover,
+
 .edit-btn:hover,
+
 .save-btn:hover {
+
   border-color: var(--primary-dark) !important;
+
   background: var(--primary-dark) !important;
+
   box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+
   transform: translateY(-1px);
+
 }
+
+
 
 .save-btn {
+
   background: var(--success) !important;
+
   border-color: var(--success) !important;
+
 }
+
+
 
 .save-btn:hover {
+
   background: #168a61 !important;
+
   border-color: #168a61 !important;
+
 }
+
+
 
 #liveBanBtn,
+
 #unlock30dBtn {
+
   background: var(--danger) !important;
+
   border-color: var(--danger) !important;
+
 }
+
+
 
 #liveBanBtn:hover,
+
 #unlock30dBtn:hover {
+
   background: #c84d4a !important;
+
   border-color: #c84d4a !important;
+
 }
+
+
 
 .action-bar {
+
   display: grid;
+
   gap: 10px;
+
 }
+
+
 
 .action-bar .edit-btn,
+
 .action-bar .save-btn {
+
   width: 100%;
+
   min-height: 44px;
+
 }
+
+
 
 #name-lock-tip {
+
   margin-top: 8px;
+
   padding: 8px 10px;
+
   border-radius: 8px;
+
   background: var(--warning-soft);
+
 }
+
+
 
 .settings-grid.role3-live-full {
+
   grid-template-columns: 1fr !important;
+
 }
+
+
 
 .settings-grid.role3-live-full .live-card,
+
 .settings-grid.role3-live-full .restriction-card {
+
   grid-column: 1 / -1 !important;
+
   width: 100% !important;
+
 }
+
+
 
 .settings-grid.role3-live-full .live-card {
+
   height: auto !important;
+
   min-height: 0 !important;
+
 }
+
+
 
 body.role-3 .venue-cover-card {
+
   display: flex !important;
+
   flex-direction: column !important;
+
 }
+
+
 
 @media (min-width: 921px) {
+
   .venue-top-grid {
+
     align-items: start !important;
+
     grid-auto-rows: auto !important;
+
   }
+
+
 
   .venue-top-grid > .glass-pane,
+
   .venue-top-grid > .panel {
+
     align-self: start !important;
+
     height: auto !important;
+
     min-height: 0 !important;
+
     margin-bottom: 0 !important;
+
   }
+
+
 
   .venue-image-panel,
+
   .basic-card {
+
     display: flex !important;
+
     flex-direction: column !important;
+
   }
+
+
 
   body.role-3 .venue-cover-card .panel-title,
+
   body.role-3 .venue-cover-card .status-strip,
+
   body.role-3 .venue-cover-card #unlockImageLockBtn {
+
     flex: 0 0 auto !important;
+
   }
+
+
+
+  /*body.role-3 .venue-cover-card .cover-box {*/
+
+  /*  flex: 1 1 auto !important;*/
+
+  /*  max-height: none !important;*/
+
+  /*  min-height: 240px !important;*/
+
+  /*}*/
 
   body.role-3 .venue-cover-card .cover-box {
-    flex: 1 1 auto !important;
-    max-height: none !important;
-    min-height: 240px !important;
-  }
+
+  flex: 0 0 auto !important;
+
+  aspect-ratio: 16 / 9 !important;
+
+  height: auto !important;
+
+  min-height: 0 !important;
+
+  max-height: none !important;
+
 }
+
+}
+
+
 
 #banModalMask {
+
   background: rgba(16, 34, 38, .46) !important;
+
   padding: 14px !important;
+
 }
+
+
 
 #banModalMask > div {
+
   width: min(92vw, 440px) !important;
+
   padding: 18px !important;
+
   border: 1px solid var(--line) !important;
+
   border-radius: 8px !important;
+
   background: #fff !important;
+
   box-shadow: 0 22px 56px rgba(16, 34, 38, .18) !important;
+
 }
+
+
 
 #banModalMask textarea {
+
   width: 100% !important;
+
   min-height: 82px !important;
+
   padding: 10px 12px !important;
+
   border: 1px solid var(--line) !important;
+
   border-radius: 8px !important;
+
   color: var(--text) !important;
+
   background: #fff !important;
+
   font-size: 13px !important;
+
   line-height: 1.55 !important;
+
   resize: vertical !important;
+
 }
+
+
 
 #banModalMask button[style*="e5e7eb"] {
+
   color: #486169 !important;
+
   background: #fff !important;
+
   border-color: var(--line) !important;
+
 }
+
+
 
 @media (max-width: 920px) {
+
   body {
+
     padding: 14px 10px 22px;
+
   }
+
+
 
   .page-hero {
+
     min-height: 52px;
+
     margin-bottom: 14px;
+
     padding: 0 14px;
+
   }
+
+
 
   .page-title {
+
     font-size: 18px;
+
   }
+
+
 
   .venue-dashboard,
-  .venue-top-grid,
-  .settings-grid {
-    gap: 14px;
-  }
 
   .venue-top-grid,
+
   .settings-grid {
-    grid-template-columns: 1fr;
+
+    gap: 14px;
+
   }
+
+
+
+  .venue-top-grid,
+
+  .settings-grid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+
+  .venue-overview-card {
+
+    padding: 16px;
+
+  }
+
+
+
+  .venue-overview-grid {
+
+    grid-template-columns: 1fr;
+
+    gap: 16px;
+
+  }
+
+
+
+  .venue-overview-card .basic-card {
+
+    padding-left: 0;
+
+    padding-top: 16px;
+
+    border-left: 0;
+
+    border-top: 1px solid var(--line);
+
+  }
+
+
 
   .panel,
+
   .card {
+
     padding: 16px;
+
   }
+
+
 
   .cover-box {
+
     min-height: 170px;
+
     max-height: none;
+
     aspect-ratio: 16 / 9;
+
   }
+
+
 
   .cover-box img {
+
     min-height: 170px;
+
   }
+
+
 
   .form-grid {
+
     grid-template-columns: 1fr;
+
   }
+
+
 
   .live-ban-box,
+
   .restriction-row {
+
     align-items: stretch;
+
     flex-direction: column;
+
   }
+
+
 
   .mini-btn,
+
   #liveBanBtn,
+
   #unlock30dBtn {
+
     width: 100%;
+
   }
+
 }
+
+
 
 @media (max-width: 768px) {
+
   .voice-bg-line {
+
     display: flex !important;
+
     flex-direction: column !important;
+
     align-items: stretch !important;
+
     gap: 10px !important;
+
     width: 100% !important;
+
   }
+
+
 
   .voice-bg-line .edit-input,
+
   .voice-bg-line .mini-btn {
+
     width: 100% !important;
+
     flex: 0 0 auto !important;
+
   }
+
 }
+
   </style>
+
 </head>
+
 <body>
 
+
+
   <div class="container">
+
     <div class="page-hero">
+
       <div>
+
         <div class="page-title">场地详情管理</div>
+
         <!--<div class="page-subtitle">场地资料、直播、语音房与系统限制</div>-->
+
       </div>
+
     </div>
+
     <div id="venue-info" class="venue-dashboard"><!-- 动态加载 --></div>
+
   </div>
 
+
+
   <script>
+
     // ================= 全局状态 =================
+
     let LOCKS = { name: null, image: null };
+
     let IS_ADMIN  = false;
+
     let ROLE_ID   = 0;      // ⭐ 新增：记录当前管理员的角色ID
+
     let IS_EDITING = false;
+
     let SENSITIVE_WORDS = [];
+
     let hasUploaded = false;
 
+
+
     // ================= 工具函数 =================
+
     function getUrlParameter(name) {
+
       const urlParams = new URLSearchParams(window.location.search);
+
       return urlParams.get(name);
+
     }
+
+
+
 
 
     function triggerCoverUpload() {
+
       const fileInput = document.getElementById('imageUploadInput');
+
       if (!fileInput) return;
 
+
+
       if (hasUploaded) {
+
         alert('您已经上传过图片，请等待审核结果。');
+
         return;
+
       }
+
+
 
       if (LOCKS.image && !IS_ADMIN) {
+
         alert(`图片上传处于冷却中，解锁时间：${(LOCKS.image && LOCKS.image.until_iso) || ''}`);
+
         return;
+
       }
+
+
 
       fileInput.disabled = false;
+
       fileInput.click();
+
     }
+
+
 
     function loadSensitiveWords() {
+
       return fetch('/api/sensitive_words.json')
+
         .then(res => res.json()).then(words => { SENSITIVE_WORDS = words || []; });
+
     }
+
     function containsSensitiveWords(text) {
+
       const t = (text || '') + '';
+
       for (let w of SENSITIVE_WORDS) if (t.includes(w)) return w;
+
       return null;
+
     }
+
     // ================= 锁：名称/图片 10天冷却 =================
+
     function loadLocks(venueId) {
+
       const url = `/api/venue/getVenueEditLock.php${venueId ? `?id=${venueId}` : ''}`;
+
       return fetch(url)
+
         .then(r => r.json())
+
         .then(res => {
+
           if (res.code === 0 && res.data) {
+
             IS_ADMIN    = !!res.data.is_admin;
+
             ROLE_ID     = Number(res.data.role_id || 0);  // ⭐ 新增：从接口拿 role_id
 
+
+
             // ✅ 根据角色给 body 加 class，方便单独修 role_id=3 的布局
+
             document.body.classList.toggle('role-3', ROLE_ID === 3);
+
             document.body.classList.toggle('role-admin', ROLE_ID === 1 || ROLE_ID === 2);
 
+
+
             LOCKS.name  = res.data.name_lock  || null;
+
             LOCKS.image = res.data.image_lock || null;
+
             renderLocksUI();
+
             updateIncomeLockUI();
+
             applyLiveLock(); // ← 新增：根据是否管理员，应用直播地址可编辑/只读
+
             applyShowLiveVisibility();  // ← 新增
+
                 // ✅补这句：ROLE_ID 有了，重新渲染封禁按钮显示/隐藏
+
             renderLiveBanUI();
+
             applyDrVenueIdPermission();
+
             syncRole3TopCardHeight();
+
             setTimeout(syncRole3TopCardHeight, 80);
+
             setTimeout(syncRole3TopCardHeight, 260);
+
           }
+
         })
+
         .catch(err => console.error('锁加载失败：', err));
+
     }
+
     // =============== 直播封禁状态 ===============
+
 let LIVE_BAN = { banned:false, ttl:-2, until:null, info:null };
 
+
+
 function fmtTTL(sec){
+
   sec = Math.max(0, Number(sec||0));
+
   const d = Math.floor(sec / 86400); sec %= 86400;
+
   const h = Math.floor(sec / 3600);  sec %= 3600;
+
   const m = Math.floor(sec / 60);
+
   if (d > 0) return `${d}天${h}小时`;
+
   if (h > 0) return `${h}小时${m}分`;
+
   return `${m}分`;
+
 }
+
+
 
 function loadLiveBanStatus(venueId){
+
   const url = `/api/venue/getLiveBanStatus.php${venueId ? `?id=${venueId}` : ''}`;
+
   return fetch(url).then(r=>r.json()).then(res=>{
+
     if(res.code===0 && res.data){
+
       LIVE_BAN = res.data;
+
       renderLiveBanUI();
+
       applyRole3BanGuard(); // role3 被封禁时禁用 UI
+
        // ✅ 新增：根据封禁状态，立即刷新“显示直播”下拉框
+
       syncShowLiveSelectByBan();
+
     }
+
   }).catch(e=>console.error('loadLiveBanStatus err', e));
+
 }
+
 // ✅ 新增：封禁 => 强制选“否(0)”；解封 => 不强制改回（或你想改回 1 也可）
+
 function syncShowLiveSelectByBan(){
+
   const sel = document.getElementById('show-live-stream-select');
+
   if (!sel) return;
 
+
+
   if (LIVE_BAN && LIVE_BAN.banned) {
+
     sel.value = "0";
+
     // 如果你希望封禁时也把 window.CURRENT_VENUE 同步
+
     if (window.CURRENT_VENUE) window.CURRENT_VENUE.show_live_stream = 0;
+
   } else {
+
     // ✅ 解封后你后端已经 UPDATE show_live_stream=1，那这里也同步成 1
+
     // sel.value = "1";
+
     if (window.CURRENT_VENUE) window.CURRENT_VENUE.show_live_stream = 1;
+
   }
+
 }
+
 function safeText(s){
+
   return String(s || '').trim();
+
 }
+
+
 
 // 可选：原因太长就截断一下（不想截断就直接 return s）
+
 function shortReason(s, maxLen = 30){
+
   s = safeText(s);
+
   if (!s) return '';
+
   return s.length > maxLen ? (s.slice(0, maxLen) + '…') : s;
+
 }
+
+
 
 function renderLiveBanUI(){
+
   const box = document.getElementById('liveBanBox');
+
   const btn = document.getElementById('liveBanBtn');
+
   const tip = document.getElementById('liveBanTip');
+
+
 
   // 只有 role_id=1/2 才显示整块“封禁直播”
+
   const canAdminBan = (ROLE_ID === 1 || ROLE_ID === 2);
 
+
+
   if (box) {
+
     box.style.display = canAdminBan ? 'flex' : 'none';
+
   }
+
+
 
   if (btn) {
+
     btn.style.display = canAdminBan ? 'inline-flex' : 'none';
+
   }
+
+
 
   // 非管理员直接清掉按钮和说明，不再往下渲染封禁按钮
+
   if (!canAdminBan) {
+
     if (tip) {
+
       tip.style.display = 'none';
+
       tip.textContent = '';
+
       tip.title = '';
+
     }
+
     return;
+
   }
+
+
 
   if (LIVE_BAN && LIVE_BAN.banned) {
+
     if (btn) btn.textContent = '解封直播';
 
+
+
     const reason = shortReason(LIVE_BAN?.data?.reason || LIVE_BAN?.info?.reason || '');
+
     const reasonText = reason ? `，原因：${reason}` : '';
 
+
+
     if (tip) {
+
       tip.style.display = 'inline';
+
       tip.textContent = `直播已封禁，剩余：${fmtTTL(LIVE_BAN.ttl)}${reasonText}`;
+
       const fullReason = safeText(LIVE_BAN?.data?.reason || LIVE_BAN?.info?.reason || '');
+
       tip.title = fullReason ? `原因：${fullReason}` : '';
+
     }
+
   } else {
+
     if (btn) btn.textContent = '封禁直播';
+
     if (tip) {
+
       tip.style.display = 'none';
+
       tip.textContent = '';
+
       tip.title = '';
+
     }
+
   }
+
 }
+
+
 
 // role3 被封禁时：禁用“是否显示直播”以及（可选）直播地址输入
+
 function applyRole3BanGuard(){
+
   const sel = document.getElementById('show-live-stream-select');
+
   const liveInput = document.getElementById('live-stream-input');
+
   const tip = document.getElementById('liveBanTip');
 
+
+
   if (ROLE_ID === 3 && LIVE_BAN && LIVE_BAN.banned) {
+
     if (sel) sel.disabled = true;
+
     if (liveInput) liveInput.readOnly = true;
 
+
+
     const reason = shortReason(LIVE_BAN?.data?.reason || LIVE_BAN?.info?.reason || '');
+
     const reasonText = reason ? `，原因：${reason}` : '';
 
+
+
     if (tip) {
+
       tip.style.display = 'inline';
+
       tip.textContent = `直播已封禁，剩余：${fmtTTL(LIVE_BAN.ttl)}${reasonText}`;
+
       const fullReason = safeText(LIVE_BAN?.data?.reason || LIVE_BAN?.info?.reason || '');
+
       tip.title = fullReason ? `原因：${fullReason}` : '';
+
     }
+
   }
+
 }
+
     function applyLiveLock() {
+
       const live = document.getElementById('live-stream-input');
+
       const tip  = document.getElementById('live-tip');
+
       if (!live) return;
 
+
+
       if (IS_ADMIN) {
+
         // 管理员可编辑
+
         live.disabled = false;
+
         live.readOnly = false;
+
         if (tip) tip.style.display = 'none';
+
       } else {
+
         // 非管理员只读
+
        live.disabled = false;
+
         live.readOnly = false;
+
         if (tip) tip.style.display = 'none';
+
       }
+
     }
+
     function applyShowLiveVisibility() {
+
       const wrap = document.getElementById('show-live-wrap');
+
       const sel  = document.getElementById('show-live-stream-select');
+
       if (!wrap || !sel) return;
 
+
+
         // role_id = 1 / 2 / 3 / 4 可见
+
   if (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3 || ROLE_ID === 4) {
+
         wrap.style.display = 'block';        // 管理员可见
+
         // 是否可编辑由“编辑模式”控制（保持与其它字段一致）
+
         sel.disabled = !IS_EDITING;
+
          applyRole3BanGuard();
+
       } else {
+
         wrap.style.display = 'none';         // 非管理员隐藏
+
       }
+
     }
+
 function applyDrVenueIdPermission() {
+
   const wrap = document.getElementById('dr-venue-id-wrap');
+
   const input = document.getElementById('dr-venue-id-input');
+
+
 
   if (!wrap || !input) return;
 
+
+
   if (ROLE_ID === 1 || ROLE_ID === 2) {
+
     wrap.style.display = 'block';
+
+
 
     const canEdit = IS_EDITING;
 
+
+
     input.disabled = !canEdit;
+
     input.readOnly = !canEdit;
 
+
+
     if (!canEdit) {
+
       input.style.background = '#f5f5f5';
+
       input.style.color = '#999';
+
     } else {
+
       input.style.background = '#f8f9ff';
+
       input.style.color = '#333';
+
     }
+
   } else {
+
     wrap.style.display = 'none';
+
   }
+
 }
+
+// function syncRole3TopCardHeight() {
+
+//   const coverCard = document.querySelector('.venue-cover-card');
+
+//   const basicCard = document.querySelector('.basic-card');
+
+//   const coverBox = document.querySelector('.venue-cover-card .cover-box');
+
+//   if (!coverCard || !basicCard || !coverBox) return;
+
+
+
+//   // 非 role_id=3 或移动端：清理动态高度，避免影响管理员/手机端
+
+//   if (ROLE_ID !== 3 || window.innerWidth <= 920) {
+
+//     coverCard.style.removeProperty('min-height');
+
+//     coverCard.style.removeProperty('display');
+
+//     coverCard.style.removeProperty('flex-direction');
+
+//     coverBox.style.removeProperty('flex');
+
+//     coverBox.style.removeProperty('aspect-ratio');
+
+//     coverBox.style.removeProperty('max-height');
+
+//     coverBox.style.removeProperty('height');
+
+//     return;
+
+//   }
+
+
+
+//   // 先恢复一次，避免重复计算越撑越高
+
+//   coverCard.style.removeProperty('min-height');
+
+//   coverBox.style.removeProperty('flex');
+
+//   coverBox.style.removeProperty('aspect-ratio');
+
+//   coverBox.style.removeProperty('max-height');
+
+//   coverBox.style.removeProperty('height');
+
+
+
+//   requestAnimationFrame(() => {
+
+//     const coverH = coverCard.getBoundingClientRect().height;
+
+//     const basicH = basicCard.getBoundingClientRect().height;
+
+
+
+//     // 只在封面卡片比基本信息矮时补齐；封面更高时不拉高基本信息
+
+//     if (coverH + 2 < basicH) {
+
+//       coverCard.style.setProperty('min-height', `${Math.ceil(basicH)}px`, 'important');
+
+//       coverCard.style.setProperty('display', 'flex', 'important');
+
+//       coverCard.style.setProperty('flex-direction', 'column', 'important');
+
+
+
+//       // 必须带 important，否则会被 .cover-box 的 flex:none!important / max-height:330px!important 压住
+
+//       coverBox.style.setProperty('flex', '1 1 auto', 'important');
+
+//       coverBox.style.setProperty('aspect-ratio', 'auto', 'important');
+
+//       coverBox.style.setProperty('max-height', 'none', 'important');
+
+//       coverBox.style.setProperty('height', 'auto', 'important');
+
+//     }
+
+//   });
+
+// }
+
+
+
 function syncRole3TopCardHeight() {
+
   const coverCard = document.querySelector('.venue-cover-card');
-  const basicCard = document.querySelector('.basic-card');
+
   const coverBox = document.querySelector('.venue-cover-card .cover-box');
-  if (!coverCard || !basicCard || !coverBox) return;
 
-  // 非 role_id=3 或移动端：清理动态高度，避免影响管理员/手机端
-  if (ROLE_ID !== 3 || window.innerWidth <= 920) {
-    coverCard.style.removeProperty('min-height');
-    coverCard.style.removeProperty('display');
-    coverCard.style.removeProperty('flex-direction');
-    coverBox.style.removeProperty('flex');
-    coverBox.style.removeProperty('aspect-ratio');
-    coverBox.style.removeProperty('max-height');
-    coverBox.style.removeProperty('height');
-    return;
-  }
+  if (!coverCard || !coverBox) return;
 
-  // 先恢复一次，避免重复计算越撑越高
+
+
+  // 不再根据右侧基本信息动态拉伸封面图，固定使用 CSS 的 16:9 图片比例
+
   coverCard.style.removeProperty('min-height');
+
+  coverCard.style.removeProperty('height');
+
   coverBox.style.removeProperty('flex');
-  coverBox.style.removeProperty('aspect-ratio');
-  coverBox.style.removeProperty('max-height');
+
   coverBox.style.removeProperty('height');
 
-  requestAnimationFrame(() => {
-    const coverH = coverCard.getBoundingClientRect().height;
-    const basicH = basicCard.getBoundingClientRect().height;
+  coverBox.style.removeProperty('max-height');
 
-    // 只在封面卡片比基本信息矮时补齐；封面更高时不拉高基本信息
-    if (coverH + 2 < basicH) {
-      coverCard.style.setProperty('min-height', `${Math.ceil(basicH)}px`, 'important');
-      coverCard.style.setProperty('display', 'flex', 'important');
-      coverCard.style.setProperty('flex-direction', 'column', 'important');
-
-      // 必须带 important，否则会被 .cover-box 的 flex:none!important / max-height:330px!important 压住
-      coverBox.style.setProperty('flex', '1 1 auto', 'important');
-      coverBox.style.setProperty('aspect-ratio', 'auto', 'important');
-      coverBox.style.setProperty('max-height', 'none', 'important');
-      coverBox.style.setProperty('height', 'auto', 'important');
-    }
-  });
 }
+
+
 
 window.addEventListener('resize', () => {
+
   clearTimeout(window.__venueTopSyncTimer);
+
   window.__venueTopSyncTimer = setTimeout(syncRole3TopCardHeight, 120);
+
 });
 
+
+
 function renderLocksUI() {
+
   // 名称锁提示 + 管理员解除按钮
+
   const wrap = document.getElementById('venue-name');
+
   if (wrap) {
+
     let tip = document.getElementById('name-lock-tip');
 
+
+
     if (LOCKS.name && !IS_ADMIN) {
+
       if (!tip) {
+
         tip = document.createElement('div');
+
         tip.id = 'name-lock-tip';
+
         tip.style.cssText = 'color:#f44336;font-size:13px;margin-top:6px;';
+
         wrap.appendChild(tip);
+
       }
+
       tip.textContent = `名称修改已锁定，解锁时间：${(LOCKS.name && LOCKS.name.until_iso) || ''}`;
+
     } else if (tip) {
+
       tip.remove();
+
     }
+
+
 
     // ✅ 只有管理员看到“解除名称锁”按钮（即使当前账号是管理员，也能帮加盟商解锁）
+
     let btn = document.getElementById('unlockNameLockBtn');
+
     if (LOCKS.name && IS_ADMIN) {
+
       if (!btn) {
+
         btn = document.createElement('button');
+
         btn.id = 'unlockNameLockBtn';
+
         btn.className = 'mini-btn';
+
         btn.style.cssText = 'padding:6px 10px;margin-top:8px;';
+
         btn.textContent = '解除名称锁';
+
         btn.onclick = () => clearVenueLock('name');
+
         wrap.appendChild(btn);
+
       }
+
       btn.style.display = 'inline-block';
+
     } else if (btn) {
+
       btn.style.display = 'none';
+
     }
+
   }
+
+
 
   // 图片锁：禁用上传 + 状态提示 + 管理员解除按钮
+
   const fileInput = document.getElementById('imageUploadInput');
+
   const statusEl = document.getElementById('image_status');
 
+
+
   if (fileInput) {
+
     if (LOCKS.image && !IS_ADMIN) {
+
       fileInput.disabled = true;
+
       fileInput.style.opacity = 0.5;
+
       if (statusEl) {
+
         statusEl.innerHTML = `图片上传已锁定，解锁时间：${(LOCKS.image && LOCKS.image.until_iso) || ''}`;
+
         statusEl.style.color = '#f44336';
+
       }
+
     } else {
+
       fileInput.disabled = false;
+
       fileInput.style.opacity = 1;
+
     }
+
   }
 
+
+
   // ✅ 图片锁的解除按钮（放在 image_status 后面）
+
   if (statusEl) {
+
     let btn2 = document.getElementById('unlockImageLockBtn');
+
     if (LOCKS.image && IS_ADMIN) {
+
       if (!btn2) {
+
         btn2 = document.createElement('button');
+
         btn2.id = 'unlockImageLockBtn';
+
         btn2.className = 'mini-btn';
+
         btn2.style.cssText = 'padding:6px 10px;';
+
         btn2.textContent = '解除图片锁';
+
         btn2.onclick = () => clearVenueLock('image');
+
         statusEl.insertAdjacentElement('afterend', btn2);
+
       }
+
       btn2.style.display = 'inline-block';
+
     } else if (btn2) {
+
       btn2.style.display = 'none';
+
     }
+
   }
+
 }
+
+
+
 
 
     // ================= 数据加载 =================
+
     function parseJsonResponse(response, apiName) {
+
       return response.text().then(text => {
+
         try {
+
           return JSON.parse(text);
+
         } catch (err) {
+
           const preview = text.replace(/\s+/g, ' ').slice(0, 220);
+
           throw new Error(`${apiName} 返回非 JSON：${preview}`);
+
         }
+
       });
+
     }
+
+
 
     function loadVenueData() {
+
       const venueId = getUrlParameter('id');
+
       const url = venueId
+
         ? `/api/venue/getVenueList.php?id=${venueId}`
+
         : '/api/venue/getVenueList.php?page=1&limit=10';
 
+
+
       fetch(url)
+
         .then(response => parseJsonResponse(response, 'getVenueList.php'))
+
         .then(data => {
+
           if (data.code === 0 && data.data.length > 0) {
+
             const venue = data.data[0];
+
             displayVenueInfo(venue);
+
             loadLocks(venueId);
+
             loadLiveBanStatus(venueId);
 
+
+
             // ===== 名称审核状态（通过时刷新锁与数据；拒绝时告警并清理）=====
+
             fetch('/api/venue/getVenueNameStatus.php')
+
               .then(r => r.json()).then(res => {
+
                 if (res.code === 0 && res.data) {
+
                   const status = res.data.status, reason = res.data.reason;
+
                   if (status === 'approved') { loadLocks(venueId); loadVenueData(); }
+
                   else if (status === 'rejected') {
+
                     alert(`场地名称审核未通过，原因：${reason}`);
+
                     fetch('/api/venue/deleteVenueNameStatus.php');
+
                   }
+
                 }
+
               });
+
+
 
             // ===== 图片审核状态（通过时刷新锁；拒绝时显示原因）=====
+
             fetch('/api/venue/getVenueImageStatus.php')
+
               .then(r => r.json()).then(imgRes => {
+
                 const statusEl = document.getElementById('image_status');
+
                 if (imgRes.code === 0 && imgRes.data && statusEl) {
+
                   const status = imgRes.data.status;
+
                   const reason = imgRes.data.reason || '无';
+
                   if (status === 'pending') { statusEl.innerText = '图片审核中'; statusEl.style.color = '#ff9800'; }
+
                   else if (status === 'approved') { statusEl.innerText = '图片审核已通过'; statusEl.style.color = '#4caf50'; loadLocks(venueId); }
+
                   else if (status === 'rejected') {
+
                     statusEl.innerHTML = `图片审核未通过<br><span style="color:#999;font-size:14px;">原因：${reason}</span>`;
+
                     statusEl.style.color = '#f44336';
+
                   }
+
                 }
+
               });
+
+
 
             // 场地描述审核状态（保持不变）
+
             fetch('/api/venue/getVenueDescriptionStatus.php')
+
               .then(res => res.json()).then(res => {
+
                 if (res.code === 0 && res.data && res.data.status === 'rejected') {
+
                   alert(`场地描述审核未通过，原因：${res.data.reason}`);
+
                   fetch('/api/venue/deleteVenueDescriptionStatus.php');
+
                 }
+
               });
 
+
+
           } else {
+
             alert(data.msg || '未找到场地信息');
+
           }
+
         })
+
         .catch(err => {
+
           console.error('数据加载失败:', err);
+
           alert(`场地详情加载失败：${err.message}`);
+
         });
+
     }
 
+
+
     // ================= 渲染（输入控件首屏即存在，但默认禁用） =================
+
     function displayVenueInfo(venue) {
+
       const c = document.getElementById('venue-info');
+
             c.innerHTML = `
+
         <div class="venue-top-grid">
-          <section class="glass-pane panel venue-image-panel venue-cover-card">
-            <div class="panel-title"><i class="fas fa-image"></i>场地封面图</div>
-            <div class="cover-box" role="button" title="点击上传场地封面图" onclick="triggerCoverUpload()">
-              <img id="venue-image" alt="场地图片">
-              <div class="cover-hover"><i class="fas fa-upload"></i><span>更新图片</span></div>
+
+          <section class="glass-pane panel venue-overview-card">
+
+            <div class="venue-overview-grid">
+
+              <div class="venue-image-panel venue-cover-card">
+
+                <div class="panel-title"><i class="fas fa-image"></i>场地封面图</div>
+
+                <div class="cover-box" role="button" title="点击上传场地封面图" onclick="triggerCoverUpload()">
+
+                  <img id="venue-image" alt="场地图片">
+
+                  <div class="cover-hover"><i class="fas fa-upload"></i><span>更新图片</span></div>
+
+                </div>
+
+                <div id="image_status" class="status-strip">图片状态：暂无最新上传的待审核状态</div>
+
+                <input type="file" id="imageUploadInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none;">
+
+              </div>
+
+
+
+              <div class="basic-card">
+
+                <div class="panel-title"><i class="fas fa-info-circle"></i>基本信息</div>
+
+                <div class="venue-info form-grid">
+
+                  <div class="field full">
+
+                    <div class="label">场地名称</div>
+
+                    <div class="value" id="venue-name">
+
+                      <input id="venue-name-input" class="edit-input edit-control" disabled>
+
+                    </div>
+
+                  </div>
+
+
+
+                  <div class="field full">
+
+                    <div class="label">场地描述</div>
+
+                    <div class="value readonly-text" id="venue-description" data-original="__KEEP__">
+
+                      <span id="venue-description-text"></span>
+
+                      <div class="hint"><i class="fas fa-lock"></i> 前台不可编辑（由审核更新）</div>
+
+                    </div>
+
+                  </div>
+
+
+
+                  <div class="field">
+
+                    <div class="label">场地标签</div>
+
+                    <div class="value"><span id="venue-tags"></span></div>
+
+                  </div>
+
+
+
+                  <div class="field full time-field">
+
+                    <div class="label">开放时间</div>
+
+                    <div class="value" id="venue-time">
+
+                      <input type="time" id="start-time" class="edit-input edit-control" disabled>
+
+                      <span>-</span>
+
+                      <input type="time" id="end-time" class="edit-input edit-control" disabled>
+
+                    </div>
+
+                  </div>
+
+
+
+                  <div class="field full">
+
+                    <div class="label">当前状态</div>
+
+                    <div class="value inline-action" id="venue-status">
+
+                      <select class="edit-select edit-control" id="status-select" disabled>
+
+                        <option value="营业中">营业中</option>
+
+                        <option value="休息中">休息中</option>
+
+                        <option value="建设中">建设中</option>
+
+                      </select>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
-            <div id="image_status" class="status-strip">图片状态：暂无最新上传的待审核状态</div>
-            <input type="file" id="imageUploadInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none;">
+
           </section>
 
-          <section class="glass-pane panel basic-card">
-            <div class="panel-title"><i class="fas fa-info-circle"></i>基本信息</div>
-            <div class="venue-info form-grid">
-              <div class="field full">
-                <div class="label">场地名称</div>
-                <div class="value" id="venue-name">
-                  <input id="venue-name-input" class="edit-input edit-control" disabled>
-                </div>
-              </div>
-
-              <div class="field full">
-                <div class="label">场地描述</div>
-                <div class="value readonly-text" id="venue-description" data-original="__KEEP__">
-                  <span id="venue-description-text"></span>
-                  <div class="hint"><i class="fas fa-lock"></i> 前台不可编辑（由审核更新）</div>
-                </div>
-              </div>
-
-              <div class="field">
-                <div class="label">场地标签</div>
-                <div class="value"><span id="venue-tags"></span></div>
-              </div>
-
-              <div class="field full time-field">
-                <div class="label">开放时间</div>
-                <div class="value" id="venue-time">
-                  <input type="time" id="start-time" class="edit-input edit-control" disabled>
-                  <span>-</span>
-                  <input type="time" id="end-time" class="edit-input edit-control" disabled>
-                </div>
-              </div>
-
-              <div class="field full">
-                <div class="label">当前状态</div>
-                <div class="value inline-action" id="venue-status">
-                  <select class="edit-select edit-control" id="status-select" disabled>
-                    <option value="营业中">营业中</option>
-                    <option value="休息中">休息中</option>
-                    <option value="建设中">建设中</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
 
+
+
         <div class="settings-grid">
+
           <section class="glass-pane panel setting-card live-card">
+
             <div>
+
               <div class="setting-head">
+
                 <div class="setting-title"><span class="setting-icon"><i class="fas fa-tv"></i></span>直播设置</div>
+
               </div>
+
+
 
               <div class="setting-field">
+
                 <div class="label">直播地址</div>
+
                 <input id="live-stream-input" class="edit-input" disabled>
+
               </div>
+
+
 
               <div class="setting-field" id="show-live-wrap" style="display:none;">
+
                 <div class="label">显示直播</div>
+
                 <div class="value inline-action">
+
                   <select class="edit-select edit-control" id="show-live-stream-select" disabled>
+
                     <option value="1">是</option>
+
                     <option value="0">否</option>
+
                   </select>
+
                 </div>
+
                 <span id="liveBanTip" style="display:none;color:#f44336;font-size:13px;"></span>
+
               </div>
+
             </div>
 
+
+
 <div class="live-ban-box" id="liveBanBox" style="display:none;">
+
   <div class="live-ban-desc">立即停止并禁止该场地的直播功能。</div>
+
   <button id="liveBanBtn" class="mini-btn" onclick="onClickLiveBanBtn()">封禁直播</button>
+
 </div>
+
           </section>
+
+
 
           <!-- 语音房与主播房间 ID 配置已从当前页面隐藏，后续重做后再接入。 -->
 
+
+
           <section id="income30dRestrictionCard" class="glass-pane panel setting-card restriction-card" style="display:none;">
+
             <div class="setting-title"><span class="setting-icon" style="background:rgba(186,26,26,.10);color:var(--error);"><i class="fas fa-user-lock"></i></span>系统限制</div>
+
             <div class="restriction-list">
+
               <div class="restriction-row danger-row">
+
                 <div>
+
                   <div style="font-weight:900;color:var(--error);">近30天无收入锁</div>
+
                   <div class="hint">系统自动触发安全保护</div>
+
                 </div>
+
                 <div class="inline-action">
+
                   <span id="lock30dBadge" style="display:none;">已锁</span>
+
                   <button id="unlock30dBtn" class="mini-btn" style="display:none;" onclick="unlock30d()">解除30天锁</button>
+
                 </div>
+
               </div>
+
             </div>
+
           </section>
+
         </div>
+
+
 
         <div class="action-bar">
+
           <button id="mainEditBtn" class="edit-btn" onclick="enableEdit()"><i class="fas fa-pen"></i> 编辑</button>
+
           <button id="mainSaveBtn" class="save-btn" style="display:none;" onclick="saveChanges()"><i class="fas fa-check"></i> 保存</button>
+
         </div>
+
       `;
 
+
+
       // 赋值（通过 DOM 属性，避免引号转义问题）
+
       const venueImageEl = document.getElementById('venue-image');
+
       if (venueImageEl) {
+
         venueImageEl.onload = () => syncRole3TopCardHeight();
+
         venueImageEl.src = venue.image_url || '';
+
         if (venueImageEl.complete) {
+
           setTimeout(syncRole3TopCardHeight, 0);
+
         }
+
       }
+
       document.getElementById('venue-name-input').value = venue.venue_name || '';
+
       document.getElementById('venue-description-text').textContent = venue.venue_description || '';
+
       document.getElementById('venue-tags').textContent = venue.venue_tags || '';
 
+
+
       // 直播地址赋值
+
       document.getElementById('live-stream-input').value = venue.live_stream_url || '';
+
       const drVenueIdInput = document.getElementById('dr-venue-id-input');
+
         if (drVenueIdInput) {
+
           drVenueIdInput.value = venue.dr_venue_id ?? '';
+
         }
+
       // 应用直播地址权限（非管理员只读 + 提示小字）
+
       applyLiveLock();
 
+
+
       document.getElementById('status-select').value = venue.venue_status || '休息中';
+
       const showSel = document.getElementById('show-live-stream-select');
+
       if (showSel) showSel.value = String(venue.show_live_stream === 1 ? 1 : 0);
+
       applyShowLiveVisibility();  // ← 新增
+
       applyDrVenueIdPermission();
+
       const st = document.getElementById('start-time');
+
       const et = document.getElementById('end-time');
+
       if (venue.start_time && String(venue.start_time).includes('-')) {
+
         const [s, e] = String(venue.start_time).split('-');
+
         st.value = (s || '').trim();
+
         et.value = (e || '').trim();
+
       }
 
+
+
       // 暴露当前场地对象
+
       window.CURRENT_VENUE = venue;
 
+
+
       // 初始按钮状态
+
       IS_EDITING = false;
+
       document.getElementById('mainEditBtn').style.display = 'inline-block';
+
       document.getElementById('mainSaveBtn').style.display = 'none';
 
+
+
       updateIncomeLockUI();
+
       syncRole3TopCardHeight();
+
     }
 
+
+
     // ================= 30天锁 UI/解锁 =================
+
     function updateIncomeLockUI() {
+
   const card  = document.getElementById('income30dRestrictionCard') || document.querySelector('.restriction-card');
+
   const badge = document.getElementById('lock30dBadge');
+
   const btn   = document.getElementById('unlock30dBtn');
+
+
 
   if (!window.CURRENT_VENUE) return;
 
+
+
   const locked = Number(window.CURRENT_VENUE.income_30d_lock) === 1;
+
   const canAdminUnlock = IS_ADMIN || ROLE_ID === 1 || ROLE_ID === 2;
 
+
+
   // ✅ role_id=1/3：没有锁就隐藏整张系统限制卡片
+
   if ((ROLE_ID === 1 || ROLE_ID === 3) && !locked) {
+
     if (card) card.style.display = 'none';
+
     if (badge) badge.style.display = 'none';
+
     if (btn) btn.style.display = 'none';
+
     return;
+
   }
+
+
 
   // ✅ role_id=3 且 locked=1：显示卡片，但不给解除按钮
+
   if (ROLE_ID === 3 && locked) {
+
     if (card) card.style.display = 'flex';
+
     if (badge) {
+
       badge.style.display = 'inline-flex';
+
       badge.textContent = '已锁';
+
     }
+
     if (btn) btn.style.display = 'none';
+
     return;
+
   }
+
+
 
   // ✅ role_id=1/2 管理员：保持管理视角
+
   if (card) card.style.display = 'flex';
 
+
+
   if (locked) {
+
     if (badge) {
+
       badge.style.display = 'inline-flex';
+
       badge.textContent = '已锁';
+
     }
+
     if (btn) btn.style.display = canAdminUnlock ? 'inline-flex' : 'none';
+
   } else {
+
     if (badge) badge.style.display = 'none';
+
     if (btn) btn.style.display = 'none';
+
   }
+
 }
+
+
 
     function unlock30d() {
+
       if (!window.CURRENT_VENUE) return;
+
       if (!IS_ADMIN) { alert('仅管理员可解除该限制'); return; }
+
       if (!confirm('确定要解除“近30天无收入锁”吗？')) return;
 
+
+
       fetch('/api/venue/setVenue.php', {
+
         method: 'POST',
+
         headers: { 'Content-Type': 'application/json' },
+
         body: JSON.stringify({ id: window.CURRENT_VENUE.id, unlock_income_30d: 1 })
+
       })
+
       .then(r => r.json())
+
       .then(res => {
+
         if (res.code === 0) {
+
           alert('已解除限制');
+
           window.CURRENT_VENUE.income_30d_lock = 0;
+
           updateIncomeLockUI();
+
         } else {
+
           alert(res.msg || '操作失败');
+
         }
+
       })
+
       .catch(err => { console.error(err); alert('请求失败，请稍后重试'); });
+
     }
+
 function clearVenueLock(type) {
+
   const venueId = getUrlParameter('id');
+
   if (!venueId) { alert('缺少场地ID'); return; }
+
   if (!IS_ADMIN) { alert('仅管理员可解除'); return; }
 
+
+
   const tip = (type === 'name') ? '名称锁' : (type === 'image') ? '图片锁' : '锁';
+
   if (!confirm(`确定要解除该场地的【${tip}】吗？`)) return;
 
+
+
   fetch('/api/venue/clearVenueEditLock.php', {
+
     method: 'POST',
+
     headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+
     body: `id=${encodeURIComponent(venueId)}&type=${encodeURIComponent(type)}`
+
   })
+
   .then(r => r.json())
+
   .then(res => {
+
     if (res.code === 0) {
+
       alert('已解除');
+
       // 解除后刷新锁信息 + UI
+
       loadLocks(venueId);
+
       // 如果你想更“干净”，也可以直接 reload
+
       // location.reload();
+
     } else {
+
       alert(res.msg || '解除失败');
+
     }
+
   })
+
   .catch(err => { console.error(err); alert('请求失败'); });
+
 }
 
+
+
     // ================= 进入编辑/保存 =================
+
     function enableEdit() {
+
     //   alert("因服务器更新维护需将设备重启后方可设置营业!");
+
       if (IS_EDITING) return;
+
       IS_EDITING = true;
 
+
+
       document.getElementById('mainEditBtn').style.display = 'none';
+
       document.getElementById('mainSaveBtn').style.display = 'inline-block';
 
+
+
       // 批量解锁可编辑控件
+
       document.querySelectorAll('.edit-control').forEach(el => el.disabled = false);
 
+
+
       // 名称锁下，非管理员不得编辑
+
       if (LOCKS.name && !IS_ADMIN) {
+
         const nameInput = document.getElementById('venue-name-input');
+
         if (nameInput) nameInput.disabled = true;
+
       }
 
+
+
       // 图片：不再显示系统“选择文件”控件，点击封面图上的“更新图片”直接选择
+
       const fileInput = document.getElementById('imageUploadInput');
+
       if (fileInput) {
+
         fileInput.style.display = 'none';
+
         const locked = (LOCKS.image && !IS_ADMIN);
+
         fileInput.disabled = !!locked;
+
         fileInput.style.opacity = locked ? 0.5 : 1;
+
       }
+
         // 再次应用直播地址权限（确保非管理员仍是只读）
+
         applyLiveLock();
+
         applyShowLiveVisibility();  // ← 新增
+
         applyDrVenueIdPermission();
+
     }
+
+
+
 
 
 function saveChanges() {
+
   const payload = {
+
     id: getUrlParameter('id'),
+
     venue_name: document.getElementById('venue-name-input').value.trim(),
+
     venue_status: document.getElementById('status-select').value
+
   };
+
 if (ROLE_ID === 1 || ROLE_ID === 2) {
+
   // 海外DR场地ID暂时从页面去掉：没有 dr-venue-id-input 时不提交该字段，避免覆盖数据库原值
+
   const drVenueIdInput = document.getElementById('dr-venue-id-input');
+
   if (drVenueIdInput) {
+
     const drVenueIdRaw = drVenueIdInput.value.trim();
 
+
+
     if (drVenueIdRaw === '') {
+
       payload.dr_venue_id = null;
+
     } else {
+
       if (!/^\d+$/.test(drVenueIdRaw)) {
+
         alert('dr_venue_id 只能填写数字');
+
         return;
+
       }
+
+
 
       const drVenueId = parseInt(drVenueIdRaw, 10);
 
+
+
       if (drVenueId < 1 || drVenueId > 9999) {
+
         alert('dr_venue_id 必须留空，或者填写 1~9999 的数字');
+
         return;
+
       }
 
+
+
       payload.dr_venue_id = drVenueId;
+
     }
+
   }
+
 }
+
   const st = document.getElementById('start-time').value;
+
   const et = document.getElementById('end-time').value;
+
   if (st && et) payload.start_time = `${st}-${et}`;
 
+
+
   const hitName = containsSensitiveWords(payload.venue_name || '');
+
   if (hitName) { alert(`场地名称中包含敏感词：${hitName}`); return; }
 
+
+
   const canEditLive =
+
     (ROLE_ID === 1 || ROLE_ID === 2) ||
+
     (ROLE_ID === 3 && !(LIVE_BAN && LIVE_BAN.banned));
 
+
+
   if (canEditLive) {
+
     payload.show_live_stream = document.getElementById('show-live-stream-select').value;
+
     payload.live_stream_url = document.getElementById('live-stream-input').value.trim();
+
   }
 
+
+
   fetch('/api/venue/setVenue.php', {
+
     method: 'POST',
+
     headers: { 'Content-Type': 'application/json' },
+
     body: JSON.stringify(payload)
+
   })
+
   .then(r => r.json())
+
   .then(res => {
+
     if (res.code === 0 || res.code === 1008) {
+
       alert(res.msg || '保存成功');
+
       setTimeout(() => location.reload(), 50); // ✅ 稳一点
+
       return;
+
     }
+
+
 
     // ✅ 名称冷却
+
     if (res.code === 1020) {
+
       alert(res.msg || '名称处于冷却期');
+
       loadLocks(getUrlParameter('id'));
+
       return;
+
     }
 
+
+
     alert(res.msg || '保存失败');
+
     loadVenueData();
+
   })
+
   .catch(e => { console.error(e); alert('保存失败，请稍后重试'); })
+
   .finally(() => { IS_EDITING = false; });
+
 }
+
+
+
+
+
 
 
 
 
     // ================= 图片上传 =================
+
     function handleImageUpload(event) {
+
       if (hasUploaded) { alert("您已经上传过图片，请等待审核结果。"); return; }
+
       if (LOCKS.image && !IS_ADMIN) {
+
         alert(`图片上传处于冷却中，解锁时间：${(LOCKS.image && LOCKS.image.until_iso) || ''}`);
+
         event.target.value = '';
+
         return;
+
       }
+
+
 
       const file = event.target.files[0];
+
       if (!file) return;
 
+
+
       const formData = new FormData();
+
       const venueId = getUrlParameter('id');
+
       formData.append('id', venueId || '');
+
       formData.append('image', file);
 
+
+
       fetch('/api/venue/uploadImg.php', { method:'POST', body:formData })
+
         .then(res => res.json())
+
         .then(data => {
+
           if (data.code === 0) {
+
             alert("图片上传成功，等待审核");
+
             hasUploaded = true;
+
             loadVenueData(); // 刷新状态
+
           } else if (data.code === 1021) {
+
             alert(data.msg);
+
             loadLocks(venueId);
+
           } else {
+
             alert("上传失败：" + (data.msg || '未知错误'));
+
           }
+
         })
+
         .catch(err => {
+
           console.error('上传失败:', err);
+
           alert("上传失败，请重试");
+
         });
+
     }
+
 function onClickLiveBanBtn(){
+
   if (!(ROLE_ID === 1 || ROLE_ID === 2)) { alert('仅管理员可操作'); return; }
+
   if (!window.CURRENT_VENUE) return;
+
+
 
   // 如果当前已封禁 => 解封
+
   if (LIVE_BAN && LIVE_BAN.banned) {
+
     if (!confirm('确定要解封直播吗？')) return;
+
     fetch('/api/venue/setVenue.php', {
+
       method:'POST',
+
       headers:{'Content-Type':'application/json'},
+
       body: JSON.stringify({ id: window.CURRENT_VENUE.id, unban_live: 1 })
+
     }).then(r=>r.json()).then(res=>{
+
       if(res.code===0){
+
         alert('已解封');
+
         loadLiveBanStatus(getUrlParameter('id'));
+
           setTimeout(() => location.reload(), 50); // ✅ 稳一点
+
       } else {
+
         alert(res.msg || '操作失败');
+
       }
+
     }).catch(e=>{console.error(e); alert('请求失败');});
+
     return;
+
   }
 
+
+
   // 未封禁 => 弹出封禁模态
+
   showLiveBanModal();
+
 }
+
+
 
 function showLiveBanModal(){
+
   // 简单原生 modal（不引入库）
+
   const html = `
+
   <div id="banModalMask" style="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:9999;">
+
     <div style="width:min(92vw,420px);background:#fff;border-radius:16px;padding:16px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,.18);">
+
       <div style="font-weight:700;font-size:16px;margin-bottom:12px;">封禁直播</div>
 
+
+
       <div style="margin-bottom:10px;">
+
         <div style="color:#7f8fa4;font-size:13px;margin-bottom:6px;">封禁时长</div>
+
         <select id="banDuration" class="edit-select" style="width:100%;">
+
           <option value="3600">1 小时</option>
+
           <option value="21600">6 小时</option>
+
           <option value="86400" selected>1 天</option>
+
           <option value="259200">3 天</option>
+
           <option value="604800">7 天</option>
+
           <option value="2592000">30 天</option>
+
         </select>
+
       </div>
+
+
 
       <div style="margin-bottom:12px;">
+
         <div style="color:#7f8fa4;font-size:13px;margin-bottom:6px;">原因（选填）</div>
+
         <textarea id="banReason" placeholder="选填" style="width:100%;min-height:72px;padding:10px;border:1px solid #ddd;border-radius:10px;resize:none;">经核实，你存在引流至第三方APP行为，现对你直播跳转功能限制，请及时整改。</textarea>
+
       </div>
+
+
 
       <div style="display:flex;gap:10px;justify-content:flex-end;">
+
         <button class="mini-btn" style="padding:8px 12px;background:#e5e7eb;color:#111;" onclick="closeLiveBanModal()">取消</button>
+
         <button class="mini-btn" style="padding:8px 12px;" onclick="submitLiveBan()">确定封禁</button>
+
       </div>
+
     </div>
+
   </div>`;
+
   document.body.insertAdjacentHTML('beforeend', html);
+
 }
+
+
 
 function closeLiveBanModal(){
+
   const m = document.getElementById('banModalMask');
+
   if (m) m.remove();
+
 }
+
+
 
 function submitLiveBan(){
+
   if (!window.CURRENT_VENUE) return;
+
   const ttl = Number(document.getElementById('banDuration')?.value || 86400);
+
   const reason = (document.getElementById('banReason')?.value || '').trim();
 
+
+
   fetch('/api/venue/setVenue.php', {
+
     method:'POST',
+
     headers:{'Content-Type':'application/json'},
+
     body: JSON.stringify({
+
       id: window.CURRENT_VENUE.id,
+
       ban_live: 1,
+
       ban_live_ttl: ttl,
+
       ban_reason: reason
+
     })
+
   }).then(r=>r.json()).then(res=>{
+
     if(res.code===0){
+
       alert('已封禁');
+
       closeLiveBanModal();
+
       loadLiveBanStatus(getUrlParameter('id'));
+
     } else {
+
       alert(res.msg || '封禁失败');
+
     }
+
   }).catch(e=>{console.error(e); alert('请求失败');});
+
 }
 
+
+
     // ================= 启动 =================
+
     loadSensitiveWords().then(loadVenueData);
+
     // 暴露到全局（供内联 on* 调用）
+
     window.handleImageUpload = handleImageUpload;
+
     window.enableEdit = enableEdit;
+
     window.saveChanges = saveChanges;
+
     window.unlock30d = unlock30d;
+
     window.onClickLiveBanBtn = onClickLiveBanBtn;
+
 window.closeLiveBanModal = closeLiveBanModal;
+
 window.submitLiveBan = submitLiveBan;
+
   </script>
 
+
+
 </body>
+
 </html>
