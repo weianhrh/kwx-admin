@@ -258,6 +258,33 @@ function menu_franchise_tree(): array
                 ['id' => 9353, 'parent_id' => 9305, 'name' => 'franchise-feedback', 'title' => '反馈信息', 'icon' => 'ops', 'jump' => '/iframe/link/feedback_mgt', 'sort' => 30],
             ],
         ],
+        [
+            'id' => 9390,
+            'parent_id' => 0,
+            'name' => 'franchise-tools',
+            'title' => '系统工具',
+            'icon' => 'tools',
+            'children' => [
+                [
+                    'id' => 9391,
+                    'parent_id' => 9390,
+                    'name' => 'franchise-system-profile',
+                    'title' => '基本资料',
+                    'icon' => 'user',
+                    'jump' => '/iframe/link/system_profile',
+                    'sort' => 10,
+                ],
+                [
+                    'id' => 9392,
+                    'parent_id' => 9390,
+                    'name' => 'franchise-system-password',
+                    'title' => '修改密码',
+                    'icon' => 'tools',
+                    'jump' => '/iframe/link/system_password',
+                    'sort' => 20,
+                ],
+            ],
+        ],
     ];
 }
 

@@ -649,7 +649,7 @@ async function approveImage(venueId) {
         formData.append('action', 'update_venue_pictrue');
         formData.append('venue_id', venueId);
 
-        const uploadRes = await fetch('https://rcwulian.cn/app/img/userimg/upload_profile.php', {
+        const uploadRes = await fetch('https://app.rcxxzk.cn/app/img/userimg/upload_profile.php', {
             method: 'POST',
             body: formData
         });
