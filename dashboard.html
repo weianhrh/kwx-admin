@@ -776,7 +776,344 @@
       gap: 18px;
       align-items: start;
     }
+    .franchise-home-stack {
+  display: grid;
+  gap: 18px;
+}
 
+.franchise-overview-panel {
+  overflow: hidden;
+}
+
+.franchise-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.franchise-overview-item {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.franchise-overview-item div {
+  min-width: 0;
+}
+
+.franchise-overview-item strong {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.franchise-overview-item span {
+  display: block;
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.franchise-overview-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.franchise-overview-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.franchise-full-notice {
+  width: 100%;
+}
+
+.franchise-full-notice .dashboard-notice-panel {
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .franchise-overview-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .franchise-overview-item span {
+    white-space: normal;
+  }
+}
+.dashboard-notice-panel {
+  min-height: 290px;
+}
+
+.dashboard-notice-list {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.dashboard-notice-card {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: 14px 14px 13px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.dashboard-notice-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 4px;
+  height: 32px;
+  border-radius: 0 999px 999px 0;
+  background: var(--notice-color, var(--primary));
+}
+
+.dashboard-notice-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-notice-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-notice-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--notice-color, var(--primary));
+  background: var(--primary-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dashboard-notice-title {
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-notice-time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dashboard-notice-content {
+  color: #34464e;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dashboard-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.dashboard-notice-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notice-page-info {
+  white-space: nowrap;
+}
+
+.notice-page-buttons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.notice-page-buttons button {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #486169;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.notice-page-buttons button:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.notice-page-buttons button.active {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.notice-page-buttons button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.notice-page-ellipsis {
+  color: var(--muted);
+  padding: 0 2px;
+}
+
+@media (max-width: 760px) {
+  .dashboard-notice-pager {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notice-page-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+.dashboard-empty {
+  padding: 22px;
+  color: var(--muted);
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.dashboard-notice-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(16, 34, 38, .46);
+}
+
+.dashboard-notice-modal-mask.show {
+  display: flex;
+}
+
+.dashboard-notice-modal {
+  width: min(760px, 100%);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 22px 58px rgba(16, 34, 38, .22);
+}
+
+.dashboard-notice-modal-head {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+.dashboard-notice-modal-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.dashboard-notice-modal-content {
+  padding: 18px;
+  overflow: auto;
+  color: #34464e;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dashboard-notice-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-notice-content a,
+.dashboard-notice-modal-content a {
+  color: var(--primary-dark);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(15, 143, 140, .5);
+  word-break: break-all;
+}
+
+@media (max-width: 760px) {
+  .dashboard-notice-top {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dashboard-notice-time {
+    white-space: normal;
+  }
+
+  .dashboard-notice-modal-foot {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
     .todo-list {
       display: grid;
       gap: 10px;
@@ -2220,7 +2557,7 @@
         audit: '围绕投诉、违规、巡查和审核处理整理。',
         tools: '系统维护和内部工具入口。'
       };
-      return escapeHtml(descriptions[name] || '该分类已按老系统菜单权限整理，后续逐步迁移为新后台页面。');
+      return escapeHtml(descriptions[name] || '');
     }
 
     // function categoryCard(item) {
@@ -2574,12 +2911,346 @@
         const metrics = data.metrics || {};
         const todos = data.todos || {};
         const actions = data.quickActions || [];
+        // pageContent.innerHTML = buildWorkbenchHtml(data, metrics, todos, actions);
         pageContent.innerHTML = buildWorkbenchHtml(data, metrics, todos, actions);
+
+        await loadDashboardMessages();
+        await checkDashboardUnreadNotices();
       } catch (error) {
         pageContent.innerHTML = '<section class="module-empty"><h2>工作台加载失败</h2><p>当前无法读取老系统工作台数据，请稍后重试或检查接口状态。</p></section>';
       }
     }
+const DASHBOARD_MSG_API = './api/index/Msg.php';
 
+const dashboardMessageState = {
+  notices: [],
+  logs: [],
+  currentNoticeId: 0,
+  noticePage: 1,
+  noticePageSize: 2
+};
+
+function stripNoticeTrailingPunct(url) {
+  return url.replace(/[。．\.，,；;！!？\?\)\]】》」'"]+$/u, '');
+}
+
+function dashboardLinkify(text) {
+  if (!text) return '';
+
+  const urlRe = /(https?:\/\/[^\s<>"']+)/g;
+  const raw = String(text);
+  const out = [];
+  let last = 0;
+
+  raw.replace(urlRe, function(m, _1, offset) {
+    out.push(escapeHtml(raw.slice(last, offset)));
+
+    const clean = stripNoticeTrailingPunct(m);
+    const trailing = m.slice(clean.length);
+    let label = clean;
+
+    try {
+      label = decodeURI(clean);
+    } catch (e) {}
+
+    out.push(
+      '<a href="' + escapeHtml(clean) + '" target="_blank" rel="noopener noreferrer nofollow">' +
+        escapeHtml(label) +
+      '</a>'
+    );
+    out.push(escapeHtml(trailing));
+    last = offset + m.length;
+    return m;
+  });
+
+  out.push(escapeHtml(raw.slice(last)));
+  return out.join('');
+}
+
+function dashboardNoticeDate(value) {
+  if (!value) return '';
+
+  let dateValue = value;
+  if (/^\d+$/.test(String(dateValue))) {
+    let n = Number(dateValue);
+    if (String(dateValue).length === 10) n *= 1000;
+    dateValue = n;
+  }
+
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return String(value);
+
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function dashboardNoticeLevel(notice) {
+  const imp = Number((notice && notice.importance) || 1);
+
+  if (imp === 4) {
+    return { text: '处罚', cls: 'danger', color: '#7c3aed' };
+  }
+
+  if (imp === 3) {
+    return { text: '紧急', cls: 'danger', color: '#df5b57' };
+  }
+
+  if (imp === 2) {
+    return { text: '重要', cls: 'warn', color: '#d58a16' };
+  }
+
+  return { text: '普通', cls: 'info', color: '#0f8f8c' };
+}
+
+async function loadDashboardMessages() {
+  const box = document.getElementById('dashboardNoticeList');
+  if (!box) return;
+
+  box.innerHTML = '<div class="dashboard-empty">官方通知加载中...</div>';
+
+  try {
+    const body = new URLSearchParams({
+      action: 'getMessages',
+      type: 'all'
+    });
+
+    const response = await fetch(DASHBOARD_MSG_API, {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body
+    });
+
+    const result = await response.json();
+
+    if (Number(result.code) !== 0) {
+      throw new Error(result.msg || '获取通知失败');
+    }
+
+    const data = result.data || {};
+dashboardMessageState.notices = Array.isArray(data.notices) ? data.notices : [];
+dashboardMessageState.logs = Array.isArray(data.logs) ? data.logs : [];
+dashboardMessageState.noticePage = 1;
+
+renderDashboardNotices();
+  } catch (error) {
+    console.error(error);
+    box.innerHTML = '<div class="dashboard-empty">官方通知加载失败，请检查 ./api/index/Msg.php</div>';
+  }
+}
+
+function renderDashboardNotices() {
+  const box = document.getElementById('dashboardNoticeList');
+  if (!box) return;
+
+  const list = dashboardMessageState.notices || [];
+
+  if (!list.length) {
+    box.innerHTML = '<div class="dashboard-empty">暂无官方通知</div>';
+    return;
+  }
+
+  const pageSize = dashboardMessageState.noticePageSize || 2;
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (dashboardMessageState.noticePage > totalPages) {
+    dashboardMessageState.noticePage = totalPages;
+  }
+
+  if (dashboardMessageState.noticePage < 1) {
+    dashboardMessageState.noticePage = 1;
+  }
+
+  const page = dashboardMessageState.noticePage;
+  const start = (page - 1) * pageSize;
+  const rows = list.slice(start, start + pageSize);
+
+  const html = rows.map(function(notice) {
+    const meta = dashboardNoticeLevel(notice);
+    const id = Number(notice.id || 0);
+    const color = notice.color || meta.color;
+
+    return '' +
+      '<article class="dashboard-notice-card" style="--notice-color:' + escapeHtml(color) + '">' +
+        '<div class="dashboard-notice-top">' +
+          '<div class="dashboard-notice-left">' +
+            '<span class="dashboard-notice-badge">' + escapeHtml(meta.text) + '</span>' +
+            '<div class="dashboard-notice-title">' + escapeHtml(notice.title || '官方通知') + '</div>' +
+          '</div>' +
+          '<time class="dashboard-notice-time">' + escapeHtml(dashboardNoticeDate(notice.publish_time || notice.created_at || '')) + '</time>' +
+        '</div>' +
+        '<div class="dashboard-notice-content">' + dashboardLinkify(notice.content || '') + '</div>' +
+        '<div class="dashboard-notice-actions">' +
+          '<button class="ghost-btn" type="button" onclick="openDashboardNoticeById(' + id + ')">查看详情</button>' +
+        '</div>' +
+      '</article>';
+  }).join('');
+
+  box.innerHTML = html + renderDashboardNoticePager(page, totalPages, total);
+}
+function renderDashboardNoticePager(page, totalPages, total) {
+  if (totalPages <= 1) {
+    return '<div class="dashboard-notice-pager"><span class="notice-page-info">共 ' + total + ' 条通知</span></div>';
+  }
+
+  const buttons = [];
+
+  buttons.push(
+    '<button type="button" ' + (page <= 1 ? 'disabled' : '') + ' onclick="changeDashboardNoticePage(' + (page - 1) + ')">上一页</button>'
+  );
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) {
+      buttons.push(
+        '<button type="button" class="' + (i === page ? 'active' : '') + '" onclick="changeDashboardNoticePage(' + i + ')">' + i + '</button>'
+      );
+    } else if (i === page - 2 || i === page + 2) {
+      buttons.push('<span class="notice-page-ellipsis">...</span>');
+    }
+  }
+
+  buttons.push(
+    '<button type="button" ' + (page >= totalPages ? 'disabled' : '') + ' onclick="changeDashboardNoticePage(' + (page + 1) + ')">下一页</button>'
+  );
+
+  return '' +
+    '<div class="dashboard-notice-pager">' +
+      '<span class="notice-page-info">共 ' + total + ' 条，' + page + '/' + totalPages + ' 页</span>' +
+      '<div class="notice-page-buttons">' + buttons.join('') + '</div>' +
+    '</div>';
+}
+
+function changeDashboardNoticePage(page) {
+  dashboardMessageState.noticePage = Number(page || 1);
+  renderDashboardNotices();
+}
+function ensureDashboardNoticeModal() {
+  if (document.getElementById('dashboardNoticeModal')) return;
+
+  document.body.insertAdjacentHTML('beforeend',
+    '<div class="dashboard-notice-modal-mask" id="dashboardNoticeModal">' +
+      '<div class="dashboard-notice-modal" role="dialog" aria-modal="true">' +
+        '<div class="dashboard-notice-modal-head">' +
+          '<div class="dashboard-notice-modal-title" id="dashboardNoticeModalTitle">通知详情</div>' +
+          '<button class="ghost-btn" type="button" onclick="closeDashboardNoticeModal()">关闭</button>' +
+        '</div>' +
+        '<div class="dashboard-notice-modal-content" id="dashboardNoticeModalContent"></div>' +
+        '<div class="dashboard-notice-modal-foot">' +
+          '<button class="ghost-btn" type="button" onclick="closeDashboardNoticeModal()">稍后再看</button>' +
+          '<button class="primary-btn" type="button" onclick="markDashboardNoticeRead()">标记已读</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+
+  const mask = document.getElementById('dashboardNoticeModal');
+  mask.addEventListener('click', function(e) {
+    if (e.target === this) closeDashboardNoticeModal();
+  });
+}
+
+function openDashboardNotice(notice) {
+  if (!notice) return;
+
+  ensureDashboardNoticeModal();
+
+  dashboardMessageState.currentNoticeId = Number(notice.id || 0);
+  document.getElementById('dashboardNoticeModalTitle').textContent = notice.title || '通知详情';
+  document.getElementById('dashboardNoticeModalContent').innerHTML = dashboardLinkify(notice.content || '');
+  document.getElementById('dashboardNoticeModal').classList.add('show');
+}
+
+function openDashboardNoticeById(id) {
+  const notice = (dashboardMessageState.notices || []).find(function(item) {
+    return Number(item.id || 0) === Number(id || 0);
+  });
+
+  if (!notice) {
+    alert('未找到通知详情');
+    return;
+  }
+
+  openDashboardNotice(notice);
+}
+
+function closeDashboardNoticeModal() {
+  const modal = document.getElementById('dashboardNoticeModal');
+  if (modal) modal.classList.remove('show');
+}
+
+async function checkDashboardUnreadNotices() {
+  try {
+    const body = new URLSearchParams({
+      action: 'getUnreadNotices'
+    });
+
+    const response = await fetch(DASHBOARD_MSG_API, {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body
+    });
+
+    const result = await response.json();
+
+    if (Number(result.code) === 0 && Array.isArray(result.data) && result.data.length > 0) {
+      openDashboardNotice(result.data[0]);
+    }
+  } catch (error) {
+    console.error('检查未读通知失败：', error);
+  }
+}
+
+async function markDashboardNoticeRead() {
+  const noticeId = Number(dashboardMessageState.currentNoticeId || 0);
+
+  if (!noticeId) {
+    closeDashboardNoticeModal();
+    return;
+  }
+
+  try {
+    const body = new URLSearchParams({
+      action: 'markNoticeAsRead',
+      notice_id: String(noticeId)
+    });
+
+    const response = await fetch(DASHBOARD_MSG_API, {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body
+    });
+
+    const result = await response.json();
+
+    if (Number(result.code) === 0) {
+      closeDashboardNoticeModal();
+      await checkDashboardUnreadNotices();
+    } else {
+      alert('标记已读失败：' + (result.msg || '未知错误'));
+    }
+  } catch (error) {
+    console.error(error);
+    alert('标记已读请求失败');
+  }
+}
+
+window.loadDashboardMessages = loadDashboardMessages;
+window.openDashboardNoticeById = openDashboardNoticeById;
+window.closeDashboardNoticeModal = closeDashboardNoticeModal;
+window.markDashboardNoticeRead = markDashboardNoticeRead;
+window.changeDashboardNoticePage = changeDashboardNoticePage;
     function buildWorkbenchHtml(data, metrics, todos, actions) {
       if (Number(data.role_id || 0) === 3) {
         return buildFranchiseWorkbenchHtml(data, metrics);
@@ -2615,33 +3286,99 @@
         '</div>';
     }
 
+    // function buildFranchiseWorkbenchHtml(data, metrics) {
+    //   const franchise = data.franchise || {};
+    //   const notices = Array.isArray(franchise.notices) ? franchise.notices : [];
+    //   return '' +
+    //     '<div class="workbench-head">' +
+    //     '<div class="workbench-title"><h2>首页</h2><p>' + escapeHtml(franchise.venue_name || data.venue_name || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p></div>' +
+    //     '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
+    //     '</div>' +
+    //     '<div class="stats">' +
+    //     statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
+    //     statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
+    //     statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
+    //     statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
+    //     '</div>' +
+    //     '<div class="workbench-grid">' +
+    //     '<section class="panel dashboard-notice-panel">' +
+    //       '<div class="panel-head">' +
+    //         '<div class="panel-title">' +
+    //           '<strong>官方通知</strong>' +
+    //           '<span>平台公告、结算提醒与运营通知</span>' +
+    //         '</div>' +
+    //         '<button class="ghost-btn" type="button" onclick="loadDashboardMessages()">刷新通知</button>' +
+    //       '</div>' +
+    //       '<div class="dashboard-notice-list" id="dashboardNoticeList">' +
+    //         '<div class="empty-state">官方通知加载中...</div>' +
+    //       '</div>' +
+    //     '</section>' +
+    //     '<aside class="side-stack">' +
+    //     '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>场地概况</strong><span>加盟商账号绑定信息</span></div></div><div class="todo-list">' +
+    //     infoItem('场地名称', franchise.venue_name || data.venue_name || '-') +
+    //     infoItem('场地编号', franchise.venue_id ? '#' + franchise.venue_id : '-') +
+    //     infoItem('设备状态', formatInt(metrics.franchiseOnlineDevices || 0) + ' 台在线') +
+    //     '</div></section>' +
+    //     '</aside>' +
+    //     '</div>';
+    // }
     function buildFranchiseWorkbenchHtml(data, metrics) {
-      const franchise = data.franchise || {};
-      const notices = Array.isArray(franchise.notices) ? franchise.notices : [];
-      return '' +
-        '<div class="workbench-head">' +
-        '<div class="workbench-title"><h2>首页</h2><p>' + escapeHtml(franchise.venue_name || data.venue_name || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p></div>' +
-        '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
+  const franchise = data.franchise || {};
+  const venueName = franchise.venue_name || data.venue_name || '-';
+  const venueIdText = franchise.venue_id ? '#' + franchise.venue_id : '-';
+  const deviceStatusText =
+    formatInt(metrics.franchiseOnlineDevices || 0) +
+    '/' +
+    formatInt(metrics.franchiseTotalDevices || 0) +
+    ' 台在线';
+
+  return '' +
+    '<div class="workbench-head">' +
+      '<div class="workbench-title">' +
+        '<h2>首页</h2>' +
+        '<p>' + escapeHtml(venueName || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p>' +
+      '</div>' +
+      '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
+    '</div>' +
+
+    '<div class="stats">' +
+      statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
+      statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
+      statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
+      statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
+    '</div>' +
+
+    '<div class="franchise-home-stack">' +
+
+      '<section class="panel franchise-overview-panel">' +
+        '<div class="panel-head">' +
+          '<div class="panel-title">' +
+            '<strong>场地概况</strong>' +
+            '<span>加盟商账号绑定信息</span>' +
+          '</div>' +
         '</div>' +
-        '<div class="stats">' +
-        statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
-        statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
-        statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
-        statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
+        '<div class="franchise-overview-strip">' +
+          franchiseOverviewItem('场地名称', venueName, 'venue') +
+          franchiseOverviewItem('场地编号', venueIdText, 'file') +
+          franchiseOverviewItem('设备状态', deviceStatusText, 'device') +
         '</div>' +
-        '<div class="workbench-grid">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>官方通知</strong><span>平台运营、结算与设备维护消息</span></div></div><div class="notice-list">' +
-        (notices.length ? notices.map(noticeItem).join('') : '<div class="notice-item"><strong>暂无通知</strong><p>当前没有新的官方通知。</p></div>') +
-        '</div></section>' +
-        '<aside class="side-stack">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>场地概况</strong><span>加盟商账号绑定信息</span></div></div><div class="todo-list">' +
-        infoItem('场地名称', franchise.venue_name || data.venue_name || '-') +
-        infoItem('场地编号', franchise.venue_id ? '#' + franchise.venue_id : '-') +
-        infoItem('设备状态', formatInt(metrics.franchiseOnlineDevices || 0) + ' 台在线') +
-        '</div></section>' +
-        '</aside>' +
-        '</div>';
-    }
+      '</section>' +
+
+      '<section class="panel dashboard-notice-panel franchise-full-notice">' +
+        '<div class="panel-head">' +
+          '<div class="panel-title">' +
+            '<strong>官方通知</strong>' +
+            '<span>平台公告与运营通知</span>' +
+          '</div>' +
+          '<button class="ghost-btn" type="button" onclick="loadDashboardMessages()">刷新通知</button>' +
+        '</div>' +
+        '<div class="dashboard-notice-list" id="dashboardNoticeList">' +
+          '<div class="empty-state">官方通知加载中...</div>' +
+        '</div>' +
+      '</section>' +
+
+    '</div>';
+}
 
     function noticeItem(item) {
       return '<article class="notice-item">' +
@@ -2654,7 +3391,16 @@
     function infoItem(label, value) {
       return '<div class="todo-link"><div><strong>' + escapeHtml(label) + '</strong><span>' + escapeHtml(value) + '</span></div></div>';
     }
-
+function franchiseOverviewItem(label, value, icon) {
+  return '' +
+    '<div class="franchise-overview-item">' +
+      '<div>' +
+        '<strong>' + escapeHtml(label) + '</strong>' +
+        '<span>' + escapeHtml(value) + '</span>' +
+      '</div>' +
+      '<i class="franchise-overview-icon">' + menuIcon(icon || 'venue') + '</i>' +
+    '</div>';
+}
     function statCard(label, value, note, icon) {
       return '<article class="stat">' + statInner(label, value, note, icon) + '</article>';
     }
