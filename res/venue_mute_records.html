@@ -1,0 +1,1011 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户禁言记录</title>
+  <style>
+:root {
+  --page-bg: #f4f7f8;
+  --panel: #ffffff;
+  --text: #172126;
+  --muted: #6b7d84;
+  --subtle: #8aa0a8;
+  --line: #dfe8eb;
+  --line-strong: #c9d8dd;
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --success-soft: #e8f7f1;
+  --danger: #df5b57;
+  --danger-dark: #c84d4a;
+  --danger-soft: #ffefef;
+  --warning: #ffb84d;
+  --warning-soft: #fff5df;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --shadow-sm: 0 8px 22px rgba(30, 55, 66, .06);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 32px;
+  color: var(--text);
+  background: var(--page-bg);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+input,
+select {
+  outline: none;
+}
+
+.page {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.header {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.title::before {
+  content: "";
+  width: 8px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.tip {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.page-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 4px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f7fbfc;
+}
+
+.page-tabs a {
+  min-width: 96px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  text-decoration: none;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.page-tabs a:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.page-tabs a.active {
+  color: #fff;
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 8px 18px rgba(15, 143, 140, .18);
+}
+
+.card {
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.toolbar {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(220px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+select,
+input {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  line-height: 38px;
+  transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+select:focus,
+input:focus {
+  border-color: rgba(15, 143, 140, .50);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+
+select:disabled,
+input:disabled {
+  color: #657881;
+  background: #f3f7f8;
+  opacity: 1;
+}
+
+.btn {
+  height: 38px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--primary);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .16s ease, border .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.btn:hover {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  box-shadow: 0 10px 24px rgba(15, 143, 140, .18);
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.btn.secondary {
+  color: var(--primary);
+  border-color: rgba(15, 143, 140, .22);
+  background: var(--primary-soft);
+}
+
+.btn.secondary:hover {
+  color: #fff;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.btn.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.btn.danger:hover {
+  border-color: var(--danger-dark);
+  background: var(--danger-dark);
+  box-shadow: 0 10px 24px rgba(223, 91, 87, .18);
+}
+
+.btn:disabled {
+  color: #7b8f97;
+  border-color: #d8e2e6;
+  background: #eef3f5;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  background: #fbfcfd;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th,
+td {
+  padding: 12px 12px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #40545c;
+  background: #f7fafb;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+td {
+  color: #24343a;
+  line-height: 1.5;
+}
+
+tbody tr:hover td {
+  background: #fbfefe;
+}
+
+.muted {
+  margin-top: 2px;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tag {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #eef3f5;
+  color: #51666e;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.tag.active {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.tag.ended {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.empty,
+.loading {
+  padding: 28px !important;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pagination {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: #fbfcfd;
+}
+
+#pageInfo {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(16, 34, 38, .46);
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  width: min(94vw, 460px);
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 22px 56px rgba(16, 34, 38, .18);
+}
+
+.modal-title {
+  margin-bottom: 16px;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.modal-box .field {
+  margin-bottom: 13px;
+}
+
+.modal-help {
+  margin: 4px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfcfd;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (max-width: 920px) {
+  body {
+    padding: 14px 10px 22px;
+  }
+
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    width: 100%;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .page-tabs {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 10px;
+  }
+
+  .page-tabs a {
+    flex: 1 0 auto;
+  }
+
+  .pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .btn,
+  .toolbar .btn {
+    width: 100%;
+  }
+}
+
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>
+      <div class="title">用户禁言记录</div>
+      <div class="page-tabs">
+          <a href="black_user_gmt.html">拉黑用户</a>
+          <a href="venue_mute_records.html" class="active">禁言用户</a>
+        </div>
+<div class="tip" id="tipText">默认展示全部场地，可按被禁言 UID 和场地筛选；解除禁言会把 end_time 改为当前时间。</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="addMuteBtn" style="display:none;">添加禁言</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+<div class="field" id="venueField" style="display:none;">
+  <label for="venue_id">场地筛选</label>
+  <select id="venue_id">
+    <option value="">全部场地</option>
+  </select>
+</div>
+      <div class="field">
+        <label for="banned_uid">被禁言 UID</label>
+        <input type="text" id="banned_uid" placeholder="输入 UID 搜索" inputmode="numeric" autocomplete="off">
+      </div>
+      <button class="btn" id="searchBtn">查询</button>
+      <button class="btn secondary" id="resetBtn">重置</button>
+    </div>
+    <div class="summary" id="summary">正在加载...</div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>场地</th>
+          <th>被禁言用户</th>
+          <th>封禁原因</th>
+          <th>状态</th>
+          <th>开始时间</th>
+          <th>结束时间</th>
+          <th>操作人</th>
+          <th>更新时间</th>
+          <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody">
+        <tr><td colspan="10" class="loading">正在加载...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button class="btn secondary" id="prevBtn">上一页</button>
+      <span id="pageInfo">第 1 / 1 页</span>
+      <button class="btn secondary" id="nextBtn">下一页</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="addMuteModal">
+  <div class="modal-box">
+    <div class="modal-title">添加禁言</div>
+
+    <div class="field" id="addVenueField" style="display:none;">
+      <label for="add_venue_id">封禁场地</label>
+      <select id="add_venue_id">
+        <option value="">请选择场地</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="add_banned_uid">被封禁人 UID</label>
+      <input type="text" id="add_banned_uid" placeholder="请输入被封禁人的 UID" inputmode="numeric" autocomplete="off">
+    </div>
+
+    <div class="modal-help" id="addMuteHelp">封禁人默认使用当前登录账号 UID。</div>
+
+    <div class="modal-actions">
+      <button class="btn secondary" id="cancelAddMuteBtn" type="button">取消</button>
+      <button class="btn" id="saveAddMuteBtn" type="button">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const VENUE_API = '/api/operat/EnergyGift.php';
+  const LIST_API  = '/api/operat/venue_mute_records_api.php';
+
+  const venueSelect = document.getElementById('venue_id');
+  const uidInput    = document.getElementById('banned_uid');
+  const searchBtn   = document.getElementById('searchBtn');
+  const resetBtn    = document.getElementById('resetBtn');
+  const tableBody   = document.getElementById('tableBody');
+  const summaryEl   = document.getElementById('summary');
+  const prevBtn     = document.getElementById('prevBtn');
+  const nextBtn     = document.getElementById('nextBtn');
+  const pageInfo    = document.getElementById('pageInfo');
+
+  const addMuteBtn       = document.getElementById('addMuteBtn');
+  const addMuteModal     = document.getElementById('addMuteModal');
+  const addVenueField    = document.getElementById('addVenueField');
+  const addVenueSelect   = document.getElementById('add_venue_id');
+  const addBannedUidInput = document.getElementById('add_banned_uid');
+  const addMuteHelp      = document.getElementById('addMuteHelp');
+  const cancelAddMuteBtn = document.getElementById('cancelAddMuteBtn');
+  const saveAddMuteBtn   = document.getElementById('saveAddMuteBtn');
+
+let currentPage = 1;
+let pageSize = 20;
+let totalPages = 1;
+let total = 0;
+let venueMap = {};
+
+let isAdminUser = false;
+let loginRoleId = 0;
+let loginVenueId = 0;
+let loginUid = 0;
+let canAddMute = false;
+let venueLoaded = false;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    bindEvents();
+    // loadVenues();
+    loadList(1);
+  });
+
+  function bindEvents() {
+    addMuteBtn.addEventListener('click', openAddMuteModal);
+    cancelAddMuteBtn.addEventListener('click', closeAddMuteModal);
+    saveAddMuteBtn.addEventListener('click', submitAddMute);
+
+    addBannedUidInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        submitAddMute();
+      }
+    });
+
+    addMuteModal.addEventListener('click', function (e) {
+      if (e.target === addMuteModal) {
+        closeAddMuteModal();
+      }
+    });
+
+    searchBtn.addEventListener('click', function () {
+      loadList(1);
+    });
+
+resetBtn.addEventListener('click', function () {
+  if (isAdminUser) {
+    venueSelect.value = '';
+  }
+  uidInput.value = '';
+  loadList(1);
+});
+
+    venueSelect.addEventListener('change', function () {
+      loadList(1);
+    });
+
+    uidInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        loadList(1);
+      }
+    });
+
+    prevBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        loadList(currentPage - 1);
+      }
+    });
+
+    nextBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        loadList(currentPage + 1);
+      }
+    });
+  }
+
+  // 场地下拉：复用补偿能量 EnergyGift.php 的 action=get_venues
+  function loadVenues() {
+    venueSelect.innerHTML = '<option value="">全部场地</option>';
+    addVenueSelect.innerHTML = '<option value="">请选择场地</option>';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', VENUE_API, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.withCredentials = true;
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+
+      if (xhr.status !== 200) {
+        console.error('场地下拉加载失败', xhr.status, xhr.responseText);
+        return;
+      }
+
+      try {
+        const response = JSON.parse(xhr.responseText || '{}');
+        if (response.code === 0 && Array.isArray(response.data)) {
+          const data = response.data.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+
+          data.forEach(venue => {
+            const option = document.createElement('option');
+            option.value = String(venue.id);
+            option.textContent = `${venue.id} - ${venue.venue_name}`;
+            venueSelect.appendChild(option);
+
+            const addOption = document.createElement('option');
+            addOption.value = String(venue.id);
+            addOption.textContent = `${venue.id} - ${venue.venue_name}`;
+            addVenueSelect.appendChild(addOption);
+
+            venueMap[String(venue.id)] = venue.venue_name || '';
+          });
+        }
+      } catch (e) {
+        console.error('场地下拉解析失败', e);
+      }
+    };
+
+    xhr.send('action=get_venues');
+  }
+
+  function loadList(page) {
+    currentPage = page || 1;
+    tableBody.innerHTML = '<tr><td colspan="10" class="loading">正在加载...</td></tr>';
+
+    const params = new URLSearchParams();
+    params.set('action', 'list');
+    params.set('page', String(currentPage));
+    params.set('page_size', String(pageSize));
+
+    const venueId = venueSelect.value || '';
+    const uid = uidInput.value.trim();
+
+    if (isAdminUser && venueId) {
+      params.set('venue_id', venueId);
+    }
+
+    if (uid) {
+      params.set('banned_uid', uid);
+    }
+
+    fetch(`${LIST_API}?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (Number(res.code) === 1001) {
+          tableBody.innerHTML = '<tr><td colspan="10" class="empty">用户未登录或会话已过期</td></tr>';
+          summaryEl.textContent = res.msg || '用户未登录或会话已过期';
+          return;
+        }
+
+        if (Number(res.code) !== 0) {
+          tableBody.innerHTML = `<tr><td colspan="10" class="empty">${escapeHtml(res.msg || '加载失败')}</td></tr>`;
+          summaryEl.textContent = res.msg || '加载失败';
+          return;
+        }
+
+        const data = res.data || {};
+        applyRoleUi(data);
+        
+        const rows = data.rows || [];
+        total = Number(data.total || 0);
+        currentPage = Number(data.page || 1);
+        totalPages = Number(data.total_pages || 1);
+        
+        renderRows(rows);
+        renderPageInfo();
+      })
+      .catch(err => {
+        console.error(err);
+        tableBody.innerHTML = '<tr><td colspan="10" class="empty">网络异常，加载失败</td></tr>';
+        summaryEl.textContent = '网络异常，加载失败';
+      });
+  }
+
+  function renderRows(rows) {
+    if (!rows || rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="10" class="empty">暂无禁言记录</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = rows.map(row => {
+      const active = Number(row.is_active || 0) === 1;
+      const venueText = getVenueText(row);
+      const userText = `${escapeHtml(row.banned_uid || '')}${row.banned_nickname ? '<div class="muted">' + escapeHtml(row.banned_nickname) + '</div>' : ''}`;
+      const adminText = `${escapeHtml(row.admin_uid || '')}${row.admin_nickname ? '<div class="muted">' + escapeHtml(row.admin_nickname) + '</div>' : ''}`;
+      const statusText = active
+        ? '<span class="tag active">禁言中</span>'
+        : '<span class="tag ended">已结束</span>';
+      const endTime = row.end_time || '<span class="muted">永久 / 未设置</span>';
+      const actionBtn = active
+        ? `<button class="btn danger" onclick="unmuteRecord(${Number(row.id)}, ${Number(row.venue_id)}, ${Number(row.banned_uid)})">解除禁言</button>`
+        : '<button class="btn" disabled>已解除</button>';
+
+      return `
+        <tr>
+          <td>${escapeHtml(row.id || '')}</td>
+          <td>${venueText}</td>
+          <td>${userText}</td>
+          <td>${escapeHtml(row.reason || '-')}</td>
+          <td>${statusText}</td>
+          <td>${escapeHtml(row.start_time || '-')}</td>
+          <td>${typeof endTime === 'string' && endTime.indexOf('<span') === 0 ? endTime : escapeHtml(endTime)}</td>
+          <td>${adminText}</td>
+          <td>${escapeHtml(row.updated_at || '-')}</td>
+          <td>${actionBtn}</td>
+        </tr>`;
+    }).join('');
+  }
+  function applyRoleUi(data) {
+  loginRoleId = Number(data.role_id || 0);
+  loginVenueId = Number(data.login_venue_id || 0);
+  loginUid = Number(data.login_uid || 0);
+  isAdminUser = Number(data.is_admin || 0) === 1;
+  canAddMute = Number(data.can_add_mute || 0) === 1;
+
+  const venueField = document.getElementById('venueField');
+  const tipText = document.getElementById('tipText');
+
+  addMuteBtn.style.display = canAddMute ? '' : 'none';
+  addVenueField.style.display = loginRoleId === 1 ? '' : 'none';
+
+  if (loginRoleId === 1) {
+    addMuteHelp.textContent = ``;
+  } else if (loginRoleId === 3) {
+    addMuteHelp.textContent = ``;
+  } else {
+    addMuteHelp.textContent = '当前角色不可添加禁言。';
+  }
+
+  if (isAdminUser) {
+    if (venueField) {
+      venueField.style.display = '';
+    }
+
+    if (tipText) {
+      tipText.textContent = '默认展示全部场地，可按被禁言 UID 和场地筛选；解除禁言会把 end_time 改为当前时间。';
+    }
+
+    if (!venueLoaded) {
+      venueLoaded = true;
+      loadVenues();
+    }
+  } else {
+    if (venueField) {
+      venueField.style.display = 'none';
+    }
+
+    venueSelect.value = '';
+
+    if (tipText) {
+      tipText.textContent = '当前账号仅展示自己场地的禁言记录，可按被禁言 UID 搜索；解除禁言会把 end_time 改为当前时间。';
+    }
+  }
+}
+  function renderPageInfo() {
+  let venueText = '';
+
+  if (isAdminUser) {
+    venueText = venueSelect.value ? `场地 ${venueSelect.value}` : '全部场地';
+  } else {
+    venueText = loginVenueId > 0 ? `当前场地 ${loginVenueId}` : '当前场地';
+  }
+
+  const uidText = uidInput.value.trim() ? `，UID包含 ${uidInput.value.trim()}` : '';
+
+  summaryEl.textContent = `当前筛选：${venueText}${uidText}，共 ${total} 条`;
+  pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页`;
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+}
+  function getVenueText(row) {
+    const id = String(row.venue_id || '');
+    const name = row.venue_name || venueMap[id] || '';
+    if (!id) return '-';
+    return escapeHtml(name ? `${id} - ${name}` : `场地ID:${id}`);
+  }
+
+  function openAddMuteModal() {
+    if (!canAddMute) {
+      alert('当前角色无权添加禁言');
+      return;
+    }
+
+    addBannedUidInput.value = '';
+
+    if (loginRoleId === 1) {
+      addVenueField.style.display = '';
+      addVenueSelect.value = venueSelect.value || '';
+      if (!venueLoaded) {
+        venueLoaded = true;
+        loadVenues();
+      }
+    } else {
+      addVenueField.style.display = 'none';
+      addVenueSelect.value = '';
+    }
+
+    addMuteModal.style.display = 'flex';
+    setTimeout(() => addBannedUidInput.focus(), 50);
+  }
+
+  function closeAddMuteModal() {
+    addMuteModal.style.display = 'none';
+    saveAddMuteBtn.disabled = false;
+  }
+
+  function submitAddMute() {
+    if (!canAddMute) {
+      alert('当前角色无权添加禁言');
+      return;
+    }
+
+    const bannedUid = addBannedUidInput.value.trim();
+    if (!/^\d+$/.test(bannedUid)) {
+      alert('请输入正确的被封禁人 UID');
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('action', 'mute');
+    params.set('banned_uid', bannedUid);
+
+    if (loginRoleId === 1) {
+      const venueId = addVenueSelect.value || '';
+      if (!venueId) {
+        alert('请选择封禁场地');
+        return;
+      }
+      params.set('venue_id', venueId);
+    }
+
+    saveAddMuteBtn.disabled = true;
+
+    fetch(LIST_API, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.msg || '操作完成');
+        if (Number(res.code) === 0) {
+          closeAddMuteModal();
+          loadList(1);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('添加禁言失败，请稍后重试');
+      })
+      .finally(() => {
+        saveAddMuteBtn.disabled = false;
+      });
+  }
+
+  function unmuteRecord(id, venueId, bannedUid) {
+    if (!id || !venueId || !bannedUid) {
+      alert('参数不完整，无法解除禁言');
+      return;
+    }
+
+    if (!confirm(`确认解除 UID ${bannedUid} 在场地 ${venueId} 的禁言吗？`)) {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('action', 'unmute');
+    params.set('id', String(id));
+    params.set('venue_id', String(venueId));
+    params.set('banned_uid', String(bannedUid));
+
+    fetch(LIST_API, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.msg || '操作完成');
+        if (Number(res.code) === 0) {
+          loadList(currentPage);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('解除禁言失败，请稍后重试');
+      });
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+</script>
+</body>
+</html>
