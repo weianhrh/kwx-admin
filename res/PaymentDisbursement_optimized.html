@@ -516,7 +516,7 @@
 
     table {
       width: 100%;
-      min-width: 680px;
+      min-width: 760px;
       border-collapse: separate;
       border-spacing: 0;
     }
@@ -891,7 +891,7 @@
       }
 
       table {
-        min-width: 620px;
+        min-width: 720px;
       }
 
       thead th,
@@ -1006,7 +1006,8 @@
               <th style="width: 90px;">状态</th>
               <th style="width: 170px;">申请时间</th>
               <th style="width: 120px;">提现金额</th>
-              <th>实际到账金额</th>
+              <th style="width: 120px;">图传扣减</th>
+              <th style="width: 130px;">实际到账金额</th>
               <th style="width: 90px;">操作</th>
             </tr>
           </thead>
@@ -1086,6 +1087,23 @@
         - parseFloat(record.withdrawal_fee || 0)
         - parseFloat(record.technical_service_fee || 0)
       );
+    }
+
+
+    function getDisplayWithdrawalAmount(record) {
+      return record.display_withdrawal_amount ?? record.withdrawal_amount ?? 0;
+    }
+
+    function getImageFeeAmount(record) {
+      return record.image_fee_amount ?? 0;
+    }
+
+    function getSettlementAmount(record) {
+      return record.settlement_amount ?? record.withdrawal_amount ?? 0;
+    }
+
+    function getTotalDebitAmount(record) {
+      return record.total_debit_amount ?? getDisplayWithdrawalAmount(record);
     }
 
     function showImageFeeInfo(event) {
@@ -1341,11 +1359,15 @@ function listStatusBadgeClass(record) {
       tbody.innerHTML = rows.map((record, index) => {
         const globalIndex = start + index;
         const receivedAmount = getReceivedAmount(record);
+        const displayWithdrawalAmount = getDisplayWithdrawalAmount(record);
+        const imageFeeAmount = getImageFeeAmount(record);
+
         return `
           <tr>
             <td><span class="badge ${listStatusBadgeClass(record)}">${listStatusText(record)}</span></td>
             <td>${esc(record.application_time || '-')}</td>
-            <td class="amount-cell">${money(record.withdrawal_amount)} 元</td>
+            <td class="amount-cell">${money(displayWithdrawalAmount)} 元</td>
+            <td class="amount-cell">${money(imageFeeAmount)} 元</td>
             <td class="amount-cell">${money(receivedAmount)} 元</td>
             <td><button class="detail-link" type="button" onclick="showWithdrawalDetail(${globalIndex})">查看详情</button></td>
           </tr>
@@ -1383,22 +1405,47 @@ function listStatusBadgeClass(record) {
     function showWithdrawalDetail(index) {
       const record = withdrawalRecords[index];
       if (!record) return;
+
       const recordNo = getRecordNo(record);
       const receivedAmount = getReceivedAmount(record);
+      const displayWithdrawalAmount = getDisplayWithdrawalAmount(record);
+      const imageFeeAmount = getImageFeeAmount(record);
+      const settlementAmount = getSettlementAmount(record);
+      const totalDebitAmount = getTotalDebitAmount(record);
+      const refundDeductAmount = record.refund_deduct_amount ?? 0;
+
+      const imageFeeRow = parseFloat(imageFeeAmount) > 0
+        ? `<div class="detail-row"><div class="detail-label">图传费用扣减:</div><div class="detail-value">${money(imageFeeAmount)} 元</div></div>`
+        : '';
+
+      const refundRow = parseFloat(refundDeductAmount) > 0
+        ? `<div class="detail-row"><div class="detail-label">退款扣减:</div><div class="detail-value">${money(refundDeductAmount)} 元</div></div>`
+        : '';
 
       const detailHtml = `
         <div class="detail-list">
           <div class="detail-row"><div class="detail-label">提现流水号:</div><div class="detail-value">${esc(recordNo)}</div></div>
           <div class="detail-row"><div class="detail-label">申请时间:</div><div class="detail-value">${esc(record.application_time || '-')}</div></div>
-          <div class="detail-row"><div class="detail-label">提现金额:</div><div class="detail-value">${money(record.withdrawal_amount)} 元</div></div>
-          <div class="detail-row"><div class="detail-label">手续费:</div><div class="detail-value">${money(record.withdrawal_fee)} 元</div></div>
+
+          <div class="detail-row"><div class="detail-label">提现金额:</div><div class="detail-value">${money(displayWithdrawalAmount)} 元</div></div>
+          ${imageFeeRow}
+          <div class="detail-row"><div class="detail-label">结算金额:</div><div class="detail-value">${money(settlementAmount)} 元</div></div>
+
           <div class="detail-row"><div class="detail-label">技术服务费:</div><div class="detail-value">${money(record.technical_service_fee)} 元</div></div>
+          <div class="detail-row"><div class="detail-label">提现手续费:</div><div class="detail-value">${money(record.withdrawal_fee)} 元</div></div>
           <div class="detail-row"><div class="detail-label">实际到账金额:</div><div class="detail-value">${money(receivedAmount)} 元</div></div>
+
+          ${refundRow}
+          <div class="detail-row"><div class="detail-label">账户扣减:</div><div class="detail-value">${money(totalDebitAmount)} 元</div></div>
+
           <div class="detail-row"><div class="detail-label">申请状态:</div><div class="detail-value">${applicationStatusText(record.application_status)}</div></div>
           <div class="detail-row"><div class="detail-label">打款状态:</div><div class="detail-value">${payoutStatusText(record.payout_status)}</div></div>
         </div>
-        <!--<div class="detail-note">这里只展示当前接口真实返回的提现字段，不额外做“审核中 / 处理中 / 已到账”进度条。</div>-->
+        <div class="detail-note">
+          说明：提现金额为本次从场地余额发起的提现总额；图传费用会先从提现金额中扣减，剩余结算金额再计算技术服务费和提现手续费。
+        </div>
       `;
+
       openCustomModal('提现详情', detailHtml, true);
     }
 

@@ -613,6 +613,9 @@ select.form-input,
     padding: 0 12px 12px;
   }
 }
+[hidden] {
+  display: none !important;
+}
 </style>
 </head>
 
@@ -627,12 +630,12 @@ select.form-input,
                 <label class="form-label">用户ID</label>
                 <input type="text" id="uid" class="form-input" placeholder="请输入用户ID">
             </div>
-            <div class="form-item">
-                <label class="form-label">场地</label>
-                <select id="venue_id" class="form-input">
-                    <option value="">全部场地</option>
-                </select>
-            </div>
+<div class="form-item" id="venueFilterItem" hidden>
+    <label class="form-label">场地</label>
+    <select id="venue_id" class="form-input">
+        <option value="">全部场地</option>
+    </select>
+</div>
             <div class="form-item">
                 <label class="form-label">订单编号</label>
                 <input type="text" id="orderNumber" class="form-input" placeholder="请输入订单编号">
@@ -662,7 +665,37 @@ select.form-input,
         let totalOrders = [];
         let totalCount = 0;
         let orderCache = []; // 用于缓存所有订单数据
+let currentRoleId = 0;
+let currentVenueId = 0;
 
+function isPlatformAdmin() {
+    return currentRoleId === 1 || currentRoleId === 2;
+}
+
+async function fetchCurrentUser() {
+    try {
+        const resp = await fetch('/api/operat/get_current_user.php', {
+            credentials: 'include'
+        });
+        const json = await resp.json();
+
+        if (json.code === 0 && json.data) {
+            currentRoleId = Number(json.data.role_id || 0);
+            currentVenueId = Number(json.data.venue_id || 0);
+        }
+    } catch (e) {
+        console.error('获取当前用户失败：', e);
+    }
+
+    const venueFilterItem = document.getElementById('venueFilterItem');
+    if (venueFilterItem) {
+        venueFilterItem.hidden = !isPlatformAdmin();
+    }
+
+    if (isPlatformAdmin()) {
+        loadVenues();
+    }
+}
  
         let hasMorePage = false;
         let orderAbortController = null;
@@ -681,7 +714,10 @@ function searchOrders(resetPage = true) {
     const uid = document.getElementById('uid').value.trim();
     const orderNumber = document.getElementById('orderNumber').value.trim();
     const orderType = 'drive';
-    const venueId = document.getElementById('venue_id') ? document.getElementById('venue_id').value : '';
+    // const venueId = document.getElementById('venue_id') ? document.getElementById('venue_id').value : '';
+    const venueId = isPlatformAdmin() && document.getElementById('venue_id')
+    ? document.getElementById('venue_id').value
+    : '';
 
     const params = new URLSearchParams();
     params.set('order_type', orderType);
@@ -1327,17 +1363,20 @@ function loadVenues() {
     });
 }
 
-document.getElementById('venue_id').addEventListener('change', () => {
-    currentPage = 1;
-    searchOrders();
-});
+const venueSelect = document.getElementById('venue_id');
+if (venueSelect) {
+    venueSelect.addEventListener('change', () => {
+        currentPage = 1;
+        searchOrders();
+    });
+}
         function getQueryParam(name){
           const u = new URL(window.location.href);
           return (u.searchParams.get(name) || '').trim();
         }
         
-        document.addEventListener('DOMContentLoaded', () => {
-  loadVenues();
+document.addEventListener('DOMContentLoaded', async () => {
+  await fetchCurrentUser();
 
   const fromUid = getQueryParam('user_id') || getQueryParam('uid');
 

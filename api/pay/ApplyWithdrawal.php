@@ -443,6 +443,8 @@ if ($ok === false) {
     echo json_encode(['code' => 500, 'msg' => '提现申请记录插入失败', 'data' => []]);
     exit;
 }
+$withdrawalRequestIdRows = $database->query("SELECT LAST_INSERT_ID() AS id");
+$withdrawalRequestId = (int)($withdrawalRequestIdRows[0]['id'] ?? 0);
 // ✅ 就加在这里：提现申请记录插入成功后，扣余额之前
 logMessage_frozen(
     "提现申请记录插入成功 | 场地ID: {$venue_id}, UID: {$uid}, 评级: {$venue_level}级, " .
@@ -548,7 +550,48 @@ if ($unsettled_image_fee_total > 0 && !empty($unsettled_image_ids)) {
 //                       SET account_balance = account_balance  - ? - ? 
 //                       WHERE venue_id = ?";
 // $ok = $database->query($updateBalanceQuery, [$amount, $totalRefundToDeduct, $venue_id], true);
-$totalDebit = round($amount + $totalRefundToDeduct + $actualImageFeeToDeduct, 2);
+
+// ==========================
+// 展示口径快照：用于提现记录列表 / 查看详情
+// 当前系统里 $amount 是扣除图传后的“参与提现结算金额”
+// 展示给老板看的“提现金额” = 参与提现结算金额 + 图传费用
+// ==========================
+$settlementAmount = round($amount, 2); // 参与提现结算金额，例如 27.55
+$displayWithdrawalAmount = round($amount + $actualImageFeeToDeduct, 2); // 展示提现金额，例如 100.00
+$totalDebit = round($amount + $totalRefundToDeduct + $actualImageFeeToDeduct, 2); // 实际扣余额，例如 100.00
+
+$withdrawal_remark = sprintf(
+    '提现评级快照：场地评级=%s级，提现比例=%s%%，技术服务费率=%s%%，提现手续费率=2%%，提现金额=%.2f，图传费用扣减=%.2f，参与提现结算金额=%.2f，退款扣减=%.2f，账户余额扣减=%.2f，技术服务费=%.2f，提现手续费=%.2f，实际到账=%.2f，图传IDs=%s',
+    $venue_level,
+    $withdraw_ratio * 100,
+    $technical_service_rate * 100,
+    $displayWithdrawalAmount,
+    $actualImageFeeToDeduct,
+    $settlementAmount,
+    $totalRefundToDeduct,
+    $totalDebit,
+    $technical_service_fee,
+    $withdrawal_fee,
+    $actual_amount,
+    implode(',', $unsettled_image_ids)
+);
+
+if ($withdrawalRequestId > 0) {
+    $ok = $database->query(
+        "UPDATE withdrawal_requests SET remarks = ? WHERE id = ? AND venue_id = ?",
+        [$withdrawal_remark, $withdrawalRequestId, $venue_id],
+        true
+    );
+
+    if ($ok === false) {
+        $database->rollBack();
+        echo json_encode(['code' => 500, 'msg' => '更新提现记录详情失败', 'data' => []], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
+
+// $totalDebit = round($amount + $totalRefundToDeduct + $actualImageFeeToDeduct, 2);
 
 $updateBalanceQuery = "UPDATE venue_funds 
                        SET account_balance = account_balance - ?
