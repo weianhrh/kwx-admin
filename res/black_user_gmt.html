@@ -28,6 +28,10 @@
   font-family: "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   min-height: 100%;
@@ -634,10 +638,10 @@ textarea.input {
         </div>
         <div class="hero-tag">拉黑管理</div>
       </div>
-<div class="page-tabs">
-  <a href="black_user_gmt.html" class="active">拉黑用户</a>
-  <a href="venue_mute_records.html">禁言用户</a>
-</div>
+<!--<div class="page-tabs">-->
+<!--  <a href="black_user_gmt.html" class="active">拉黑用户</a>-->
+<!--  <a href="venue_mute_records.html">禁言用户</a>-->
+<!--</div>-->
       <div class="toolbar">
         <input id="kw" class="input" placeholder="按 UID 精确 / 按原因模糊搜索…" />
         <!-- 仅 role_id == 1 可见：场地筛选 -->
@@ -684,13 +688,6 @@ textarea.input {
         <label for="addReason">拉黑原因 <span style="color:#ef4444">*</span></label>
         <textarea id="addReason" class="input" rows="4" maxlength="255" placeholder="请输入拉黑原因（必填）" required aria-required="true"></textarea>
       </div>
-      <div class="modal-row">
-          <label></label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#475569;">
-            <input type="checkbox" id="addRemoveVoiceRoom" style="width:16px;height:16px;">
-            <span>发送移除语音房指令，把这个用户移除语音房</span>
-          </label>
-        </div>
       <div class="btns">
         <button class="btn btn-outline" data-close>取消</button>
         <button class="btn btn-primary" id="confirmAdd">确定</button>
@@ -721,13 +718,6 @@ textarea.input {
         <label for="assignReason">拉黑原因 <span style="color:#ef4444">*</span></label>
         <textarea id="assignReason" class="input" rows="4" maxlength="255" placeholder="请输入拉黑原因（必填）" required aria-required="true"></textarea>
       </div>
-      <div class="modal-row">
-          <label></label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#475569;">
-            <input type="checkbox" id="assignRemoveVoiceRoom" style="width:16px;height:16px;">
-            <span>发送移除语音房指令，把这个用户移除语音房</span>
-          </label>
-        </div>
       <div class="btns">
         <button class="btn btn-outline" data-close>取消</button>
         <button class="btn btn-primary" id="confirmAssign">确定</button>
@@ -892,7 +882,6 @@ textarea.input {
 $('#btnAdd').addEventListener('click', ()=>{
   $('#addUid').value = '';
   $('#addReason').value = '';
-  $('#addRemoveVoiceRoom').checked = false;
   $('#addUid').classList.remove('invalid');
   openModal('#addModal');
   setTimeout(()=> $('#addUid').focus(), 50);
@@ -901,7 +890,6 @@ $('#btnAdd').addEventListener('click', ()=>{
 $('#btnAssign').addEventListener('click', ()=>{
   $('#assignUid').value = '';
   $('#assignReason').value = '';
-  $('#assignRemoveVoiceRoom').checked = false;
   $('#assignUid').classList.remove('invalid');
   openModal('#assignModal');
   loadVenuesIntoSelect($('#venue_id'));
@@ -921,16 +909,13 @@ $('#btnAssign').addEventListener('click', ()=>{
       uidEl.classList.remove('invalid');
 
 try{
-  const removeVoiceRoom = $('#addRemoveVoiceRoom').checked ? 1 : 0;
-
   const resp = await fetch(API.BLOCK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({
       uid,
-      reason,
-      remove_voice_room: removeVoiceRoom
+      reason
     })
   });
 
@@ -1012,8 +997,6 @@ $('#confirmAssign').addEventListener('click', async ()=>{
   uidEl.classList.remove('invalid');
 
   try{
-    const removeVoiceRoom = $('#assignRemoveVoiceRoom').checked ? 1 : 0;
-
     const resp = await fetch(API.BLOCK_FOR_VENUE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1021,8 +1004,7 @@ $('#confirmAssign').addEventListener('click', async ()=>{
       body: JSON.stringify({
         uid,
         venue_id,
-        reason,
-        remove_voice_room: removeVoiceRoom
+        reason
       })
     });
 
