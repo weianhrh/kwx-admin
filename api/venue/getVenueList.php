@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once '../Database.php'; // 引入数据库连接类
+require_once '../lib/venue_scope.php';
 
 // 日志记录函数 
 function logMessage($message) {
@@ -41,6 +42,7 @@ if (!$user) {
 $role_id = $user[0]['role_id'];
 $bind_venue_id = $user[0]['venue_id'];
 $get_venue_id = $_GET['id'] ?? null;
+$current_user = $user[0];
 
 // 记录请求信息
 logMessage("用户角色: $role_id, 用户绑定场地: $bind_venue_id, 请求 id: " . var_export($get_venue_id, true));
@@ -48,27 +50,33 @@ logMessage("用户角色: $role_id, 用户绑定场地: $bind_venue_id, 请求 i
 // 构造 SQL 和参数
 $params = [];
 $venueFields = "id, venue_name, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock";
+$where = [];
 
 if ($role_id == 1 || $role_id == 2) {
     if (!empty($get_venue_id) && is_numeric($get_venue_id)) {
         // 管理员传了有效 id，就查指定场地
-        $sql = "SELECT $venueFields FROM venues WHERE id = ?";
-        $params = [$get_venue_id];
+        $where[] = "id = ?";
+        $params[] = $get_venue_id;
     } elseif (!empty($bind_venue_id)) {
         // 管理员未传 id，但有绑定场地，只查绑定场地
-        $sql = "SELECT $venueFields FROM venues WHERE id = ?";
-        $params = [$bind_venue_id];
-    } else {
-        // 管理员无绑定场地，查全部
-        $sql = "SELECT $venueFields FROM venues";
-        $params = [];
+        $where[] = "id = ?";
+        $params[] = $bind_venue_id;
     }
 } else {
-    // 普通用户：只能查看绑定场地
-    $sql = "SELECT $venueFields FROM venues WHERE id = ?";
-    $params = [$bind_venue_id];
+    // 加盟商可查看自己名下多个场地；场地管理员仍然只看自己的场地
+    $requestedVenueId = venue_scope_requested_id(['venue_id' => $get_venue_id]);
+    $scopeParams = [];
+    $scopeSql = venue_scope_apply_filter($database, $current_user, 'id', $scopeParams, $requestedVenueId);
+    if ($scopeSql !== '') {
+        $where[] = preg_replace('/^\s*AND\s+/i', '', trim($scopeSql));
+        $params = array_merge($params, $scopeParams);
+    }
 }
 
+$sql = "SELECT $venueFields FROM venues";
+if ($where) {
+    $sql .= " WHERE " . implode(" AND ", $where);
+}
 
 logMessage("执行 SQL: $sql");
 logMessage("参数: " . json_encode($params));

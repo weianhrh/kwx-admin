@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php'; // 确保路径正确
+require_once '../lib/venue_scope.php';
 function logMessage($message) {
     $logFile = __DIR__ . '/order_test.log';
     $timestamp = date('Y-m-d H:i:s');
@@ -32,6 +33,7 @@ $start_date     = $_GET['start_date'] ?? '';
 $end_date       = $_GET['end_date'] ?? '';
 $status         = $_GET['status'] ?? '';
 $exclude_energy = $_GET['exclude_energy'] ?? 'off';
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 $whereSql = " WHERE 1=1";
 $params = [];
@@ -86,11 +88,7 @@ if ($exclude_energy === 'on') {
     $whereSql .= " AND pays_type != '能量'";
 }
 
-// 非管理员只能看自己场地的
-if (!in_array($role_id, [1, 2], true)) {
-    $whereSql .= " AND reservation_id = ?";
-    $params[] = $user['venue_id'];
-}
+$whereSql .= venue_scope_apply_filter($database, $user, 'o.reservation_id', $params, $requestedVenueId);
 
 // 查询语句（关联昵称）
 $sql = "SELECT o.*, u.nickname 

@@ -505,6 +505,7 @@
         let startDate = new Date().toISOString().split('T')[0]; // 获取当天日期
         let endDate = startDate; // 默认结束日期也是当天
         let totalPages = 0;
+        const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
       
         document.addEventListener('DOMContentLoaded', function () {
@@ -526,7 +527,17 @@
 
         // 修改加载数据的函数
         function loadIncomeData(page) {
-            const url = `/api/venue/GetDrivingOrders.php?page=${page}&limit=${limit}&order_number=&start_date=${startDate}&end_date=${endDate}&exclude_energy=on&uid=`;
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit),
+                order_number: '',
+                start_date: startDate,
+                end_date: endDate,
+                exclude_energy: 'on',
+                uid: ''
+            });
+            if (pageVenueId) params.set('venue_id', pageVenueId);
+            const url = `/api/venue/GetDrivingOrders.php?${params.toString()}`;
             console.log('请求URL:', url);
 
             document.getElementById('loading').style.display = 'block';

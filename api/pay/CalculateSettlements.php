@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 require_once '../RedisHelper.php';   // ★ 新增
 
 // api/pay/CalculateSettlements.php
@@ -41,7 +42,10 @@ $user = $database->getUserBySessionToken($session_token);
 if (!$user || !$user['role_id']) {
   echo json_encode(['code'=>1001,'msg'=>'用户未登录或无权访问','data'=>[]]); exit;
 }
-$venue_id = (int)$user['venue_id'];
+$venue_id = venue_scope_resolve_single_id($database, $user, venue_scope_requested_id(array_merge($_GET, $_POST)));
+if ($venue_id <= 0) {
+  echo json_encode(['code'=>1003,'msg'=>'未绑定或无权访问该场地','data'=>[]], JSON_UNESCAPED_UNICODE); exit;
+}
 $withdraw_type = $_GET['withdraw_type'] ?? $_POST['withdraw_type'] ?? 'account';
 $withdraw_type = ($withdraw_type === 'gift') ? 'gift' : 'account';
 // 业务金额

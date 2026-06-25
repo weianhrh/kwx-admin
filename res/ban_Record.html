@@ -1054,6 +1054,7 @@
     let currentUser = null;
     let currentRoleId = 0;
     let currentRangeType = 'week';
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
 async function loadCurrentUserAndApplyRole() {
     const banVenueWrap = document.getElementById('ban-venue-filter-wrap');
@@ -1182,10 +1183,11 @@ async function loadVenueOptions() {
             option.value = venue.id;
             option.textContent = `${venue.id} - ${venue.venue_name}`;
             venueMap[String(venue.id)] = venue.venue_name;
+            if (pageVenueId && String(venue.id) === String(pageVenueId)) option.selected = true;
             venueSelect.appendChild(option);
         });
 
-        venueSelect.value = 'all';
+        if (!pageVenueId) venueSelect.value = 'all';
 
         venueSelect.addEventListener('change', function () {
             // 切换顶部场地后，重置统计卡片里的违规场地下拉
@@ -1304,7 +1306,7 @@ function fetchVenueOwnerRecords() {
     isMultiVenueMode = false;
 
     // 后端已经强制 role_id=3 只能返回自己绑定场地
-    const url = '/api/operat/ban_record.php?get_default=1';
+    const url = '/api/operat/ban_record.php?get_default=1' + (pageVenueId ? `&venue_id=${encodeURIComponent(pageVenueId)}` : '');
 
     fetchBanData(url);
 }

@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 
 // 创建数据库连接
 $database = new Database();
@@ -19,11 +20,10 @@ if (!$user || !$user['role_id']) {
     exit;
 }
 
-// $venue_id = $_GET['venue_id'] ?? $user['venue_id'];  // 绑定的场地ID
-if ((int)$user['role_id'] === 1) {
-    $venue_id = isset($_GET['venue_id']) ? (int)$_GET['venue_id'] : (int)$user['venue_id'];
-} else {
-    $venue_id = (int)$user['venue_id'];
+$venue_id = venue_scope_resolve_single_id($database, $user, venue_scope_requested_id($_GET));
+if ($venue_id <= 0) {
+    echo json_encode(['code' => 1003, 'msg' => '未绑定或无权访问该场地', 'data' => []], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 header('Content-Type: application/json');
@@ -171,4 +171,4 @@ echo json_encode([
 ], JSON_UNESCAPED_UNICODE);
 
 $database->close();
-?> 
+?>

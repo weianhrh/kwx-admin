@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -11,12 +12,15 @@ $session_token = $_COOKIE['session_token'] ?? null;
 if (!$session_token) json_out(['code'=>1001,'msg'=>'无有效认证信息，请登录','data'=>[]]);
 
 // 查角色 & 场地
-$userRows = $database->query("SELECT uid, role_id, venue_id FROM admin_users WHERE session_token = ?", [$session_token]);
+$userRows = $database->query("SELECT id, uid, role_id, venue_id FROM admin_users WHERE session_token = ?", [$session_token]);
 if (!$userRows || empty($userRows)) json_out(['code'=>1001,'msg'=>'用户未登录或不存在','data'=>[]]);
 
 $user = $userRows[0];
 $role_id = intval($user['role_id']);
-$bind_venue_id = intval($user['venue_id']);
+$bind_venue_id = venue_scope_resolve_single_id($database, $user, venue_scope_requested_id($_POST));
+if ($bind_venue_id <= 0) {
+  json_out(['code'=>1003,'msg'=>'未绑定或无权访问该场地','data'=>[]]);
+}
 
 // if ($role_id !== 3) json_out(['code'=>1003,'msg'=>'无权限：仅加盟商可提交反馈','data'=>[]]);
 

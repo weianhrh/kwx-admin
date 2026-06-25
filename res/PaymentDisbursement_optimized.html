@@ -1036,6 +1036,12 @@
     const API_ACCOUNT = '/api/pay/CalculateSettlements.php';
     const API_APPLY = '/api/pay/ApplyWithdrawal.php';
     const API_RECORDS = '/api/pay/getWithdrawalRecords.php';
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
+
+    function withVenueParam(url) {
+      if (!pageVenueId) return url;
+      return url + (url.includes('?') ? '&' : '?') + 'venue_id=' + encodeURIComponent(pageVenueId);
+    }
 
     let accountCache = {};
     let withdrawalRecords = [];
@@ -1192,7 +1198,7 @@ const feeHelp = `
     }
 
     function loadAccountInfo() {
-      fetch(API_ACCOUNT)
+      fetch(withVenueParam(API_ACCOUNT))
         .then(response => response.json())
         .then(data => {
           if (data.code === 0) {
@@ -1243,8 +1249,9 @@ const feeHelp = `
         unsettled_image_transmission_fee: document.getElementById('unsettled-image-fee-total').value || 0,
         unsettled_image_ids: document.getElementById('unsettled-image-ids').value || '[]'
       };
+      if (pageVenueId) data.venue_id = pageVenueId;
 
-      fetch(API_APPLY, {
+      fetch(withVenueParam(API_APPLY), {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
         body: new URLSearchParams(data).toString()
@@ -1314,7 +1321,7 @@ function listStatusBadgeClass(record) {
     }
 
     function loadWithdrawalRecords() {
-      fetch(API_RECORDS)
+      fetch(withVenueParam(API_RECORDS))
         .then(response => response.json())
         .then(data => {
           if (data.code === 0 && data.data && data.data.length > 0) {

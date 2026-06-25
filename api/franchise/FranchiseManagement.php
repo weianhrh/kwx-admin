@@ -3,6 +3,7 @@
 session_start();
 
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 function logMessage($message) {
     $logFile = __DIR__ . '/editAupdate.log';
     $timestamp = date('Y-m-d H:i:s');
@@ -28,6 +29,59 @@ if (!$user || !$user['role_id']) {
 
 $role_id = $user['role_id'];
 
+function franchise_request_venue_ids(): array {
+    $raw = $_POST['venue_ids'] ?? $_POST['venue_id'] ?? [];
+    if (!is_array($raw)) {
+        $raw = [$raw];
+    }
+    return venue_scope_ints($raw);
+}
+
+function franchise_primary_venue_id(array $venueIds): ?int {
+    return $venueIds[0] ?? null;
+}
+
+function franchise_venue_name(mysqli $conn, ?int $venueId): ?string {
+    if (!$venueId) return null;
+    $vs = $conn->prepare("SELECT venue_name FROM venues WHERE id = ? LIMIT 1");
+    if (!$vs) return null;
+    $vs->bind_param("i", $venueId);
+    $vs->execute();
+    $res = $vs->get_result();
+    $name = null;
+    if ($row = $res->fetch_assoc()) {
+        $name = $row['venue_name'];
+    }
+    $vs->close();
+    return $name;
+}
+
+function franchise_sync_user_venues(Database $database, int $adminUserId, array $venueIds): void {
+    if ($adminUserId <= 0 || !venue_scope_has_table($database, 'admin_user_venues')) {
+        return;
+    }
+    $conn = $database->getConnection();
+    $del = $conn->prepare("DELETE FROM admin_user_venues WHERE admin_user_id = ?");
+    if ($del) {
+        $del->bind_param("i", $adminUserId);
+        $del->execute();
+        $del->close();
+    }
+    if (!$venueIds) {
+        return;
+    }
+    $ins = $conn->prepare("INSERT INTO admin_user_venues (admin_user_id, venue_id, relation_type, is_primary) VALUES (?, ?, 'franchise', ?)");
+    if (!$ins) {
+        return;
+    }
+    foreach (array_values($venueIds) as $index => $venueId) {
+        $isPrimary = $index === 0 ? 1 : 0;
+        $ins->bind_param("iii", $adminUserId, $venueId, $isPrimary);
+        $ins->execute();
+    }
+    $ins->close();
+}
+
 // 获取请求方法
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -41,7 +95,8 @@ if ($method === 'POST') {
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
         $role     = $_POST['role'] ?? '3';      // 默认为加盟商
-        $venue_id = $_POST['venue_id'] ?? null; // 场地 ID
+        $venueIds = franchise_request_venue_ids();
+        $venue_id = franchise_primary_venue_id($venueIds); // 旧字段保留首个场地 ID
         $uid      = $_POST['uid'] ?? null;      // 绑定的用户 uid
 
         if (!$username || !$password) {
@@ -64,20 +119,8 @@ if ($method === 'POST') {
                 throw new Exception("数据库连接失败");
             }
 
-            // ===== 先根据 venue_id 查出 venue_name =====
-            $venue_name = null;
-            if (!empty($venue_id)) {
-                $vs = $conn->prepare("SELECT venue_name FROM venues WHERE id = ? LIMIT 1");
-                if ($vs) {
-                    $vs->bind_param("i", $venue_id);
-                    $vs->execute();
-                    $res = $vs->get_result();
-                    if ($row = $res->fetch_assoc()) {
-                        $venue_name = $row['venue_name'];
-                    }
-                    $vs->close();
-                }
-            }
+            // ===== 先根据首个 venue_id 查出 venue_name，兼容旧字段 =====
+            $venue_name = franchise_venue_name($conn, $venue_id);
 
             // 调试日志
             logMessage("接收到的参数：");
@@ -123,6 +166,8 @@ if ($method === 'POST') {
                 throw new Exception("SQL执行失败: " . $stmt->error);
             }
 
+            franchise_sync_user_venues($database, (int)$conn->insert_id, $venueIds);
+
             echo json_encode(['code' => 0, 'msg' => '添加成功', 'data' => []]);
             exit;
 
@@ -145,7 +190,8 @@ if ($method === 'POST') {
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
         $role     = $_POST['role'] ?? '3';
-        $venue_id = $_POST['venue_id'] ?? null;
+        $venueIds = franchise_request_venue_ids();
+        $venue_id = franchise_primary_venue_id($venueIds);
         $uid      = $_POST['uid'] ?? null;
 
         if (!$id) {
@@ -166,20 +212,8 @@ if ($method === 'POST') {
                 throw new Exception("数据库连接失败");
             }
 
-            // 先根据 venue_id 查 venue_name
-            $venue_name = null;
-            if (!empty($venue_id)) {
-                $vs = $conn->prepare("SELECT venue_name FROM venues WHERE id = ? LIMIT 1");
-                if ($vs) {
-                    $vs->bind_param("i", $venue_id);
-                    $vs->execute();
-                    $res = $vs->get_result();
-                    if ($row = $res->fetch_assoc()) {
-                        $venue_name = $row['venue_name'];
-                    }
-                    $vs->close();
-                }
-            }
+            // 先根据首个 venue_id 查 venue_name，兼容旧字段
+            $venue_name = franchise_venue_name($conn, $venue_id);
 
             // 根据有没有填写密码，决定是否更新密码
             // 把 venue_name 一起更新
@@ -218,6 +252,8 @@ if ($method === 'POST') {
                 throw new Exception("SQL执行失败: " . $stmt->error);
             }
 
+            franchise_sync_user_venues($database, (int)$id, $venueIds);
+
             echo json_encode(['code' => 0, 'msg' => '更新成功', 'data' => []]);
             exit;
 
@@ -255,6 +291,37 @@ if ($method === 'POST') {
                 while ($row = $result->fetch_assoc()) {
                     $list[] = $row;
                 }
+            }
+
+            if ($list && venue_scope_has_table($database, 'admin_user_venues')) {
+                $relationRows = $database->query("
+                    SELECT auv.admin_user_id, auv.venue_id, v.venue_name
+                    FROM admin_user_venues auv
+                    LEFT JOIN venues v ON v.id = auv.venue_id
+                    ORDER BY auv.admin_user_id ASC, auv.is_primary DESC, auv.venue_id ASC
+                ") ?: [];
+                $map = [];
+                foreach ($relationRows as $rel) {
+                    $adminUserId = (int)($rel['admin_user_id'] ?? 0);
+                    if ($adminUserId <= 0) continue;
+                    if (!isset($map[$adminUserId])) {
+                        $map[$adminUserId] = ['ids' => [], 'names' => []];
+                    }
+                    $map[$adminUserId]['ids'][] = (int)$rel['venue_id'];
+                    $map[$adminUserId]['names'][] = $rel['venue_name'] ?: ('场地 ' . $rel['venue_id']);
+                }
+                foreach ($list as &$row) {
+                    $id = (int)($row['id'] ?? 0);
+                    if (!empty($map[$id]['ids'])) {
+                        $row['venue_ids'] = $map[$id]['ids'];
+                        $row['venue_names'] = implode('、', $map[$id]['names']);
+                    } else {
+                        $fallbackIds = venue_scope_ints([$row['venue_id'] ?? null]);
+                        $row['venue_ids'] = $fallbackIds;
+                        $row['venue_names'] = $row['venue_name'] ?? '';
+                    }
+                }
+                unset($row);
             }
 
             echo json_encode(['code' => 200, 'msg' => '数据加载成功', 'data' => $list]);

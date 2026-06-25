@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,6 +35,7 @@ if (!$user || !$user['role_id']) {
  */
 $role_id = intval($user['role_id'] ?? 0);
 $user_venue_id = intval($user['venue_id'] ?? 0);
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 $raw_venue_id = $_GET['venue_id'] ?? null;
 $venue_id = null;
@@ -44,18 +46,18 @@ if ($raw_venue_id !== null && $raw_venue_id !== '' && $raw_venue_id !== 'all') {
 
 $get_default = isset($_GET['get_default']) && $_GET['get_default'] == '1';
 
-// ✅ role_id == 3 是场地方，只允许看自己绑定场地
-if ($role_id === 3 || $role_id === 4) {
+// ✅ 非平台管理员只能看自己可管理的场地
+if (!in_array($role_id, [1, 2], true)) {
+    $user_venue_id = venue_scope_resolve_single_id($database, $user, $requestedVenueId);
     if ($user_venue_id <= 0) {
         echo json_encode([
             'code' => 403,
-            'msg' => '当前账号未绑定场地，无法查看违规记录',
+            'msg' => '当前账号未绑定或无权访问该场地，无法查看违规记录',
             'data' => []
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    // 强制覆盖前端传来的 venue_id
     $venue_id = $user_venue_id;
 }
 
@@ -79,8 +81,8 @@ if (!$end_date) {
  */
 $selectedVenueId = null;
 
-if ($role_id === 3 || $role_id === 4) {
-    // ✅ 场地方永远只能看自己的场地
+if (!in_array($role_id, [1, 2], true)) {
+    // ✅ 非平台管理员使用前面解析后的可访问场地
     $selectedVenueId = $user_venue_id;
 } else {
     if ($get_default) {

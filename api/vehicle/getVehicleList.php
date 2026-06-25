@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php'; // 确保正确的路径
+require_once '../lib/venue_scope.php';
 // /api/vehicle/getVehicleList.php
 // 创建数据库连接
 $database = new Database();
@@ -22,7 +23,7 @@ if (!$user || !$user['role_id']) {
 }
 
 $role_id = $user['role_id'];
-$bind_site = $user['bind_site'] ?? null; // 假设用户表中包含 bind_site 字段
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 // 构建查询语句，根据用户角色和站点进行数据过滤
 $sql = "SELECT 
@@ -49,15 +50,12 @@ $sql = "SELECT
             share_name, 
             image_device_serial, 
             bk_image_device_serial
-        FROM vehicles";
+        FROM vehicles
+        WHERE 1=1";
 
-// 如果用户不是管理员，限制他们只能看到特定站点的车辆
-if (!in_array($role_id, [1, 2], true)) {
-    $sql .= " WHERE bind_site = ?";
-    $params[] = $user['venue_id'];
-} else {
-    $params = [];
-}
+$params = [];
+$sql .= venue_scope_apply_filter($database, $user, 'bind_site', $params, $requestedVenueId);
+$sql .= " ORDER BY updated_at DESC, id DESC";
 
 // 执行查询
 $result = $database->query($sql, $params);

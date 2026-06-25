@@ -531,6 +531,7 @@ td:nth-child(4){
 let CURRENT_ROLE = 0;
 let CAN_CHOOSE_VENUE = false;
 let CAN_OPERATE = false;
+const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -551,7 +552,8 @@ function statusBadgeClass(text){
 }
 
 async function init(){
-  const meta = await fetch('/api/operat/energy_renew_or_config.php?action=meta').then(r => r.json());
+  const metaUrl = '/api/operat/energy_renew_or_config.php?action=meta' + (pageVenueId ? `&venue_id=${encodeURIComponent(pageVenueId)}` : '');
+  const meta = await fetch(metaUrl).then(r => r.json());
 
   if(meta.code !== 0){
     document.getElementById('result').innerText = meta.msg || '加载失败';
@@ -576,7 +578,7 @@ async function init(){
       sel.appendChild(o);
     });
 
-    sel.value = data.venue_id || '';
+    sel.value = pageVenueId || data.venue_id || '';
     sel.onchange = loadVehicles;
   }
 
@@ -585,7 +587,7 @@ async function init(){
 }
 
 function selectedVenueId(){
-  return CAN_CHOOSE_VENUE ? (document.getElementById('venue_id').value || '') : '';
+  return CAN_CHOOSE_VENUE ? (document.getElementById('venue_id').value || pageVenueId || '') : pageVenueId;
 }
 
 function renderPolicyBox(){

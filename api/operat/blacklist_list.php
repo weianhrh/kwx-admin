@@ -1,12 +1,13 @@
 <?php // api/operat/blacklist_list.php
 require_once __DIR__.'/_bootstrap.php';
+require_once __DIR__.'/../lib/venue_scope.php';
 
 $db   = new Database();
 $user = auth_or_die($db); // 返回包含 role_id, venue_id 等
 if(!can_block($user)) json_err('无权查看此列表', 1003);
 
 $role_id  = intval($user['role_id'] ?? 0);
-$user_vid = intval($user['venue_id'] ?? 0);
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 $page      = max(1, intval($_GET['page'] ?? 1));
 $page_size = min(100, max(1, intval($_GET['page_size'] ?? 12)));
@@ -16,17 +17,14 @@ $offset    = ($page-1)*$page_size;
 $where  = " WHERE 1=1 ";
 $params = [];
 
-// 管理员可通过 query 指定场地；非管理员强制当前场地
-if ($role_id === 1 || $role_id === 2) {
-    $filter_vid = intval($_GET['venue_id'] ?? 0);
-    if ($filter_vid > 0) {
+// 管理员可通过 query 指定场地；非管理员限制在自己可管理场地内
+if (venue_scope_is_platform_admin($user)) {
+    if ($requestedVenueId > 0) {
         $where   .= " AND venue_id = ? ";
-        $params[] = $filter_vid;
+        $params[] = $requestedVenueId;
     }
 } else {
-    if($user_vid <= 0) json_err('当前用户未绑定场地，无法操作', 1004);
-    $where   .= " AND venue_id = ? ";
-    $params[] = $user_vid;
+    $where .= venue_scope_apply_filter($db, $user, 'venue_id', $params, $requestedVenueId);
 }
 
 // 关键字：纯数字按 UID 精确，否则按原因模糊

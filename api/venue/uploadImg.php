@@ -1,6 +1,7 @@
 <?php
 // /api/venue/uploadImg.php
 require_once '../Database.php'; // 引入数据库连接类
+require_once '../lib/venue_scope.php';
 require_once './_venue_locks.php';
 $locks = new VenueLocks();
 $database = new Database();
@@ -12,7 +13,7 @@ if (!$session_token) {
     exit;
 }
 
-$sql = "SELECT uid, role_id, venue_id FROM admin_users WHERE session_token = ?";
+$sql = "SELECT id, uid, role_id, venue_id FROM admin_users WHERE session_token = ?";
 $user = $database->query($sql, [$session_token]);
 
 if (!$user) {
@@ -24,8 +25,13 @@ if (!$user) {
 $role_id = $user[0]['role_id'];
 $venue_id = $user[0]['venue_id'];
 $operator_uid = $user[0]['uid']; // 可按需赋值
-if (in_array($role_id, [1, 2], true)&& isset($_POST['id']) && is_numeric($_POST['id'])) {
-    $venue_id = intval($_POST['id']); // 超管可指定上传场地
+if (isset($_POST['id']) && is_numeric($_POST['id']) && (int)$_POST['id'] > 0) {
+    $venue_id = intval($_POST['id']);
+}
+
+if (!venue_scope_can_access($database, $user[0], (int)$venue_id)) {
+    echo json_encode(['code' => 1003, 'msg' => '权限不足，无法上传该场地图片', 'data' => []]);
+    exit;
 }
 
 // 2. 图片上传处理

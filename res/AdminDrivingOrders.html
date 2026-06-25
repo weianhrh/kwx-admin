@@ -667,6 +667,7 @@ select.form-input,
         let orderCache = []; // 用于缓存所有订单数据
 let currentRoleId = 0;
 let currentVenueId = 0;
+const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
 function isPlatformAdmin() {
     return currentRoleId === 1 || currentRoleId === 2;
@@ -714,10 +715,10 @@ function searchOrders(resetPage = true) {
     const uid = document.getElementById('uid').value.trim();
     const orderNumber = document.getElementById('orderNumber').value.trim();
     const orderType = 'drive';
-    // const venueId = document.getElementById('venue_id') ? document.getElementById('venue_id').value : '';
-    const venueId = isPlatformAdmin() && document.getElementById('venue_id')
-    ? document.getElementById('venue_id').value
-    : '';
+    const venueSelectEl = document.getElementById('venue_id');
+    const venueId = isPlatformAdmin() && venueSelectEl
+    ? (venueSelectEl.value || pageVenueId)
+    : pageVenueId;
 
     const params = new URLSearchParams();
     params.set('order_type', orderType);
@@ -1360,6 +1361,7 @@ function loadVenues() {
                 const option = document.createElement('option');
                 option.value = venue.id;
                 option.textContent = `${venue.id} - ${venue.venue_name}`;
+                if (pageVenueId && String(venue.id) === String(pageVenueId)) option.selected = true;
                 venueSelect.appendChild(option);
             });
         }

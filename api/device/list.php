@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
+require_once __DIR__ . '/../lib/venue_scope.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -31,17 +32,16 @@ $page = max(1, (int)($_GET['page'] ?? 1));
 $limit = min(50, max(10, (int)($_GET['limit'] ?? 20)));
 $offset = ($page - 1) * $limit;
 $keyword = trim((string)($_GET['keyword'] ?? ''));
-$venueId = trim((string)($_GET['venue_id'] ?? ''));
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 $where = [];
 $params = [];
 
-if (!in_array($roleId, [1, 2], true) && $userVenueId > 0) {
-    $where[] = 'v.bind_site = ?';
-    $params[] = (string)$userVenueId;
-} elseif ($venueId !== '' && ctype_digit($venueId)) {
-    $where[] = 'v.bind_site = ?';
-    $params[] = $venueId;
+$scopeParams = [];
+$scopeSql = venue_scope_apply_filter($db, $user, 'v.bind_site', $scopeParams, $requestedVenueId);
+if ($scopeSql !== '') {
+    $where[] = preg_replace('/^\s*AND\s+/i', '', trim($scopeSql));
+    $params = array_merge($params, $scopeParams);
 }
 
 if ($keyword !== '') {
@@ -110,10 +110,7 @@ $statsRows = $db->query("
     $whereSql
 ", $params);
 
-$venues = [];
-if (in_array($roleId, [1, 2], true)) {
-    $venues = $db->query('SELECT id, venue_name FROM venues ORDER BY id DESC LIMIT 300') ?: [];
-}
+$venues = venue_scope_visible_venues($db, $user);
 
 $db->close();
 

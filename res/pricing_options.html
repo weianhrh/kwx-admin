@@ -543,6 +543,18 @@ textarea {
         const currentRateText = Number.isFinite(rate) ? rate.toFixed(2) : '无效';
         return `费率必须在 ${RATE_MIN} 元/分钟到 ${RATE_MAX} 元/分钟之间（当前费率：${currentRateText}），请重新输入。`;
     }
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
+
+    function selectedPricingVenueId() {
+        const select = document.getElementById('venue_id');
+        return (select && select.value) || pageVenueId || '';
+    }
+
+    function pricingApiUrl() {
+        const venueId = selectedPricingVenueId();
+        return '/api/operat/pricing_options.php' + (venueId ? `?venue_id=${encodeURIComponent(venueId)}` : '');
+    }
+
     fetch('/api/operat/get_current_user.php')
       .then(res => res.json())
       .then(data => {
@@ -576,7 +588,7 @@ function setupVenueSelectAndLoad() {
                 const opt = document.createElement('option');
                 opt.value = venue.id;
                 opt.textContent = `${venue.id} - ${venue.venue_name}`;
-                if (venue.id == 10) opt.selected = true;
+                if ((pageVenueId && String(venue.id) === String(pageVenueId)) || (!pageVenueId && venue.id == 10)) opt.selected = true;
                 select.appendChild(opt);
             });
 
@@ -619,7 +631,7 @@ function setupVenueSelectAndLoad() {
     }
         // 生成默认套餐
         function generateDefaultPricingOption() {
-            fetch('/api/operat/pricing_options.php',  {
+            fetch(pricingApiUrl(),  {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({  action: 'insert_default' })
@@ -641,11 +653,7 @@ function setupVenueSelectAndLoad() {
 
         // 加载资费套餐数据
        function loadPricingData() {
-        let url = '/api/operat/pricing_options.php';
-         if (currentUserRole === 1 || currentUserRole === 2){
-            const venue_id = document.getElementById('venue_id').value;
-            url += `?venue_id=${venue_id}`;
-        }
+        let url = pricingApiUrl();
     
         const pricingListContainer = document.getElementById('pricing-list');
         pricingListContainer.innerHTML = '<p style="color:#999">加载中...</p>'; // 清空旧数据并提示加载
@@ -814,7 +822,7 @@ function setupVenueSelectAndLoad() {
             };
 
             // 发送保存请求到后台
-            fetch('/api/operat/pricing_options.php',  {
+            fetch(pricingApiUrl(),  {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -844,7 +852,7 @@ function setupVenueSelectAndLoad() {
                 formData.append('id',  id);
                 
 
-                fetch('/api/operat/pricing_options.php',  {
+                fetch(pricingApiUrl(),  {
                     method: 'POST',
                     body: formData
                 })
@@ -883,8 +891,7 @@ function setupVenueSelectAndLoad() {
             const batteryInput = document.getElementById('add-battery');
             const notesInput = document.getElementById('add-notes');
             const tagSelect = document.getElementById('add-tag');
-            const venueIdSelect = document.getElementById('venue_id');
-            const selectedVenueId = venueIdSelect ? venueIdSelect.value : null;
+            const selectedVenueId = selectedPricingVenueId();
 
 
 
@@ -924,7 +931,7 @@ function setupVenueSelectAndLoad() {
             formData.append('notes', notes);
             formData.append('packageName', packageName);
 
-            fetch('/api/operat/pricing_options.php', {
+            fetch(pricingApiUrl(), {
                 method: 'POST',
                 body: formData
             })

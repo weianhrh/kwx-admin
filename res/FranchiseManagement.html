@@ -106,6 +106,11 @@
       outline: 0;
     }
 
+    .form-field select[multiple] {
+      min-height: 150px;
+      padding: 8px 10px;
+    }
+
     .search-box input:focus,
     .form-field input:focus,
     .form-field select:focus {
@@ -507,7 +512,8 @@
           </div>
           <div class="form-field">
             <label>绑定场地</label>
-            <select id="venue-select" name="venue_id"></select>
+            <select id="venue-select" name="venue_ids[]" multiple></select>
+            <p class="field-note">可按住 Ctrl / Shift 多选；旧字段会保留第一个选中的场地。</p>
           </div>
         </div>
         <div class="modal-actions">
@@ -572,6 +578,27 @@
         return value === null || value === undefined || value === '' ? '-' : value;
       }
 
+      function venueIdsOf(item) {
+        if (Array.isArray(item && item.venue_ids) && item.venue_ids.length) {
+          return item.venue_ids.map(String);
+        }
+        if (item && item.venue_id !== null && item.venue_id !== undefined && item.venue_id !== '') {
+          return [String(item.venue_id)];
+        }
+        return [];
+      }
+
+      function venueNamesOf(item) {
+        return (item && (item.venue_names || item.venue_name)) || '';
+      }
+
+      function setVenueSelection(ids) {
+        const selected = new Set((ids || []).map(String));
+        Array.from(venueSelect.options).forEach(function(option) {
+          option.selected = selected.has(String(option.value));
+        });
+      }
+
       function openModal(mode, item) {
         formMode = mode;
         modalTitle.textContent = mode === 'edit' ? '编辑加盟商' : '添加加盟商';
@@ -580,7 +607,7 @@
         uidInput.value = item ? item.uid || '' : '';
         passwordInput.value = '';
         roleSelect.value = item ? String(item.role_id || '') : (roleSelect.querySelector('option[value="3"]') ? '3' : roleSelect.value);
-        venueSelect.value = item ? String(item.venue_id || '') : venueSelect.value;
+        setVenueSelection(item ? venueIdsOf(item) : []);
         keepPwWrap.style.display = mode === 'edit' ? 'flex' : 'none';
         keepPwCheckbox.checked = mode === 'edit';
         pwInputWrap.style.display = mode === 'edit' ? 'none' : 'block';
@@ -595,11 +622,10 @@
       }
 
       function updateSummary() {
-        const boundVenueIds = new Set(users.filter(function (item) {
-          return item.venue_id !== null && item.venue_id !== undefined && item.venue_id !== '';
-        }).map(function (item) {
-          return String(item.venue_id);
-        }));
+        const boundVenueIds = new Set();
+        users.forEach(function(item) {
+          venueIdsOf(item).forEach(function(id) { boundVenueIds.add(String(id)); });
+        });
         document.getElementById('total-count').textContent = users.length;
         document.getElementById('venue-count').textContent = boundVenueIds.size;
       }
@@ -618,8 +644,8 @@
             '</div>' +
             '<div class="info-grid">' +
               infoItem('角色ID', item.role_id) +
-              infoItem('场地名称', item.venue_name) +
-              infoItem('场地ID', item.venue_id) +
+              infoItem('场地名称', venueNamesOf(item)) +
+              infoItem('场地ID', venueIdsOf(item).join('、')) +
               infoItem('绑定UID', item.uid) +
               infoItem('创建时间', item.created_at) +
               infoItem('更新时间', item.updated_at) +
@@ -646,8 +672,8 @@
             item.id,
             item.username,
             item.role_id,
-            item.venue_name,
-            item.venue_id,
+            venueNamesOf(item),
+            venueIdsOf(item).join(' '),
             item.uid,
             item.created_at,
             item.updated_at
@@ -750,6 +776,12 @@
         event.preventDefault();
         const formData = new FormData(addForm);
         formData.append('action', formMode === 'edit' ? 'updateuser' : 'adduser');
+        const selectedVenueIds = Array.from(venueSelect.selectedOptions).map(function(option) {
+          return option.value;
+        }).filter(Boolean);
+        if (selectedVenueIds.length) {
+          formData.set('venue_id', selectedVenueIds[0]);
+        }
 
         fetch(apiManagement, {
           method: 'POST',

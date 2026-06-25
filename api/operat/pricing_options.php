@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';       
+require_once '../lib/venue_scope.php';
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -18,10 +19,11 @@ if (!$user || !$user['role_id']) {
 }
 
 $role_id = $user['role_id'];
-$inputVenueId = $_POST['venue_id'] ?? $_GET['venue_id'] ?? null;
-$venue_id = (( $role_id == 1 || $role_id == 2 ) && $inputVenueId !== null && trim($inputVenueId) !== '')
-    ? intval($inputVenueId)
-    : intval($user['venue_id']);
+$venue_id = venue_scope_resolve_single_id($database, $user, venue_scope_requested_id(array_merge($_GET, $_POST)));
+if ($venue_id <= 0) {
+    echo json_encode(['code' => 1003, 'msg' => '未绑定或无权访问该场地', 'data' => []], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // ✅ 统一资费费率配置，后面只改这里
 $RATE_MIN = 0.8;
@@ -202,9 +204,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 throw new Exception("缺少必要参数");
             }
 
-            $deleteSql = "DELETE FROM PricingOptions WHERE ID = ?";
+            $deleteSql = "DELETE FROM PricingOptions WHERE ID = ? AND BindLocation = ?";
             $stmt = $database->getConnection()->prepare($deleteSql);
-            $stmt->bind_param("i", $id);
+            $stmt->bind_param("ii", $id, $venue_id);
 
             if ($stmt->execute()) {
                 echo json_encode(['code' => 0, 'msg' => '套餐删除成功', 'data' => []]);
@@ -293,14 +295,14 @@ if ($role_id != 1 && ($rate < $RATE_MIN || $rate > $RATE_MAX)) {
         $stmt = $database->getConnection()->prepare("
             UPDATE PricingOptions 
             SET Minutes = ?, Battery = ?, Notes = ?, Title = ? 
-            WHERE ID = ?
+            WHERE ID = ? AND BindLocation = ?
         ");
 
         if (!$stmt) {
             throw new Exception("Prepare failed: ". $database->getConnection()->error);
         }
 
-        $stmt->bind_param("iissi", $minutes, $battery, $notes, $Title, $id);
+        $stmt->bind_param("iissii", $minutes, $battery, $notes, $Title, $id, $venue_id);
 
         if ($stmt->execute()) {
             echo json_encode(['code' => 0, 'msg' => '更新成功', 'data' => []]);

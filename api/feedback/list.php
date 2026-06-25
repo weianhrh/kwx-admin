@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function json_out($arr){ echo json_encode($arr, JSON_UNESCAPED_UNICODE); exit; }
@@ -11,7 +12,7 @@ $session_token = $_COOKIE['session_token'] ?? null;
 if (!$session_token) json_out(['code'=>1001,'msg'=>'无有效认证信息，请登录','count'=>0,'data'=>[]]);
 
 $userRows = $database->query(
-  "SELECT uid, role_id, venue_id FROM admin_users WHERE session_token = ?",
+  "SELECT id, uid, role_id, venue_id FROM admin_users WHERE session_token = ?",
   [$session_token]
 );
 if (!$userRows || empty($userRows)) {
@@ -19,7 +20,7 @@ if (!$userRows || empty($userRows)) {
 }
 $user = $userRows[0];
 $role_id       = (int)$user['role_id'];
-$bind_venue_id = (int)$user['venue_id'];
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 /* ========== 分页 ========== */
 $page   = max(1, (int)($_GET['page'] ?? 1));
@@ -44,9 +45,8 @@ if ($role_id === 1 || $role_id === 2) {
     $params[] = (string)$venueParam;
   }
 } elseif ($role_id === 3 || $role_id === 4) {
-  // 加盟商：强制限定自己的场地
-  $where   .= ' AND f.venue_id = ? ';
-  $params[] = (string)$bind_venue_id;
+  // 加盟商：限定在自己可管理场地内
+  $where .= venue_scope_apply_filter($database, $user, 'f.venue_id', $params, $requestedVenueId);
 } else {
   json_out(['code'=>1003,'msg'=>'无权限','count'=>0,'data'=>[]]);
 }

@@ -1,6 +1,7 @@
 <?php
 // 文件：/api/finance/getRefundRecords.php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
@@ -19,8 +20,7 @@ try {
         exit;
     }
 
-    $role_id   = (int)$user['role_id'];
-    $venue_id  = isset($user['venue_id']) ? (string)$user['venue_id'] : null;
+    $requestedVenueId = venue_scope_requested_id($_GET);
 
     // 2) 读取筛选参数（可选）
     $order_number = isset($_GET['order_number']) ? trim($_GET['order_number']) : '';
@@ -32,15 +32,7 @@ try {
     $where = " WHERE 1=1 ";
     $params = [];
 
-    // 非超管：仅能查看绑定场地
-    if (!in_array($role_id, [1, 2], true)) {
-        if (empty($venue_id)) {
-            echo json_encode(['code' => 1003, 'msg' => '未绑定场地', 'data' => []]);
-            exit;
-        }
-        $where .= " AND rr.reservation_id = ? ";
-        $params[] = $venue_id;
-    }
+    $where .= venue_scope_apply_filter($db, $user, 'rr.reservation_id', $params, $requestedVenueId);
 
     if ($order_number !== '') {
         $where .= " AND rr.order_id LIKE ? ";

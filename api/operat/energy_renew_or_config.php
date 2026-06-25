@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 header('Content-Type: application/json; charset=utf-8');
 date_default_timezone_set('Asia/Singapore');
 
@@ -60,8 +61,10 @@ function isSystemHoldVehicle($row)
         && $vehicleStatus === '开始围观';
 }
 
-function resolveVenueId($db, $roleId, $userVenueId, $reqVenueId)
+function resolveVenueId($db, $user, $reqVenueId)
 {
+    $roleId = (int)($user['role_id'] ?? 0);
+    $userVenueId = (int)($user['venue_id'] ?? 0);
     if (canChooseVenue($roleId)) {
         if ($reqVenueId > 0) {
             return $reqVenueId;
@@ -74,19 +77,17 @@ function resolveVenueId($db, $roleId, $userVenueId, $reqVenueId)
         return (int)($first[0]['id'] ?? 0);
     }
 
-    return (int)$userVenueId;
+    return venue_scope_resolve_single_id($db, $user, $reqVenueId) ?: $userVenueId;
 }
 
-function getVenueListByRole($db, $roleId, $venueId)
+function getVenueListByRole($db, $user, $venueId)
 {
+    $roleId = (int)($user['role_id'] ?? 0);
     if (canChooseVenue($roleId)) {
         return $db->query("SELECT id, venue_name FROM venues ORDER BY id DESC");
     }
 
-    return $db->query(
-        "SELECT id, venue_name FROM venues WHERE id = ? LIMIT 1",
-        [$venueId]
-    );
+    return venue_scope_visible_venues($db, $user);
 }
 
 function getVehicleListByVenue($db, $venueId)
@@ -156,7 +157,7 @@ $userVenueId = (int)($user['venue_id'] ?? 0);
 $action      = $_POST['action'] ?? $_GET['action'] ?? 'check';
 $reqVenueId  = (int)($_POST['venue_id'] ?? $_GET['venue_id'] ?? 0);
 
-$venue_id = resolveVenueId($db, $role_id, $userVenueId, $reqVenueId);
+$venue_id = resolveVenueId($db, $user, $reqVenueId);
 
 if (!$venue_id) {
     jsonOut(1003, '未绑定场地');
@@ -164,7 +165,7 @@ if (!$venue_id) {
 
 // ===== meta =====
 if ($action === 'meta') {
-    $venues = getVenueListByRole($db, $role_id, $venue_id);
+    $venues = getVenueListByRole($db, $user, $venue_id);
 
     jsonOut(0, 'ok', [
         'role_id'          => $role_id,

@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 require_once '../RedisHelper.php';
 
 $database = new Database();
@@ -14,7 +15,7 @@ if (!$session_token) {
   exit;
 }
 
-$sql = "SELECT uid, role_id, venue_id FROM admin_users WHERE session_token = ?";
+$sql = "SELECT id, uid, role_id, venue_id FROM admin_users WHERE session_token = ?";
 $user = $database->query($sql, [$session_token]);
 if (!$user) {
   echo json_encode(['code'=>1001,'msg'=>'用户未登录或不存在','data'=>[]], JSON_UNESCAPED_UNICODE);
@@ -28,8 +29,8 @@ if (!$venue_id) {
   echo json_encode(['code'=>1002,'msg'=>'缺少场地ID','data'=>[]], JSON_UNESCAPED_UNICODE);
   exit;
 }
-// 仅管理员可查别人的；role3 只能查自己的
-if (!in_array($role_id, [1,2], true) && $venue_id !== (int)$user[0]['venue_id']) {
+// 仅管理员或当前账号可管理的场地可查
+if (!venue_scope_can_access($database, $user[0], $venue_id)) {
   echo json_encode(['code'=>1003,'msg'=>'权限不足','data'=>[]], JSON_UNESCAPED_UNICODE);
   exit;
 }

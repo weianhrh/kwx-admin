@@ -375,9 +375,20 @@
   <script>
     let currentPage = 1;
     const limit = 10;
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
+
+    function vehicleListUrl(page) {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit)
+      });
+      if (pageVenueId) params.set('venue_id', pageVenueId);
+      return `/api/vehicle/getVehicleList.php?${params.toString()}`;
+    }
+
     // 获取设备数据
     function loadDeviceData(page) {
-      const url = `/api/vehicle/getVehicleList.php?page=${page}&limit=${limit}`;
+      const url = vehicleListUrl(page);
       document.getElementById('loading').style.display  = 'block';
 
       fetch(url)
@@ -488,7 +499,7 @@ function getDeviceStatusTag(device) {
   loading.textContent = '正在刷新...';
   loading.style.display = 'block';
 
-  const url = `/api/vehicle/getVehicleList.php?page=${currentPage}&limit=${limit}`;
+  const url = vehicleListUrl(currentPage);
 
   fetch(url)
     .then(response => response.json())

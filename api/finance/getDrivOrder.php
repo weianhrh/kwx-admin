@@ -1,5 +1,6 @@
 <?php 
 require_once '../Database.php';   // 确保路径正确 
+require_once '../lib/venue_scope.php';
 //  api/finance/getDrivOrder.php
 header('Content-Type: application/json; charset=utf-8');
 // 创建数据库连接 
@@ -27,7 +28,7 @@ $role_id = (int)$user['role_id'];
 // 获取请求参数，用于订单号和用户 ID 过滤 
 $order_number = filter_input(INPUT_GET, 'order_number'); 
 $uid = filter_input(INPUT_GET, 'uid');
-$venue_id = filter_input(INPUT_GET, 'venue_id', FILTER_VALIDATE_INT);
+$requestedVenueId = venue_scope_requested_id($_GET);
 
 // 订单类型：drive=驾驶订单，gift=礼物订单
 $order_type = filter_input(INPUT_GET, 'order_type') ?: 'drive';
@@ -56,15 +57,7 @@ if ($order_type === 'gift') {
         $params[] = $uid;
     }
 
-if (!in_array($role_id, [1, 2], true)) {
-    // 非管理员，只能看自己场地的礼物订单
-    $whereSql .= " AND g.reservation_id = ?";
-    $params[] = $user['venue_id'];
-} elseif (!empty($venue_id)) {
-    // 管理员可以按下拉框选择场地
-    $whereSql .= " AND g.reservation_id = ?";
-    $params[] = $venue_id;
-}
+    $whereSql .= venue_scope_apply_filter($database, $user, 'g.reservation_id', $params, $requestedVenueId);
 
     $sql = "
         SELECT
@@ -142,15 +135,7 @@ if (!empty($uid)) {
     $params[] = $uid; 
 } 
  
-if (!in_array($role_id, [1, 2], true)) {
-    // 非管理员，只能看到绑定的场地数据
-    $whereSql .= " AND o.reservation_id = ?";
-    $params[] = $user['venue_id'];
-} elseif (!empty($venue_id)) {
-    // 管理员可以按下拉框选择场地
-    $whereSql .= " AND o.reservation_id = ?";
-    $params[] = $venue_id;
-}
+$whereSql .= venue_scope_apply_filter($database, $user, 'o.reservation_id', $params, $requestedVenueId);
  
 // 构建查询语句,包括用户的昵称,并按照 order_id 倒序排列 
 // $sql = "SELECT o.*, u.nickname  FROM orders o JOIN users u ON o.uid  = u.uid"  . $whereSql . " ORDER BY o.order_id  DESC"; 
@@ -281,4 +266,4 @@ echo json_encode([
 
 $database->close();
 exit; 
-?> 
+?>

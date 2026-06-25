@@ -443,6 +443,7 @@
 
   <script>
     let page = 1, pageSize = 10, total = 0;
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
     // 固定仅查询“已退款” => 后端状态为 applied
     function buildQuery(){
@@ -453,6 +454,7 @@
       p.set('page_size', pageSize);
       if(order) p.set('order_number', order);
       if(uid)   p.set('uid', uid);
+      if(pageVenueId) p.set('venue_id', pageVenueId);
       p.set('status', 'applied');  // 只查已退款
       return p.toString();
     }

@@ -580,6 +580,7 @@
     let myVenueId = null;         // 登录用户绑定的场地（用于 role=3 锁定）
     let currentPage = 1;
     let pageSize = 20;
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
     const elVenue = document.getElementById('venueSelect');
     const elCards = document.getElementById('cardsContainer');
@@ -626,7 +627,7 @@
         if(result && result.code === 0){
           const role = Number(result.data.role_id);
           isAdmin = (role === 1 || role === 2);
-          myVenueId = result.data.venue_id ?? null;
+          myVenueId = pageVenueId || (result.data.venue_id ?? null);
         }
       } catch (err) {
         console.warn('获取用户角色失败:', err);
@@ -661,6 +662,7 @@
                   const option = document.createElement('option');
                   option.value = String(venue.id);
                   option.textContent = `${venue.id} - ${venue.venue_name}`;
+                  if (pageVenueId && String(venue.id) === String(pageVenueId)) option.selected = true;
                   selectEl.appendChild(option);
                 });
 
@@ -758,10 +760,10 @@ async function loadList(){
   params.set('limit', String(pageSize));
 
   // 读取状态与场地
-  const selectedVenue = (elVenue.value || '').trim();
+  const selectedVenue = (elVenue.value || pageVenueId || '').trim();
   const selectedStatus = (document.getElementById('statusFilter').value || '').trim();
 
-  if (isAdmin && selectedVenue) {
+  if (selectedVenue) {
     params.set('venue_id', selectedVenue);
     params.set('venueId', selectedVenue); // 兼容命名
   }
@@ -862,6 +864,7 @@ async function loadList(){
       if(msg.length > 4000){ showToast('反馈内容过长(>4000字)'); return; }
       const form = new FormData();
       form.set('message', msg);
+      if (selectedVenueIdForFeedback()) form.set('venue_id', selectedVenueIdForFeedback());
       try{
         const res = await fetch('/api/feedback/create.php', { method:'POST', body: form, credentials:'include' });
         const json = await res.json();
@@ -877,6 +880,10 @@ async function loadList(){
         console.error(e);
         showToast('网络错误');
       }
+    }
+
+    function selectedVenueIdForFeedback() {
+      return (elVenue.value || pageVenueId || myVenueId || '').toString().trim();
     }
 
     // ========== 初始化 ==========

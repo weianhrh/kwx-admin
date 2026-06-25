@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
+require_once __DIR__ . '/../lib/venue_scope.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -59,34 +60,57 @@ $franchiseTodayRevenue = '0.00';
 $franchiseTodayOrderCount = 0;
 $franchiseOnlineDevices = 0;
 $franchiseTotalDevices = 0;
+$franchiseVenueRows = [];
+$franchiseVenueIds = [];
 
-if ($roleId === 3 && $venueId > 0) {
+if ($roleId === 3) {
+    $franchiseVenueRows = venue_scope_visible_venues($db, $user);
+    $franchiseVenueIds = venue_scope_ints(array_column($franchiseVenueRows, 'id'));
+
+    if (count($franchiseVenueRows) === 1) {
+        $franchiseVenueName = (string)($franchiseVenueRows[0]['venue_name'] ?? $franchiseVenueName);
+    } elseif (count($franchiseVenueRows) > 1) {
+        $franchiseVenueName = count($franchiseVenueRows) . ' 个场地';
+    }
+}
+
+if ($roleId === 3 && $franchiseVenueIds) {
+    $orderRevenueParams = [$todayStart, $tomorrowStart];
+    $orderRevenueWhere = venue_scope_filter_sql('reservation_id', $franchiseVenueIds, $orderRevenueParams);
     $franchiseTodayRevenue = dashboard_scalar($db, "
         SELECT COALESCE(ROUND(SUM(payment_amount), 2), 0) AS total
         FROM orders
-        WHERE reservation_id = ?
-          AND end_time >= ? AND end_time < ?
+        WHERE end_time >= ? AND end_time < ?
           AND pays_type <> '能量'
-    ", [$venueId, $todayStart, $tomorrowStart], 'total', '0.00');
+          {$orderRevenueWhere}
+    ", $orderRevenueParams, 'total', '0.00');
 
+    $orderCountParams = [$todayStart, $tomorrowStart];
+    $orderCountWhere = venue_scope_filter_sql('reservation_id', $franchiseVenueIds, $orderCountParams);
     $franchiseTodayOrderCount = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM orders
-        WHERE reservation_id = ?
-          AND end_time >= ? AND end_time < ?
-    ", [$venueId, $todayStart, $tomorrowStart], 'total', 0);
+        WHERE end_time >= ? AND end_time < ?
+          {$orderCountWhere}
+    ", $orderCountParams, 'total', 0);
 
+    $onlineParams = [];
+    $onlineWhere = venue_scope_filter_sql('bind_site', $franchiseVenueIds, $onlineParams);
     $franchiseOnlineDevices = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM vehicles
-        WHERE bind_site = ? AND status = '在线'
-    ", [$venueId], 'total', 0);
+        WHERE status = '在线'
+          {$onlineWhere}
+    ", $onlineParams, 'total', 0);
 
+    $deviceParams = [];
+    $deviceWhere = venue_scope_filter_sql('bind_site', $franchiseVenueIds, $deviceParams);
     $franchiseTotalDevices = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM vehicles
-        WHERE bind_site = ?
-    ", [$venueId], 'total', 0);
+        WHERE 1=1
+          {$deviceWhere}
+    ", $deviceParams, 'total', 0);
 }
 
 $registerCount = dashboard_scalar($db, "
@@ -181,6 +205,26 @@ if (in_array($roleId, [1, 2], true)) {
         ) AS total
     ";
 } else {
+    if ($roleId === 3 && $franchiseVenueIds) {
+        $reportParams = [];
+        $reportDeviceWhere = venue_scope_filter_sql('v.bind_site', $franchiseVenueIds, $reportParams);
+        $reportVoiceWhere = venue_scope_filter_sql('handler_uid', $franchiseVenueIds, $reportParams);
+        $reportSql = "
+            SELECT (
+                SELECT COUNT(*)
+                FROM Reports r
+                INNER JOIN vehicles v ON v.serial_number = r.device_id
+                WHERE r.status IN ('未处理', '处理中')
+                  {$reportDeviceWhere}
+            ) + (
+                SELECT COUNT(*)
+                FROM voice_reports
+                WHERE report_type = 0
+                  AND status IN ('未处理', '处理中')
+                  {$reportVoiceWhere}
+            ) AS total
+        ";
+    } else {
     $reportSql = "
         SELECT (
             SELECT COUNT(*)
@@ -194,6 +238,7 @@ if (in_array($roleId, [1, 2], true)) {
         ) AS total
     ";
     $reportParams = [$venueId, $venueId];
+    }
 }
 $reportCount = dashboard_scalar($db, $reportSql, $reportParams, 'total', 0);
 
@@ -204,11 +249,22 @@ if (in_array($roleId, [1, 2], true)) {
         WHERE payout_status = 0
     ", [], 'total', 0);
 } else {
-    $withdrawCount = dashboard_scalar($db, "
+    if ($roleId === 3 && $franchiseVenueIds) {
+        $withdrawParams = [];
+        $withdrawWhere = venue_scope_filter_sql('venue_id', $franchiseVenueIds, $withdrawParams);
+        $withdrawCount = dashboard_scalar($db, "
+            SELECT COUNT(*) AS total
+            FROM withdrawal_requests
+            WHERE payout_status = 0
+              {$withdrawWhere}
+        ", $withdrawParams, 'total', 0);
+    } else {
+        $withdrawCount = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM withdrawal_requests
         WHERE payout_status = 0 AND venue_id = ?
-    ", [$venueId], 'total', 0);
+        ", [$venueId], 'total', 0);
+    }
 }
 
 $appealCount = dashboard_scalar($db, "
@@ -256,7 +312,7 @@ auth_out(0, 'ok', [
         'dollRevenueToday' => (float)$dollRevenueToday,
         'todayGoldRechargeRevenue' => (float)$appleGoldRevenue + (float)$androidGoldRevenue,
         'goldRechargeOrderCount' => (int)$appleGoldCount + (int)$androidGoldCount,
-        'franchiseVenueCount' => $venueId > 0 ? 1 : 0,
+        'franchiseVenueCount' => count($franchiseVenueIds),
         'franchiseTodayRevenue' => (float)$franchiseTodayRevenue,
         'franchiseTodayOrderCount' => (int)$franchiseTodayOrderCount,
         'franchiseOnlineDevices' => (int)$franchiseOnlineDevices,
@@ -271,8 +327,9 @@ auth_out(0, 'ok', [
     ],
     'quickActions' => $quickActions,
     'franchise' => [
-        'venue_id' => $venueId,
+        'venue_id' => $franchiseVenueIds[0] ?? $venueId,
         'venue_name' => $franchiseVenueName,
+        'venues' => $franchiseVenueRows,
         'notices' => [
             ['title' => '运营提醒', 'content' => '请保持车辆电量、网络与视频画面稳定，避免影响玩家远程驾驶体验。', 'date' => date('Y-m-d')],
             ['title' => '结算提示', 'content' => '今日收益按场地订单实时汇总，最终结算以财务审核后的账单为准。', 'date' => date('Y-m-d')],

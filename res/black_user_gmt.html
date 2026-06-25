@@ -783,13 +783,15 @@ textarea.input {
       page: 1, pageSize: 12, kw: '', total: 0, pendingDel: {uid:null, venue_id:null},
       roleId: 0, venueId: 0, venueFilter: ''   // venueFilter 仅 role==1 用
     };
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
     const isPlatformAdmin = () => (state.roleId === 1 || state.roleId === 2);
 
     // 列表加载
     async function loadList(){
       const params = new URLSearchParams({ page: state.page, page_size: state.pageSize });
       if(state.kw.trim()) params.set('kw', state.kw.trim());
-      if(isPlatformAdmin() && state.venueFilter){ params.set('venue_id', state.venueFilter); }
+      if(pageVenueId){ params.set('venue_id', pageVenueId); }
+      else if(isPlatformAdmin() && state.venueFilter){ params.set('venue_id', state.venueFilter); }
 
       setCardsLoading();
       try{
@@ -860,7 +862,7 @@ textarea.input {
       $$('#cardList [data-unblock]').forEach(btn => btn.addEventListener('click', (e)=>{
         const id       = Number(e.currentTarget.getAttribute('data-id'));
         const uid = Number(e.currentTarget.getAttribute('data-uid'));
-        const venue_id = Number(e.currentTarget.getAttribute('data-venue')) || (isPlatformAdmin() ? Number(state.venueFilter||0) : state.venueId);
+        const venue_id = Number(e.currentTarget.getAttribute('data-venue')) || Number(pageVenueId || 0) || (isPlatformAdmin() ? Number(state.venueFilter||0) : state.venueId);
         state.pendingDel = { uid, venue_id };
         openModal('#delModal');
       }));
@@ -1120,7 +1122,7 @@ $('#confirmAssign').addEventListener('click', async ()=>{
         const json = await resp.json();
         if(json.code === 0 && json.data){
           state.roleId = Number(json.data.role_id || 0);
-          state.venueId = Number(json.data.venue_id || 0);
+          state.venueId = Number(pageVenueId || json.data.venue_id || 0);
         // role_id === 1 或 2 显示“指定添加”“场地筛选”“一键拉黑”
          const admin = isPlatformAdmin();
          $('#btnAssign').hidden = !admin;
@@ -1129,6 +1131,10 @@ $('#confirmAssign').addEventListener('click', async ()=>{
         
          if(admin){
            await loadVenuesForFilter($('#venueFilter'));
+           if (pageVenueId) {
+             state.venueFilter = pageVenueId;
+             $('#venueFilter').value = pageVenueId;
+           }
          }
         }
       }catch(e){ /* 忽略 */ }

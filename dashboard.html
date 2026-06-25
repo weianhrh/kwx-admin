@@ -1531,6 +1531,91 @@
       gap: 14px;
     }
 
+    .franchise-venue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .franchise-venue-card {
+      min-height: 190px;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .franchise-venue-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .franchise-venue-title {
+      min-width: 0;
+      display: grid;
+      gap: 7px;
+    }
+
+    .franchise-venue-title h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .franchise-venue-title span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .franchise-venue-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .franchise-venue-stats div {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid #edf2f3;
+      border-radius: 8px;
+      background: #f8fbfb;
+    }
+
+    .franchise-venue-stats span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .franchise-venue-stats strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .franchise-venue-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
     .category-card {
       min-height: 132px;
       display: grid;
@@ -2067,6 +2152,15 @@
         grid-template-columns: 1fr;
       }
 
+      .franchise-venue-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .franchise-venue-title h3,
+      .franchise-venue-stats strong {
+        white-space: normal;
+      }
+
       .subpage-title-row {
         flex-direction: column;
       }
@@ -2346,6 +2440,7 @@
     const noticeReadButton = document.getElementById('noticeReadButton');
     const homeContent = pageContent.innerHTML;
     let menuTree = [];
+    let currentUser = null;
     let deviceFilters = { keyword: '', venueId: '' };
     let noticePollTimer = null;
     let currentNotice = null;
@@ -2450,6 +2545,7 @@
           window.location.replace('./index.html');
           return;
         }
+        currentUser = result.data || null;
         document.getElementById('currentUser').textContent = result.data.username || 'Admin';
         await loadMenus();
         startNoticePolling();
@@ -2549,6 +2645,7 @@
         window.location.replace('./index.html');
         return;
       }
+      currentUser = result.data.user || currentUser;
       menuTree = filterDeferredMenus(result.data.menus || [], false);
       renderMenus(menuTree);
       routeFromHash();
@@ -2596,6 +2693,7 @@
     function routeFromHash() {
       const params = new URLSearchParams(location.hash.replace(/^#/, ''));
       const id = params.get('menu');
+      const venueId = params.get('venue') || '';
       const item = id ? findMenu(id) : null;
       if (!item || item.jump === '' || item.jump === '/') {
         renderWorkbench();
@@ -2610,8 +2708,12 @@
         renderCategory(item);
         return;
       }
+      if (shouldShowFranchiseVenueOverview(item, venueId)) {
+        renderFranchiseVenueOverview(item);
+        return;
+      }
       if (legacyModuleUrl(item)) {
-        renderLegacyModule(item);
+        renderLegacyModule(item, { venueId: venueId });
         return;
       }
       if (isDeviceChild(item)) {
@@ -2621,12 +2723,13 @@
       renderModule(item);
     }
 
-    function navigateToMenu(id) {
+    function navigateToMenu(id, venueId) {
       const target = 'menu=' + encodeURIComponent(id);
-      if (location.hash.replace(/^#/, '') === target) {
+      const nextTarget = venueId ? target + '&venue=' + encodeURIComponent(venueId) : target;
+      if (location.hash.replace(/^#/, '') === nextTarget) {
         routeFromHash();
       } else {
-        location.hash = target;
+        location.hash = nextTarget;
       }
       if (isMobileSidebar()) {
         closeSidebar();
@@ -2657,7 +2760,8 @@
         '</section>';
     }
 
-    function legacyModuleUrl(item) {
+    function legacyModuleUrl(item, options) {
+      options = options || {};
       const raw = String(item.jump || '').trim();
       if (!raw || raw === '/' || /^https?:\/\//i.test(raw)) return '';
 
@@ -2674,16 +2778,135 @@
       if (pageName.toLowerCase() === 'devicemgt') pageName = 'devMgtV2';
       if (!pageName || pageName.includes('..')) return '';
 
-      return './res/' + encodeURIComponent(pageName) + '.html?embed=dashboard';
+      const query = new URLSearchParams({ embed: 'dashboard' });
+      if (options.venueId) {
+        query.set('venue_id', String(options.venueId));
+        if (isVenueDetailModule(item)) {
+          query.set('id', String(options.venueId));
+        }
+      }
+
+      return './res/' + encodeURIComponent(pageName) + '.html?' + query.toString();
     }
 
-    function renderLegacyModule(item) {
-      const src = legacyModuleUrl(item);
+    function renderLegacyModule(item, options) {
+      options = options || {};
+      const src = legacyModuleUrl(item, options);
       document.querySelector('.crumb span').textContent = 'Menu / ' + item.name;
       document.querySelector('.crumb strong').textContent = item.title;
       pageContent.innerHTML = '<section class="legacy-module">' +
         '<iframe src="' + escapeHtml(src) + '" title="' + escapeHtml(item.title) + '"></iframe>' +
         '</section>';
+    }
+
+    function isFranchiseUser() {
+      return Number((currentUser && currentUser.role_id) || 0) === 3;
+    }
+
+    function shouldShowFranchiseVenueOverview(item, venueId) {
+      if (!isFranchiseUser() || venueId) return false;
+      if (!legacyModuleUrl(item)) return false;
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      return text.includes('franchise-') &&
+        !text.includes('system-profile') &&
+        !text.includes('system-password') &&
+        !text.includes('基本资料') &&
+        !text.includes('修改密码');
+    }
+
+    function isVenueDetailModule(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      return text.includes('franchise-venues') || text.includes('/venue') || text.includes('场地管理');
+    }
+
+    function franchiseFeatureKey(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('device') || text.includes('vehicle') || text.includes('设备') || text.includes('挂车')) return 'device';
+      if (text.includes('order') || text.includes('refund') || text.includes('订单') || text.includes('退款')) return 'order';
+      if (text.includes('income') || text.includes('withdraw') || text.includes('payment') || text.includes('pricing') || text.includes('fund') || text.includes('收入') || text.includes('提现') || text.includes('资费') || text.includes('财务')) return 'finance';
+      if (text.includes('venue') || text.includes('场地')) return 'venue';
+      return 'ops';
+    }
+
+    function franchiseOverviewDescription(item) {
+      const feature = franchiseFeatureKey(item);
+      const descriptions = {
+        device: '先查看名下所有场地的设备概况，再进入某个场地维护设备。',
+        order: '先汇总各场地订单和收入，再进入某个场地查看订单明细。',
+        finance: '先查看各场地收入和设备经营状态，再进入某个场地处理财务功能。',
+        venue: '先查看名下场地列表，再进入某个场地维护资料和配置。',
+        ops: '先选择要处理的场地，再进入对应运营功能。'
+      };
+      return descriptions[feature] || moduleDescription(item);
+    }
+
+    async function renderFranchiseVenueOverview(item) {
+      const feature = franchiseFeatureKey(item);
+      document.querySelector('.crumb span').textContent = '加盟商 / 场地总览';
+      document.querySelector('.crumb strong').textContent = item.title;
+      pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载场地总览...</div></section>';
+
+      try {
+        const response = await fetch('./api/franchise/venue_overview.php?feature=' + encodeURIComponent(feature), {
+          credentials: 'same-origin',
+          cache: 'no-store'
+        });
+        const result = await response.json();
+        if (result.code !== 0) {
+          throw new Error(result.msg || 'franchise overview failed');
+        }
+
+        pageContent.innerHTML = buildFranchiseVenueOverviewHtml(item, result.data || {});
+      } catch (error) {
+        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">场地总览加载失败，请稍后重试。</div></section>';
+      }
+    }
+
+    function buildFranchiseVenueOverviewHtml(item, data) {
+      const summary = data.summary || {};
+      const venues = Array.isArray(data.venues) ? data.venues : [];
+      return '<section class="subpage">' +
+        '<div class="subpage-head">' +
+        '<div class="subpage-title-row">' +
+        '<div class="subpage-title"><h2>' + escapeHtml(item.title) + ' · 场地总览</h2><p>' + franchiseOverviewDescription(item) + '</p></div>' +
+        '<div class="subpage-status">先选场地</div>' +
+        '</div>' +
+        '<div class="subpage-meta">' +
+        '<span>场地：' + formatInt(summary.venue_count || venues.length) + ' 个</span>' +
+        '<span>今日收入：' + formatMoney(summary.today_revenue || 0) + '</span>' +
+        '<span>今日订单：' + formatInt(summary.today_order_count || 0) + ' 单</span>' +
+        '<span>在线设备：' + formatInt(summary.online_devices || 0) + '/' + formatInt(summary.total_devices || 0) + '</span>' +
+        '</div>' +
+        '</div>' +
+        (venues.length ? '<div class="franchise-venue-grid">' + venues.map(function(venue) {
+          return franchiseVenueCard(item, venue);
+        }).join('') + '</div>' : '<div class="empty-state">当前账号暂无可管理场地。</div>') +
+        '</section>';
+    }
+
+    function franchiseVenueCard(item, venue) {
+      const status = venue.venue_status || '未设置';
+      const statusClass = status === '营业中' ? 'ok' : (status === '休息中' ? 'warn' : 'off');
+      return '<article class="franchise-venue-card">' +
+        '<div class="franchise-venue-top">' +
+        '<div class="franchise-venue-title"><h3>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) + '</h3><span>场地 ID：' + escapeHtml(String(venue.id || '-')) + '</span></div>' +
+        '<span class="tag ' + statusClass + '">' + escapeHtml(status) + '</span>' +
+        '</div>' +
+        '<div class="franchise-venue-stats">' +
+        '<div><span>今日收入</span><strong>' + formatMoney(venue.today_revenue || 0) + '</strong></div>' +
+        '<div><span>今日订单</span><strong>' + formatInt(venue.today_order_count || 0) + ' 单</strong></div>' +
+        '<div><span>在线设备</span><strong>' + formatInt(venue.online_devices || 0) + '/' + formatInt(venue.total_devices || 0) + '</strong></div>' +
+        '<div><span>离线设备</span><strong>' + formatInt(venue.offline_devices || 0) + ' 台</strong></div>' +
+        '</div>' +
+        '<div class="franchise-venue-actions">' +
+        '<button class="primary-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenue(this)">进入' + escapeHtml(item.title) + '</button>' +
+        '</div>' +
+        '</article>';
+    }
+
+    function openFranchiseVenue(el) {
+      if (!el) return;
+      navigateToMenu(el.dataset.menuId, el.dataset.venueId);
     }
 
     function renderCategory(item) {
