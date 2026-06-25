@@ -105,34 +105,68 @@ class Database {
     public function getConnection() {
         return $this->connection;
     }
-    public function logToFile($message, $logFile = 'log/monitoring.log')  { 
-            // 获取日志文件所在的目录 
-            $logDir = dirname($logFile); 
+    // public function logToFile($message, $logFile = 'log/monitoring.log')  { 
+    //         // 获取日志文件所在的目录 
+    //         $logDir = dirname($logFile); 
          
-            // 检查日志目录是否存在，如果不存在则创建它 
-            if (!file_exists($logDir)) { 
-                if (!mkdir($logDir, 0755, true)) { 
-                    // 处理创建目录失败的情况 
-                    trigger_error("Failed to create log directory: $logDir", E_USER_WARNING); 
-                    return false; 
-                } 
-            } 
+    //         // 检查日志目录是否存在，如果不存在则创建它 
+    //         if (!file_exists($logDir)) { 
+    //             if (!mkdir($logDir, 0755, true)) { 
+    //                 // 处理创建目录失败的情况 
+    //                 trigger_error("Failed to create log directory: $logDir", E_USER_WARNING); 
+    //                 return false; 
+    //             } 
+    //         } 
          
-            // 生成时间戳 
-            $timestamp = date('Y-m-d H:i:s'); 
+    //         // 生成时间戳 
+    //         $timestamp = date('Y-m-d H:i:s'); 
             
-            // 组合日志信息 
-            $logMessage = "[$timestamp] $message" . PHP_EOL; 
+    //         // 组合日志信息 
+    //         $logMessage = "[$timestamp] $message" . PHP_EOL; 
          
-            // 将日志信息写入文件 
-            if (file_put_contents($logFile, $logMessage, FILE_APPEND) === false) { 
-                // 处理写入文件失败的情况 
-                trigger_error("Failed to write to log file: $logFile", E_USER_WARNING); 
-                return false; 
-            } 
+    //         // 将日志信息写入文件 
+    //         if (file_put_contents($logFile, $logMessage, FILE_APPEND) === false) { 
+    //             // 处理写入文件失败的情况 
+    //             trigger_error("Failed to write to log file: $logFile", E_USER_WARNING); 
+    //             return false; 
+    //         } 
          
-            return true; 
-        } 
+    //         return true; 
+    //     } 
+    public function logToFile($message, $logFile = null) {
+    // Database.php 在 /api/lib/Database.php
+    // dirname(__DIR__) 就是 /api
+    $apiRoot = dirname(__DIR__);
+
+    // 默认固定写到 /www/wwwroot/kwx.rcxxzk.cn/api/log/monitoring.log
+    if (empty($logFile) || $logFile === 'log/monitoring.log') {
+        $logFile = $apiRoot . '/log/monitoring.log';
+    } else {
+        // 如果传入的不是绝对路径，也统一转成 api 目录下的路径
+        $logFile = str_replace('\\', '/', $logFile);
+        if ($logFile[0] !== '/') {
+            $logFile = $apiRoot . '/' . ltrim($logFile, '/');
+        }
+    }
+
+    $logDir = dirname($logFile);
+
+    // 创建目录，失败也不要输出 Warning
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0775, true);
+    }
+
+    // 目录不可写时，直接返回 false，不要 trigger_error
+    if (!is_dir($logDir) || !is_writable($logDir)) {
+        return false;
+    }
+
+    $timestamp = date('Y-m-d H:i:s');
+    $logMessage = "[$timestamp] $message" . PHP_EOL;
+
+    // 写失败也静默返回 false，避免污染 JSON
+    return @file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX) !== false;
+}
 
 }
 
