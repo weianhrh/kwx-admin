@@ -2602,7 +2602,7 @@
       const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
       if (text.includes('profile') || text.includes('基本资料')) return '查看和维护当前后台账号的基础资料。';
       if (text.includes('password') || text.includes('修改密码')) return '修改当前后台账号登录密码。';
-      if (text.includes('franchise') || text.includes('加盟')) return '管理加盟后台账号、绑定场地与待处理加盟申请。';
+      if (text.includes('franchise') || text.includes('加盟')) return '';
       if (text.includes('devicemgt') || text.includes('设备管理')) return '设备列表、状态、绑定关系与基础维护入口。';
       if (text.includes('adddev') || text.includes('添加')) return '新增设备资料并完成初始配置。';
       if (text.includes('fault') || text.includes('故障')) return '查看并处理设备故障审批记录。';

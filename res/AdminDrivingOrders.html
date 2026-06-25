@@ -895,27 +895,31 @@ document.getElementById('nextPage').disabled = !hasMorePage;
                 // if (order.refund_status === 'applied' || order.refund_status === 'approved') {
                 //   refundBtnHtml = `<button class="form-button" disabled>已退款</button>`;
                 // }
+const canManageOrder = isPlatformAdmin();
 const hasRefundRecord = order.refund_status === 'applied' || order.refund_status === 'approved';
+const isLocked = Number(order.lock_status) === 1;
 
-let refundBtnHtml = `
-  <button class="form-button ${hasRefundRecord ? 'cancel-refund-btn' : 'refund-btn'}"
-          data-order-id="${order.order_id}"
-          data-uid="${order.uid}"
-          data-amount="${order.payment_amount ?? ''}"
-          style="${hasRefundRecord ? 'background-color:#ff4d4f;' : ''}">
-    ${hasRefundRecord ? '取消退款' : '退款'}
-  </button>`;
-
+let refundBtnHtml = '';
 let lockBtnHtml = '';
-if ((order.pays_type || '').trim() !== '能量') {
-  const isLocked = Number(order.lock_status) === 1;
 
-  lockBtnHtml = `
-    <button class="form-button lock-btn ${isLocked ? 'unlock-action-btn' : 'lock-action-btn'}"
+if (canManageOrder) {
+  refundBtnHtml = `
+    <button class="form-button ${hasRefundRecord ? 'cancel-refund-btn' : 'refund-btn'}"
             data-order-id="${order.order_id}"
-            data-lock-status="${isLocked ? 1 : 2}">
-      ${isLocked ? '解锁' : '锁定'}
+            data-uid="${order.uid}"
+            data-amount="${order.payment_amount ?? ''}"
+            style="${hasRefundRecord ? 'background-color:#ff4d4f;' : ''}">
+      ${hasRefundRecord ? '取消退款' : '退款'}
     </button>`;
+
+  if ((order.pays_type || '').trim() !== '能量') {
+    lockBtnHtml = `
+      <button class="form-button lock-btn ${isLocked ? 'unlock-action-btn' : 'lock-action-btn'}"
+              data-order-id="${order.order_id}"
+              data-lock-status="${isLocked ? 1 : 2}">
+        ${isLocked ? '解锁' : '锁定'}
+      </button>`;
+  }
 }
                 // === 卡片内容 ===
 card.innerHTML = `
@@ -932,7 +936,7 @@ card.innerHTML = `
       <span class="order-money-value">¥ ${parseFloat(order.payment_amount || 0).toFixed(2)}</span>
     </div>
 
-    <div class="order-actions">
+    <div class="order-actions" ${canManageOrder ? '' : 'hidden'}>
       ${refundBtnHtml}
       ${lockBtnHtml}
     </div>
@@ -1005,17 +1009,19 @@ Number(order.lock_status) === 1
                 container.appendChild(card);
             });
         
-document.querySelectorAll('.refund-btn').forEach(btn => {
-    btn.addEventListener('click', onRefundClick);
-});
-
-document.querySelectorAll('.cancel-refund-btn').forEach(btn => {
-    btn.addEventListener('click', onCancelRefundClick);
-});
-
-document.querySelectorAll('.lock-btn').forEach(btn => {
-    btn.addEventListener('click', onLockClick);
-});
+            if (isPlatformAdmin()) {
+              document.querySelectorAll('.refund-btn').forEach(btn => {
+                  btn.addEventListener('click', onRefundClick);
+              });
+            
+              document.querySelectorAll('.cancel-refund-btn').forEach(btn => {
+                  btn.addEventListener('click', onCancelRefundClick);
+              });
+            
+              document.querySelectorAll('.lock-btn').forEach(btn => {
+                  btn.addEventListener('click', onLockClick);
+              });
+            }
         }
 
            
