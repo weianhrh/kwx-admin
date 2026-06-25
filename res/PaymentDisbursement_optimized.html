@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!-- PaymentDisbursement.html - Stitch风格优化版 -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提现申请</title>
+  <style>
+    :root {
+      --page-bg: #f5f7fb;
+      --card-bg: #fff;
+      --border: #d9dde5;
+      --border-light: #e8ebf0;
+      --text: #111827;
+      --muted: #6b7280;
+      --muted-2: #8b95a1;
+      --primary: #2f7df6;
+      --primary-dark: #1f66d8;
+      --title-color: #111827;
+      --label-color: #334155;
+      --normal-value: #111827;
+      --icon-muted: #64748b;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --success-bg: #dcfce7;
+      --success-text: #15803d;
+      --pending-bg: #fef3c7;
+      --pending-text: #a16207;
+      --danger-bg: #fee2e2;
+      --danger-text: #b91c1c;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(47, 125, 246, 0.05), transparent 34%),
+        radial-gradient(circle at 80% 12%, rgba(148, 163, 184, 0.10), transparent 36%),
+        var(--page-bg);
+      color: var(--text);
+      padding: 14px 16px 36px;
+    }
+
+    .page {
+      width: min(920px, 100%);
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin: 0 0 12px;
+      color: var(--title-color);
+    }
+
+    .section-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 14px 18px 10px;
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--title-color);
+    }
+
+    .section-desc {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .account-line {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .account-chip {
+      border: 1px solid var(--border-light);
+      border-radius: 999px;
+      background: #f8fafc;
+      color: #374151;
+      font-size: 12px;
+      line-height: 20px;
+      padding: 0 9px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .amount-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top: 1px solid var(--border-light);
+    }
+
+    .amount-item {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-right: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      background: rgba(255,255,255,0.9);
+    }
+
+    .amount-item:nth-child(3n) {
+      border-right: none;
+    }
+
+    .amount-item:nth-last-child(-n + 3) {
+      border-bottom: none;
+    }
+
+    .amount-icon {
+      width: 32px;
+      min-width: 32px;
+      text-align: center;
+      color: var(--icon-muted);
+      font-size: 28px;
+      line-height: 1;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      font-weight: 700;
+    }
+
+    .amount-label {
+      font-size: 13px;
+      color: var(--label-color);
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+
+    .amount-value {
+      margin-top: 3px;
+      font-size: 19px;
+      color: var(--normal-value);
+      font-weight: 800;
+      line-height: 1.1;
+      word-break: break-all;
+    }
+
+    .amount-value small {
+      font-size: 13px;
+      font-weight: 700;
+    }
+.amount-item.is-primary .amount-icon,
+.amount-item.is-primary .amount-value {
+  color: var(--primary);
+}
+
+.amount-item.is-warning .amount-icon,
+.amount-item.is-warning .amount-value {
+  color: var(--warning);
+}
+
+.amount-item.is-danger .amount-icon,
+.amount-item.is-danger .amount-value {
+  color: var(--danger);
+}
+
+.amount-item.is-muted .amount-icon,
+.amount-item.is-muted .amount-value {
+  color: var(--icon-muted);
+}
+
+.amount-item.is-primary .amount-label {
+  color: #1d4ed8;
+}
+
+.amount-item.is-warning .amount-label {
+  color: #92400e;
+}
+
+.amount-item.is-danger .amount-label {
+  color: #991b1b;
+}
+    .amount-content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .amount-item.amount-full {
+      min-width: 0;
+    }
+
+    .check-money-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 20px;
+      margin-left: 6px;
+      padding: 0 8px;
+      border: 1px solid rgba(47, 125, 246, .28);
+      border-radius: 999px;
+      background: #eff6ff;
+      color: var(--primary);
+      font-size: 12px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    .withdraw-box {
+      padding: 12px 18px 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .form-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--label-color);
+    }
+
+    .fee-tip {
+      color: #475569;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .withdraw-input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #cfd6df;
+      border-radius: 7px;
+      background: #fff;
+      padding: 0 11px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .withdraw-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(47, 125, 246, .12);
+    }
+
+    .withdraw-button {
+      width: 100%;
+      height: 34px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #3d8bff 0%, var(--primary) 100%);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 3px 8px rgba(47,125,246,.20);
+    }
+
+    .withdraw-button:hover {
+      background: linear-gradient(180deg, #2f7df6 0%, var(--primary-dark) 100%);
+    }
+
+    .withdraw-button:disabled {
+      background: #c9ced6;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .ledger-button {
+      width: 100%;
+      height: 34px;
+      margin-top: 8px;
+      border: 1px solid #c8d6f4;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .ledger-button:hover {
+      background: #f3f7ff;
+    }
+
+    .status-message {
+      display: none;
+      margin-top: 8px;
+      text-align: center;
+      color: var(--primary);
+      font-size: 13px;
+    }
+
+    .table-wrap {
+      margin: 0 18px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 640px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    thead th {
+      height: 28px;
+      background: #f8fafc;
+       color: #334155;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      height: 32px;
+      font-size: 13px;
+      color: #111827;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover td {
+      background: #fafcff;
+    }
+
+    .amount-cell {
+      font-weight: 700;
+    }
+
+    .record-no {
+      display: inline-block;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      border-radius: 5px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.pending {
+      background: var(--pending-bg);
+      color: var(--pending-text);
+    }
+
+    .badge.success {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .badge.danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .badge.gray {
+      background: #eef2f7;
+      color: #475569;
+    }
+
+    .detail-link {
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 0;
+    }
+
+    .empty-state {
+      padding: 22px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pager {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 8px 18px 12px;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .pager button {
+      min-width: 26px;
+      height: 24px;
+      border: 1px solid #d4dae3;
+      background: #fff;
+      color: #475569;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0 7px;
+    }
+
+    .pager button.active {
+      border-color: #2563eb;
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .pager button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .custom-modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .custom-modal {
+      width: min(476px, 100%);
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.22);
+      animation: modalFadeIn .16s ease-out;
+    }
+
+    .custom-modal-head {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .custom-modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .custom-modal-close {
+      border: none;
+      background: transparent;
+      color: #4b5563;
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .custom-modal-content {
+      padding: 18px 20px 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #111827;
+      white-space: pre-line;
+      text-align: left !important;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+      justify-items: stretch;
+      text-align: left;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 108px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      justify-content: start;
+      font-size: 14px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .detail-label {
+      color: #111827;
+      font-weight: 800;
+      text-align: left;
+    }
+
+    .detail-value {
+      color: #111827;
+      font-weight: 600;
+      word-break: break-all;
+      text-align: left;
+    }
+
+    .detail-note {
+      margin-top: 12px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .custom-modal-actions {
+      padding: 0 20px 18px;
+    }
+
+    .custom-modal-btn {
+      width: 100%;
+      height: 38px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .help-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(47, 125, 246, .35);
+      background: #eff6ff;
+      color: var(--primary);
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      margin-left: 4px;
+      vertical-align: -1px;
+    }
+
+    .amount-item.help-clickable {
+      cursor: pointer;
+    }
+
+    .amount-item.help-clickable:hover {
+      background: #f8fafc;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(6px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 12px 10px 28px; }
+      .page-title { font-size: 22px; }
+      .section-head { padding: 13px 14px 10px; }
+      .amount-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .amount-item:nth-child(3n) { border-right: 1px solid var(--border-light); }
+      .amount-item:nth-child(2n) { border-right: none; }
+      .amount-item:nth-last-child(-n + 3) { border-bottom: 1px solid var(--border-light); }
+      .amount-item:nth-last-child(-n + 2) { border-bottom: none; }
+      .amount-item { padding: 11px 12px; gap: 9px; }
+      .amount-icon { width: 26px; min-width: 26px; font-size: 23px; }
+      .amount-label { font-size: 12px; }
+      .amount-value { font-size: 17px; }
+      .amount-grid.has-full .amount-item:nth-last-child(2) { border-bottom: 1px solid var(--border-light); }
+      .amount-grid.has-full .amount-item.amount-full {
+        grid-column: 1 / -1;
+        border-right: none !important;
+        border-bottom: none !important;
+      }
+      .amount-grid.has-full .amount-item.amount-full .amount-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+      }
+      .amount-grid.has-full .amount-item.amount-full .amount-label {
+        flex: 0 0 auto;
+        font-size: 13px;
+      }
+      .amount-grid.has-full .amount-item.amount-full .amount-value {
+        margin-top: 0;
+        text-align: right;
+        font-size: clamp(18px, 5.2vw, 22px);
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .withdraw-box { padding: 12px 14px 15px; }
+      .table-wrap { margin: 0 14px; }
+      .pager { padding-right: 14px; flex-wrap: wrap; }
+      .detail-row { grid-template-columns: 92px minmax(0, 1fr); }
+      .custom-modal-head { padding: 0 16px; }
+      .custom-modal-content { padding: 16px; }
+      .custom-modal-actions { padding: 0 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="page-title">提现申请</h1>
+
+    <section class="section-card">
+      <div class="section-head">
+        <div class="section-title">账户信息</div>
+        <div class="section-desc">账户信息用于提现账户展示，并完成可提现余额计算。</div>
+        <div class="account-line" id="account-info">
+          <span class="account-chip">账户信息加载中...</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-head">
+        <div class="section-title">余额详情</div>
+      </div>
+      <div class="amount-grid" id="amount-info">
+        <div class="amount-item"><div class="amount-icon">≋</div><div class="amount-content"><div class="amount-label">总余额:</div><div class="amount-value">--</div></div></div>
+        <div class="amount-item"><div class="amount-icon">❄</div><div class="amount-content"><div class="amount-label">可提现:</div><div class="amount-value">--</div></div></div>
+        <div class="amount-item"><div class="amount-icon">↔</div><div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">--</div></div></div>
+        <div class="amount-item"><div class="amount-icon">◷</div><div class="amount-content"><div class="amount-label">锁定订单:</div><div class="amount-value">--</div></div></div>
+        <div class="amount-item"><div class="amount-icon">?</div><div class="amount-content"><div class="amount-label">待复核订单:</div><div class="amount-value">--</div></div></div>
+        <div class="amount-item"><div class="amount-icon">▤</div><div class="amount-content"><div class="amount-label">未核对金额:</div><div class="amount-value">--</div></div></div>
+      </div>
+      <input type="hidden" id="available-balance" value="0">
+      <input type="hidden" id="unsettled-image-fee-total" value="0">
+      <input type="hidden" id="unsettled-image-ids" value="[]">
+    </section>
+
+    <section class="section-card">
+      <div class="section-head">
+        <div class="section-title-row">
+          <div class="section-title">提现操作</div>
+        </div>
+      </div>
+      <div class="withdraw-box">
+        <div class="form-topline">
+          <label for="withdraw-amount">提现金额</label>
+          <!--<span class="fee-tip">手续费：以系统计算为准</span>-->
+        </div>
+        <input type="number" id="withdraw-amount" class="withdraw-input" placeholder="提现金额" min="0" step="0.01" />
+        <button class="withdraw-button" id="withdraw-button" type="button" onclick="applyWithdrawal()">立即提现</button>
+        <button class="ledger-button" type="button" onclick="window.location.href='VenueFundChanges.html'">场地流水变动记录</button>
+        <div id="status-message" class="status-message">正在申请提现...</div>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-head">
+        <div class="section-title">提现记录</div>
+      </div>
+      <div class="table-wrap" id="record-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 90px;">状态</th>
+              <th style="width: 170px;">申请时间</th>
+              <th style="width: 120px;">提现金额</th>
+              <th>实际到账金额</th>
+              <th style="width: 90px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawal-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="empty-state" style="display:none;">暂无提现记录</div>
+      <div class="pager" id="record-pager"></div>
+    </section>
+  </div>
+
+  <div class="custom-modal-mask" id="custom-modal-mask" onclick="closeCustomModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()">
+      <div class="custom-modal-head">
+        <div class="custom-modal-title" id="custom-modal-title">提示</div>
+        <button class="custom-modal-close" type="button" onclick="closeCustomModal()">×</button>
+      </div>
+      <div class="custom-modal-content" id="custom-modal-content"></div>
+      <div class="custom-modal-actions">
+        <button class="custom-modal-btn" type="button" onclick="closeCustomModal()">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_ACCOUNT = '/api/pay/CalculateSettlements.php';
+    const API_APPLY = '/api/pay/ApplyWithdrawal.php';
+    const API_RECORDS = '/api/pay/getWithdrawalRecords.php';
+
+    let accountCache = {};
+    let withdrawalRecords = [];
+    let currentPage = 1;
+    const pageSize = 5;
+
+    function money(value) {
+      const num = parseFloat(value);
+      if (isNaN(num)) return '0.00';
+      return num.toFixed(2);
+    }
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[s]));
+    }
+
+    function openCustomModal(title, content, isHtml) {
+      document.getElementById('custom-modal-title').textContent = title || '提示';
+      const contentEl = document.getElementById('custom-modal-content');
+      if (isHtml) {
+        contentEl.innerHTML = content || '';
+      } else {
+        contentEl.textContent = content || '';
+      }
+      document.getElementById('custom-modal-mask').style.display = 'flex';
+    }
+
+    function showCustomModal(title, content) {
+      openCustomModal(title, content, false);
+    }
+
+    function closeCustomModal() {
+      document.getElementById('custom-modal-mask').style.display = 'none';
+    }
+
+    function formatAmount(value, unit) {
+      return `${money(value)} <small>${unit || '元'}</small>`;
+    }
+
+    function getReceivedAmount(record) {
+      return record.actual_amount || (
+        parseFloat(record.withdrawal_amount || 0)
+        - parseFloat(record.withdrawal_fee || 0)
+        - parseFloat(record.technical_service_fee || 0)
+      );
+    }
+
+    function showImageFeeInfo(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      showCustomModal(
+        '图传费用说明',
+        '图传费用 = 驾驶分钟数 × 0.03元\n\n该费用会在提现时作为扣减项参与结算。'
+      );
+    }
+
+    function renderAccountInfo(data) {
+      const accountInfo = document.getElementById('account-info');
+      accountInfo.innerHTML = `
+        <span class="account-chip">账户号：${esc(data.account_number || '-')}</span>
+        <span class="account-chip">账户姓名：${esc(data.account_name || '-')}</span>
+        <span class="account-chip">账户类型：${esc(data.account_pay || '-')}</span>
+      `;
+    }
+
+    function renderAmountInfo(data) {
+      const unsettledFee = parseFloat(data.unsettled_image_transmission_fee || 0);
+      const hasUnsettledFee = unsettledFee > 0;
+      document.getElementById('available-balance').value = money(data.available_balance);
+      document.getElementById('unsettled-image-fee-total').value = money(unsettledFee);
+      document.getElementById('unsettled-image-ids').value = JSON.stringify(data.unsettled_image_ids || []);
+
+      const checkBtn = Math.abs(parseFloat(data.notSettledAmount || 0)) > 0
+        ? `<button type="button" class="check-money-btn" onclick="location.href='moeny.html'">去核对</button>`
+        : '';
+
+const feeHelp = `
+  <button
+    type="button"
+    class="help-dot"
+    onclick="showImageFeeInfo(event)"
+    aria-label="图传费用说明"
+  >?</button>
+`;
+
+      const amountGrid = document.getElementById('amount-info');
+      amountGrid.classList.add('has-full');
+      amountGrid.innerHTML = `
+        <div class="amount-item">
+          <div class="amount-icon">≋</div>
+          <div class="amount-content"><div class="amount-label">总余额:</div><div class="amount-value">${formatAmount(data.account_balance)}</div></div>
+        </div>
+<div class="amount-item is-primary">
+  <div class="amount-icon">❄</div>
+  <div class="amount-content"><div class="amount-label">可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
+</div>
+<div class="amount-item is-warning">
+  <div class="amount-icon">↔</div>
+  <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
+</div>
+<div class="amount-item is-muted">
+  <div class="amount-icon">◷</div>
+  <div class="amount-content"><div class="amount-label">锁定订单:</div><div class="amount-value">${esc(data.lock_order_count || 0)} <small>笔</small></div></div>
+</div>
+<div class="amount-item is-warning">
+  <div class="amount-icon">?</div>
+  <div class="amount-content"><div class="amount-label">待复核订单:</div><div class="amount-value">${esc(data.lock_amount || 0)} <small>电池</small></div></div>
+</div>
+<div class="amount-item is-warning">
+  <div class="amount-icon">▤</div>
+  <div class="amount-content"><div class="amount-label">未核对金额:${checkBtn}</div><div class="amount-value">${formatAmount(data.notSettledAmount)}</div></div>
+</div>
+<div class="amount-item is-danger">
+  <div class="amount-icon">↺</div>
+  <div class="amount-content"><div class="amount-label">退款金额:</div><div class="amount-value">${formatAmount(data.total_refund)}</div></div>
+</div>
+<div class="amount-item is-warning help-clickable" onclick="showImageFeeInfo(event)">
+  <div class="amount-icon">▥</div>
+  <div class="amount-content">
+    <div class="amount-label">未结算图传:${feeHelp}</div>
+    <div class="amount-value">${formatAmount(unsettledFee)}</div>
+  </div>
+</div>
+<div class="amount-item amount-full is-primary">
+          <div class="amount-icon">✓</div>
+          <div class="amount-content"><div class="amount-label">实际可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
+        </div>
+      `;
+    }
+
+    function loadAccountInfo() {
+      fetch(API_ACCOUNT)
+        .then(response => response.json())
+        .then(data => {
+          if (data.code === 0) {
+            accountCache = data;
+            renderAccountInfo(data);
+            renderAmountInfo(data);
+            const withdrawAmountInput = document.getElementById('withdraw-amount');
+            withdrawAmountInput.value = money(data.available_balance);
+            updateWithdrawButtonState();
+          } else if (data.code === 1002) {
+            if (confirm('需要先绑定收款账号才可以提现，是否立即绑定？')) {
+              window.location.href = 'paybind.html';
+            } else {
+              window.history.back();
+            }
+          } else {
+            showCustomModal('加载失败', '加载账户信息失败，请稍后再试。');
+          }
+        })
+        .catch(error => {
+          console.error('请求失败:', error);
+          showCustomModal('加载失败', '加载账户信息失败，请重试。');
+        });
+    }
+
+    function updateWithdrawButtonState() {
+      const withdrawAmount = parseFloat(document.getElementById('withdraw-amount').value);
+      const maxWithdrawAmount = parseFloat(document.getElementById('available-balance').value) || 0;
+      const btn = document.getElementById('withdraw-button');
+      btn.disabled = !(withdrawAmount > 0 && withdrawAmount <= maxWithdrawAmount);
+    }
+
+    function applyWithdrawal() {
+      const withdrawButton = document.getElementById('withdraw-button');
+      const statusMessage = document.getElementById('status-message');
+      const withdrawAmount = parseFloat(document.getElementById('withdraw-amount').value);
+
+      if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+        showCustomModal('提现提示', '请输入有效的提现金额。');
+        return;
+      }
+
+      statusMessage.style.display = 'block';
+      withdrawButton.disabled = true;
+
+      const data = {
+        amount: withdrawAmount,
+        unsettled_image_transmission_fee: document.getElementById('unsettled-image-fee-total').value || 0,
+        unsettled_image_ids: document.getElementById('unsettled-image-ids').value || '[]'
+      };
+
+      fetch(API_APPLY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: new URLSearchParams(data).toString()
+      })
+        .then(response => response.json())
+        .then(data => {
+          statusMessage.style.display = 'none';
+          if (data.code === 0) {
+            showCustomModal('提现申请成功', '提现申请已提交，请等待平台处理。');
+            loadAccountInfo();
+            loadWithdrawalRecords();
+          } else if (data.code === 1005) {
+            showCustomModal('无法提现', '场地已被封禁，无法提现，请联系运营处理。');
+            updateWithdrawButtonState();
+          } else if (data.code === 1008) {
+            showCustomModal(
+              '超过可提现额度',
+              `账户余额：${data.data.account_balance} 元\n冻结金额：${data.data.frozen_amount} 元\n退款金额：${data.data.total_refund || 0} 元\n待复核订单：${data.data.lock_amount || 0} 电池\n可提现：${data.data.available_balance} 元`
+            );
+            updateWithdrawButtonState();
+          } else {
+            showCustomModal('提现失败', data.msg || '提现申请失败，请稍后重试。');
+            updateWithdrawButtonState();
+          }
+        })
+        .catch(error => {
+          console.error('提现申请失败:', error);
+          statusMessage.style.display = 'none';
+          showCustomModal('提现失败', '提现申请失败，请重试。');
+          updateWithdrawButtonState();
+        });
+    }
+
+    function applicationStatusText(status) {
+      const s = Number(status);
+      if (s === 0) return '待处理';
+      if (s === 1) return '已处理';
+      if (s === 2) return '已打款';
+      return '拒绝';
+    }
+
+    function payoutStatusText(status) {
+      return Number(status) === 1 ? '已打款' : '未打款';
+    }
+
+    function applicationBadgeClass(record) {
+      const s = Number(record.application_status);
+      if (s === 0) return 'pending';
+      if (s === 1 || s === 2 || Number(record.payout_status) === 1) return 'success';
+      return 'danger';
+    }
+
+function listStatusText(record) {
+  // 列表只看是否已打款
+  if (Number(record.payout_status) === 1 || Number(record.application_status) === 2) {
+    return '已打款';
+  }
+
+  return '未处理';
+}
+
+function listStatusBadgeClass(record) {
+  return listStatusText(record) === '已打款' ? 'success' : 'pending';
+}
+    function getRecordNo(record) {
+      return record.withdrawal_no || record.withdrawal_number || record.order_number || record.id || '-';
+    }
+
+    function loadWithdrawalRecords() {
+      fetch(API_RECORDS)
+        .then(response => response.json())
+        .then(data => {
+          if (data.code === 0 && data.data && data.data.length > 0) {
+            withdrawalRecords = data.data.slice().sort((a, b) => String(b.application_time || '').localeCompare(String(a.application_time || '')));
+            currentPage = 1;
+            renderWithdrawalRecords();
+          } else {
+            withdrawalRecords = [];
+            renderWithdrawalRecords();
+          }
+        })
+        .catch(error => {
+          console.error('提现记录加载失败:', error);
+          withdrawalRecords = [];
+          renderWithdrawalRecords('提现记录加载失败');
+        });
+    }
+
+    function renderWithdrawalRecords(errorText) {
+      const tbody = document.getElementById('withdrawal-tbody');
+      const emptyState = document.getElementById('empty-state');
+      const tableWrap = document.getElementById('record-table-wrap');
+      const pager = document.getElementById('record-pager');
+
+      if (!withdrawalRecords.length) {
+        tbody.innerHTML = '';
+        tableWrap.style.display = 'none';
+        emptyState.style.display = 'block';
+        emptyState.textContent = errorText || '暂无提现记录';
+        pager.innerHTML = '';
+        return;
+      }
+
+      tableWrap.style.display = 'block';
+      emptyState.style.display = 'none';
+
+      const totalPages = Math.max(1, Math.ceil(withdrawalRecords.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const rows = withdrawalRecords.slice(start, start + pageSize);
+
+      tbody.innerHTML = rows.map((record, index) => {
+        const globalIndex = start + index;
+        const receivedAmount = getReceivedAmount(record);
+        return `
+          <tr>
+            <td><span class="badge ${listStatusBadgeClass(record)}">${listStatusText(record)}</span></td>
+            <td>${esc(record.application_time || '-')}</td>
+            <td class="amount-cell">${money(record.withdrawal_amount)} 元</td>
+            <td class="amount-cell">${money(receivedAmount)} 元</td>
+            <td><button class="detail-link" type="button" onclick="showWithdrawalDetail(${globalIndex})">查看详情</button></td>
+          </tr>
+        `;
+      }).join('');
+
+      renderPager(totalPages);
+    }
+
+    function renderPager(totalPages) {
+      const pager = document.getElementById('record-pager');
+      const buttons = [];
+      buttons.push(`<span>共${totalPages}页</span>`);
+      buttons.push(`<button type="button" ${currentPage <= 1 ? 'disabled' : ''} onclick="changePage(1)">|&lt;</button>`);
+      buttons.push(`<button type="button" ${currentPage <= 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&lt;</button>`);
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+          buttons.push(`<button type="button" class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`);
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          buttons.push('<span>...</span>');
+        }
+      }
+
+      buttons.push(`<button type="button" ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">&gt;</button>`);
+      buttons.push(`<button type="button" ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${totalPages})">&gt;|</button>`);
+      pager.innerHTML = buttons.join('');
+    }
+
+    function changePage(page) {
+      currentPage = page;
+      renderWithdrawalRecords();
+    }
+
+    function showWithdrawalDetail(index) {
+      const record = withdrawalRecords[index];
+      if (!record) return;
+      const recordNo = getRecordNo(record);
+      const receivedAmount = getReceivedAmount(record);
+
+      const detailHtml = `
+        <div class="detail-list">
+          <div class="detail-row"><div class="detail-label">提现流水号:</div><div class="detail-value">${esc(recordNo)}</div></div>
+          <div class="detail-row"><div class="detail-label">申请时间:</div><div class="detail-value">${esc(record.application_time || '-')}</div></div>
+          <div class="detail-row"><div class="detail-label">提现金额:</div><div class="detail-value">${money(record.withdrawal_amount)} 元</div></div>
+          <div class="detail-row"><div class="detail-label">手续费:</div><div class="detail-value">${money(record.withdrawal_fee)} 元</div></div>
+          <div class="detail-row"><div class="detail-label">技术服务费:</div><div class="detail-value">${money(record.technical_service_fee)} 元</div></div>
+          <div class="detail-row"><div class="detail-label">实际到账金额:</div><div class="detail-value">${money(receivedAmount)} 元</div></div>
+          <div class="detail-row"><div class="detail-label">申请状态:</div><div class="detail-value">${applicationStatusText(record.application_status)}</div></div>
+          <div class="detail-row"><div class="detail-label">打款状态:</div><div class="detail-value">${payoutStatusText(record.payout_status)}</div></div>
+        </div>
+        <!--<div class="detail-note">这里只展示当前接口真实返回的提现字段，不额外做“审核中 / 处理中 / 已到账”进度条。</div>-->
+      `;
+      openCustomModal('提现详情', detailHtml, true);
+    }
+
+    document.getElementById('withdraw-amount').addEventListener('input', updateWithdrawButtonState);
+    loadAccountInfo();
+    loadWithdrawalRecords();
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>场地流水变动记录</title>
+<style>
+:root{--primary:#5b8cff;--primary-dark:#4a77e4;--muted:#7f8fa4;--bg-start:#f8f9ff;--bg-end:#f0f3ff;--card:#fff;--border:#dfe5f2;--text:#263238;--danger:#d93025;--success:#0f9d58;--warning:#b45309;--warning-bg:#fff7ed;--warning-border:#fed7aa;--shadow:0 4px 24px rgba(91,140,255,.08)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"PingFang SC",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh;background:linear-gradient(135deg,var(--bg-start),var(--bg-end));padding:20px;color:var(--text)}
+.container{max-width:1200px;margin:0 auto}.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--primary);padding-bottom:12px;margin-bottom:18px}.title{font-size:24px;font-weight:700}
+.back-btn{border:1px solid var(--primary);color:var(--primary);background:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font-size:14px}.back-btn:hover{background:#f4f7ff}
+.filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:12px;align-items:end}.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}.field input,.field select{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:#fff;color:var(--text)}
+.search-btn{height:40px;border:0;border-radius:8px;background:var(--primary);color:#fff;padding:0 18px;cursor:pointer;font-size:15px}.search-btn:hover{background:var(--primary-dark)}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.kpi{border:1px solid var(--border);border-radius:10px;padding:14px;background:#fff}.kpi.problem{border-color:var(--warning-border);background:var(--warning-bg)}.kpi .label{font-size:13px;color:var(--muted);margin-bottom:8px}.kpi .value{font-size:22px;font-weight:700}.kpi.problem .value{color:var(--warning)}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:12px 10px;border-bottom:1px solid #edf1f7;text-align:left;font-size:14px;white-space:nowrap}th{color:#526173;background:#f8faff;font-weight:600}tbody tr:hover{background:#fbfcff}
+.problem-row{background:#fff7ed}.problem-row:hover{background:#ffedd5}.amount-revenue{color:var(--success);font-weight:700}.amount-withdrawal{color:var(--danger);font-weight:700}.problem-badge{display:inline-flex;align-items:center;border:1px solid var(--warning-border);border-radius:999px;background:#ffedd5;color:var(--warning);font-weight:700;padding:2px 8px;margin-right:6px}
+.empty,.loading{padding:34px 0;text-align:center;color:var(--muted)}.error{color:var(--danger);font-size:14px;margin-top:10px;min-height:20px}.pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px}.pager button{border:1px solid var(--border);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}.pager button:disabled{color:#b4bdcc;background:#f5f7fb;cursor:not-allowed}.page-info{font-size:14px;color:var(--muted)}
+@media (max-width:760px){body{padding:12px}.card{padding:16px;border-radius:10px}.header{align-items:flex-start;flex-direction:column}.title{font-size:20px}.filters{grid-template-columns:1fr}.summary{grid-template-columns:1fr}.pager{justify-content:center}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <div class="title">场地流水变动记录</div>
+      <button class="back-btn" type="button" onclick="location.href='PaymentDisbursement_optimized.html'">返回提现申请</button>
+    </div>
+    <div class="filters">
+      <div class="field"><label for="changeType">变动类型</label><select id="changeType"><option value="">全部</option><option value="revenue">收益入账</option><option value="withdrawal">提现出账</option></select></div>
+      <div class="field"><label for="dataStatus">数据状态</label><select id="dataStatus"><option value="">全部数据</option><option value="abnormal">异常数据</option></select></div>
+      <div class="field"><label for="startDate">开始日期</label><input id="startDate" type="date" /></div>
+      <div class="field"><label for="endDate">结束日期</label><input id="endDate" type="date" /></div>
+      <div class="field"><label for="pageSize">每页条数</label><select id="pageSize"><option value="20">20</option><option value="50">50</option><option value="100">100</option></select></div>
+      <button class="search-btn" type="button" onclick="reload()">查询</button>
+    </div>
+    <div id="error" class="error"></div>
+  </div>
+  <div class="card">
+    <div class="summary">
+      <div class="kpi"><div class="label">收益入账合计</div><div id="revenueTotal" class="value">--</div></div>
+      <div class="kpi"><div class="label">流水记录数</div><div id="recordTotal" class="value">--</div></div>
+      <div class="kpi problem"><div class="label">异常数据数</div><div id="abnormalTotal" class="value">--</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>类型</th><th>变动金额</th><th>变动后余额</th><th>变动时间</th><th>收益账期</th><th>原因</th><th>来源</th><th>操作人</th><th>备注</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="10" class="loading">加载中...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pager"><button id="prevBtn" type="button" onclick="changePage(-1)">上一页</button><span id="pageInfo" class="page-info">--</span><button id="nextBtn" type="button" onclick="changePage(1)">下一页</button></div>
+  </div>
+</div>
+<script>
+const API_URL='/api/pay/GetVenueFundChanges.php';
+const PROBLEM_SOURCE='存在问题订单';
+let currentPage=1,total=0;
+const els={changeType:document.getElementById('changeType'),dataStatus:document.getElementById('dataStatus'),startDate:document.getElementById('startDate'),endDate:document.getElementById('endDate'),pageSize:document.getElementById('pageSize'),error:document.getElementById('error'),tbody:document.getElementById('tbody'),revenueTotal:document.getElementById('revenueTotal'),recordTotal:document.getElementById('recordTotal'),abnormalTotal:document.getElementById('abnormalTotal'),pageInfo:document.getElementById('pageInfo'),prevBtn:document.getElementById('prevBtn'),nextBtn:document.getElementById('nextBtn')};
+function money(v){return Number(v||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function text(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+function typeName(t){return t==='withdrawal'?'提现出账':'收益入账'}
+function isProblem(row){return row.source_type===PROBLEM_SOURCE}
+function sourceText(row){const parts=[];if(row.source_type)parts.push(row.source_type);if(row.source_id)parts.push(`#${row.source_id}`);return parts.length?parts.join(' '):'--'}
+function sourceHtml(row){return isProblem(row)?`<span class="problem-badge">${text(row.source_type)}</span>`:text(sourceText(row))}
+function params(){const q=new URLSearchParams();q.set('page',currentPage);q.set('page_size',els.pageSize.value);if(els.changeType.value)q.set('change_type',els.changeType.value);if(els.dataStatus.value==='abnormal')q.set('abnormal','1');if(els.startDate.value)q.set('start_date',els.startDate.value);if(els.endDate.value)q.set('end_date',els.endDate.value);return q.toString()}
+async function loadData(){els.error.textContent='';els.tbody.innerHTML='<tr><td colspan="10" class="loading">加载中...</td></tr>';try{const res=await fetch(`${API_URL}?${params()}`,{credentials:'include'});const json=await res.json();if(json.code!==0)throw new Error(json.msg||'查询失败');render(json.data||{})}catch(err){els.error.textContent=err.message||'网络异常，请稍后重试';els.tbody.innerHTML='<tr><td colspan="10" class="empty">暂无数据</td></tr>';renderPager(0,1,Number(els.pageSize.value))}}
+
+function render(data){
+  const rows=Array.isArray(data.rows)?data.rows:[];
+  const summary=data.summary||{};
+  total=Number(data.total||0);
+  els.revenueTotal.textContent=`${money(summary.revenue_total)} 元`;
+  els.recordTotal.textContent=total.toLocaleString('zh-CN');
+  els.abnormalTotal.textContent=Number(summary.abnormal_total||0).toLocaleString('zh-CN');
+  if(!rows.length){
+    els.tbody.innerHTML='<tr><td colspan="10" class="empty">\u6682\u65e0\u6d41\u6c34\u8bb0\u5f55</td></tr>';
+  }else{
+    els.tbody.innerHTML=rows.map(row=>{
+      const amountClass=row.change_type==='withdrawal'?'amount-withdrawal':'amount-revenue';
+      const amountPrefix=row.change_type==='withdrawal'?'-':'+';
+      const rowClass=isProblem(row)?' class="problem-row"':'';
+      return `<tr${rowClass}><td>${text(row.id)}</td><td>${typeName(row.change_type)}</td><td class="${amountClass}">${amountPrefix} ${money(row.change_amount)} 元</td><td>${money(row.balance_after_change)} 元</td><td>${text(row.change_date)}</td><td>${text(row.revenue_date||'--')}</td><td>${text(row.change_reason||'--')}</td><td>${sourceHtml(row)}</td><td>${text(row.operator_id||'--')}</td><td>${text(row.remarks||'--')}</td></tr>`;
+    }).join('');
+  }
+  renderPager(total,Number(data.page||currentPage),Number(data.page_size||els.pageSize.value));
+}
+function renderPager(totalRows,page,pageSize){const pages=Math.max(1,Math.ceil(totalRows/pageSize));currentPage=Math.min(page,pages);els.pageInfo.textContent=`第 ${currentPage} / ${pages} 页，共 ${totalRows} 条`;els.prevBtn.disabled=currentPage<=1;els.nextBtn.disabled=currentPage>=pages}
+function reload(){currentPage=1;loadData()}function changePage(delta){const pages=Math.max(1,Math.ceil(total/Number(els.pageSize.value)));const next=currentPage+delta;if(next<1||next>pages)return;currentPage=next;loadData()}
+els.pageSize.addEventListener('change',reload);els.dataStatus.addEventListener('change',reload);loadData();
+</script>
+</body>
+</html>

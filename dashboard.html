@@ -346,6 +346,26 @@
       background: #fff;
     }
 
+    .notice-button {
+      position: relative;
+    }
+
+    .notice-dot {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      display: none;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    .notice-button.has-unread .notice-dot {
+      display: block;
+    }
+
     .icon-btn svg,
     .primary-btn svg,
     .ghost-btn svg {
@@ -857,6 +877,94 @@
       background: #fbfcfd;
       cursor: pointer;
       position: relative;
+    }
+
+    .notice-modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background: rgba(8, 21, 25, .46);
+      backdrop-filter: blur(3px);
+    }
+
+    .notice-modal-mask.show {
+      display: flex;
+    }
+
+    .notice-modal {
+      width: min(620px, 100%);
+      max-height: min(78vh, 640px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(223, 232, 235, .95);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 24px 80px rgba(6, 20, 24, .28);
+    }
+
+    .notice-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(15, 143, 140, .08), rgba(64, 92, 168, .04));
+    }
+
+    .notice-modal-title {
+      min-width: 0;
+    }
+
+    .notice-modal-title span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .notice-modal-title strong {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .notice-close {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #52666d;
+      background: #fff;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .notice-modal-body {
+      overflow: auto;
+      padding: 18px 20px;
+      color: #34464e;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .notice-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px 18px;
+      border-top: 1px solid var(--line);
+      background: #fbfcfd;
     }
 
     .quick-card:hover {
@@ -1554,8 +1662,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="search" placeholder="搜索设备、订单、用户" />
           </div>
-          <button class="icon-btn" type="button" aria-label="通知">
+          <button class="icon-btn notice-button" id="noticeButton" type="button" aria-label="通知">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+            <span class="notice-dot" id="noticeDot" aria-hidden="true"></span>
           </button>
           <div class="user-chip"><i></i><span id="currentUser">加载中</span></div>
           <button class="ghost-btn" id="logoutButton" type="button">
@@ -1709,15 +1818,44 @@
       </section>
     </main>
   </div>
+
+  <div class="notice-modal-mask" id="noticeModal" role="presentation">
+    <div class="notice-modal" role="dialog" aria-modal="true" aria-labelledby="noticeModalTitle">
+      <div class="notice-modal-head">
+        <div class="notice-modal-title">
+          <span>官方通知</span>
+          <strong id="noticeModalTitle">通知详情</strong>
+        </div>
+        <button class="notice-close" id="noticeCloseButton" type="button" aria-label="关闭通知">×</button>
+      </div>
+      <div class="notice-modal-body" id="noticeModalContent"></div>
+      <div class="notice-modal-actions">
+        <button class="ghost-btn" id="noticeLaterButton" type="button">稍后处理</button>
+        <button class="primary-btn" id="noticeReadButton" type="button">标记已读</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const sidebarNav = document.getElementById('sidebarNav');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const mobileMenuButton = document.querySelector('.mobile-menu');
     const pageContent = document.getElementById('pageContent');
+    const noticeButton = document.getElementById('noticeButton');
+    const noticeModal = document.getElementById('noticeModal');
+    const noticeModalTitle = document.getElementById('noticeModalTitle');
+    const noticeModalContent = document.getElementById('noticeModalContent');
+    const noticeCloseButton = document.getElementById('noticeCloseButton');
+    const noticeLaterButton = document.getElementById('noticeLaterButton');
+    const noticeReadButton = document.getElementById('noticeReadButton');
     const homeContent = pageContent.innerHTML;
     let menuTree = [];
     let deviceFilters = { keyword: '', venueId: '' };
+    let noticePollTimer = null;
+    let currentNotice = null;
+    let lastUnreadNotice = null;
+    const autoOpenedNoticeIds = new Set();
 
     function isMobileSidebar() {
       return window.matchMedia('(max-width: 760px)').matches;
@@ -1819,6 +1957,7 @@
         }
         document.getElementById('currentUser').textContent = result.data.username || 'Admin';
         await loadMenus();
+        startNoticePolling();
       } catch (error) {
         window.location.replace('./index.html');
       }
@@ -2565,6 +2704,125 @@
       pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p>该入口来自老工作台，后续会按旧接口重做为新后台页面。</p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
     }
 
+    function noticeBody(action, extra) {
+      const body = new URLSearchParams();
+      body.set('action', action);
+      Object.keys(extra || {}).forEach(function(key) {
+        body.set(key, extra[key]);
+      });
+      return body;
+    }
+
+    async function postNoticeApi(action, extra) {
+      const response = await fetch('./api/index/Msg.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: noticeBody(action, extra),
+        cache: 'no-store'
+      });
+      return response.json();
+    }
+
+    function updateNoticeBadge(hasUnread) {
+      if (noticeButton) {
+        noticeButton.classList.toggle('has-unread', !!hasUnread);
+      }
+    }
+
+    function normalizeNotice(notice) {
+      if (!notice || typeof notice !== 'object') return null;
+      const id = Number(notice.id || 0);
+      if (!id) return null;
+      return {
+        id: id,
+        title: notice.title || '官方通知',
+        content: notice.content || ''
+      };
+    }
+
+    async function checkUnreadNotices(options) {
+      options = options || {};
+      try {
+        const result = await postNoticeApi('getUnreadNotices');
+        if (Number(result.code) !== 0) {
+          lastUnreadNotice = null;
+          updateNoticeBadge(false);
+          return null;
+        }
+
+        const list = Array.isArray(result.data) ? result.data : [];
+        const notice = normalizeNotice(list[0]);
+        lastUnreadNotice = notice;
+        updateNoticeBadge(!!notice);
+
+        if (!notice) {
+          return null;
+        }
+
+        const shouldOpen = options.forceOpen || !autoOpenedNoticeIds.has(notice.id);
+        if (shouldOpen) {
+          openNoticeModal(notice);
+          autoOpenedNoticeIds.add(notice.id);
+        }
+
+        return notice;
+      } catch (error) {
+        console.error('检查未读通知失败:', error);
+        return null;
+      }
+    }
+
+    function startNoticePolling() {
+      checkUnreadNotices();
+      if (noticePollTimer) return;
+      noticePollTimer = window.setInterval(function() {
+        checkUnreadNotices();
+      }, 60000);
+    }
+
+    function openNoticeModal(notice) {
+      const normalized = normalizeNotice(notice);
+      if (!normalized || !noticeModal) return;
+      currentNotice = normalized;
+      noticeModalTitle.textContent = normalized.title;
+      noticeModalContent.innerHTML = escapeHtml(normalized.content).replace(/\r?\n/g, '<br>');
+      noticeModal.classList.add('show');
+    }
+
+    function closeNoticeModal() {
+      if (noticeModal) {
+        noticeModal.classList.remove('show');
+      }
+    }
+
+    async function markCurrentNoticeRead() {
+      if (!currentNotice || !currentNotice.id) {
+        closeNoticeModal();
+        return;
+      }
+
+      try {
+        const result = await postNoticeApi('markNoticeAsRead', {
+          notice_id: String(currentNotice.id)
+        });
+        if (Number(result.code) === 0) {
+          lastUnreadNotice = null;
+          currentNotice = null;
+          updateNoticeBadge(false);
+          closeNoticeModal();
+          await checkUnreadNotices();
+        } else {
+          alert(result.msg || '标记已读失败');
+        }
+      } catch (error) {
+        console.error('标记通知已读失败:', error);
+        alert('标记已读请求失败，请稍后重试');
+      }
+    }
+
     function formatMoney(value) {
       const number = Number(value || 0);
       return '¥' + number.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2602,6 +2860,7 @@
 
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape') {
+        closeNoticeModal();
         closeSidebar();
       }
     });
@@ -2629,6 +2888,36 @@
     });
 
     window.addEventListener('hashchange', routeFromHash);
+
+    if (noticeButton) {
+      noticeButton.addEventListener('click', async function() {
+        if (lastUnreadNotice) {
+          openNoticeModal(lastUnreadNotice);
+          return;
+        }
+        await checkUnreadNotices({ forceOpen: true });
+      });
+    }
+
+    if (noticeCloseButton) {
+      noticeCloseButton.addEventListener('click', closeNoticeModal);
+    }
+
+    if (noticeLaterButton) {
+      noticeLaterButton.addEventListener('click', closeNoticeModal);
+    }
+
+    if (noticeReadButton) {
+      noticeReadButton.addEventListener('click', markCurrentNoticeRead);
+    }
+
+    if (noticeModal) {
+      noticeModal.addEventListener('click', function(event) {
+        if (event.target === noticeModal) {
+          closeNoticeModal();
+        }
+      });
+    }
 
     document.getElementById('logoutButton').addEventListener('click', async function() {
       await fetch('./api/auth/logout.php', {

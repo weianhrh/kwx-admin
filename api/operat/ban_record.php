@@ -99,11 +99,9 @@ if ($role_id === 3 || $role_id === 4) {
 }
 $device_details = [];
 $venue_details = [];
-$voice_room_details = [];
 $venue_stats = [];
 $device_count = 0;
 $venue_count = 0;
-$voice_room_count = 0;
 
 try {
     // =========================
@@ -193,65 +191,19 @@ $sql_venue_detail = "
     $venue_count = intval($venue_count_result[0]['total'] ?? 0);
 
     // =========================
-    // 语音房封禁记录
-    // voice_room_ban_records 字段：
-    // venue_id、ban_duration、ban_start_time、ban_end_time、status、operator、ban_reason
-    // =========================
-    $voiceRoomWhere = "vr.ban_start_time BETWEEN ? AND ?";
-    $voiceRoomParams = [$start_date, $end_date];
-
-    if ($selectedVenueId !== null) {
-        $voiceRoomWhere .= " AND vr.venue_id = ?";
-        $voiceRoomParams[] = $selectedVenueId;
-    }
-
-    $sql_voice_room_detail = "
-        SELECT
-            v.venue_name,
-            NULL AS name,
-            vr.venue_id,
-            NULL AS serial_number,
-            vr.ban_start_time AS created_at,
-            NULL AS image_url,
-            vr.ban_duration,
-            vr.ban_end_time,
-            vr.ban_reason,
-            vr.status AS ban_status,
-            vr.operator AS operator_uid
-        FROM voice_room_ban_records vr
-        LEFT JOIN venues v ON vr.venue_id = v.id
-        WHERE {$voiceRoomWhere}
-        ORDER BY vr.ban_start_time DESC
-    ";
-    logSql($sql_voice_room_detail, $voiceRoomParams);
-    $voice_room_details = $database->query($sql_voice_room_detail, $voiceRoomParams);
-
-    $sql_voice_room_count = "
-        SELECT COUNT(*) AS total
-        FROM voice_room_ban_records vr
-        WHERE {$voiceRoomWhere}
-    ";
-    $voice_room_count_result = $database->query($sql_voice_room_count, $voiceRoomParams);
-    $voice_room_count = intval($voice_room_count_result[0]['total'] ?? 0);
-
-    // =========================
     // 当前时间区间内，每个场地违规次数
-    // 统计：设备封禁 + 场地封禁 + 语音房封禁
+    // 统计：设备封禁 + 场地封禁
     // =========================
     $statsDeviceWhere = "db.created_at BETWEEN ? AND ?";
     $statsVenueWhere = "vb.created_at BETWEEN ? AND ?";
-    $statsVoiceRoomWhere = "vr.ban_start_time BETWEEN ? AND ?";
     $statsDeviceParams = [$start_date, $end_date];
     $statsVenueParams = [$start_date, $end_date];
-    $statsVoiceRoomParams = [$start_date, $end_date];
 
     if ($selectedVenueId !== null) {
         $statsDeviceWhere .= " AND db.venue_id = ?";
         $statsVenueWhere .= " AND vb.venue_id = ?";
-        $statsVoiceRoomWhere .= " AND vr.venue_id = ?";
         $statsDeviceParams[] = $selectedVenueId;
         $statsVenueParams[] = $selectedVenueId;
-        $statsVoiceRoomParams[] = $selectedVenueId;
     }
 
     $sql_venue_stats = "
@@ -260,7 +212,6 @@ $sql_venue_detail = "
             COALESCE(v.venue_name, '未知场地') AS venue_name,
             SUM(CASE WHEN x.ban_type = 'device' THEN 1 ELSE 0 END) AS device_count,
             SUM(CASE WHEN x.ban_type = 'venue' THEN 1 ELSE 0 END) AS venue_count,
-            SUM(CASE WHEN x.ban_type = 'voice_room' THEN 1 ELSE 0 END) AS voice_room_count,
             COUNT(*) AS total_count
         FROM (
             SELECT
@@ -276,24 +227,16 @@ $sql_venue_detail = "
                 'venue' AS ban_type
             FROM venue_bans vb
             WHERE {$statsVenueWhere}
-
-            UNION ALL
-
-            SELECT
-                vr.venue_id,
-                'voice_room' AS ban_type
-            FROM voice_room_ban_records vr
-            WHERE {$statsVoiceRoomWhere}
         ) x
         LEFT JOIN venues v ON v.id = x.venue_id
         GROUP BY x.venue_id, v.venue_name
         ORDER BY total_count DESC
     ";
-    $statsParams = array_merge($statsDeviceParams, $statsVenueParams, $statsVoiceRoomParams);
+    $statsParams = array_merge($statsDeviceParams, $statsVenueParams);
     logSql($sql_venue_stats, $statsParams);
     $venue_stats = $database->query($sql_venue_stats, $statsParams);
 
-    $total_count = $device_count + $venue_count + $voice_room_count;
+    $total_count = $device_count + $venue_count;
 
     echo json_encode([
         'code' => 0,
@@ -302,10 +245,8 @@ $sql_venue_detail = "
             'total_bans' => $total_count,
             'device_count' => $device_count,
             'venue_count' => $venue_count,
-            'voice_room_count' => $voice_room_count,
             'device_bans' => $device_details ?: [],
             'venue_bans' => $venue_details ?: [],
-            'voice_room_bans' => $voice_room_details ?: [],
             'venue_stats' => $venue_stats ?: [],
             'start_date' => $start_date,
             'end_date' => $end_date,

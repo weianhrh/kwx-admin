@@ -195,7 +195,7 @@ function menu_franchise_tree(): array
             'title' => '设备管理',
             'icon' => 'device',
             'children' => [
-                ['id' => 9321, 'parent_id' => 9302, 'name' => 'franchise-devices', 'title' => '设备管理', 'icon' => 'device', 'jump' => '/iframe/link/deviceMgt', 'sort' => 10],
+                ['id' => 9321, 'parent_id' => 9302, 'name' => 'franchise-devices', 'title' => '设备管理', 'icon' => 'device', 'jump' => '/iframe/link/vehicleslite', 'sort' => 10],
                 ['id' => 9322, 'parent_id' => 9302, 'name' => 'franchise-device-lock', 'title' => '挂车占有', 'icon' => 'tools', 'jump' => '/iframe/link/fill_energy', 'sort' => 20],
             ],
         ],
@@ -206,7 +206,7 @@ function menu_franchise_tree(): array
             'title' => '场地管理',
             'icon' => 'venue',
             'children' => [
-                ['id' => 9331, 'parent_id' => 9303, 'name' => 'franchise-venues', 'title' => '场地管理', 'icon' => 'venue', 'jump' => '/iframe/link/VenuesManagement', 'sort' => 10],
+                ['id' => 9331, 'parent_id' => 9303, 'name' => 'franchise-venues', 'title' => '场地管理', 'icon' => 'venue', 'jump' => '/iframe/link/venue', 'sort' => 10],
                 ['id' => 9332, 'parent_id' => 9303, 'name' => 'franchise-pricing', 'title' => '资费套餐', 'icon' => 'finance', 'jump' => '/iframe/link/pricing_options', 'sort' => 20],
             ],
         ],
@@ -218,7 +218,7 @@ function menu_franchise_tree(): array
             'icon' => 'finance',
             'children' => [
                 ['id' => 9341, 'parent_id' => 9304, 'name' => 'franchise-income', 'title' => '收入明细', 'icon' => 'finance', 'jump' => '/iframe/link/incomedetails', 'sort' => 10],
-                ['id' => 9342, 'parent_id' => 9304, 'name' => 'franchise-withdraw', 'title' => '提现申请', 'icon' => 'finance', 'jump' => '/iframe/link/venue_funds', 'sort' => 20],
+                ['id' => 9342, 'parent_id' => 9304, 'name' => 'franchise-withdraw', 'title' => '提现申请', 'icon' => 'finance', 'jump' => '/iframe/link/PaymentDisbursement_optimized', 'sort' => 20],
             ],
         ],
         [

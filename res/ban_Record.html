@@ -966,7 +966,7 @@
             <div>
                 <div class="ban-page-kicker"><i class="fas fa-shield-alt"></i> 酷玩星风控中心</div>
                 <span class="card-heading">违规记录</span>
-                <div class="ban-page-subtitle">设备封禁 / 场地违规 / 语音房处罚</div>
+                <div class="ban-page-subtitle">设备封禁 / 场地违规</div>
             </div>
 
             <div class="title-controls">
@@ -984,7 +984,6 @@
             <option value="all">全部</option>
             <option value="device">仅设备</option>
             <option value="venue">仅场地</option>
-            <option value="voice_room">仅语音房</option>
         </select>
     </div>
 
@@ -1330,9 +1329,7 @@ function fetchVenueOwnerRecords() {
 
                 const deviceRecords = (res.data.device_bans || []).map(r => ({ ...r, type: 'device' }));
                 const venueRecords = (res.data.venue_bans || []).map(r => ({ ...r, type: 'venue' }));
-                const voiceRoomRecords = (res.data.voice_room_bans || []).map(r => ({ ...r, type: 'voice_room' }));
-
-                allRecordsCache = [...deviceRecords, ...venueRecords, ...voiceRoomRecords].sort(
+                allRecordsCache = [...deviceRecords, ...venueRecords].sort(
                     (a, b) => new Date(b.created_at) - new Date(a.created_at)
                 );
 
@@ -1379,7 +1376,6 @@ function bindExtraFilters() {
                     venue_name: venueMap[venueId] || item.venue_name || '未知场地',
                     device_count: 0,
                     venue_count: 0,
-                    voice_room_count: 0,
                     total_count: 0
                 });
             }
@@ -1390,8 +1386,6 @@ function bindExtraFilters() {
                 row.device_count++;
             } else if (item.type === 'venue') {
                 row.venue_count++;
-            } else if (item.type === 'voice_room') {
-                row.voice_room_count++;
             }
 
             row.total_count++;
@@ -1430,9 +1424,8 @@ function updateVenueStatsBar(stats) {
 
     const totalVenues = displayStats.length;
 
-    // ✅ 三类违规分开统计
+    // ✅ 设备违规和场地违规分开统计
     const venueBanCount = displayStats.reduce((sum, item) => sum + Number(item.venue_count || 0), 0);
-    const voiceRoomBanCount = displayStats.reduce((sum, item) => sum + Number(item.voice_room_count || 0), 0);
     const deviceBanCount = displayStats.reduce((sum, item) => sum + Number(item.device_count || 0), 0);
     const totalCount = displayStats.reduce((sum, item) => sum + Number(item.total_count || 0), 0);
 
@@ -1449,7 +1442,7 @@ function updateVenueStatsBar(stats) {
                     </span>
 
                     <span class="stats-sub-count">
-                        语音房违规 <b>${voiceRoomBanCount}</b> 次 / 设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
+                        设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
                     </span>
                 </div>
             `;
@@ -1468,20 +1461,17 @@ function updateVenueStatsBar(stats) {
                     </span>
 
                     <span class="stats-sub-count">
-                        语音房违规 <b>${voiceRoomBanCount}</b> 次 / 设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
+                        设备违规 <b>${deviceBanCount}</b> 次 / 合计 <b>${totalCount}</b> 次
                     </span>
                 </div>
             `;
         }
     }
 
-    // ✅ 展开后优先按场地违规，其次语音房违规，再按合计排序
+    // ✅ 展开后优先按场地违规，再按合计排序
     const sortedStats = [...displayStats].sort((a, b) => {
         const venueDiff = Number(b.venue_count || 0) - Number(a.venue_count || 0);
         if (venueDiff !== 0) return venueDiff;
-
-        const voiceRoomDiff = Number(b.voice_room_count || 0) - Number(a.voice_room_count || 0);
-        if (voiceRoomDiff !== 0) return voiceRoomDiff;
 
         return Number(b.total_count || 0) - Number(a.total_count || 0);
     });
@@ -1492,13 +1482,12 @@ function updateVenueStatsBar(stats) {
         const total = Number(item.total_count || 0);
         const deviceCount = Number(item.device_count || 0);
         const venueCount = Number(item.venue_count || 0);
-        const voiceRoomCount = Number(item.voice_room_count || 0);
 
         return `
             <span class="venue-stat-chip">
                 ${escHtml(venueId)} - ${escHtml(name)}：
                 <span class="venue-count-strong">场地${venueCount}次</span>
-                <span class="device-count-light">语音房${voiceRoomCount} / 设备${deviceCount} / 合计${total}</span>
+                <span class="device-count-light">设备${deviceCount} / 合计${total}</span>
             </span>
         `;
     }).join('');
@@ -1527,7 +1516,6 @@ const venueCountMap = new Map(
         String(item.venue_id),
         {
             venueCount: Number(item.venue_count || 0),
-            voiceRoomCount: Number(item.voice_room_count || 0),
             deviceCount: Number(item.device_count || 0),
             totalCount: Number(item.total_count || 0)
         }
@@ -1545,12 +1533,11 @@ const venueCountMap = new Map(
 
 const countInfo = venueCountMap.get(String(value)) || {
     venueCount: 0,
-    voiceRoomCount: 0,
     deviceCount: 0,
     totalCount: 0
 };
 
-option.textContent = `${value} - ${label}（场地${countInfo.venueCount}次 / 语音房${countInfo.voiceRoomCount}次 / 合计${countInfo.totalCount}次）`;
+option.textContent = `${value} - ${label}（场地${countInfo.venueCount}次 / 设备${countInfo.deviceCount}次 / 合计${countInfo.totalCount}次）`;
 
                 venueSelect.appendChild(option);
             });
@@ -1591,8 +1578,6 @@ function renderRecords() {
         if (item.type === 'device') {
             const deviceName = item.name || item.serial_number || '未知设备';
             banContent = `封禁设备【${deviceName}】驾驶权限 ${formatDuration(item.ban_duration)}`;
-        } else if (item.type === 'voice_room') {
-            banContent = `封禁语音房【${venueName}】 ${formatDuration(item.ban_duration)}`;
         } else {
             banContent = `封禁场地【${venueName}】`;
         }
@@ -1608,11 +1593,6 @@ function renderRecords() {
             }
         } else if (String(item.ban_status || '') === '1') {
             isOver = false;
-        }
-
-        // 语音房记录表 status：1进行中、2结束；如果已标记结束，优先显示已结束
-        if (String(item.ban_status || '') === '2') {
-            isOver = true;
         }
 
         const statusText = isOver ? '已结束' : '进行中';
@@ -1715,11 +1695,6 @@ function renderRecords() {
                 bg: '#fff3f1',
                 color: '#b44436'
             },
-            voice_room: {
-                label: '语音房',
-                bg: '#eefaf8',
-                color: '#087c72'
-            }
         };
 
         const typeMeta = typeMetaMap[item.type] || {
@@ -1734,9 +1709,7 @@ function renderRecords() {
             </span>
         `;
 
-        const operatorHtml = (item.type === 'voice_room' && item.operator_uid)
-            ? `<span>操作人UID：${escHtml(item.operator_uid)}</span>`
-            : '';
+        const operatorHtml = '';
 
         const html = `
             <div class="complaint-item">
