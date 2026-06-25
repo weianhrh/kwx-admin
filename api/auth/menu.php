@@ -210,7 +210,7 @@ function menu_franchise_tree(): array
             'icon' => 'order',
             'children' => [
                 ['id' => 9311, 'parent_id' => 9301, 'name' => 'franchise-orders', 'title' => '订单管理', 'icon' => 'order', 'jump' => '/iframe/link/AdminDrivingOrders', 'sort' => 10],
-                ['id' => 9312, 'parent_id' => 9301, 'name' => 'franchise-refunds', 'title' => '退款记录', 'icon' => 'finance', 'jump' => '/iframe/link/refund_records', 'sort' => 20],
+                ['id' => 9312, 'parent_id' => 9301, 'name' => 'franchise-refunds', 'title' => '退款记录', 'icon' => 'finance', 'jump' => '/iframe/link/refund_records_fi', 'sort' => 20],
             ],
         ],
         [
