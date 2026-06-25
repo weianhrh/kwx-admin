@@ -907,12 +907,30 @@ function shortReason(s, maxLen = 30){
 }
 
 function renderLiveBanUI(){
+  const box = document.getElementById('liveBanBox');
   const btn = document.getElementById('liveBanBtn');
   const tip = document.getElementById('liveBanTip');
 
-  // 只有 role 1/2 能看到按钮
+  // 只有 role_id=1/2 才显示整块“封禁直播”
   const canAdminBan = (ROLE_ID === 1 || ROLE_ID === 2);
-  if (btn) btn.style.display = canAdminBan ? 'inline-block' : 'none';
+
+  if (box) {
+    box.style.display = canAdminBan ? 'flex' : 'none';
+  }
+
+  if (btn) {
+    btn.style.display = canAdminBan ? 'inline-flex' : 'none';
+  }
+
+  // 非管理员直接清掉按钮和说明，不再往下渲染封禁按钮
+  if (!canAdminBan) {
+    if (tip) {
+      tip.style.display = 'none';
+      tip.textContent = '';
+      tip.title = '';
+    }
+    return;
+  }
 
   if (LIVE_BAN && LIVE_BAN.banned) {
     if (btn) btn.textContent = '解封直播';
@@ -923,13 +941,16 @@ function renderLiveBanUI(){
     if (tip) {
       tip.style.display = 'inline';
       tip.textContent = `直播已封禁，剩余：${fmtTTL(LIVE_BAN.ttl)}${reasonText}`;
-      // ✅ 鼠标悬停显示完整原因（PC 上很好用）
       const fullReason = safeText(LIVE_BAN?.data?.reason || LIVE_BAN?.info?.reason || '');
       tip.title = fullReason ? `原因：${fullReason}` : '';
     }
   } else {
     if (btn) btn.textContent = '封禁直播';
-    if (tip) { tip.style.display = 'none'; tip.textContent = ''; tip.title = ''; }
+    if (tip) {
+      tip.style.display = 'none';
+      tip.textContent = '';
+      tip.title = '';
+    }
   }
 }
 
@@ -1295,10 +1316,10 @@ function renderLocksUI() {
               </div>
             </div>
 
-            <div class="live-ban-box">
-              <div class="live-ban-desc">立即停止并禁止该场地的直播功能。</div>
-              <button id="liveBanBtn" class="mini-btn" style="display:none;" onclick="onClickLiveBanBtn()">封禁直播</button>
-            </div>
+<div class="live-ban-box" id="liveBanBox" style="display:none;">
+  <div class="live-ban-desc">立即停止并禁止该场地的直播功能。</div>
+  <button id="liveBanBtn" class="mini-btn" onclick="onClickLiveBanBtn()">封禁直播</button>
+</div>
           </section>
 
           <!-- 语音房与主播房间 ID 配置已从当前页面隐藏，后续重做后再接入。 -->
