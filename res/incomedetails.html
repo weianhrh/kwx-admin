@@ -7,178 +7,457 @@
     <title>收入明细</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> 
     <style>
-        /* 定义 CSS 变量 */
         :root {
-            --primary: #5b8cff;
-            --secondary: #7f8fa4;
-            --background-gradient-start: #f8f9ff;
-            --background-gradient-end: #f0f3ff;
+            --bg: #f4f7f8;
+            --panel: #ffffff;
+            --text: #172126;
+            --muted: #6b7d84;
+            --subtle: #8aa0a8;
+            --line: #dfe8eb;
+            --line-strong: #c9d8dd;
+            --primary: #0f8f8c;
+            --primary-dark: #08706e;
+            --primary-soft: #e6f6f5;
+            --success: #20a876;
+            --success-soft: #e8f7f1;
+            --warning: #d97706;
+            --warning-soft: #fff7ed;
+            --danger: #df5b57;
+            --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+            --shadow-sm: 0 8px 22px rgba(30, 55, 66, .07);
+            --radius: 8px;
+            --transition: all .16s ease;
             --card-bg: #ffffff;
-            --border-color: #ddd;
-            --text-color: #333;
-            --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
-            --transition: all 0.3s ease;
-            --hover-bg: #f9f9f9;
-            --highlight-bg: #eff4ff;
+            --border-color: #dfe8eb;
+            --text-color: #172126;
+            --secondary: #6b7d84;
+            --background-gradient-start: #f4f7f8;
+            --background-gradient-end: #eef3f4;
+            --highlight-bg: #f7fbfb;
         }
 
-        /* 全局样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "PingFang SC", system-ui;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
         }
 
         body {
-            background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+            min-width: 320px;
             min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            padding: 22px 24px 30px;
+            display: block;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 16% 0%, rgba(15, 143, 140, .08), transparent 28%),
+                radial-gradient(circle at 86% 8%, rgba(47, 125, 246, .07), transparent 32%),
+                var(--bg);
+            overflow-x: hidden;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            user-select: none;
+        }
+
+        input {
+            outline: none;
         }
 
         .container {
-            max-width: 1200px;
             width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
         }
 
-        /* 卡片样式 */
         .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
+            width: 100%;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            transition: var(--transition);
+            gap: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, .98);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: none;
         }
 
         .card:hover {
-            box-shadow: 0 8px 32px rgba(91, 140, 255, 0.16);
+            box-shadow: var(--shadow);
         }
 
         .card-title {
-            font-size: 24px;
-            color: var(--text-color);
-            margin-bottom: 20px;
-            font-weight: 600;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
+            min-height: 74px;
+            margin: 0 !important;
+            padding: 20px 22px !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--line) !important;
+            color: var(--text);
+            background:
+                linear-gradient(135deg, rgba(15, 143, 140, .07), rgba(47, 125, 246, .04)),
+                #fff;
+            font-size: 22px;
+            line-height: 1.2;
+            font-weight: 900;
         }
 
-        /* 订单项样式 */
+        .card-title::before {
+            content: "";
+            width: 8px;
+            height: 22px;
+            border-radius: 999px;
+            background: var(--primary);
+            flex: 0 0 auto;
+        }
+
+        .card-title {
+            justify-content: flex-start;
+        }
+
+        #total-amount {
+            float: none !important;
+            margin-left: auto;
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 12px;
+            border: 1px solid rgba(15, 143, 140, .20);
+            border-radius: 999px;
+            color: var(--primary) !important;
+            background: var(--primary-soft);
+            font-size: 14px !important;
+            line-height: 1;
+            font-weight: 900 !important;
+            white-space: nowrap;
+        }
+
+        .date-filter {
+            margin: 18px 22px 0 !important;
+            padding: 12px !important;
+            display: grid !important;
+            grid-template-columns: minmax(200px, 1fr) auto minmax(200px, 1fr) auto;
+            align-items: center !important;
+            gap: 10px !important;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #f8fbfb;
+        }
+
+        .date-filter span {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .date-filter input,
+        .date-input,
+        #jumpPage {
+            width: 100% !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            padding: 0 12px !important;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius) !important;
+            color: var(--text) !important;
+            background: #fff !important;
+            font-size: 13px !important;
+            line-height: 38px !important;
+            box-shadow: none !important;
+            transition: border .16s ease, box-shadow .16s ease, background .16s ease;
+        }
+
+        .date-filter input:focus,
+        #jumpPage:focus {
+            border-color: rgba(15, 143, 140, .48) !important;
+            box-shadow: 0 0 0 4px rgba(15, 143, 140, .10) !important;
+        }
+
+        .date-filter button,
+        .pagination button {
+            min-height: 38px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 14px !important;
+            border: 1px solid var(--primary) !important;
+            border-radius: var(--radius) !important;
+            color: #fff !important;
+            background: var(--primary) !important;
+            font-size: 13px !important;
+            line-height: 1 !important;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: none !important;
+            transition: background .16s ease, border .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
+            white-space: nowrap;
+        }
+
+        .date-filter button:hover,
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--primary-dark) !important;
+            background: var(--primary-dark) !important;
+            box-shadow: 0 10px 24px rgba(15, 143, 140, .18) !important;
+            transform: translateY(-1px);
+        }
+
+        .pagination button:disabled {
+            opacity: .45 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        #income-details {
+            padding: 18px 22px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 14px;
+        }
+
         .order-item {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 16px;
-            transition: var(--transition);
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            position: relative;
+            min-width: 0;
+            margin: 0 !important;
+            padding: 16px 16px 14px !important;
+            display: grid;
+            gap: 10px;
+            border: 1px solid var(--line) !important;
+            border-radius: var(--radius) !important;
+            background: #fff !important;
+            box-shadow: var(--shadow-sm);
+            transition: border .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+            overflow: hidden;
+        }
+
+        .order-item::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: var(--primary);
+            opacity: .78;
         }
 
         .order-item:hover {
-            background-color: var(--highlight-bg);
+            background: #fff !important;
+            border-color: rgba(15, 143, 140, .28) !important;
+            box-shadow: 0 14px 30px rgba(30, 55, 66, .09);
+            transform: translateY(-1px);
         }
 
-        /* 字段样式 */
         .field {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            align-items: center;
-            /*margin-bottom: 8px;*/
+            min-width: 0;
+            display: grid !important;
+            grid-template-columns: 112px minmax(0, 1fr);
+            align-items: start !important;
+            justify-content: start !important;
+            gap: 10px;
+            color: var(--text);
+            font-size: 13px !important;
+            line-height: 1.5;
         }
 
-        .field.label  {
-            color: var(--secondary);
-            font-weight: 500;
+        .field .label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
         }
 
-        .field.value  {
-            color: var(--text-color);
-            font-size: 14px;
-            font-weight: 400;
+        .field .value {
+            min-width: 0;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .field .value.datetime {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .payment-amount {
-            font-weight: 700;
-            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 2px 8px;
+            border-radius: 999px;
+            color: var(--primary) !important;
+            background: var(--primary-soft);
+            font-size: 14px;
+            font-weight: 900;
         }
 
         .status {
+            color: var(--muted);
             font-size: 12px;
-            color: #5c5c5c;
         }
 
         .datetime {
-            font-size: 10px;
-            color: var(--text-color);
+            color: var(--muted);
+            font-size: 12px;
         }
 
-        /* 加载更多提示 */
-        .loading {
-            text-align: center;
-            font-size: 16px;
+        .pagination {
+            margin: 18px 22px 20px !important;
+            padding: 12px !important;
+            min-height: 58px;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 10px !important;
+            flex-wrap: wrap;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: #f8fbfb;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pagination span {
+            color: var(--muted);
+            line-height: 38px !important;
+            white-space: nowrap;
+        }
+
+        #pageInfo {
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 12px;
+            border-radius: 999px;
             color: var(--primary);
-            padding: 20px;
+            background: var(--primary-soft);
+            font-weight: 900;
         }
 
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .card {
-                padding: 16px;
+        #jumpPage {
+            width: 86px !important;
+            text-align: center !important;
+        }
+
+        .loading {
+            margin: 0 22px 22px;
+            padding: 18px;
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--radius);
+            color: var(--primary);
+            background: #f8fbfb;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 14px 10px 24px;
+            }
+
+            .card-title {
+                min-height: auto;
+                padding: 18px 16px !important;
+                align-items: flex-start;
+                flex-wrap: wrap;
+                font-size: 20px;
+            }
+
+            #total-amount {
+                width: 100%;
+                justify-content: center;
+                margin-left: 0;
+            }
+
+            .date-filter {
+                margin: 14px 14px 0 !important;
+                grid-template-columns: 1fr;
+                align-items: stretch !important;
+            }
+
+            .date-filter span {
+                display: none;
+            }
+
+            #income-details {
+                padding: 14px 14px 0;
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .order-item {
+                padding: 14px !important;
             }
 
             .field {
-                font-size: 12px;
+                grid-template-columns: 98px minmax(0, 1fr);
+                gap: 8px;
+            }
+
+            .pagination {
+                margin: 14px 14px 16px !important;
+                align-items: stretch !important;
+                flex-direction: column;
+            }
+
+            .pagination button,
+            .pagination input,
+            .pagination span,
+            #jumpPage,
+            #pageInfo {
+                width: 100% !important;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .loading {
+                margin: 0 14px 16px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .field {
+                grid-template-columns: 1fr;
+                gap: 4px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #edf2f4;
+            }
+
+            .field:last-child {
+                padding-bottom: 0;
+                border-bottom: 0;
+            }
+
+            .field .value {
+                text-align: left;
             }
 
             .payment-amount {
-                font-size: 16px;
+                justify-content: flex-start;
             }
         }
-        @media (max-width: 500px) {
-    .pagination {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-
-    .pagination button,
-    .pagination input,
-    .pagination span {
-        width: 100%;
-        text-align: center;
-    }
-
-    .pagination input {
-        max-width: 100%;
-    }
-}
-@media (max-width: 600px) {
-    .date-filter {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-
-    .date-filter input,
-    .date-filter button {
-        width: 100%;
-    }
-
-    .date-filter span {
-        text-align: center;
-    }
-}
 
     </style>
 </head>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Hand Record</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --kwx-primary: #0f8f8c;
+      --kwx-primary-dark: #08706e;
+      --kwx-primary-soft: #e6f6f5;
+      --kwx-bg: #f5f7f8;
+      --kwx-card: #ffffff;
+      --kwx-border: #e5eaef;
+      --kwx-border-strong: #d7e0e7;
+      --kwx-text: #172b2a;
+      --kwx-muted: #6b7c7b;
+      --kwx-subtle: #8a9a99;
+      --kwx-shadow: 0 8px 24px rgba(15, 35, 34, 0.06);
+      --kwx-radius: 10px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      background: var(--kwx-bg);
+      color: var(--kwx-text);
+      padding: 16px;
+      display: block;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--kwx-text);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 14px;
+    }
+
+    h2.card-title {
+      background: var(--kwx-card);
+      border: 1px solid var(--kwx-border);
+      border-radius: var(--kwx-radius);
+      box-shadow: var(--kwx-shadow);
+      padding: 16px 18px 0;
+      margin-bottom: 0;
+      border-bottom: 0;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    h2.card-title::before,
+    #report-list > .card-title::before {
+      content: "";
+      width: 4px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--kwx-primary);
+      flex: 0 0 auto;
+    }
+
+    #select-container {
+      background: var(--kwx-card);
+      border: 1px solid var(--kwx-border);
+      border-top: 0;
+      border-radius: 0 0 var(--kwx-radius) var(--kwx-radius);
+      box-shadow: var(--kwx-shadow);
+      padding: 12px 18px 18px;
+      margin-bottom: 14px;
+    }
+
+    select {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--kwx-border-strong);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--kwx-text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    select:hover {
+      border-color: rgba(15, 143, 140, .45);
+    }
+
+    select:focus {
+      border-color: var(--kwx-primary);
+      box-shadow: 0 0 0 3px rgba(15, 143, 140, .12);
+    }
+
+    .card {
+      background: var(--kwx-card);
+      border: 1px solid var(--kwx-border);
+      border-radius: var(--kwx-radius);
+      padding: 18px;
+      box-shadow: var(--kwx-shadow);
+      margin-bottom: 14px;
+    }
+
+    #report-content {
+      color: var(--kwx-muted);
+      min-height: 88px;
+    }
+
+    #report-content > p {
+      margin: 0;
+      padding: 36px 16px;
+      text-align: center;
+      color: var(--kwx-subtle);
+      background: #fafcfc;
+      border: 1px dashed var(--kwx-border-strong);
+      border-radius: 8px;
+    }
+
+    .report-item {
+      background: #fff;
+      border: 1px solid var(--kwx-border);
+      border-radius: 10px;
+      padding: 4px 16px;
+      margin-bottom: 12px;
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    .report-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .report-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      align-items: start;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid #eef2f4;
+    }
+
+    .report-row:last-child {
+      border-bottom: none;
+    }
+
+    .report-label {
+      width: auto;
+      color: var(--kwx-muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .report-value {
+      width: auto;
+      color: var(--kwx-text);
+      font-weight: 500;
+      text-align: left;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.55;
+    }
+
+    .report-value img {
+      display: block;
+      max-width: 420px !important;
+      width: auto;
+      border: 1px solid var(--kwx-border);
+      border-radius: 8px !important;
+      background: #f8fbfb;
+      box-shadow: 0 4px 14px rgba(15, 35, 34, .08);
+    }
+
+    .back-button {
+      min-height: 38px;
+      padding: 0 16px;
+      border: 1px solid rgba(15, 143, 140, .35);
+      border-radius: 8px;
+      background: var(--kwx-primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .back-button:hover {
+      background: var(--kwx-primary-dark);
+      border-color: var(--kwx-primary-dark);
+      box-shadow: 0 6px 16px rgba(15, 143, 140, .18);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      h2.card-title {
+        padding: 14px 14px 0;
+      }
+
+      #select-container,
+      .card {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .card-title {
+        font-size: 16px;
+      }
+
+      .report-item {
+        padding: 2px 12px;
+      }
+
+      .report-row {
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 10px;
+        padding: 10px 0;
+      }
+
+      .report-label,
+      .report-value {
+        font-size: 13px;
+      }
+
+      .report-value img {
+        max-width: 100% !important;
+      }
+
+      .back-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="card-title">选择场地</h2>
+<div id="select-container">
+  <select id="venue_id">
+    <option value="10">默认场地 10</option>
+  </select>
+</div>
+
+    <div id="report-list" class="card">
+      <div class="card-title">报告列表</div>
+      <div id="report-content">
+        加载中...
+      </div>
+    </div>
+
+    <button class="back-button" onclick="window.history.back()">返回上一页</button>
+
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const venueSelect = document.getElementById('venue_id');
+    const reportContent = document.getElementById('report-content');
+    const selectContainer = document.getElementById('select-container');  // ✅ 重点改这里
+
+    // 获取当前登录用户角色
+    fetch('/api/operat/get_current_user.php')
+      .then(response => response.json())
+      .then(userResp => {
+        if (userResp.code !== 0) {
+          reportContent.innerHTML = '<p>未登录，请重新登录</p>';
+          return;
+        }
+
+        const roleId = userResp.data.role_id;
+        const userVenueId = userResp.data.venue_id;
+
+        if (roleId === 1 || roleId=== 2) {
+          // 管理员：加载下拉场地列表
+          selectContainer.style.display = 'block';
+
+          const xhrVenue = new XMLHttpRequest();
+          xhrVenue.open('POST', '/api/operat/EnergyGift.php', true);
+          xhrVenue.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          xhrVenue.onreadystatechange = function () {
+            if (xhrVenue.readyState === 4 && xhrVenue.status === 200) {
+              const response = JSON.parse(xhrVenue.responseText);
+              if (response.code === 0) {
+                venueSelect.innerHTML = '';
+                response.data.forEach(venue => {
+                  const option = document.createElement('option');
+                  option.value = venue.id;
+                  option.textContent = `${venue.id} - ${venue.venue_name}`;
+                  if (venue.id == 10) option.selected = true;
+                  venueSelect.appendChild(option);
+                });
+                loadReports(10);
+              }
+            }
+          };
+          xhrVenue.send('action=get_venues');
+
+          // 场地切换事件
+          venueSelect.addEventListener('change', function () {
+            loadReports(this.value);
+          });
+        } else {
+          // 普通用户：隐藏下拉框，使用自己绑定场地
+          document.getElementById('select-container').style.display = 'none';
+
+          loadReports(Number(userVenueId));
+
+        }
+      });
+    /*   <div class="report-row"><div class="report-label">处理人</div><div class="report-value">${report.handler_uid || '暂无'}</div></div>*/
+    // 加载报告数据
+    function loadReports(venueId) {
+      reportContent.innerHTML = '加载中...';
+      const xhrReport = new XMLHttpRequest();
+      xhrReport.open('GET', `/api/operat/ReporthandRecord.php?venue_id=${venueId}`, true);
+      xhrReport.onreadystatechange = function () {
+        if (xhrReport.readyState === 4 && xhrReport.status === 200) {
+          const response = JSON.parse(xhrReport.responseText);
+          if (response.code === 0) {
+            const reports = response.data;
+            if (!reports.length) {
+              reportContent.innerHTML = '<p>暂无报告数据</p>';
+              return;
+            }
+            reportContent.innerHTML = reports.map(report => {
+              return `
+                <div class="report-item">
+                  <div class="report-row"><div class="report-label">设备编号</div><div class="report-value">${report.device_id}</div></div>
+                  <div class="report-row"><div class="report-label">上报人</div><div class="report-value">${report.reporter_uid}</div></div>
+                  <div class="report-row"><div class="report-label">类型</div><div class="report-value">${report.report_type}</div></div>
+                  ${report.notes ? `<div class="report-row"><div class="report-label">备注</div><div class="report-value">${report.notes}</div></div>` : ''}
+
+                  <div class="report-row"><div class="report-label">时间</div><div class="report-value">${report.insert_time}</div></div>
+                  ${report.image_url ? `
+  <div class="report-row" style="flex-direction: column; gap: 6px;">
+    <div class="report-label">截图</div>
+    <div class="report-value" style="text-align: left;">
+      <img src="${report.image_url}"
+           alt="截图"
+           style="max-width: 100%; border-radius: 8px;"
+           onerror="this.style.display='none'" />
+    </div>
+  </div>` : ''}
+
+                </div>
+              `;
+            }).join('');
+          } else {
+            reportContent.innerHTML = '<p>加载失败：' + response.msg + '</p>';
+          }
+        }
+      };
+      xhrReport.send();
+    }
+  });
+</script>
+
+</body>
+</html>
