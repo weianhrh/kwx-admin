@@ -806,38 +806,6 @@
       background: var(--danger);
     }
 
-    .notice-list {
-      display: grid;
-      gap: 12px;
-      padding: 16px;
-    }
-
-    .notice-item {
-      display: grid;
-      gap: 8px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
-    }
-
-    .notice-item strong {
-      font-size: 14px;
-      line-height: 1.3;
-    }
-
-    .notice-item p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    .notice-item time {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
     .quick-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2442,9 +2410,6 @@
     }
 
     function buildWorkbenchHtml(data, metrics, todos, actions) {
-      if (Number(data.role_id || 0) === 3) {
-        return buildFranchiseWorkbenchHtml(data, metrics);
-      }
       const adminOnlyStyle = Number(data.role_id || 0) === 2 ? ' style="display:none"' : '';
       const visibleActions = (actions || []).filter(function(action) {
         return !isDeferredEntry(action);
@@ -2474,46 +2439,6 @@
         '</div></section>' +
         '</aside>' +
         '</div>';
-    }
-
-    function buildFranchiseWorkbenchHtml(data, metrics) {
-      const franchise = data.franchise || {};
-      const notices = Array.isArray(franchise.notices) ? franchise.notices : [];
-      return '' +
-        '<div class="workbench-head">' +
-        '<div class="workbench-title"><h2>首页</h2><p>' + escapeHtml(franchise.venue_name || data.venue_name || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p></div>' +
-        '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
-        '</div>' +
-        '<div class="stats">' +
-        statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
-        statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
-        statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
-        statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
-        '</div>' +
-        '<div class="workbench-grid">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>官方通知</strong><span>平台运营、结算与设备维护消息</span></div></div><div class="notice-list">' +
-        (notices.length ? notices.map(noticeItem).join('') : '<div class="notice-item"><strong>暂无通知</strong><p>当前没有新的官方通知。</p></div>') +
-        '</div></section>' +
-        '<aside class="side-stack">' +
-        '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>场地概况</strong><span>加盟商账号绑定信息</span></div></div><div class="todo-list">' +
-        infoItem('场地名称', franchise.venue_name || data.venue_name || '-') +
-        infoItem('场地编号', franchise.venue_id ? '#' + franchise.venue_id : '-') +
-        infoItem('设备状态', formatInt(metrics.franchiseOnlineDevices || 0) + ' 台在线') +
-        '</div></section>' +
-        '</aside>' +
-        '</div>';
-    }
-
-    function noticeItem(item) {
-      return '<article class="notice-item">' +
-        '<strong>' + escapeHtml(item.title || '官方通知') + '</strong>' +
-        '<p>' + escapeHtml(item.content || '') + '</p>' +
-        '<time>' + escapeHtml(item.date || '') + '</time>' +
-        '</article>';
-    }
-
-    function infoItem(label, value) {
-      return '<div class="todo-link"><div><strong>' + escapeHtml(label) + '</strong><span>' + escapeHtml(value) + '</span></div></div>';
     }
 
     function statCard(label, value, note, icon) {

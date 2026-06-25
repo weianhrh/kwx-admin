@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>意见反馈管理</title>
+  <style>
+    :root {
+      --primary: #5b8cff;
+      --secondary: #7f8fa4;
+      --background-gradient-start: #f8f9ff;
+      --background-gradient-end: #f0f3ff;
+      --card-bg: #ffffff;
+      --border-color: #ddd;
+      --text-color: #333;
+      --shadow: 0 4px 24px rgba(91, 140, 255, 0.08);
+      --transition: all 0.3s ease;
+      --hover-bg: #f9f9f9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", system-ui; }
+    body { background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%); min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
+    .container { max-width: 1200px; width: 100%; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; transition: var(--transition); }
+    .card-title { font-size: 24px; color: var(--text-color); margin-bottom: 20px; font-weight: 600; border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-align: left; }
+    .loading { text-align: center; font-size: 16px; color: var(--primary); padding: 20px; }
+
+    /* 工具栏 */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+    .toolbar .input { flex: 1 1 240px; min-width: 200px; }
+    .venue-filter { width: 260px; }
+
+    .input { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; transition: var(--transition); background: #fff; }
+    .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,140,255,0.12); }
+    .btn { appearance: none; border: none; border-radius: 8px; padding: 10px 14px; font-size: 14px; cursor: pointer; transition: var(--transition); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { filter: brightness(0.95); }
+    .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-outline:hover { background: rgba(91,140,255,0.06); }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-danger:hover { filter: brightness(0.95); }
+
+    /* 按钮禁用态 */
+    .btn:disabled{ opacity: .5; cursor: not-allowed; }
+
+    /* 卡片列表 */
+    .cards{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .feedback-card{
+      background:#fff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+    }
+    .feedback-card:hover { background: var(--hover-bg); }
+    .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .id { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #111827; }
+    .tag { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; background: #eef2ff; color: #4f46e5; border: 1px solid #e0e7ff; }
+
+    .message{
+      color: var(--text-color);
+      white-space: normal;
+      word-break: break-word;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      line-height: 1.6;
+      min-height: calc(1.6em * 3);
+    }
+
+    .reply{
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      color: #334155;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .meta { display: grid; grid-template-columns: 1fr; gap: 4px; color: #64748b; font-size: 12px; }
+    .actions{
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: auto;
+    }
+
+    .muted { color: #64748b; font-size: 12px; text-align: center; padding: 18px; }
+
+    .pagination { display: flex; align-items: center; gap: 10px; justify-content: flex-end; padding-top: 12px; }
+    .page-info { color: var(--secondary); font-size: 13px; }
+    .page-size { width: 120px; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 22px; border-radius: 12px; width: 580px; max-width: 92%; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; }
+    .modal-row { display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; }
+    .modal .title { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
+    .modal .btns { display: flex; gap: 10px; justify-content: flex-end; padding-top: 6px; }
+
+    .toast { position: fixed; right: 16px; bottom: 16px; background: #111827; color: #fff; padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow); opacity: 0; transform: translateY(10px); transition: .25s; z-index: 1000; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    textarea.input{ height: auto; min-height: 120px; line-height: 1.5; padding: 10px 12px; resize: vertical; }
+    .input.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
+
+    @media (max-width: 640px){
+      .toolbar { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 8px; }
+      .toolbar .input, .toolbar .btn { flex: 0 0 auto; min-width: 0; width: 100%; }
+      .venue-filter { width: 100%; }
+      .card { padding: 14px; }
+      .input { height: 36px; padding: 6px 10px; font-size: 14px; }
+      select.input, .page-size { height: 36px; }
+      .btn { height: 36px; padding: 6px 10px; font-size: 14px; }
+    }
+    /* 桌面：给状态筛选一个合理宽度（和场地/分页一致） */
+.status-filter { width: 160px; }
+
+/* 手机：工具栏控件全宽铺满一行，包括状态筛选 */
+@media (max-width: 640px){
+  .status-filter { width: 100% !important; }
+  .venue-filter   { width: 100% !important; }
+  .page-size      { width: 100% !important; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">意见反馈</div>
+
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <select id="venueSelect" class="input venue-filter" title="按场地筛选(仅管理员可选)">
+          <option value="">加载中…</option>
+        </select>
+         <!-- 新增：状态筛选 -->
+          <select id="statusFilter" class="input"  title="按状态筛选">
+            <option value="">全部状态</option>
+            <option value="0">待回复</option>
+            <option value="1">已回复</option>
+          </select>
+          
+        <select id="pageSize" class="input page-size" title="每页数量">
+          <option value="10">10 / 页</option>
+          <option value="20" selected>20 / 页</option>
+          <option value="50">50 / 页</option>
+          <option value="100">100 / 页</option>
+        </select>
+
+        <button id="refreshBtn" class="btn btn-outline" title="刷新">刷新</button>
+        <button id="createBtn" class="btn btn-primary" style="display:none" title="发布反馈">发布反馈</button>
+      </div>
+
+      <!-- 列表 -->
+      <div id="cardsContainer" class="cards">
+        <div class="muted">加载中…</div>
+      </div>
+
+      <!-- 分页 -->
+      <div class="pagination">
+        <span class="page-info" id="pageInfo">第 1 页</span>
+        <button class="btn btn-outline" id="prevBtn">上一页</button>
+        <button class="btn btn-outline" id="nextBtn">下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 回复弹窗 -->
+  <div id="replyModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="title">回复反馈</div>
+      <div class="modal-row">
+        <label>反馈ID</label>
+        <input id="replyFeedbackId" class="input" type="text" readonly />
+      </div>
+      <div class="modal-row">
+        <label>回复内容</label>
+        <textarea id="replyContent" class="input" placeholder="请输入回复内容…"></textarea>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick="closeReplyModal()">取消</button>
+        <button class="btn btn-primary" onclick="submitReply()">提交</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- 发布反馈弹窗 -->
+  <div id="createModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="title">发布反馈</div>
+      <div class="modal-row">
+        <label>反馈内容</label>
+        <textarea id="createMessage" class="input" placeholder="请输入反馈内容…"></textarea>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick="closeCreateModal()">取消</button>
+        <button class="btn btn-primary" onclick="createFeedback()">提交</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ========== 权限与状态 ==========
+    let isAdmin = false;          // role_id === 1
+    let myVenueId = null;         // 登录用户绑定的场地（用于 role=3 锁定）
+    let currentPage = 1;
+    let pageSize = 20;
+
+    const elVenue = document.getElementById('venueSelect');
+    const elCards = document.getElementById('cardsContainer');
+    const elPageInfo = document.getElementById('pageInfo');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    // 放在已有的事件绑定区附近
+    const elStatus = document.getElementById('statusFilter');
+    elStatus.addEventListener('change', ()=>{ currentPage = 1; loadList(); });
+
+    let totalPages = 1;
+    let totalCount = 0;
+
+    document.getElementById('pageSize').addEventListener('change', (e)=>{
+      pageSize = parseInt(e.target.value, 10) || 20;
+      currentPage = 1;
+      loadList();
+    });
+    prevBtn.addEventListener('click', ()=>{
+      if(currentPage>1){ currentPage--; loadList(); }
+    });
+    nextBtn.addEventListener('click', ()=>{
+      if(currentPage < totalPages){ currentPage++; loadList(); }
+    });
+    (function(){
+      const refreshBtnEl = document.getElementById('refreshBtn');
+      if (refreshBtnEl) refreshBtnEl.addEventListener('click', ()=> loadList());
+    })();
+    elVenue.addEventListener('change', ()=>{ currentPage = 1; loadList(); });
+
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(()=> t.classList.remove('show'), 2200);
+    }
+
+    // ========== 获取登录用户角色（你已有接口） ==========
+    async function fetchCurrentUserRole(){
+      try {
+        const res = await fetch('/api/operat/get_current_user.php', { credentials: 'include' });
+        const result = await res.json();
+        if(result && result.code === 0){
+          const role = Number(result.data.role_id);
+          isAdmin = (role === 1 || role === 2);
+          myVenueId = result.data.venue_id ?? null;
+        }
+      } catch (err) {
+        console.warn('获取用户角色失败:', err);
+      }
+    }
+
+    // ========== 场地下拉填充（仅管理员可选） ==========
+    function loadVenuesIntoSelect(selectEl){
+      if(!selectEl) return;
+      selectEl.innerHTML = `<option value="">加载中…</option>`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/operat/EnergyGift.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try{
+              const response = JSON.parse(xhr.responseText);
+              if (response.code === 0) {
+                const data = response.data || [];
+                selectEl.innerHTML = '';
+
+                // 管理员默认“全部场地”选项
+                if(isAdmin){
+                  const allOpt = document.createElement('option');
+                  allOpt.value = '';
+                  allOpt.textContent = '全部场地';
+                  selectEl.appendChild(allOpt);
+                }
+
+                data.forEach(venue => {
+                  const option = document.createElement('option');
+                  option.value = String(venue.id);
+                  option.textContent = `${venue.id} - ${venue.venue_name}`;
+                  selectEl.appendChild(option);
+                });
+
+                if(!data.length){
+                  selectEl.innerHTML = `<option value="">无可选场地</option>`;
+                }
+
+                // 加盟商锁定到自己的场地并禁用下拉
+                if(!isAdmin){
+                  if(myVenueId){
+                    selectEl.value = String(myVenueId);
+                  }
+                  selectEl.disabled = true;
+                  selectEl.title = '加盟商仅可查看自身场地';
+                }
+              } else {
+                selectEl.innerHTML = `<option value="">加载失败</option>`;
+              }
+            }catch{ selectEl.innerHTML = `<option value="">加载失败</option>`; }
+          } else {
+            selectEl.innerHTML = `<option value="">加载失败</option>`;
+          }
+        }
+      };
+      xhr.send('action=get_venues');
+    }
+
+    // ========== 渲染卡片 ==========
+    function renderCards(rows){
+      if(!rows || !rows.length){
+        elCards.innerHTML = `<div class="muted">暂无数据</div>`;
+        return;
+      }
+
+      elCards.innerHTML = rows.map(row => {
+        const fid = row.id;
+        const status = Number(row.status || 0); // 0/1
+        const created = row.created_at || '';
+        const venueId = row.venue_id || '';
+        const message = row.message || '';
+        const replyContent = row.reply_content || '';
+        const repliedAt = row.replied_at || '';
+
+        const statusTag = status === 1 ? '<span class="tag">已回复</span>' : '<span class="tag">待回复</span>';
+        const venueTag = isAdmin && venueId ? `<span class=\"tag\">场地 #${venueId}</span>` : '';
+
+        // === 加盟商视图：只展示 提交反馈 / 回复内容 / 状态 ===
+        if(!isAdmin){
+          return `<div class=\"feedback-card\">
+            <div class=\"card-top\">
+              <div class=\"id\">#${fid}</div>
+              ${statusTag}
+            </div>
+            <div class=\"reply\"><b>提交反馈：</b>${message ? escapeHtml(message) : '（空）'}</div>
+            <div class=\"reply\"><b>回复内容：</b>${replyContent ? escapeHtml(replyContent) : '— 暂无回复 —'}</div>
+            <div class=\"meta\">状态：${status === 1 ? '已回复' : '待回复'}</div>
+          </div>`;
+        }
+
+        // === 管理员视图：保持原来的富信息 ===
+        const messageBlock = message ? `<div class=\"message\">${escapeHtml(message)}</div>` : '';
+        const replyBlock = replyContent ? `<div class=\"reply\">${escapeHtml(replyContent)}</div>` : '<div class=\"reply\" style=\"opacity:.7\">— 暂无回复 —</div>';
+        const encReply = encodeURIComponent(replyContent || '');
+        const adminActions = `<div class=\"actions\">
+            <button class=\"btn btn-primary reply-btn\" data-reply=\"${encReply}\" onclick=\"openReplyModal(${fid}, decodeURIComponent(this.getAttribute('data-reply')))\">回复</button>
+          </div>`;
+
+        return `<div class=\"feedback-card\">
+          <div class=\"card-top\">
+            <div class=\"id\">#${fid}</div>
+            <div style=\"display:flex; gap:6px; align-items:center;\">${venueTag}${statusTag}</div>
+          </div>
+          ${messageBlock}
+          ${replyBlock}
+          <div class=\"meta\">
+            <div>创建时间：${created || '-'}</div>
+            ${repliedAt ? `<div>回复时间：${repliedAt}</div>` : ''}
+          </div>
+          ${adminActions}
+        </div>`
+      }).join('');
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+    }
+
+    // ========== 数据加载 ==========
+async function loadList(){
+  elCards.innerHTML = `<div class="muted">加载中…</div>`;
+
+  const params = new URLSearchParams();
+  const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  params.set('page', String(safePage));
+  params.set('limit', String(pageSize));
+
+  // 读取状态与场地
+  const selectedVenue = (elVenue.value || '').trim();
+  const selectedStatus = (document.getElementById('statusFilter').value || '').trim();
+
+  if (isAdmin && selectedVenue) {
+    params.set('venue_id', selectedVenue);
+    params.set('venueId', selectedVenue); // 兼容命名
+  }
+  if (selectedStatus !== '') {
+    params.set('status', selectedStatus); // 新增：把状态传给后端（若支持）
+  }
+
+  try{
+    const res = await fetch(`/api/feedback/list.php?${params.toString()}`, { credentials: 'include' });
+    const json = await res.json();
+
+    if (json.code === 0) {
+      // 数据（先拿后端返回）
+      let rows = json.data || [];
+
+      // 兜底：如果后端暂未实现 status 过滤，这里再前端过滤一次
+      if (selectedStatus !== '') {
+        rows = rows.filter(r => String(r.status) === selectedStatus);
+      }
+
+      renderCards(rows);
+
+      // 统计与分页：
+      // 若后端已支持 status，会返回准确的 count；否则就以当前页过滤后的条数做展示（分页可能略不准确）
+      totalCount  = (selectedStatus === '' ? Number(json.count || 0) : rows.length);
+      totalPages  = Math.max(1, Math.ceil(totalCount / pageSize));
+      currentPage = Math.max(1, Math.min(safePage, totalPages));
+      elPageInfo.textContent = `第 ${currentPage} / ${totalPages} 页，共 ${totalCount} 条`;
+    } else {
+      elCards.innerHTML = `<div class="muted">加载失败：${escapeHtml(json.msg || '未知错误')}</div>`;
+    }
+  } catch (err) {
+    console.error(err);
+    elCards.innerHTML = `<div class="muted">网络错误</div>`;
+  }
+
+  // 更新分页按钮状态
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+}
+
+
+
+    // ========== 回复弹窗 ==========
+    function openReplyModal(fid, replyText){
+      const existing = replyText || '';
+      document.getElementById('replyFeedbackId').value = String(fid);
+      document.getElementById('replyContent').value = existing;
+      document.getElementById('replyModal').style.display = 'flex';
+      document.getElementById('replyModal').setAttribute('aria-hidden', 'false');
+    }
+    function closeReplyModal(){
+      document.getElementById('replyModal').style.display = 'none';
+      document.getElementById('replyModal').setAttribute('aria-hidden', 'true');
+    }
+
+    async function submitReply(){
+      const fid = Number(document.getElementById('replyFeedbackId').value || 0);
+      const content = document.getElementById('replyContent').value.trim();
+      if(!fid){ showToast('参数错误'); return; }
+      if(!content){ showToast('回复内容不能为空'); return; }
+
+      const form = new FormData();
+      form.set('feedback_id', String(fid));
+      form.set('reply_content', content);
+
+      try{
+        const res = await fetch('/api/feedback/reply.php', { method:'POST', body: form, credentials:'include' });
+        const json = await res.json();
+        if(json.code === 0){
+          showToast('回复成功');
+          closeReplyModal();
+          loadList();
+        }else{
+          showToast(json.msg || '回复失败');
+        }
+      }catch(err){
+        console.error(err);
+        showToast('网络错误');
+      }
+    }
+
+    // ========== 发布反馈弹窗（仅加盟商可见） ==========
+    function openCreateModal(){
+      document.getElementById('createMessage').value = '';
+      const m = document.getElementById('createModal');
+      m.style.display = 'flex';
+      m.setAttribute('aria-hidden','false');
+    }
+    function closeCreateModal(){
+      const m = document.getElementById('createModal');
+      m.style.display = 'none';
+      m.setAttribute('aria-hidden','true');
+    }
+    async function createFeedback(){
+      const msg = (document.getElementById('createMessage').value || '').trim();
+      if(!msg){ showToast('反馈内容不能为空'); return; }
+      if(msg.length > 4000){ showToast('反馈内容过长(>4000字)'); return; }
+      const form = new FormData();
+      form.set('message', msg);
+      try{
+        const res = await fetch('/api/feedback/create.php', { method:'POST', body: form, credentials:'include' });
+        const json = await res.json();
+        if(json.code === 0){
+          showToast('提交成功');
+          closeCreateModal();
+          currentPage = 1;
+          loadList();
+        }else{
+          showToast(json.msg || '提交失败');
+        }
+      }catch(e){
+        console.error(e);
+        showToast('网络错误');
+      }
+    }
+
+    // ========== 初始化 ==========
+    (async function init(){
+      // 1) 先确定权限
+      await fetchCurrentUserRole();
+      // 2) 如果是加盟商，直接隐藏场地筛选
+      if(!isAdmin){ elVenue.style.display = 'none'; }
+      // 3) 加载场地与列表
+      loadVenuesIntoSelect(elVenue);
+      loadList();
+
+      // 按权限显示“发布反馈”按钮（仅加盟商可见）
+      const createBtnEl = document.getElementById('createBtn');
+      if(!isAdmin){ createBtnEl.style.display = 'inline-block'; } else { createBtnEl.style.display = 'none'; }
+      createBtnEl.addEventListener('click', openCreateModal);
+
+      // 非管理员隐藏“回复”入口（保险起见：渲染时已判断，这里双保险）
+      if(!isAdmin){
+        document.querySelectorAll('.reply-btn').forEach(btn => btn.style.display = 'none');
+      }
+    })();
+  </script>
+</body>
+</html>

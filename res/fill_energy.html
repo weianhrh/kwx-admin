@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>挂车占有管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --kx-ink:#172033;
+  --kx-muted:#6b7280;
+  --kx-line:#d9e1ec;
+  --kx-page:#f4f7fb;
+  --kx-surface:#ffffff;
+  --kx-soft:#f8fafc;
+  --kx-green:#0f9f8f;
+  --kx-blue:#4056a1;
+  --kx-amber:#c47a16;
+  --kx-rose:#d23f57;
+  --kx-success:#0f9f62;
+  --kx-shadow:0 14px 34px rgba(18,31,56,.08);
+  --kx-shadow-sm:0 8px 22px rgba(18,31,56,.07);
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"PingFang SC",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+html,
+body{
+  min-height:100%;
+}
+
+body{
+  min-height:100vh;
+  padding:18px;
+  color:var(--kx-ink);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 210px),
+    var(--kx-page);
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0 0 auto;
+  z-index:-1;
+  height:230px;
+  background:
+    linear-gradient(90deg,rgba(15,159,143,.16),rgba(64,86,161,.14) 54%,rgba(196,122,22,.10)),
+    #eef3f8;
+}
+
+.kx-page{
+  width:min(1180px,100%);
+  margin:0 auto;
+}
+
+.kx-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 320px;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.kx-hero-main,
+.kx-hero-side,
+.kx-panel{
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(217,225,236,.95);
+  border-radius:8px;
+  box-shadow:var(--kx-shadow);
+}
+
+.kx-hero-main{
+  position:relative;
+  overflow:hidden;
+  padding:20px 22px;
+  background:
+    linear-gradient(90deg,rgba(15,159,143,.13),rgba(64,86,161,.11) 58%,rgba(196,122,22,.08)),
+    rgba(255,255,255,.96);
+}
+
+.kx-hero-main::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:4px;
+  background:linear-gradient(90deg,var(--kx-green),var(--kx-blue),var(--kx-amber));
+}
+
+.kx-eyebrow{
+  color:#0f766e;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.02em;
+}
+
+.kx-hero-main h1{
+  margin:7px 0 7px;
+  color:#111827;
+  font-size:25px;
+  font-weight:850;
+  line-height:1.25;
+}
+
+.kx-hero-main p{
+  max-width:660px;
+  color:#5f6b7a;
+  font-size:14px;
+  line-height:1.7;
+}
+
+.kx-hero-side{
+  display:grid;
+  gap:10px;
+  align-content:center;
+  padding:16px;
+}
+
+.kx-status-guide{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:38px;
+  padding:8px 10px;
+  border:1px solid rgba(217,225,236,.82);
+  border-radius:8px;
+  background:#fbfcfe;
+}
+
+.kx-status-guide span:first-child{
+  color:#6b7280;
+  font-size:12px;
+  font-weight:750;
+}
+
+.kx-layout{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr);
+  gap:14px;
+  align-items:start;
+}
+
+.kx-panel{
+  min-width:0;
+  overflow:hidden;
+}
+
+.kx-side-panel{
+  position:sticky;
+  top:18px;
+}
+
+.kx-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px 16px;
+  border-bottom:1px solid rgba(217,225,236,.9);
+}
+
+.kx-panel-head h2{
+  margin:0;
+  color:#172033;
+  font-size:15px;
+  font-weight:850;
+  line-height:1.3;
+}
+
+.kx-panel-subtitle{
+  color:#7b8796;
+  font-size:12px;
+  font-weight:650;
+  white-space:nowrap;
+}
+
+.kx-control-body{
+  padding:14px 16px 16px;
+}
+
+#venueSelectWrapper{
+  margin:0 0 12px !important;
+}
+
+.kx-label{
+  display:block;
+  margin-bottom:7px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:800;
+}
+
+select{
+  width:100%;
+  height:38px;
+  padding:0 12px;
+  color:#172033;
+  background:#fff;
+  border:1px solid #d9e1ec;
+  border-radius:8px;
+  outline:none;
+  font-size:14px;
+}
+
+select:focus{
+  border-color:rgba(15,159,143,.45);
+  box-shadow:0 0 0 3px rgba(15,159,143,.10);
+}
+
+.policy-box{
+  position:relative;
+  margin:0 0 12px;
+  padding:12px 12px 12px 14px;
+  color:#8a4d05;
+  background:rgba(196,122,22,.10);
+  border:1px solid rgba(196,122,22,.23);
+  border-radius:8px;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.7;
+}
+
+.policy-box::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:13px;
+  width:4px;
+  height:28px;
+  border-radius:0 99px 99px 0;
+  background:var(--kx-amber);
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:0 0 12px;
+}
+
+button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:34px;
+  padding:0 13px;
+  border:1px solid transparent;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--kx-green),#128f84);
+  font-size:13px;
+  font-weight:800;
+  line-height:1;
+  cursor:pointer;
+  white-space:nowrap;
+  box-shadow:0 8px 18px rgba(15,159,143,.16);
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 22px rgba(15,159,143,.20);
+}
+
+button:active{
+  transform:translateY(0);
+}
+
+button:disabled{
+  color:#fff;
+  background:#c7cbd3;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+
+.restore-btn{
+  color:#8a4d05;
+  background:#fff7ed;
+  border-color:rgba(196,122,22,.28);
+  box-shadow:none;
+}
+
+.restore-btn:hover{
+  background:#ffedd5;
+  box-shadow:none;
+}
+
+.muted{
+  padding:10px 12px;
+  color:#64748b;
+  background:#f8fafc;
+  border:1px dashed rgba(217,225,236,.95);
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.65;
+}
+
+.status{
+  min-height:180px;
+  padding:14px 16px 16px;
+}
+
+.table-wrap{
+  overflow:auto;
+  border:1px solid rgba(217,225,236,.95);
+  border-radius:8px;
+  background:#fff;
+}
+
+table{
+  width:100%;
+  min-width:720px;
+  border-collapse:separate;
+  border-spacing:0;
+  background:#fff;
+}
+
+th,
+td{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(217,225,236,.86);
+  text-align:left;
+  vertical-align:middle;
+  font-size:13px;
+}
+
+th{
+  color:#475569;
+  background:#f8fafc;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+td{
+  color:#172033;
+  font-weight:650;
+  word-break:break-all;
+}
+
+tr:last-child td{
+  border-bottom:none;
+}
+
+tr:hover td{
+  background:#fbfdff;
+}
+
+th:nth-child(3),
+td:nth-child(3),
+th:nth-child(4),
+td:nth-child(4){
+  text-align:center;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  padding:0 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.badge.ok{
+  color:#087760;
+  background:#e8f7f3;
+  border:1px solid rgba(15,159,143,.22);
+}
+
+.badge.danger{
+  color:#b42342;
+  background:rgba(210,63,87,.10);
+  border:1px solid rgba(210,63,87,.20);
+}
+
+.badge.normal{
+  color:#3159b5;
+  background:rgba(64,86,161,.10);
+  border:1px solid rgba(64,86,161,.18);
+}
+
+.player-busy{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:26px;
+  padding:0 10px;
+  color:#b42342;
+  background:rgba(210,63,87,.10);
+  border:1px solid rgba(210,63,87,.20);
+  border-radius:999px;
+  font-size:12px;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.empty{
+  display:flex;
+  min-height:150px;
+  align-items:center;
+  justify-content:center;
+  color:#7b8796;
+  background:linear-gradient(135deg,rgba(15,159,143,.07),rgba(64,86,161,.07));
+  border:1px dashed rgba(217,225,236,.95);
+  border-radius:8px;
+  font-size:13px;
+}
+
+@media (max-width:900px){
+  body{
+    padding:12px;
+  }
+
+  .kx-hero,
+  .kx-layout{
+    grid-template-columns:1fr;
+  }
+
+  .kx-side-panel{
+    position:static;
+  }
+
+  .kx-hero-main{
+    padding:18px;
+  }
+
+  .kx-hero-main h1{
+    font-size:22px;
+  }
+
+  .kx-hero-side{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media (max-width:560px){
+  .kx-hero-side{
+    grid-template-columns:1fr;
+  }
+
+  .kx-panel-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+    padding:13px 14px;
+  }
+
+  .kx-panel-subtitle{
+    white-space:normal;
+  }
+
+  .kx-control-body,
+  .status{
+    padding:12px 14px 14px;
+  }
+
+  button{
+    width:100%;
+    min-height:38px;
+  }
+
+  td button{
+    width:auto;
+    min-width:86px;
+    min-height:30px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="kx-page">
+  <section class="kx-hero">
+    <div class="kx-hero-main">
+      <div class="kx-eyebrow">KUWANXING DEVICE HOLD</div>
+      <h1>挂车占有管理</h1>
+      <p>集中查看当前场地车辆占有状态，区分系统挂车占有与玩家真实占有，并快速执行一键占有或恢复在线。</p>
+    </div>
+    <div class="kx-hero-side">
+      <div class="kx-status-guide"><span>在线车辆</span><span class="badge ok">在线</span></div>
+      <div class="kx-status-guide"><span>系统占有</span><span class="badge danger">占有</span></div>
+      <div class="kx-status-guide"><span>其他状态</span><span class="badge normal">查看</span></div>
+    </div>
+  </section>
+
+  <div class="kx-layout">
+    <aside class="kx-panel kx-side-panel">
+      <div class="kx-panel-head">
+        <h2>场地与操作</h2>
+        <span class="kx-panel-subtitle">按角色显示权限</span>
+      </div>
+      <div class="kx-control-body">
+        <div id="venueSelectWrapper" style="display:none;margin-bottom:12px">
+          <label class="kx-label" for="venue_id">场地筛选</label>
+          <select id="venue_id"></select>
+        </div>
+
+        <div id="policyTips" class="policy-box">加载中...</div>
+
+        <div class="toolbar">
+          <button onclick="loadVehicles()">刷新列表</button>
+        </div>
+
+        <div class="muted">
+          系统挂车占有显示“恢复在线”，真实玩家占有显示“玩家占有中”。离线车辆执行占有通常无效，请先确认设备在线状态。
+        </div>
+      </div>
+    </aside>
+
+    <main class="kx-panel">
+      <div class="kx-panel-head">
+        <h2>车辆占有列表</h2>
+        <span class="kx-panel-subtitle">当前场地设备状态</span>
+      </div>
+      <div id="result" class="status"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+let CURRENT_ROLE = 0;
+let CAN_CHOOSE_VENUE = false;
+let CAN_OPERATE = false;
+
+document.addEventListener('DOMContentLoaded', init);
+
+function escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function statusBadgeClass(text){
+  const t = String(text || '');
+  if (t.includes('占有')) return 'danger';
+  if (t.includes('在线')) return 'ok';
+  return 'normal';
+}
+
+async function init(){
+  const meta = await fetch('/api/operat/energy_renew_or_config.php?action=meta').then(r => r.json());
+
+  if(meta.code !== 0){
+    document.getElementById('result').innerText = meta.msg || '加载失败';
+    return;
+  }
+
+  const data = meta.data || {};
+  CURRENT_ROLE = Number(data.role_id || 0);
+  CAN_CHOOSE_VENUE = !!data.can_choose_venue;
+  CAN_OPERATE = !!data.can_operate;
+
+  if(CAN_CHOOSE_VENUE){
+    const wrap = document.getElementById('venueSelectWrapper');
+    const sel  = document.getElementById('venue_id');
+    wrap.style.display = 'block';
+    sel.innerHTML = '';
+
+    (data.venues || []).forEach(v => {
+      const o = document.createElement('option');
+      o.value = v.id;
+      o.textContent = `${v.id} - ${v.venue_name}`;
+      sel.appendChild(o);
+    });
+
+    sel.value = data.venue_id || '';
+    sel.onchange = loadVehicles;
+  }
+
+  renderPolicyBox();
+  await loadVehicles();
+}
+
+function selectedVenueId(){
+  return CAN_CHOOSE_VENUE ? (document.getElementById('venue_id').value || '') : '';
+}
+
+function renderPolicyBox(){
+  const box = document.getElementById('policyTips');
+
+  if(CURRENT_ROLE === 1){
+    box.innerHTML = `
+      当前模式：管理员<br>
+      可切换场地查看车辆列表<br>
+      可对当前选中场地车辆执行“一键占有 / 恢复在线”
+    `;
+    return;
+  }
+
+  if(CURRENT_ROLE === 2){
+    box.innerHTML = `
+      当前模式：管理员 / 运营<br>
+      仅可查看自己场地设备<br>
+      可对自己场地车辆执行“一键占有 / 恢复在线”
+    `;
+    return;
+  }
+
+  if(CURRENT_ROLE === 3 || CURRENT_ROLE === 4){
+    box.innerHTML = `
+      离线车辆设备占有无效<br>
+      可对自己场地车辆执行“一键占有 / 恢复在线”
+    `;
+    return;
+  }
+
+  box.innerHTML = `
+    当前模式：普通查看<br>
+    仅查看自己场地车辆，不提供操作
+  `;
+}
+
+async function loadVehicles(){
+  const res = await fetch(`/api/operat/energy_renew_or_config.php?action=check&venue_id=${selectedVenueId()}`);
+  const json = await res.json();
+
+  if(json.code !== 0){
+    document.getElementById('result').innerText = json.msg || '查询失败';
+    return;
+  }
+
+  const data = json.data || {};
+  const rows = data.vehicles || [];
+
+  if(rows.length === 0){
+    document.getElementById('result').innerHTML = '<div class="empty">当前场地暂无设备</div>';
+    return;
+  }
+
+  let html = `
+    <div class="table-wrap">
+      <table>
+        <tr>
+          <th>车辆名称</th>
+          <th>设备序列号</th>
+          <th>当前状态</th>
+          <th>操作</th>
+        </tr>
+  `;
+
+  rows.forEach(row => {
+    const canOp = !!data.can_operate;
+    const statusText = escapeHtml(row.current_status || '-');
+    const badgeClass = statusBadgeClass(row.current_status || '');
+
+    let opHtml = '-';
+
+    if (canOp) {
+      if (row.is_system_hold) {
+        opHtml = `<button class="restore-btn" onclick="restoreVehicle(${Number(row.id || 0)}, '${escapeHtml(row.name || '')}')">恢复在线</button>`;
+      } else if (row.is_real_player_occupied) {
+        opHtml = `<span class="player-busy">玩家占有中</span>`;
+      } else {
+        opHtml = `<button onclick="occupyVehicle(${Number(row.id || 0)}, '${escapeHtml(row.name || '')}')">一键占有</button>`;
+      }
+    }
+
+    html += `
+      <tr>
+        <td>${escapeHtml(row.name || '-')}</td>
+        <td>${escapeHtml(row.serial_number || '-')}</td>
+        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+        <td>${opHtml}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </table>
+    </div>
+  `;
+
+  document.getElementById('result').innerHTML = html;
+}
+
+async function occupyVehicle(vehicleId, vehicleName){
+  if(!vehicleId){
+    alert('缺少 vehicle_id');
+    return;
+  }
+
+  const ok = confirm(`确定对【${vehicleName || '该车辆'}】执行一键占有吗？`);
+  if(!ok) return;
+
+  const res = await fetch('/api/operat/energy_renew_or_config.php?action=occupy', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `venue_id=${encodeURIComponent(selectedVenueId())}&vehicle_id=${encodeURIComponent(vehicleId)}`
+  });
+
+  const json = await res.json();
+  if(json.code !== 0){
+    alert(json.msg || '操作失败');
+    return;
+  }
+
+  const v = (json.data && json.data.vehicle) || {};
+  alert(
+    `${json.msg || '一键占有成功'}\n` +
+    `车辆：${v.name || '-'}\n` +
+    `序列号：${v.serial_number || '-'}\n` +
+    `driver_id：${v.driver_id || '-'}\n` +
+    `driver：${v.driver || '-'}\n` +
+    `状态：${v.current_status || '-'}`
+  );
+
+  await loadVehicles();
+}
+
+async function restoreVehicle(vehicleId, vehicleName){
+  if(!vehicleId){
+    alert('缺少 vehicle_id');
+    return;
+  }
+
+  const ok = confirm(`确定将【${vehicleName || '该车辆'}】恢复为在线吗？`);
+  if(!ok) return;
+
+  const res = await fetch('/api/operat/energy_renew_or_config.php?action=restore', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `venue_id=${encodeURIComponent(selectedVenueId())}&vehicle_id=${encodeURIComponent(vehicleId)}`
+  });
+
+  const json = await res.json();
+  if(json.code !== 0){
+    alert(json.msg || '恢复失败');
+    return;
+  }
+
+  const v = (json.data && json.data.vehicle) || {};
+  alert(
+    `恢复在线成功\n` +
+    `车辆：${v.name || '-'}\n` +
+    `序列号：${v.serial_number || '-'}\n` +
+    `driver_id：${v.driver_id ?? 'NULL'}\n` +
+    `driver：${v.driver ?? 'NULL'}\n` +
+    `状态：${v.current_status || '-'}`
+  );
+
+  await loadVehicles();
+}
+</script>
+
+</body>
+</html>

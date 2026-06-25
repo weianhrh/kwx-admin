@@ -54,41 +54,6 @@ $venueId = (int)($user['venue_id'] ?? 0);
 $todayStart = date('Y-m-d 00:00:00');
 $tomorrowStart = date('Y-m-d 00:00:00', strtotime('+1 day'));
 
-$franchiseVenueName = $user['venue_name'] ?? '未绑定场地';
-$franchiseTodayRevenue = '0.00';
-$franchiseTodayOrderCount = 0;
-$franchiseOnlineDevices = 0;
-$franchiseTotalDevices = 0;
-
-if ($roleId === 3 && $venueId > 0) {
-    $franchiseTodayRevenue = dashboard_scalar($db, "
-        SELECT COALESCE(ROUND(SUM(payment_amount), 2), 0) AS total
-        FROM orders
-        WHERE reservation_id = ?
-          AND end_time >= ? AND end_time < ?
-          AND pays_type <> '能量'
-    ", [$venueId, $todayStart, $tomorrowStart], 'total', '0.00');
-
-    $franchiseTodayOrderCount = dashboard_scalar($db, "
-        SELECT COUNT(*) AS total
-        FROM orders
-        WHERE reservation_id = ?
-          AND end_time >= ? AND end_time < ?
-    ", [$venueId, $todayStart, $tomorrowStart], 'total', 0);
-
-    $franchiseOnlineDevices = dashboard_scalar($db, "
-        SELECT COUNT(*) AS total
-        FROM vehicles
-        WHERE bind_site = ? AND status = '在线'
-    ", [$venueId], 'total', 0);
-
-    $franchiseTotalDevices = dashboard_scalar($db, "
-        SELECT COUNT(*) AS total
-        FROM vehicles
-        WHERE bind_site = ?
-    ", [$venueId], 'total', 0);
-}
-
 $registerCount = dashboard_scalar($db, "
     SELECT COUNT(*) AS total
     FROM users
@@ -256,11 +221,6 @@ auth_out(0, 'ok', [
         'dollRevenueToday' => (float)$dollRevenueToday,
         'todayGoldRechargeRevenue' => (float)$appleGoldRevenue + (float)$androidGoldRevenue,
         'goldRechargeOrderCount' => (int)$appleGoldCount + (int)$androidGoldCount,
-        'franchiseVenueCount' => $venueId > 0 ? 1 : 0,
-        'franchiseTodayRevenue' => (float)$franchiseTodayRevenue,
-        'franchiseTodayOrderCount' => (int)$franchiseTodayOrderCount,
-        'franchiseOnlineDevices' => (int)$franchiseOnlineDevices,
-        'franchiseTotalDevices' => (int)$franchiseTotalDevices,
     ],
     'todos' => [
         'appealCount' => (int)$appealCount,
@@ -270,12 +230,4 @@ auth_out(0, 'ok', [
         'franchiseCount' => (int)$franchiseCount,
     ],
     'quickActions' => $quickActions,
-    'franchise' => [
-        'venue_id' => $venueId,
-        'venue_name' => $franchiseVenueName,
-        'notices' => [
-            ['title' => '运营提醒', 'content' => '请保持车辆电量、网络与视频画面稳定，避免影响玩家远程驾驶体验。', 'date' => date('Y-m-d')],
-            ['title' => '结算提示', 'content' => '今日收益按场地订单实时汇总，最终结算以财务审核后的账单为准。', 'date' => date('Y-m-d')],
-        ],
-    ],
 ]);

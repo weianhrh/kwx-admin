@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>退款记录（仅显示已退款）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --primary:#5b8cff;
+      --secondary:#7f8fa4;
+      --background-gradient-start:#f8f9ff;
+      --background-gradient-end:#f0f3ff;
+      --card-bg:#ffffff;
+      --border-color:#ddd;
+      --text-color:#333;
+      --shadow:0 4px 24px rgba(91,140,255,.08);
+      --transition:all .3s ease;
+      --hover-bg:#f9f9f9;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui;}
+    body{
+      background:linear-gradient(135deg,var(--background-gradient-start) 0%,var(--background-gradient-end) 100%);
+      min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start;
+    }
+    .container{max-width:1200px;width:100%;}
+    .card{background:var(--card-bg);border-radius:12px;padding:20px;box-shadow:var(--shadow);margin-bottom:20px;transition:var(--transition);}
+    .card-title{font-size:24px;color:var(--text-color);margin-bottom:20px;font-weight:600;border-bottom:2px solid var(--primary);padding-bottom:10px;text-align:left;}
+
+    .filters{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+    .filters input{padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;min-width:180px;}
+    .filters button{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;}
+    .filters button:hover{background:#4a77e4;}
+.page-tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.page-tabs a{
+  display:inline-block;
+  text-decoration:none;
+  padding:8px 14px;
+  border-radius:6px;
+  border:1px solid var(--primary);
+  color:var(--primary);
+  background:#fff;
+  font-size:14px;
+}
+.page-tabs a.active{
+  background:var(--primary);
+  color:#fff;
+}
+.page-tabs a:hover{
+  background:#edf3ff;
+}
+.page-tabs a.active:hover{
+  background:var(--primary);
+}
+    /* 卡片布局：PC 横向，手机纵向 */
+    .venue-card{
+      background:#fff;border:1px solid var(--border-color);border-radius:8px;
+      padding:15px;margin-bottom:15px;display:flex;gap:16px;transition:var(--transition);
+    }
+    .venue-card:hover{background-color:var(--hover-bg);}
+
+    /* 信息区：PC 两列；避免最小宽导致挤爆 */
+    .venue-info{
+      flex:1;display:grid;grid-template-columns:repeat(2, minmax(240px, 1fr));
+      column-gap:20px;row-gap:8px;font-size:14px;color:var(--text-color);
+      word-break:break-all;  /* 长订单号在窄屏也能换行 */
+    }
+    .venue-name{grid-column:1 / -1;font-size:16px;font-weight:600;color:var(--primary);margin-bottom:4px;}
+
+    .loading{text-align:center;font-size:16px;color:var(--primary);padding:20px;}
+
+    .pagination{display:flex;gap:10px;justify-content:center;padding-top:8px;}
+    .pagination button{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;}
+    .pagination button[disabled]{opacity:.5;cursor:not-allowed;}
+
+    /* —— 关键的响应式断点 —— */
+    @media (max-width: 768px){
+      .container{padding:0 12px;}
+      .venue-card{flex-direction:column;}        /* 手机上下布局 */
+      .venue-info{grid-template-columns:1fr;}    /* 手机单列 */
+      .filters input{min-width:0;flex:1;}
+    }
+    @media (max-width: 400px){
+      .card{padding:16px;}
+      .filters{gap:8px;}
+      .pagination button{padding:6px 10px;}
+    }
+    
+    .venue-actions{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:8px;
+  padding-left:15px;
+}
+
+.action-btn{
+  border:none;
+  border-radius:6px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:14px;
+  color:#fff;
+  background:var(--primary);
+  white-space:nowrap;
+}
+
+.action-btn.danger{
+  background:#ef4444;
+}
+
+.action-btn.secondary{
+  background:#64748b;
+}
+
+.action-btn[disabled]{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+@media (max-width: 768px){
+  .venue-actions{
+    flex-direction:row;
+    padding-left:0;
+    flex-wrap:wrap;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">退款记录（仅显示已退款）</div>
+        <div class="page-tabs">
+          <a href="refund_records.html" class="active">退款记录</a>
+          <a href="orderLockRecords.html">锁定订单</a>
+        </div>
+      <!-- 筛选：只有订单号/UID -->
+      <div class="filters">
+        <input type="text" id="f_order" placeholder="订单号" />
+        <input type="text" id="f_uid" placeholder="用户ID" />
+        <button id="btnSearch">查询</button>
+      </div>
+
+      <!-- 列表 -->
+      <div id="list"></div>
+
+      <!-- 分页 -->
+      <div class="pagination">
+        <button id="prev">上一页</button>
+        <span id="pageInfo" style="align-self:center;"></span>
+        <button id="next">下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let page = 1, pageSize = 10, total = 0;
+
+    // 固定仅查询“已退款” => 后端状态为 applied
+    function buildQuery(){
+      const order = document.getElementById('f_order').value.trim();
+      const uid   = document.getElementById('f_uid').value.trim();
+      const p = new URLSearchParams();
+      p.set('page', page);
+      p.set('page_size', pageSize);
+      if(order) p.set('order_number', order);
+      if(uid)   p.set('uid', uid);
+      p.set('status', 'applied');  // 只查已退款
+      return p.toString();
+    }
+
+    async function loadData(){
+      const list = document.getElementById('list');
+      list.innerHTML = '<div class="loading">加载中...</div>';
+      try{
+        const resp = await fetch('/api/finance/getRefundRecords.php?' + buildQuery(), {credentials:'include'});
+        const data = await resp.json();
+        if(data.code !== 0){
+          list.innerHTML = `<div class="loading">${data.msg || '加载失败'}</div>`;
+          document.getElementById('pageInfo').textContent = '';
+          return;
+        }
+        total = data.count || 0;
+        renderList(data.data || []);
+        renderPager();
+      }catch(e){
+        console.error(e);
+        list.innerHTML = '<div class="loading">网络异常</div>';
+        document.getElementById('pageInfo').textContent = '';
+      }
+    }
+
+    function renderList(rows){
+      const list = document.getElementById('list');
+      if(!rows.length){ list.innerHTML = '<div class="loading">暂无数据</div>'; return; }
+      list.innerHTML = '';
+
+      rows.forEach(r=>{
+        const card = document.createElement('div');
+        card.className = 'venue-card';
+
+        const amountText = (r.refund_amount == null || r.refund_amount === '')
+          ? '—' : ('¥ ' + Number(r.refund_amount).toFixed(2));
+
+        const reasonText = r.reason ? escapeHtml(r.reason) : '无';
+
+        card.innerHTML = `
+          <div class="venue-info">
+            <div class="venue-name">${r.venue_name || '未知场地'}</div>
+            <span><b>订单：</b>${r.order_id || '—'}</span>
+            <span><b>用户ID：</b>${r.uid ?? '—'}</span>
+            <span><b>金额：</b>${amountText}</span>
+            <span><b>状态：</b>已退款</span>
+            <span style="grid-column:1/-1;"><b>原因：</b>${reasonText}</span>
+            <span><b>退款人：</b>${r.applicant_admin_uid ?? '—'}</span>
+            <span><b>时间：</b>${r.created_at || '—'}</span>
+          </div>
+        
+          <div class="venue-actions">
+            <button
+              class="action-btn danger"
+              type="button"
+              data-order="${escapeAttr(r.order_id || '')}"
+              data-uid="${escapeAttr(r.uid ?? '')}"
+              onclick="cancelRefundFromBtn(this)"
+            >
+              取消退款
+            </button>
+        
+            <button
+              class="action-btn secondary"
+              type="button"
+              data-order="${escapeAttr(r.order_id || '')}"
+              onclick="copyOrderNo(this.dataset.order)"
+            >
+              复制订单号
+            </button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function renderPager(){
+      const pageInfo = document.getElementById('pageInfo');
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      pageInfo.textContent = `第 ${page} / ${totalPages} 页，共 ${total} 条`;
+      document.getElementById('prev').disabled = page <= 1;
+      document.getElementById('next').disabled = page >= totalPages;
+    }
+
+    // 简单转义，防止原因里含HTML破版
+    function escapeHtml(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+function escapeAttr(str){
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+async function cancelRefundFromBtn(btn){
+  const orderId = (btn.dataset.order || '').trim();
+  const uid = Number(btn.dataset.uid || 0);
+
+  if(!orderId){
+    alert('缺少订单号，不能取消退款');
+    return;
+  }
+
+  if(!confirm(`确认取消这条退款记录吗？\n订单号：${orderId}`)){
+    return;
+  }
+
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+
+  try{
+    const payload = { order_id: orderId };
+    if(uid > 0) payload.uid = uid;
+
+    const resp = await fetch('/api/finance/cancelRefundRecord.php', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if(data.code === 0){
+      alert(data.msg || '已取消退款记录');
+      loadData(); // 重新加载后，该记录会从 applied 列表消失
+      return;
+    }
+
+    alert(data.msg || '取消退款失败');
+  }catch(e){
+    console.error(e);
+    alert('网络异常，取消退款失败');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+function copyOrderNo(orderId){
+  orderId = String(orderId || '').trim();
+  if(!orderId){
+    alert('订单号为空');
+    return;
+  }
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(orderId)
+      .then(()=>alert('已复制订单号'))
+      .catch(()=>prompt('复制失败，请手动复制', orderId));
+  }else{
+    prompt('请手动复制订单号', orderId);
+  }
+}
+    // 事件
+    document.getElementById('btnSearch').addEventListener('click', ()=>{ page = 1; loadData(); });
+    document.getElementById('prev').addEventListener('click', ()=>{ if(page>1){ page--; loadData(); } });
+    document.getElementById('next').addEventListener('click', ()=>{ page++; loadData(); });
+
+    // 首次加载
+    loadData();
+  </script>
+</body>
+</html>

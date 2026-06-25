@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>场地用户拉黑管理</title>
+  <style>
+:root {
+  --kx-ink: #172033;
+  --kx-muted: #6b7280;
+  --kx-line: #d9e1ec;
+  --kx-page: #f4f7fb;
+  --kx-surface: #ffffff;
+  --kx-soft: #f8fafc;
+  --kx-primary: #0f9f8f;
+  --kx-primary-2: #4056a1;
+  --kx-amber: #c47a16;
+  --kx-rose: #d23f57;
+  --kx-green: #0f9f62;
+  --kx-shadow: 0 14px 34px rgba(18, 31, 56, 0.08);
+  --transition: all .18s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  padding: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  color: var(--kx-ink);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, 0) 220px),
+    var(--kx-page);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 220px;
+  background:
+    linear-gradient(90deg, rgba(15, 159, 143, 0.16), rgba(64, 86, 161, 0.14) 56%, rgba(196, 122, 22, 0.1)),
+    #eef3f8;
+}
+
+.container {
+  width: min(100%, 1240px);
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(217, 225, 236, .95);
+  border-radius: 8px;
+  box-shadow: var(--kx-shadow);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--kx-primary), var(--kx-primary-2), var(--kx-amber));
+}
+
+.page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(217, 225, 236, 0.86);
+}
+
+.kx-eyebrow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.page-hero h1 {
+  margin-top: 7px;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.page-hero p {
+  max-width: 780px;
+  margin-top: 8px;
+  color: #5f6b7a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  height: 34px;
+  padding: 0 12px;
+  color: #4056a1;
+  background: rgba(64, 86, 161, 0.08);
+  border: 1px solid rgba(64, 86, 161, 0.18);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.card-title {
+  color: var(--kx-ink);
+  font-size: 24px;
+  font-weight: 850;
+}
+
+.loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--kx-primary);
+  font-size: 14px;
+}
+
+.page-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  flex-wrap: wrap;
+}
+
+.page-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  height: 34px;
+  padding: 0 14px;
+  color: #40506a;
+  background: #fff;
+  border: 1px solid rgba(217, 225, 236, .96);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.page-tabs a:hover {
+  color: var(--kx-primary);
+  border-color: rgba(15, 159, 143, 0.35);
+  background: rgba(15, 159, 143, 0.07);
+}
+
+.page-tabs a.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--kx-primary), var(--kx-primary-2));
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(15, 159, 143, .18);
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(180px, 220px) 130px 88px 104px 104px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fbfcfe;
+  border: 1px solid rgba(217, 225, 236, .9);
+  border-radius: 8px;
+}
+
+.toolbar .field {
+  position: relative;
+}
+
+.toolbar .input {
+  min-width: 0;
+}
+
+.venue-filter {
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  height: 38px;
+  padding: 0 11px;
+  color: var(--kx-ink);
+  background: #fff;
+  border: 1px solid rgba(217, 225, 236, .98);
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+textarea.input {
+  height: auto;
+  min-height: 116px;
+  padding: 10px 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.input:focus {
+  border-color: rgba(15, 159, 143, .5);
+  box-shadow: 0 0 0 4px rgba(15, 159, 143, .10);
+}
+
+.input.invalid {
+  border-color: var(--kx-rose);
+  box-shadow: 0 0 0 4px rgba(210, 63, 87, .12);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none;
+  font-size: 14px;
+  font-weight: 850;
+  white-space: nowrap;
+  transition: transform .16s ease, filter .16s ease, background .16s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(.98);
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--kx-primary);
+}
+
+.btn-outline {
+  color: #4056a1;
+  background: rgba(64, 86, 161, 0.08);
+  border-color: rgba(64, 86, 161, 0.18);
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--kx-rose);
+}
+
+.btn:disabled {
+  color: #8b95a1;
+  background: #eef2f7;
+  border-color: #e5eaf2;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(292px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.black-card {
+  position: relative;
+  display: flex;
+  min-height: 168px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(217, 225, 236, .95);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(18, 31, 56, 0.05);
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.black-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 4px;
+  height: 30px;
+  border-radius: 0 999px 999px 0;
+  background: var(--kx-rose);
+}
+
+.black-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(210, 63, 87, .22);
+  box-shadow: 0 12px 24px rgba(18, 31, 56, 0.08);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.uid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  color: #9f1239;
+  background: rgba(210, 63, 87, .09);
+  border: 1px solid rgba(210, 63, 87, .18);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.reason {
+  min-height: calc(1.65em * 3);
+  overflow: hidden;
+  display: -webkit-box;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.65;
+  word-break: break-word;
+  white-space: normal;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  padding-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.actions .btn {
+  min-width: 92px;
+}
+
+.muted {
+  grid-column: 1 / -1;
+  padding: 26px;
+  color: #7b8796;
+  background: #fbfcfe;
+  border: 1px dashed rgba(217, 225, 236, .95);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.page-info {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.page-size {
+  width: 100%;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(15, 23, 42, .48);
+}
+
+.modal-content {
+  width: min(540px, 100%);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  background: #fff;
+  border: 1px solid rgba(217, 225, 236, .98);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, .24);
+}
+
+.modal .title {
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.modal-row label {
+  padding-top: 9px;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.modal-row label[style*="display:flex"] {
+  padding-top: 0;
+  font-weight: 700;
+}
+
+.modal .btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 10px 14px;
+  color: #fff;
+  background: #111827;
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(18, 31, 56, 0.22);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .25s;
+  font-size: 14px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.field {
+  position: relative;
+}
+
+.suggest {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1002;
+  max-height: 260px;
+  overflow: auto;
+  padding: 6px 0;
+  background: #fff;
+  border: 1px solid rgba(217, 225, 236, .95);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(18, 31, 56, .12);
+}
+
+.s-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.s-item:hover {
+  background: #f8fafc;
+}
+
+.s-item .nick {
+  color: var(--kx-ink);
+  font-weight: 800;
+}
+
+.s-item .meta {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.s-item.disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.s-item.disabled .meta::after {
+  content: " · 不可拉黑";
+  color: var(--kx-rose);
+}
+
+@media (max-width: 1080px) {
+  .toolbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, 220px) 120px 88px;
+  }
+
+  #btnAdd,
+  #btnAssign {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .page-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-tag {
+    width: fit-content;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .toolbar .input,
+  .toolbar .btn,
+  .btn {
+    width: 100%;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .black-card {
+    min-height: 150px;
+  }
+
+  .pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .page-info {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  .pagination .btn {
+    flex: 1 1 120px;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .modal-row label {
+    padding-top: 0;
+  }
+
+  .modal .btns {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .page-tabs a {
+    flex: 1;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="page-hero">
+        <div>
+          <div class="kx-eyebrow">KUWANXING RISK CONTROL</div>
+          <h1>场地用户拉黑管理</h1>
+          <p>集中查看场地拉黑名单，支持按 UID、原因和场地筛选，并快速新增或取消拉黑。</p>
+        </div>
+        <div class="hero-tag">拉黑管理</div>
+      </div>
+<div class="page-tabs">
+  <a href="black_user_gmt.html" class="active">拉黑用户</a>
+  <a href="venue_mute_records.html">禁言用户</a>
+</div>
+      <div class="toolbar">
+        <input id="kw" class="input" placeholder="按 UID 精确 / 按原因模糊搜索…" />
+        <!-- 仅 role_id == 1 可见：场地筛选 -->
+        <select id="venueFilter" class="input venue-filter" hidden>
+          <option value="">全部场地</option>
+        </select>
+
+        <select id="pageSize" class="input page-size">
+          <option value="12">每页 12</option>
+          <option value="20">每页 20</option>
+          <option value="50">每页 50</option>
+        </select>
+        <button id="btnSearch" class="btn btn-outline">搜索</button>
+        <button id="btnAdd" class="btn btn-primary">添加拉黑</button>
+        <!-- 仅 role_id == 1 可见 -->
+        <button id="btnAssign" class="btn btn-outline" hidden>指定添加</button>
+      </div>
+
+      <!-- 卡片列表 -->
+      <div id="cardList" class="cards">
+        <div class="black-card"><div class="loading">加载中…</div></div>
+      </div>
+
+      <div class="pagination">
+        <span class="page-info" id="pageInfo">—</span>
+        <button class="btn btn-outline" id="prev">上一页</button>
+        <button class="btn btn-outline" id="next">下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加拉黑 Modal（当前场地） -->
+  <div class="modal" id="addModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" role="document">
+      <div class="title">添加拉黑</div>
+      <div class="modal-row">
+        <label for="addUid">用户 UID</label>
+        <div class="field">
+          <input id="addUid" class="input" type="number" inputmode="numeric" autocomplete="off" placeholder="请输入用户 UID" />
+          <div id="uidSuggest" class="suggest" hidden></div>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label for="addReason">拉黑原因 <span style="color:#ef4444">*</span></label>
+        <textarea id="addReason" class="input" rows="4" maxlength="255" placeholder="请输入拉黑原因（必填）" required aria-required="true"></textarea>
+      </div>
+      <div class="modal-row">
+          <label></label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#475569;">
+            <input type="checkbox" id="addRemoveVoiceRoom" style="width:16px;height:16px;">
+            <span>发送移除语音房指令，把这个用户移除语音房</span>
+          </label>
+        </div>
+      <div class="btns">
+        <button class="btn btn-outline" data-close>取消</button>
+        <button class="btn btn-primary" id="confirmAdd">确定</button>
+        <!-- 仅管理员可见 -->
+        <button class="btn btn-danger" id="confirmAddAll" hidden>一键拉黑所有场地</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 指定添加 Modal（UID + 场地） -->
+  <div class="modal" id="assignModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" role="document">
+      <div class="title">指定添加（UID + 场地）</div>
+      <div class="modal-row">
+        <label for="assignUid">用户 UID</label>
+        <div class="field">
+          <input id="assignUid" class="input" type="number" inputmode="numeric" autocomplete="off" placeholder="请输入用户 UID" />
+          <div id="uidSuggestAssign" class="suggest" hidden></div>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label for="venue_id">场地</label>
+        <select id="venue_id" class="input">
+          <option value="">加载中…</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label for="assignReason">拉黑原因 <span style="color:#ef4444">*</span></label>
+        <textarea id="assignReason" class="input" rows="4" maxlength="255" placeholder="请输入拉黑原因（必填）" required aria-required="true"></textarea>
+      </div>
+      <div class="modal-row">
+          <label></label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#475569;">
+            <input type="checkbox" id="assignRemoveVoiceRoom" style="width:16px;height:16px;">
+            <span>发送移除语音房指令，把这个用户移除语音房</span>
+          </label>
+        </div>
+      <div class="btns">
+        <button class="btn btn-outline" data-close>取消</button>
+        <button class="btn btn-primary" id="confirmAssign">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认 Modal -->
+  <div class="modal" id="delModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" role="document">
+      <div class="title">确认取消拉黑？</div>
+      <div class="muted">此操作只影响当前记录所在的场地。</div>
+      <div class="btns">
+        <button class="btn btn-outline" data-close>再想想</button>
+        <button class="btn btn-danger" id="confirmDel">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== API 路径 =====
+    const API_BASE = '/api/operat';
+    const API = {
+      LIST: API_BASE + '/blacklist_list.php',
+      BLOCK: API_BASE + '/block_user.php',
+      UNBLOCK: API_BASE + '/unblock_user.php',
+      SEARCH_USER: API_BASE + '/search_user.php',
+      GET_CUR_USER: API_BASE + '/get_current_user.php',
+      BLOCK_FOR_VENUE: API_BASE + '/block_user_for_venue.php'
+    };
+
+    // 禁止拉黑 UID（示例）
+    const DENY_UIDS = new Set([10001, 10107, 10130]);
+    const isDenyUid = (uid) => DENY_UIDS.has(Number(uid));
+
+    // 工具
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const escapeHTML = (s='') => String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'
+    }[m]));
+    const fmt = (dstr) => {
+      if(!dstr) return '-';
+      const d = new Date(dstr.replace(/-/g,'/'));
+      if(isNaN(d)) return dstr;
+      const pad = (n)=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    let TOAST_TIMER = null;
+    function toast(msg, ok=true){
+      const el = $('#toast');
+      el.textContent = msg;
+      el.style.background = ok ? '#111827' : '#ef4444';
+      el.classList.add('show');
+      clearTimeout(TOAST_TIMER);
+      TOAST_TIMER = setTimeout(()=> el.classList.remove('show'), 2000);
+    }
+
+    // 状态
+    let state = {
+      page: 1, pageSize: 12, kw: '', total: 0, pendingDel: {uid:null, venue_id:null},
+      roleId: 0, venueId: 0, venueFilter: ''   // venueFilter 仅 role==1 用
+    };
+    const isPlatformAdmin = () => (state.roleId === 1 || state.roleId === 2);
+
+    // 列表加载
+    async function loadList(){
+      const params = new URLSearchParams({ page: state.page, page_size: state.pageSize });
+      if(state.kw.trim()) params.set('kw', state.kw.trim());
+      if(isPlatformAdmin() && state.venueFilter){ params.set('venue_id', state.venueFilter); }
+
+      setCardsLoading();
+      try{
+        const resp = await fetch(`${API.LIST}?${params.toString()}`, { credentials: 'include' });
+        const json = await resp.json();
+        if(json.code !== 0) throw new Error(json.msg || '加载失败');
+        const { total, list, page, page_size } = json.data || {};
+        state.total = total || 0; state.page = page || 1; state.pageSize = page_size || state.pageSize;
+        renderCards(list || []);
+        renderPager();
+      }catch(err){
+        renderCards([]);
+        renderPager();
+        toast(err.message || '网络错误', false);
+      }
+    }
+
+    function setCardsLoading(){
+      const wrap = $('#cardList');
+      wrap.innerHTML = `<div class="black-card"><div class="loading">加载中…</div></div>`;
+    }
+
+    function renderCards(list){
+      const wrap = $('#cardList');
+      if(!list.length){
+        wrap.innerHTML = `<div class="muted" style="grid-column:1/-1;">暂无数据</div>`;
+        return;
+      }
+      const isAdmin = isPlatformAdmin();
+
+      wrap.innerHTML = list.map(row=>{
+        const uid = escapeHTML(row.uid);
+        const venue = escapeHTML(row.venue_id);
+        const handler = escapeHTML(row.handler_uid);
+        const reason = escapeHTML(row.reason);
+        const created = fmt(row.created_at);
+
+        // 非管理员只显示：UID、原因、操作
+        const metaHtml = isAdmin ? `
+          <div class="meta">
+            <div>场地ID：${venue}</div>
+            <div>操作人UID：${handler || '-'}</div>
+            <div>创建时间：${created}</div>
+          </div>
+        ` : ``;
+
+        return `
+          <div class="black-card">
+            <div class="card-top">
+              <div class="uid"><span class="tag">UID ${uid}</span></div>
+            </div>
+            <div class="reason" title="${reason}">原因：${reason}</div>
+            ${metaHtml}
+            <div class="actions">
+           
+            <button class="btn btn-danger"
+                    data-unblock
+                    data-id="${row.id}"
+                    data-uid="${row.uid}"
+                    data-venue="${row.venue_id}">取消拉黑</button>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 绑定取消拉黑
+      $$('#cardList [data-unblock]').forEach(btn => btn.addEventListener('click', (e)=>{
+        const id       = Number(e.currentTarget.getAttribute('data-id'));
+        const uid = Number(e.currentTarget.getAttribute('data-uid'));
+        const venue_id = Number(e.currentTarget.getAttribute('data-venue')) || (isPlatformAdmin() ? Number(state.venueFilter||0) : state.venueId);
+        state.pendingDel = { uid, venue_id };
+        openModal('#delModal');
+      }));
+    }
+
+    function renderPager(){
+      const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+      $('#pageInfo').textContent = `共 ${state.total} 条，${state.page}/${totalPages} 页`;
+      $('#prev').disabled = state.page <= 1;
+      $('#next').disabled = state.page >= totalPages;
+    }
+
+    // Modal 控制
+    function openModal(sel){ const el = $(sel); if(el){ el.style.display = 'flex'; el.setAttribute('aria-hidden','false'); } }
+    function closeModal(sel){ const el = $(sel); if(el){ el.style.display = 'none'; el.setAttribute('aria-hidden','true'); } }
+    $$('[data-close]').forEach(b => b.addEventListener('click', ()=>{ ['#addModal','#assignModal','#delModal'].forEach(closeModal); }));
+
+    // 事件
+$('#btnAdd').addEventListener('click', ()=>{
+  $('#addUid').value = '';
+  $('#addReason').value = '';
+  $('#addRemoveVoiceRoom').checked = false;
+  $('#addUid').classList.remove('invalid');
+  openModal('#addModal');
+  setTimeout(()=> $('#addUid').focus(), 50);
+});
+
+$('#btnAssign').addEventListener('click', ()=>{
+  $('#assignUid').value = '';
+  $('#assignReason').value = '';
+  $('#assignRemoveVoiceRoom').checked = false;
+  $('#assignUid').classList.remove('invalid');
+  openModal('#assignModal');
+  loadVenuesIntoSelect($('#venue_id'));
+  setTimeout(()=> $('#assignUid').focus(), 50);
+});
+
+    // 添加（当前场地）- 原因必填
+    $('#confirmAdd').addEventListener('click', async ()=>{
+      const uidEl = $('#addUid');
+      const reasonEl = $('#addReason');
+      const uid = Number(uidEl.value.trim());
+      const reason = reasonEl.value.trim();
+      if(!uid || uid < 1){ toast('请输入正确的 UID', false); return; }
+      if(!reason){ reasonEl.setCustomValidity('请输入拉黑原因'); } else { reasonEl.setCustomValidity(''); }
+      if(!reasonEl.checkValidity()){ reasonEl.reportValidity(); reasonEl.focus(); return; }
+      if (isDenyUid(uid)) { toast(`UID ${uid} 为受保护账号，禁止拉黑`, false); uidEl.classList.add('invalid'); return; }
+      uidEl.classList.remove('invalid');
+
+try{
+  const removeVoiceRoom = $('#addRemoveVoiceRoom').checked ? 1 : 0;
+
+  const resp = await fetch(API.BLOCK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      uid,
+      reason,
+      remove_voice_room: removeVoiceRoom
+    })
+  });
+
+  const json = await resp.json();
+  if(json.code !== 0) throw new Error(json.msg || '添加失败');
+  toast(json.msg || '已拉黑');
+  closeModal('#addModal');
+  state.page = 1;
+  await loadList();
+}catch(err){
+  toast(err.message || '网络错误', false);
+}
+    });
+    // 一键拉黑所有场地（仅管理员）
+    $('#confirmAddAll').addEventListener('click', async ()=>{
+      if(!isPlatformAdmin()){ return; }
+    
+      const uidEl = $('#addUid');
+      const reasonEl = $('#addReason');
+      const uid = Number(uidEl.value.trim());
+      const reason = reasonEl.value.trim();
+    
+      if(!uid || uid < 1){ toast('请输入正确的 UID', false); return; }
+      if(!reason){ reasonEl.setCustomValidity('请输入拉黑原因'); } else { reasonEl.setCustomValidity(''); }
+      if(!reasonEl.checkValidity()){ reasonEl.reportValidity(); reasonEl.focus(); return; }
+      if (isDenyUid(uid)) { toast(`UID ${uid} 为受保护账号，禁止拉黑`, false); uidEl.classList.add('invalid'); return; }
+      uidEl.classList.remove('invalid');
+    
+      try{
+        const resp = await fetch(API.BLOCK + '?type=all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ uid, reason })
+        });
+        const json = await resp.json();
+        if(json.code !== 0) throw new Error(json.msg || '一键拉黑失败');
+        toast(json.msg || '已对所有场地拉黑');
+        closeModal('#addModal');
+        state.page = 1;
+        await loadList();
+      }catch(err){
+        toast(err.message || '网络错误', false);
+      }
+    });
+
+    // 指定添加（UID+场地）- 原因必填
+// 指定添加（UID+场地）- 原因必填
+$('#confirmAssign').addEventListener('click', async ()=>{
+  const uidEl = $('#assignUid');
+  const venueEl = $('#venue_id');
+  const reasonEl = $('#assignReason');
+
+  const uid = Number(uidEl.value.trim());
+  const venue_id = Number(venueEl.value);
+  const reason = reasonEl.value.trim();
+
+  if(!uid || uid < 1){ toast('请输入正确的 UID', false); return; }
+  if(!venue_id || venue_id < 1){ toast('请选择场地', false); return; }
+
+  if(!reason){
+    reasonEl.setCustomValidity('请输入拉黑原因');
+  } else {
+    reasonEl.setCustomValidity('');
+  }
+
+  if(!reasonEl.checkValidity()){
+    reasonEl.reportValidity();
+    reasonEl.focus();
+    return;
+  }
+
+  if (isDenyUid(uid)) {
+    toast(`UID ${uid} 为受保护账号，禁止拉黑`, false);
+    uidEl.classList.add('invalid');
+    return;
+  }
+
+  uidEl.classList.remove('invalid');
+
+  try{
+    const removeVoiceRoom = $('#assignRemoveVoiceRoom').checked ? 1 : 0;
+
+    const resp = await fetch(API.BLOCK_FOR_VENUE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        uid,
+        venue_id,
+        reason,
+        remove_voice_room: removeVoiceRoom
+      })
+    });
+
+    const json = await resp.json();
+
+    if(json.code !== 0) {
+      throw new Error(json.msg || '添加失败');
+    }
+
+    toast(json.msg || '已拉黑');
+    closeModal('#assignModal');
+    state.page = 1;
+    await loadList();
+
+  }catch(err){
+    toast(err.message || '网络错误', false);
+  }
+});
+
+    // 取消拉黑
+       $('#confirmDel').addEventListener('click', async ()=>{
+      const { id, uid, venue_id } = state.pendingDel || {};
+      if(!id && !uid){ closeModal('#delModal'); return; }
+      try{
+        // 优先按 id 删除；没有 id 再走旧逻辑
+        const body = id ? { id } : (isPlatformAdmin()  ? { uid, venue_id } : { uid });
+    
+        const resp = await fetch(API.UNBLOCK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body)
+        });
+        const json = await resp.json();
+        if(json.code !== 0) throw new Error(json.msg || '操作失败');
+        toast(json.msg || '已取消拉黑');
+        closeModal('#delModal');
+        await loadList();
+      }catch(err){ toast(err.message || '网络错误', false); }
+    });
+
+
+    // 搜索 & 分页
+    let searchTimer = null;
+    const triggerSearch = ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(()=>{ state.page = 1; state.kw = $('#kw').value || ''; loadList(); }, 250); };
+    $('#btnSearch').addEventListener('click', triggerSearch);
+    $('#kw').addEventListener('input', triggerSearch);
+    $('#prev').addEventListener('click', ()=>{ if(state.page>1){ state.page--; loadList(); } });
+    $('#next').addEventListener('click', ()=>{ const totalPages = Math.max(1, Math.ceil(state.total/state.pageSize)); if(state.page<totalPages){ state.page++; loadList(); } });
+    $('#pageSize').addEventListener('change', ()=>{ state.pageSize = Number($('#pageSize').value); state.page = 1; loadList(); });
+
+    // 点击遮罩关闭
+    ['addModal','assignModal','delModal'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('click', (e)=>{ if(e.target === el) closeModal('#'+id); });
+    });
+
+    /* UID 联想（复用） */
+    function attachUidSuggest(input, panel){
+      if(!input || !panel) return;
+      let timer = null;
+      function hide(){ panel.hidden = true; panel.innerHTML=''; }
+      function render(list){
+        if(!list || !list.length){ hide(); return; }
+        panel.innerHTML = list.map(u => {
+          const disabled = isDenyUid(u.uid);
+          return `
+            <div class="s-item${disabled ? ' disabled' : ''}" data-uid="${u.uid}" ${disabled ? 'data-disabled="1"' : ''}>
+              <span class="nick">${escapeHTML(u.nickname || '(无昵称)')}</span>
+              <span class="meta">UID: ${u.uid}</span>
+            </div>
+          `;
+        }).join('');
+        panel.hidden = false;
+      }
+      async function query(q){
+        if(!q){ hide(); return; }
+        try{
+          const resp = await fetch(`${API.SEARCH_USER}?kw=${encodeURIComponent(q)}`, { credentials: 'include' });
+          const json = await resp.json();
+          if(json.code !== 0) throw new Error(json.msg || '');
+          const data = json.data || json.list || [];
+          render(data);
+        }catch{ hide(); }
+      }
+      input.addEventListener('input', ()=>{
+        const q = input.value.trim();
+        clearTimeout(timer);
+        if(!q){ hide(); input.classList.remove('invalid'); return; }
+        input.classList.toggle('invalid', isDenyUid(q));
+        timer = setTimeout(()=> query(q), 200);
+      });
+      panel.addEventListener('click', (e)=>{
+        const item = e.target.closest('.s-item');
+        if(!item) return;
+        if (item.dataset.disabled === '1' || isDenyUid(item.dataset.uid)) {
+          toast(`UID ${item.dataset.uid} 为受保护账号，禁止拉黑`, false);
+          return;
+        }
+        input.value = item.getAttribute('data-uid');
+        input.classList.remove('invalid');
+        hide();
+      });
+      document.addEventListener('click', (e)=>{ if(!input.closest('.modal-content')?.contains(e.target)) hide(); });
+    }
+    attachUidSuggest($('#addUid'), $('#uidSuggest'));
+    attachUidSuggest($('#assignUid'), $('#uidSuggestAssign'));
+
+    /* 获取当前用户，控制权限与控件可见性 */
+    async function fetchCurUser(){
+      try{
+        const resp = await fetch(API.GET_CUR_USER, { credentials: 'include' });
+        const json = await resp.json();
+        if(json.code === 0 && json.data){
+          state.roleId = Number(json.data.role_id || 0);
+          state.venueId = Number(json.data.venue_id || 0);
+        // role_id === 1 或 2 显示“指定添加”“场地筛选”“一键拉黑”
+         const admin = isPlatformAdmin();
+         $('#btnAssign').hidden = !admin;
+         $('#venueFilter').hidden = !admin;
+         $('#confirmAddAll').hidden = !admin;
+        
+         if(admin){
+           await loadVenuesForFilter($('#venueFilter'));
+         }
+        }
+      }catch(e){ /* 忽略 */ }
+    }
+
+    /* 场地下拉（指定添加用） */
+    function loadVenuesIntoSelect(selectEl){
+      if(!selectEl) return;
+      selectEl.innerHTML = `<option value="">加载中…</option>`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/operat/EnergyGift.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try{
+              const response = JSON.parse(xhr.responseText);
+              if (response.code === 0) {
+                const data = response.data || [];
+                selectEl.innerHTML = '';
+                data.forEach(venue => {
+                  const option = document.createElement('option');
+                  option.value = venue.id;
+                  option.textContent = `${venue.id} - ${venue.venue_name}`;
+                  selectEl.appendChild(option);
+                });
+                if(!data.length) selectEl.innerHTML = `<option value="">无可选场地</option>`;
+              } else {
+                selectEl.innerHTML = `<option value="">加载失败</option>`;
+              }
+            }catch{ selectEl.innerHTML = `<option value="">加载失败</option>`; }
+          } else {
+            selectEl.innerHTML = `<option value="">加载失败</option>`;
+          }
+        }
+      };
+      xhr.send('action=get_venues');
+    }
+
+    /* 场地筛选（工具栏用） */
+    async function loadVenuesForFilter(selectEl){
+      if(!selectEl) return;
+      selectEl.innerHTML = `<option value="">全部场地</option>`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/operat/EnergyGift.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          try{
+            const response = JSON.parse(xhr.responseText);
+            if (response.code === 0) {
+              const data = response.data || [];
+              data.forEach(venue => {
+                const opt = document.createElement('option');
+                opt.value = venue.id;
+                opt.textContent = `${venue.id} - ${venue.venue_name}`;
+                selectEl.appendChild(opt);
+              });
+            }
+          }catch{}
+        }
+      };
+      xhr.send('action=get_venues');
+
+      selectEl.addEventListener('change', ()=>{
+        state.venueFilter = selectEl.value || '';
+        state.page = 1;
+        loadList();
+      });
+    }
+
+    // 初始
+    (async function init(){
+      await fetchCurUser();
+      await loadList();
+    })();
+  </script>
+</body>
+</html>
