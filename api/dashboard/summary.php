@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
+require_once __DIR__ . '/../RedisHelper.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -18,16 +19,50 @@ function dashboard_scalar(Database $db, string $sql, array $params, string $fiel
 
 function dashboard_count_pending_images(Database $db): int
 {
-    $dir = __DIR__ . '/../venue/pending_images/';
-    if (!is_dir($dir)) {
-        return 0;
-    }
+    // 图文审核数量 = 待审核场地图片 + Redis 里的场地名称/描述/设备名称/分享名称审核。
+    // 这里要和 res/pidtrueAndtextPedding.html 使用的接口保持一致：
+    // - api/venue/getPendingImages.php 统计 pending_images 目录下的场地图片
+    // - api/venue/get_audit_list.php 读取 venue_name_audit_pool / venue_description_audit_pool
+    // - api/venue/getPendingVehicleNameAudits.php 读取 vehicle_name_audit_pool
     $count = 0;
-    foreach (scandir($dir) ?: [] as $file) {
-        if (preg_match('/venue_\d+_\d{14}\.(jpg|jpeg|png|gif|webp)$/i', $file)) {
-            $count++;
+
+    $dir = __DIR__ . '/../venue/pending_images/';
+    if (is_dir($dir)) {
+        foreach (scandir($dir) ?: [] as $file) {
+            if (preg_match('/venue_\d+_\d{14}\.(jpg|jpeg|png|gif|webp)$/i', $file)) {
+                $count++;
+            }
         }
     }
+
+    try {
+        $redis = new RedisHelper();
+        $redis->connect();
+        $redis->selectDb(3);
+        $nativeRedis = method_exists($redis, 'getNative') ? $redis->getNative() : null;
+
+        if ($nativeRedis) {
+            foreach (['venue_name_audit_pool', 'venue_description_audit_pool', 'vehicle_name_audit_pool'] as $poolKey) {
+                $keys = $nativeRedis->sMembers($poolKey) ?: [];
+                foreach ($keys as $key) {
+                    $json = $redis->get($key);
+                    if (!$json) {
+                        continue;
+                    }
+
+                    $item = json_decode($json, true);
+                    if (is_array($item) && (($item['status'] ?? '') === 'pending')) {
+                        $count++;
+                    }
+                }
+            }
+        }
+
+        $redis->close();
+    } catch (Throwable $e) {
+        // Redis 统计失败时，不影响工作台主数据展示；至少返回图片目录数量。
+    }
+
     return $count;
 }
 

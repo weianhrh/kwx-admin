@@ -298,6 +298,7 @@
 
   const container = document.getElementById("audit-list-card");
   container.innerHTML = "";
+  container.style.display = list.length ? "block" : "none";
 
   list.forEach(item => {
     const time = new Date(item.timestamp * 1000).toLocaleString();
@@ -305,7 +306,7 @@
     card.className = "venue-card";
     card.innerHTML = `
       <div class="venue-info">
-        <span class="venue-name">提交名称：${item.venue_name}</span>
+        <span class="venue-name">场地名称：${item.venue_name}</span>
         <span>场地ID: ${item.venue_id}</span>
         <span>提交时间: ${time}</span>
       </div>
@@ -321,7 +322,7 @@
     container.appendChild(card);
   });
 
-  notifyTextCount();
+  markAuditLoaded('name');
 }
 
     async function loadDeviceList() {
@@ -331,6 +332,7 @@
 
   const container = document.getElementById("device-audit-list-card");
   container.innerHTML = "";
+  container.style.display = list.length ? "block" : "none";
 
   list.forEach(item => {
     const time = new Date(item.timestamp * 1000).toLocaleString();
@@ -356,7 +358,7 @@
     container.appendChild(card);
   });
 
-  notifyTextCount();
+  markAuditLoaded('device');
 }
 
     async function loadDescList() {
@@ -366,6 +368,7 @@
 
   const container = document.getElementById("desc-audit-list-card");
   container.innerHTML = "";
+  container.style.display = list.length ? "block" : "none";
 
   list.forEach(item => {
     const time = new Date(item.timestamp * 1000).toLocaleString();
@@ -373,7 +376,7 @@
     card.className = "venue-card";
     card.innerHTML = `
       <div class="venue-info">
-        <span class="venue-name">提交描述：${item.venue_description}</span>
+        <span class="venue-name">场地描述：${item.venue_description}</span>
         <span>场地ID: ${item.venue_id}</span>
         <span>提交时间: ${time}</span>
       </div>
@@ -389,7 +392,7 @@
     container.appendChild(card);
   });
 
-  notifyTextCount();
+  markAuditLoaded('desc');
 }
 
     async function approve(id) {
@@ -476,12 +479,54 @@
       box.style.display = box.style.display === "none" ? "block" : "none";
     }
 
+    const auditLoadState = {
+      image: false,
+      name: false,
+      desc: false,
+      device: false
+    };
+
+    function countTextAuditCards() {
+      return document.querySelectorAll(
+        '#audit-list-card .venue-card, #desc-audit-list-card .venue-card, #device-audit-list-card .venue-card'
+      ).length;
+    }
+
+    function countAllAuditCards() {
+      return document.querySelectorAll(
+        '#image-list .venue-card, #audit-list-card .venue-card, #desc-audit-list-card .venue-card, #device-audit-list-card .venue-card'
+      ).length;
+    }
+
+    function updateGlobalAuditState() {
+      const loading = document.getElementById('loading');
+      if (!loading) return;
+
+      const allLoaded = Object.keys(auditLoadState).every(function(key) {
+        return auditLoadState[key];
+      });
+
+      if (!allLoaded) {
+        loading.style.display = 'block';
+        loading.innerText = '正在加载审核内容...';
+        return;
+      }
+
+      const total = countAllAuditCards();
+      loading.style.display = total > 0 ? 'none' : 'block';
+      loading.innerText = total > 0 ? '' : '暂无待审核内容';
+
+      notifyTextCount();
+      notifyParentCount();
+    }
+
+    function markAuditLoaded(type) {
+      auditLoadState[type] = true;
+      updateGlobalAuditState();
+    }
+
     function notifyTextCount() {
-      const count =
-        document.querySelectorAll('#audit-list tr').length +
-        document.querySelectorAll('#desc-audit-list tr').length +
-        document.querySelectorAll('#device-audit-list tr').length;
-      window.parent.postMessage({ type: 'text-card-count', count }, '*');
+      window.parent.postMessage({ type: 'text-card-count', count: countTextAuditCards() }, '*');
     }
 
     loadList();
@@ -518,7 +563,8 @@ function loadPendingImages() {
             const loading = document.getElementById('loading');
             loading.style.display = 'none';
 
-            if (data.code === 0 && data.data.length > 0) {
+            if (data.code === 0 && Array.isArray(data.data) && data.data.length > 0) {
+                container.style.display = 'block';
                  data.data.sort((a, b) => new Date(b.upload_time) - new Date(a.upload_time));
                 data.data.forEach(item => {
                     const card = document.createElement('div');
@@ -540,15 +586,18 @@ function loadPendingImages() {
 
                     container.appendChild(card);
                 });
-                 // ✅ 主动通知父页面
-                setTimeout(notifyParentCount, 100);
+                markAuditLoaded('image');
             } else {
-                container.innerHTML = '<div class="loading">暂无待审核图片或文字</div>';
-                notifyParentCount(); // 如果没图也要通知 count=0
+                container.innerHTML = '';
+                container.style.display = 'none';
+                markAuditLoaded('image');
             }
         })
         .catch(error => {
-            document.getElementById('loading').innerText = '加载失败';
+            const loading = document.getElementById('loading');
+            if (loading) loading.innerText = '加载失败';
+            auditLoadState.image = true;
+            updateGlobalAuditState();
             console.error('加载失败：', error);
         });
 }
@@ -649,7 +698,7 @@ async function approveImage(venueId) {
         formData.append('action', 'update_venue_pictrue');
         formData.append('venue_id', venueId);
 
-        const uploadRes = await fetch('https://app.rcxxzk.cn/app/img/userimg/upload_profile.php', {
+        const uploadRes = await fetch('https://app.kwxapp.cn/app/img/userimg/upload_profile.php', {
             method: 'POST',
             body: formData
         });
@@ -742,7 +791,9 @@ async function rejectImage(venueId) {
     }
  // 方法2：页面加载完后主动告诉父页面
   function notifyParentCount() {
-    const count = document.querySelectorAll('.venue-card').length;
+    const count = typeof countAllAuditCards === 'function'
+      ? countAllAuditCards()
+      : document.querySelectorAll('.venue-card').length;
     window.parent.postMessage({ type: 'image-card-count', count }, '*');
   }
 </script>

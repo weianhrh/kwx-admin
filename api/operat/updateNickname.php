@@ -13,7 +13,7 @@ try {
     // —— 可选：同源校验（按你的前端域名修改/或删掉）——
     $origin  = $_SERVER['HTTP_ORIGIN']  ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $allowHost = 'open.rcwulian.cn';
+    $allowHost = 'open.kwxapp.cn';
     $okOrigin = false;
     foreach ([$origin, $referer] as $src) {
         if ($src && parse_url($src, PHP_URL_HOST) === $allowHost) { $okOrigin = true; break; }
