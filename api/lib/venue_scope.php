@@ -61,11 +61,7 @@ function venue_scope_ints(array $values): array
 
 function venue_scope_user_ids(Database $db, array $user): array
 {
-    $ids = venue_scope_ints([
-        $user['venue_id'] ?? null,
-        $user['venue_ids'] ?? null,
-        $user['managed_venue_ids'] ?? null,
-    ]);
+    $relationIds = [];
 
     if (venue_scope_has_table($db, 'admin_user_venues')) {
         $userId = (int)($user['id'] ?? 0);
@@ -76,13 +72,26 @@ function venue_scope_user_ids(Database $db, array $user): array
             );
             if (is_array($rows)) {
                 foreach ($rows as $row) {
-                    $ids[] = (int)($row['venue_id'] ?? 0);
+                    $venueId = (int)($row['venue_id'] ?? 0);
+                    if ($venueId > 0) {
+                        $relationIds[] = $venueId;
+                    }
                 }
             }
         }
     }
 
-    return venue_scope_ints($ids);
+    // 新多场地关系表存在绑定时，以 admin_user_venues 为准。
+    // 旧 admin_users.venue_id 只做无绑定关系时的兼容兜底，避免旧字段没同步导致首页主/子场地判断错乱。
+    if ($relationIds) {
+        return venue_scope_ints($relationIds);
+    }
+
+    return venue_scope_ints([
+        $user['venue_id'] ?? null,
+        $user['venue_ids'] ?? null,
+        $user['managed_venue_ids'] ?? null,
+    ]);
 }
 
 function venue_scope_is_platform_admin(array $user): bool
@@ -164,7 +173,25 @@ function venue_scope_apply_filter(Database $db, array $user, string $column, arr
 function venue_scope_visible_venues(Database $db, array $user): array
 {
     if (venue_scope_is_platform_admin($user)) {
-        return $db->query('SELECT id, venue_name, image_url, venue_status FROM venues ORDER BY id DESC LIMIT 500') ?: [];
+        return $db->query('SELECT id, venue_name, image_url, venue_status, 0 AS is_primary FROM venues ORDER BY id DESC LIMIT 500') ?: [];
+    }
+
+    // 新多场地关系：直接从 admin_user_venues 取 is_primary，首页和加盟管理页才能显示一致。
+    if (venue_scope_has_table($db, 'admin_user_venues')) {
+        $userId = (int)($user['id'] ?? 0);
+        if ($userId > 0) {
+            $rows = $db->query(
+                'SELECT v.id, v.venue_name, v.image_url, v.venue_status, auv.is_primary
+                 FROM admin_user_venues auv
+                 INNER JOIN venues v ON v.id = auv.venue_id
+                 WHERE auv.admin_user_id = ?
+                 ORDER BY auv.is_primary DESC, v.id ASC',
+                [$userId]
+            );
+            if (is_array($rows) && $rows) {
+                return $rows;
+            }
+        }
     }
 
     $ids = venue_scope_user_ids($db, $user);
@@ -175,7 +202,7 @@ function venue_scope_visible_venues(Database $db, array $user): array
     $params = [];
     $where = venue_scope_filter_sql('id', $ids, $params);
     return $db->query(
-        'SELECT id, venue_name, image_url, venue_status FROM venues WHERE 1=1' . $where . ' ORDER BY id DESC',
+        'SELECT id, venue_name, image_url, venue_status, 0 AS is_primary FROM venues WHERE 1=1' . $where . ' ORDER BY id ASC',
         $params
     ) ?: [];
 }

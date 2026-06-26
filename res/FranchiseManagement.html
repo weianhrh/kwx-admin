@@ -277,13 +277,17 @@
     }
 
     .card-actions {
-      display: flex;
-      flex-direction: column;
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
       align-items: stretch;
-      justify-content: center;
-      gap: 8px;
     }
-
+    
+    .card-actions .btn {
+      width: 100%;
+    }
+    
 
     .venue-tags {
       grid-column: 1 / -1;
@@ -503,11 +507,7 @@
       }
 
       .card-actions {
-        justify-content: stretch;
-      }
-
-      .card-actions .btn {
-        width: 100%;
+        grid-column: 1 / -1;
       }
     }
 
@@ -525,7 +525,8 @@
 
       .toolbar,
       .form-grid,
-      .info-grid {
+      .info-grid,
+      .card-actions {
         grid-template-columns: 1fr;
       }
 
