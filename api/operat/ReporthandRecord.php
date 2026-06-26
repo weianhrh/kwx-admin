@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 
 $database = new Database();
 
@@ -16,23 +17,21 @@ if (!$user || !$user['role_id']) {
     exit;
 }
 
-// 判断是否为管理员
-$role_id = $user['role_id'];
-if ($role_id == 1 || $role_id == 2) {
-    // 管理员：使用 GET 提供的 venue_id
-    $venue_id = $_GET['venue_id'] ?? null;
-    if (!$venue_id || !is_numeric($venue_id)) {
-        echo json_encode(['code' => 1002, 'msg' => '缺少或无效的场地ID', 'data' => []]);
-        exit;
-    }
-} else {
-    // 普通用户：强制使用用户自己的 venue_id
-    $venue_id = $user['venue_id'];
-    if (!$venue_id) {
-        echo json_encode(['code' => 1003, 'msg' => '用户未绑定场地', 'data' => []]);
-        exit;
-    }
+// 判断是否为管理员，并支持加盟商多场地从 URL 传入 venue_id
+$role_id = intval($user['role_id']);
+$requested_venue_id = venue_scope_requested_id($_GET);
+
+if ($requested_venue_id <= 0) {
+    echo json_encode(['code' => 1002, 'msg' => '缺少或无效的场地ID', 'data' => []]);
+    exit;
 }
+
+if (!venue_scope_can_access($database, $user, $requested_venue_id)) {
+    echo json_encode(['code' => 1006, 'msg' => '无权查看该场地处理记录', 'data' => []]);
+    exit;
+}
+
+$venue_id = $requested_venue_id;
 
 // 查询 Reports + vehicles（根据场地筛选）
 $sql = "

@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -24,6 +25,7 @@ $role_id = intval($user['role_id']);
 $venue_id = $user['venue_id'] ?? '';
 $user_id = $user['uid'] ?? '';
 $operator_id = $user['id'] ?? '';
+$requested_venue_id = venue_scope_requested_id($_GET);
 
 function json_out($code, $msg, $data = [])
 {
@@ -216,37 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['report_id']) && isset
 try {
     $reports = [];
 
-    // 1) 原设备举报 Reports
-// 1) 原设备举报 Reports
-if ($role_id == 3 || $role_id == 4) {
-    $deviceSql = "
-        SELECT
-            r.id,
-            r.device_id,
-            r.insert_time,
-            CAST(v.name AS CHAR) AS vehicle_name,
-            v.bind_site,
-            r.report_type,
-            r.status,
-            r.notes,
-            r.image_url,
-            r.handler_uid,
-            r.report_type AS report_content,
-            r.reporter_uid AS reporter_uid,
-            '' AS reporter_name
-        FROM Reports r
-        JOIN vehicles v ON r.device_id = v.serial_number
-        WHERE v.bind_site = ?
-          AND (r.status = '未处理' OR r.status = '处理中')
-        ORDER BY r.insert_time DESC
-    ";
-
-    $deviceStmt = $connection->prepare($deviceSql);
-    if (!$deviceStmt) {
-        throw new Exception("Prepare failed: " . $connection->error);
-    }
-    $deviceStmt->bind_param("s", $venue_id);
-} elseif (is_admin_role($role_id)) {
+    // 1) 设备举报 Reports
+    $deviceParams = [];
     $deviceSql = "
         SELECT
             r.id,
@@ -265,103 +238,73 @@ if ($role_id == 3 || $role_id == 4) {
         FROM Reports r
         JOIN vehicles v ON r.device_id = v.serial_number
         WHERE (r.status = '未处理' OR r.status = '处理中')
-        ORDER BY r.insert_time DESC
     ";
 
-    $deviceStmt = $connection->prepare($deviceSql);
-    if (!$deviceStmt) {
-        throw new Exception("Prepare failed: " . $connection->error);
+    if (is_admin_role($role_id)) {
+        if ($requested_venue_id > 0) {
+            $deviceSql .= " AND v.bind_site = ?";
+            $deviceParams[] = (string)$requested_venue_id;
+        }
+    } elseif ($role_id == 3 || $role_id == 4) {
+        $deviceSql .= venue_scope_apply_filter($database, $user, 'v.bind_site', $deviceParams, $requested_venue_id);
+    } else {
+        throw new Exception("不支持的角色 ID: " . $role_id);
     }
-} else {
-    throw new Exception("不支持的角色 ID: " . $role_id);
-}
 
-    $deviceStmt->execute();
-    $deviceResult = $deviceStmt->get_result();
-    while ($row = $deviceResult->fetch_assoc()) {
+    $deviceSql .= " ORDER BY r.insert_time DESC";
+    $deviceRows = $database->query($deviceSql, $deviceParams) ?: [];
+    foreach ($deviceRows as $row) {
         $reports[] = normalize_device_report_row($row);
     }
-    $deviceStmt->close();
 
-    // 2) 新增语音房举报 voice_reports
-    if ($role_id == 3 || $role_id == 4) {
-        // 场地方仅看自己场地的房间举报
-        $voiceSql = "
-            SELECT
-                vr.id,
-                vr.reporter_uid,
-                vr.report_content,
-                vr.report_type,
-                vr.status,
-                vr.notes,
-                vr.handler_uid,
-                vr.insert_time,
-                vr.image_url,
-                '' AS device_id,
-                '' AS vehicle_name,
-                '' AS bind_site,
-                COALESCE(vv.venue_name, '') AS venue_name,
-                COALESCE(ru.nickname, '') AS reporter_name,
-                COALESCE(uu.nickname, '') AS reported_user_name
-            FROM voice_reports vr
-            LEFT JOIN venues vv
-                ON vr.report_type = 0 AND CAST(vr.handler_uid AS UNSIGNED) = vv.id
-            LEFT JOIN users ru
-                ON CAST(vr.reporter_uid AS UNSIGNED) = ru.uid
-            LEFT JOIN users uu
-                ON vr.report_type = 1 AND CAST(vr.handler_uid AS UNSIGNED) = uu.uid
-            WHERE (vr.status = '未处理' OR vr.status = '处理中')
-              AND vr.report_type = 0
-              AND CAST(vr.handler_uid AS CHAR) = ?
-            ORDER BY vr.insert_time DESC
-        ";
+    // 2) 语音房举报 voice_reports
+    $voiceParams = [];
+    $voiceSql = "
+        SELECT
+            vr.id,
+            vr.reporter_uid,
+            vr.report_content,
+            vr.report_type,
+            vr.status,
+            vr.notes,
+            vr.handler_uid,
+            vr.insert_time,
+            vr.image_url,
+            '' AS device_id,
+            '' AS vehicle_name,
+            '' AS bind_site,
+            COALESCE(vv.venue_name, '') AS venue_name,
+            COALESCE(ru.nickname, '') AS reporter_name,
+            COALESCE(uu.nickname, '') AS reported_user_name
+        FROM voice_reports vr
+        LEFT JOIN venues vv
+            ON vr.report_type = 0 AND CAST(vr.handler_uid AS UNSIGNED) = vv.id
+        LEFT JOIN users ru
+            ON CAST(vr.reporter_uid AS UNSIGNED) = ru.uid
+        LEFT JOIN users uu
+            ON vr.report_type = 1 AND CAST(vr.handler_uid AS UNSIGNED) = uu.uid
+        WHERE (vr.status = '未处理' OR vr.status = '处理中')
+    ";
 
-        $voiceStmt = $connection->prepare($voiceSql);
-        if (!$voiceStmt) {
-            throw new Exception("Prepare failed: " . $connection->error);
+    if (is_admin_role($role_id)) {
+        if ($requested_venue_id > 0) {
+            // 管理员指定场地时，只取该场地的房间举报。
+            $voiceSql .= " AND vr.report_type = 0 AND CAST(vr.handler_uid AS UNSIGNED) = ?";
+            $voiceParams[] = (string)$requested_venue_id;
         }
-        $voiceStmt->bind_param("s", $venue_id);
+    } elseif ($role_id == 3 || $role_id == 4) {
+        // 场地方只看自己绑定场地的房间举报，不展示弹幕举报。
+        $voiceSql .= " AND vr.report_type = 0";
+        $voiceSql .= venue_scope_apply_filter($database, $user, 'CAST(vr.handler_uid AS UNSIGNED)', $voiceParams, $requested_venue_id);
     } else {
-        $voiceSql = "
-            SELECT
-                vr.id,
-                vr.reporter_uid,
-                vr.report_content,
-                vr.report_type,
-                vr.status,
-                vr.notes,
-                vr.handler_uid,
-                vr.insert_time,
-                vr.image_url,
-                '' AS device_id,
-                '' AS vehicle_name,
-                '' AS bind_site,
-                COALESCE(vv.venue_name, '') AS venue_name,
-                COALESCE(ru.nickname, '') AS reporter_name,
-                COALESCE(uu.nickname, '') AS reported_user_name
-            FROM voice_reports vr
-            LEFT JOIN venues vv
-                ON vr.report_type = 0 AND CAST(vr.handler_uid AS UNSIGNED) = vv.id
-            LEFT JOIN users ru
-                ON CAST(vr.reporter_uid AS UNSIGNED) = ru.uid
-            LEFT JOIN users uu
-                ON vr.report_type = 1 AND CAST(vr.handler_uid AS UNSIGNED) = uu.uid
-            WHERE (vr.status = '未处理' OR vr.status = '处理中')
-            ORDER BY vr.insert_time DESC
-        ";
-
-        $voiceStmt = $connection->prepare($voiceSql);
-        if (!$voiceStmt) {
-            throw new Exception("Prepare failed: " . $connection->error);
-        }
+        throw new Exception("不支持的角色 ID: " . $role_id);
     }
 
-    $voiceStmt->execute();
-    $voiceResult = $voiceStmt->get_result();
-    while ($row = $voiceResult->fetch_assoc()) {
+    $voiceSql .= " ORDER BY vr.insert_time DESC";
+    $voiceRows = $database->query($voiceSql, $voiceParams) ?: [];
+    foreach ($voiceRows as $row) {
         $reports[] = normalize_voice_report_row($row);
     }
-    $voiceStmt->close();
 
     usort($reports, function ($a, $b) {
         return strtotime($b['insert_time']) <=> strtotime($a['insert_time']);

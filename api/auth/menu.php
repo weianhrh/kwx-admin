@@ -256,6 +256,7 @@ function menu_franchise_tree(): array
                 ['id' => 9351, 'parent_id' => 9305, 'name' => 'franchise-violations', 'title' => '违规记录', 'icon' => 'audit', 'jump' => '/iframe/link/ban_Record', 'sort' => 10],
                 ['id' => 9352, 'parent_id' => 9305, 'name' => 'franchise-black-users', 'title' => '拉黑用户', 'icon' => 'user', 'jump' => '/iframe/link/black_user_gmt', 'sort' => 20],
                 ['id' => 9353, 'parent_id' => 9305, 'name' => 'franchise-feedback', 'title' => '反馈信息', 'icon' => 'ops', 'jump' => '/iframe/link/feedback_mgt', 'sort' => 30],
+                ['id' => 9354, 'parent_id' => 9305, 'name' => 'franchise-reporthand', 'title' => '投诉处理', 'icon' => 'audit', 'jump' => '/iframe/link/reporthand', 'sort' => 40],
             ],
         ],
         [

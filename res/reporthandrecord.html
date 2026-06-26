@@ -277,6 +277,7 @@
     const venueSelect = document.getElementById('venue_id');
     const reportContent = document.getElementById('report-content');
     const selectContainer = document.getElementById('select-container');  // ✅ 重点改这里
+    const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
     // 获取当前登录用户角色
     fetch('/api/operat/get_current_user.php')
@@ -306,10 +307,10 @@
                   const option = document.createElement('option');
                   option.value = venue.id;
                   option.textContent = `${venue.id} - ${venue.venue_name}`;
-                  if (venue.id == 10) option.selected = true;
+                  if (String(venue.id) === String(pageVenueId || 10)) option.selected = true;
                   venueSelect.appendChild(option);
                 });
-                loadReports(10);
+                loadReports(pageVenueId || 10);
               }
             }
           };
@@ -323,7 +324,7 @@
           // 普通用户：隐藏下拉框，使用自己绑定场地
           document.getElementById('select-container').style.display = 'none';
 
-          loadReports(Number(userVenueId));
+          loadReports(Number(pageVenueId || userVenueId));
 
         }
       });

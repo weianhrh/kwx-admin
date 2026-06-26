@@ -314,7 +314,7 @@
                     <span id="roleReadonlyTip" class="readonly-tip" style="display:none; margin-bottom:0;">
                         当前账号仅可查看，不能修改处理状态
                     </span>
-                    <button class="action-button" onclick="window.location.href='reporthandrecord.html'">
+                    <button class="action-button" onclick="openReportHistory()">
                         查看处理记录
                     </button>
                 </div>
@@ -386,6 +386,24 @@
 
         let currentUserRole = 0;
         const complaintCache = {};
+        const pageParams = new URLSearchParams(window.location.search);
+        const pageVenueId = pageParams.get('venue_id') || pageParams.get('venue') || '';
+
+        function isReadonlyRole() {
+            return currentUserRole === 3 || currentUserRole === 4;
+        }
+
+        function withVenueParam(url) {
+            const next = new URL(url, window.location.origin);
+            if (pageVenueId) {
+                next.searchParams.set('venue_id', pageVenueId);
+            }
+            return next.pathname + next.search;
+        }
+
+        function openReportHistory() {
+            window.location.href = withVenueParam('res/reporthandrecord.html');
+        }
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -419,7 +437,7 @@
         }
 
         function loadComplaintRecords() {
-            const url = '/api/operat/ReporthandV2.php';
+            const url = withVenueParam('/api/operat/ReporthandV2.php');
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -550,7 +568,7 @@ function renderDeviceComplaint(complaint) {
         }
 
         function modifyComplaintStatus(report_id, currentStatus, overrideStatus = null, sourceTable = 'Reports') {
-            if (currentUserRole === 3) {
+            if (isReadonlyRole()) {
                 alert('当前角色仅可查看，不能修改处理状态');
                 return;
             }
@@ -605,7 +623,7 @@ function renderDeviceComplaint(complaint) {
         }
 
         function deleteComplaint(id, sourceTable = 'Reports') {
-            if (currentUserRole === 3) {
+            if (isReadonlyRole()) {
                 alert('当前角色仅可查看，不能处理投诉');
                 return;
             }
@@ -641,7 +659,7 @@ function renderDeviceComplaint(complaint) {
         }
 
         function openBanModal(complaint) {
-            if (currentUserRole === 3) {
+            if (isReadonlyRole()) {
                 alert('当前角色仅可查看，不能处理投诉');
                 return;
             }
@@ -711,7 +729,7 @@ document.getElementById('banDuration').value = '600';
         document.getElementById('banForm').onsubmit = function (e) {
             e.preventDefault();
 
-            if (currentUserRole === 3) {
+            if (isReadonlyRole()) {
                 alert('当前角色仅可查看，不能处理投诉');
                 return;
             }
@@ -757,7 +775,7 @@ document.getElementById('banDuration').value = '600';
                 if (data.code === 0) {
                     currentUserRole = parseInt(data.data.role_id || 0, 10);
 
-                    if (currentUserRole === 3 || currentUserRole === 4) {
+                    if (isReadonlyRole()) {
                         document.getElementById('roleReadonlyTip').style.display = 'inline-block';
                     }
 
