@@ -2384,7 +2384,7 @@ function renderLocksUI() {
 
     } else if (btn) {
 
-      btn.style.display = 'none';
+      btn.remove();
 
     }
 
@@ -2458,7 +2458,7 @@ function renderLocksUI() {
 
     } else if (btn2) {
 
-      btn2.style.display = 'none';
+      btn2.remove();
 
     }
 
@@ -3120,15 +3120,58 @@ function clearVenueLock(type) {
 
     if (res.code === 0) {
 
-      alert('已解除');
+      // 成功后先更新本地状态和 DOM，再弹提示，避免 alert 阻塞导致按钮看起来还在。
+      if (type === 'name') LOCKS.name = null;
+      if (type === 'image') LOCKS.image = null;
+      if (type === 'all') {
+        LOCKS.name = null;
+        LOCKS.image = null;
+      }
 
-      // 解除后刷新锁信息 + UI
+      if (type === 'name' || type === 'all') {
+        const btn = document.getElementById('unlockNameLockBtn');
+        if (btn) btn.remove();
 
-      loadLocks(venueId);
+        const tipEl = document.getElementById('name-lock-tip');
+        if (tipEl) tipEl.remove();
+      }
 
-      // 如果你想更“干净”，也可以直接 reload
+      if (type === 'image' || type === 'all') {
+        const btn = document.getElementById('unlockImageLockBtn');
+        if (btn) btn.remove();
 
-      // location.reload();
+        const statusEl = document.getElementById('image_status');
+        if (statusEl) {
+          statusEl.innerHTML = '图片状态：暂无最新上传的待审核状态';
+          statusEl.style.color = '';
+        }
+
+        const fileInput = document.getElementById('imageUploadInput');
+        if (fileInput) {
+          fileInput.disabled = false;
+          fileInput.style.opacity = 1;
+        }
+      }
+
+      renderLocksUI();
+
+      const finish = function () {
+        renderLocksUI();
+        // 让浏览器先完成一次重绘，再弹提示。
+        setTimeout(function () {
+          alert('已解除');
+        }, 0);
+      };
+
+      const p = loadLocks(venueId);
+      if (p && typeof p.then === 'function') {
+        p.then(finish).catch(function (err) {
+          console.error('刷新锁状态失败：', err);
+          finish();
+        });
+      } else {
+        finish();
+      }
 
     } else {
 

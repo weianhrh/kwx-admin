@@ -744,7 +744,8 @@ button.venue-pill:hover {
 .ban-preview-img,
 .ban-preview-video {
   width: 100%;
-  max-height: 130px;
+  height: 96px;
+  max-height: 96px;
   object-fit: cover;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1459,9 +1460,11 @@ allVenues = venues.sort((a, b) => {
                         el = document.createElement('video');
                         el.controls = true;
                         el.src = url;
+                        el.className = 'ban-preview-video';
                     } else {
                         el = document.createElement('img');
                         el.src = url;
+                        el.className = 'ban-preview-img';
                     }
             
                     previewList.appendChild(el);
