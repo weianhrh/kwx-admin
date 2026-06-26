@@ -278,8 +278,101 @@
 
     .card-actions {
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 8px;
+    }
+
+
+    .venue-tags {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .venue-tag {
+      display: inline-flex;
       align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      border: 1px solid #e5edf0;
+      border-radius: 999px;
+      padding: 4px 9px;
+      color: #3c5059;
+      background: #f7fbfb;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .venue-tag.primary {
+      border-color: rgba(15, 143, 140, .24);
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+    }
+
+    .venue-tools {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .venue-bind-list {
+      display: grid;
+      gap: 10px;
+      padding: 0 20px 20px;
+    }
+
+    .venue-bind-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fbfdfd;
+    }
+
+    .venue-bind-title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .venue-bind-title strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .venue-bind-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .venue-bind-actions {
+      display: flex;
+      flex-wrap: wrap;
       justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn.mini {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .bind-account-tip {
+      padding: 0 20px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
     }
 
     .empty-state {
@@ -513,7 +606,12 @@
           <div class="form-field">
             <label>绑定场地</label>
             <select id="venue-select" name="venue_ids[]" multiple></select>
-            <p class="field-note">可按住 Ctrl / Shift 多选；旧字段会保留第一个选中的场地。</p>
+            <p class="field-note">可按住 Ctrl / Shift 多选；下方可明确指定主场地，其余自动作为子场地。</p>
+          </div>
+          <div class="form-field">
+            <label>主场地</label>
+            <select id="primary-venue-select" name="primary_venue_id"></select>
+            <p class="field-note">主场地会同步写入 admin_users.venue_id，兼容旧页面。</p>
           </div>
         </div>
         <div class="modal-actions">
@@ -521,6 +619,31 @@
           <button class="btn primary" type="submit">提交保存</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="venue-modal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="venue-modal-title">场地绑定管理</h2>
+        <button class="close" id="venue-close-btn" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <p class="bind-account-tip" id="venue-user-label">选择一个加盟账号后，可新增子场地、移除子场地，并设置唯一主场地。</p>
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>新增绑定场地</label>
+          <div class="venue-tools">
+            <select id="venue-add-select"></select>
+            <button class="btn" type="button" id="venue-add-btn">添加到该加盟商</button>
+          </div>
+          <p class="field-note">第一个场地会自动成为主场地；也可以在下方列表中点击“设为主场地”。</p>
+        </div>
+      </div>
+      <div id="venue-bind-list" class="venue-bind-list"></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="venue-cancel-btn">取消</button>
+        <button class="btn primary" type="button" id="venue-save-btn">保存场地绑定</button>
+      </div>
     </div>
   </div>
 
@@ -539,6 +662,16 @@
       const cancelBtn = document.getElementById('cancel-btn');
       const roleSelect = document.getElementById('role-select');
       const venueSelect = document.getElementById('venue-select');
+      const primaryVenueSelect = document.getElementById('primary-venue-select');
+      const venueModal = document.getElementById('venue-modal');
+      const venueModalTitle = document.getElementById('venue-modal-title');
+      const venueUserLabel = document.getElementById('venue-user-label');
+      const venueAddSelect = document.getElementById('venue-add-select');
+      const venueAddBtn = document.getElementById('venue-add-btn');
+      const venueBindList = document.getElementById('venue-bind-list');
+      const venueSaveBtn = document.getElementById('venue-save-btn');
+      const venueCloseBtn = document.getElementById('venue-close-btn');
+      const venueCancelBtn = document.getElementById('venue-cancel-btn');
       const usernameInput = document.querySelector('input[name="username"]');
       const passwordInput = document.getElementById('password-input');
       const uidInput = document.querySelector('input[name="uid"]');
@@ -548,6 +681,10 @@
       const pwInputWrap = document.getElementById('pw-input-wrap');
       let formMode = 'add';
       let users = [];
+      let allVenues = [];
+      let bindingUser = null;
+      let bindingVenueIds = [];
+      let bindingPrimaryId = '';
 
       function parseJson(response) {
         return response.text().then(function (text) {
@@ -565,6 +702,14 @@
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: 'action=' + encodeURIComponent(action)
+        }).then(parseJson);
+      }
+
+      function postForm(formData) {
+        return fetch(apiManagement, {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: formData
         }).then(parseJson);
       }
 
@@ -592,11 +737,70 @@
         return (item && (item.venue_names || item.venue_name)) || '';
       }
 
-      function setVenueSelection(ids) {
+      function primaryVenueIdOf(item) {
+        if (item && item.primary_venue_id) return String(item.primary_venue_id);
+        const ids = venueIdsOf(item);
+        return ids[0] || '';
+      }
+
+      function subVenueIdsOf(item) {
+        const primaryId = primaryVenueIdOf(item);
+        return venueIdsOf(item).filter(function(id) { return String(id) !== String(primaryId); });
+      }
+
+      function venueById(id) {
+        return allVenues.find(function(item) { return String(item.id) === String(id); }) || null;
+      }
+
+      function venueLabel(id) {
+        const item = venueById(id);
+        return item ? (item.id + '-' + (item.venue_name || '未命名场地')) : ('场地 ' + id);
+      }
+
+      function primaryVenueLabel(item) {
+        const id = primaryVenueIdOf(item);
+        if (!id) return '';
+        return item && item.primary_venue_name ? item.primary_venue_name + '（ID: ' + id + '）' : venueLabel(id);
+      }
+
+      function subVenueLabel(item) {
+        const ids = subVenueIdsOf(item);
+        return ids.length ? ids.map(venueLabel).join('、') : '无';
+      }
+
+      function venueTagsHtml(item) {
+        const ids = venueIdsOf(item);
+        const primaryId = primaryVenueIdOf(item);
+        if (!ids.length) return '<div class="venue-tags"><span class="venue-tag">未绑定场地</span></div>';
+        return '<div class="venue-tags">' + ids.map(function(id) {
+          const isPrimary = String(id) === String(primaryId);
+          return '<span class="venue-tag' + (isPrimary ? ' primary' : '') + '">' +
+            escapeHtml(isPrimary ? '主' : '子') + ' · ' + escapeHtml(venueLabel(id)) +
+          '</span>';
+        }).join('') + '</div>';
+      }
+
+      function syncPrimaryVenueOptions(preferId) {
+        const selectedIds = Array.from(venueSelect.selectedOptions).map(function(option) {
+          return option.value;
+        }).filter(Boolean);
+        const current = preferId || primaryVenueSelect.value || selectedIds[0] || '';
+        primaryVenueSelect.innerHTML = selectedIds.length ? selectedIds.map(function(id) {
+          return '<option value="' + escapeHtml(id) + '">' + escapeHtml(venueLabel(id)) + '</option>';
+        }).join('') : '<option value="">请先选择场地</option>';
+        if (selectedIds.includes(String(current))) {
+          primaryVenueSelect.value = String(current);
+        } else if (selectedIds.length) {
+          primaryVenueSelect.value = selectedIds[0];
+        }
+      }
+
+      function setVenueSelection(ids, primaryId) {
         const selected = new Set((ids || []).map(String));
         Array.from(venueSelect.options).forEach(function(option) {
           option.selected = selected.has(String(option.value));
         });
+        syncPrimaryVenueOptions(primaryId);
       }
 
       function openModal(mode, item) {
@@ -607,7 +811,7 @@
         uidInput.value = item ? item.uid || '' : '';
         passwordInput.value = '';
         roleSelect.value = item ? String(item.role_id || '') : (roleSelect.querySelector('option[value="3"]') ? '3' : roleSelect.value);
-        setVenueSelection(item ? venueIdsOf(item) : []);
+        setVenueSelection(item ? venueIdsOf(item) : [], item ? primaryVenueIdOf(item) : '');
         keepPwWrap.style.display = mode === 'edit' ? 'flex' : 'none';
         keepPwCheckbox.checked = mode === 'edit';
         pwInputWrap.style.display = mode === 'edit' ? 'none' : 'block';
@@ -644,14 +848,16 @@
             '</div>' +
             '<div class="info-grid">' +
               infoItem('角色ID', item.role_id) +
-              infoItem('场地名称', venueNamesOf(item)) +
-              infoItem('场地ID', venueIdsOf(item).join('、')) +
+              infoItem('主场地', primaryVenueLabel(item)) +
+              infoItem('子场地', subVenueLabel(item)) +
               infoItem('绑定UID', item.uid) +
               infoItem('创建时间', item.created_at) +
               infoItem('更新时间', item.updated_at) +
             '</div>' +
+            venueTagsHtml(item) +
             '<div class="card-actions">' +
-              '<button class="btn" type="button" data-action="edit" data-id="' + escapeHtml(item.id) + '">编辑</button>' +
+              '<button class="btn" type="button" data-action="edit" data-id="' + escapeHtml(item.id) + '">编辑账号</button>' +
+              '<button class="btn primary" type="button" data-action="venues" data-id="' + escapeHtml(item.id) + '">场地绑定</button>' +
             '</div>' +
           '</article>';
         }).join('');
@@ -698,9 +904,12 @@
           if (data.code !== 200) throw new Error(data.msg || '场地加载失败');
           const venues = Array.isArray(data.data) ? data.data.slice() : [];
           venues.sort(function (a, b) { return Number(b.id || 0) - Number(a.id || 0); });
+          allVenues = venues;
           venueSelect.innerHTML = venues.map(function (item) {
             return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.id + '-' + (item.venue_name || '未命名场地')) + '</option>';
           }).join('');
+          syncPrimaryVenueOptions();
+          renderVenueBindList();
         }).catch(function (error) {
           console.error('场地数据加载失败:', error);
         });
@@ -716,6 +925,99 @@
           }
         }).catch(function (error) {
           console.error('角色数据加载失败:', error);
+        });
+      }
+
+      function openVenueModal(item) {
+        bindingUser = item;
+        bindingVenueIds = venueIdsOf(item);
+        bindingPrimaryId = primaryVenueIdOf(item) || bindingVenueIds[0] || '';
+        venueModalTitle.textContent = '场地绑定管理';
+        venueUserLabel.textContent = '当前账号：' + (item.username || '-') + '，账号ID：' + (item.id || '-') + '。主场地只有一个，其余场地自动作为子场地。';
+        renderVenueBindList();
+        venueModal.classList.add('open');
+        venueModal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeVenueModal() {
+        venueModal.classList.remove('open');
+        venueModal.setAttribute('aria-hidden', 'true');
+      }
+
+      function renderVenueAddOptions() {
+        if (!venueAddSelect) return;
+        const selected = new Set(bindingVenueIds.map(String));
+        const options = allVenues.filter(function(item) {
+          return !selected.has(String(item.id));
+        });
+        venueAddSelect.innerHTML = options.length ? options.map(function(item) {
+          return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.id + '-' + (item.venue_name || '未命名场地')) + '</option>';
+        }).join('') : '<option value="">没有可添加的场地</option>';
+      }
+
+      function renderVenueBindList() {
+        if (!venueBindList) return;
+        renderVenueAddOptions();
+        if (!bindingUser) {
+          venueBindList.innerHTML = '<div class="empty-state">请选择一个加盟商账号</div>';
+          return;
+        }
+        if (!bindingVenueIds.length) {
+          venueBindList.innerHTML = '<div class="empty-state">该加盟商暂未绑定场地，请先添加一个场地。</div>';
+          return;
+        }
+        venueBindList.innerHTML = bindingVenueIds.map(function(id) {
+          const isPrimary = String(id) === String(bindingPrimaryId);
+          return '<div class="venue-bind-item" data-venue-id="' + escapeHtml(id) + '">' +
+            '<div class="venue-bind-title">' +
+              '<strong>' + escapeHtml(venueLabel(id)) + '</strong>' +
+              '<span>' + escapeHtml(isPrimary ? '主场地：兼容旧字段 admin_users.venue_id' : '子场地：加盟商可在总览里进入该场地') + '</span>' +
+            '</div>' +
+            '<div class="venue-bind-actions">' +
+              (isPrimary ? '<span class="venue-tag primary">主场地</span>' : '<button class="btn mini" type="button" data-bind-action="primary" data-id="' + escapeHtml(id) + '">设为主场地</button>') +
+              '<button class="btn mini danger" type="button" data-bind-action="remove" data-id="' + escapeHtml(id) + '">移除</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      function addVenueToBinding() {
+        const id = venueAddSelect.value;
+        if (!id) return;
+        if (!bindingVenueIds.includes(String(id))) {
+          bindingVenueIds.push(String(id));
+        }
+        if (!bindingPrimaryId) bindingPrimaryId = String(id);
+        renderVenueBindList();
+      }
+
+      function saveVenueBinding() {
+        if (!bindingUser) return;
+        if (!bindingVenueIds.length) {
+          alert('请至少绑定一个场地');
+          return;
+        }
+        if (!bindingPrimaryId || !bindingVenueIds.includes(String(bindingPrimaryId))) {
+          bindingPrimaryId = bindingVenueIds[0];
+        }
+        const formData = new FormData();
+        formData.append('action', 'update_user_venues');
+        formData.append('id', bindingUser.id);
+        formData.append('primary_venue_id', bindingPrimaryId);
+        formData.append('venue_id', bindingPrimaryId);
+        bindingVenueIds.forEach(function(id) {
+          formData.append('venue_ids[]', id);
+        });
+        postForm(formData).then(function(data) {
+          if (data.code === 0) {
+            alert('场地绑定保存成功');
+            closeVenueModal();
+            loadUsers();
+          } else {
+            alert(data.msg || '场地绑定保存失败');
+          }
+        }).catch(function(error) {
+          alert('请求出错：' + error.message);
         });
       }
 
@@ -762,15 +1064,42 @@
       });
 
       listContainer.addEventListener('click', function (event) {
-        const button = event.target.closest('button[data-action="edit"]');
+        const button = event.target.closest('button[data-action]');
         if (!button) return;
         const item = users.find(function (row) {
           return String(row.id) === String(button.dataset.id);
         });
-        if (item) openModal('edit', item);
+        if (!item) return;
+        if (button.dataset.action === 'edit') openModal('edit', item);
+        if (button.dataset.action === 'venues') openVenueModal(item);
       });
 
       searchInput.addEventListener('input', applySearch);
+      venueSelect.addEventListener('change', function () { syncPrimaryVenueOptions(); });
+
+      venueCloseBtn.addEventListener('click', closeVenueModal);
+      venueCancelBtn.addEventListener('click', closeVenueModal);
+      venueModal.addEventListener('click', function (event) {
+        if (event.target === venueModal) closeVenueModal();
+      });
+      venueAddBtn.addEventListener('click', addVenueToBinding);
+      venueBindList.addEventListener('click', function(event) {
+        const button = event.target.closest('button[data-bind-action]');
+        if (!button) return;
+        const id = String(button.dataset.id || '');
+        if (button.dataset.bindAction === 'primary') {
+          bindingPrimaryId = id;
+          renderVenueBindList();
+        }
+        if (button.dataset.bindAction === 'remove') {
+          bindingVenueIds = bindingVenueIds.filter(function(item) { return String(item) !== id; });
+          if (String(bindingPrimaryId) === id) {
+            bindingPrimaryId = bindingVenueIds[0] || '';
+          }
+          renderVenueBindList();
+        }
+      });
+      venueSaveBtn.addEventListener('click', saveVenueBinding);
 
       addForm.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -779,15 +1108,13 @@
         const selectedVenueIds = Array.from(venueSelect.selectedOptions).map(function(option) {
           return option.value;
         }).filter(Boolean);
-        if (selectedVenueIds.length) {
-          formData.set('venue_id', selectedVenueIds[0]);
+        const primaryVenueId = primaryVenueSelect.value || selectedVenueIds[0] || '';
+        if (primaryVenueId) {
+          formData.set('venue_id', primaryVenueId);
+          formData.set('primary_venue_id', primaryVenueId);
         }
 
-        fetch(apiManagement, {
-          method: 'POST',
-          credentials: 'same-origin',
-          body: formData
-        }).then(parseJson).then(function (data) {
+        postForm(formData).then(function (data) {
           if (data.code === 0) {
             alert(formMode === 'edit' ? '更新成功' : '添加成功');
             closeModal();
