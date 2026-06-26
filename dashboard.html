@@ -837,11 +837,12 @@
   margin-top: 8px;
   color: var(--text);
   font-size: 18px;
-  line-height: 1.2;
+  line-height: 1.35;
   font-weight: 900;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .franchise-overview-icon {
@@ -3705,8 +3706,32 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
     // }
     function buildFranchiseWorkbenchHtml(data, metrics) {
   const franchise = data.franchise || {};
-  const venueName = franchise.venue_name || data.venue_name || '-';
-  const venueIdText = franchise.venue_id ? '#' + franchise.venue_id : '-';
+  const venues = Array.isArray(franchise.venues) ? franchise.venues : [];
+  const venueCount = Number(metrics.franchiseVenueCount || venues.length || 0);
+  const hasMultipleVenues = venueCount > 1 || venues.length > 1;
+
+  const venueNames = venues.map(function(venue) {
+    const id = venue && venue.id ? String(venue.id) : '';
+    return String((venue && venue.venue_name) || (id ? ('场地 ' + id) : '')).trim();
+  }).filter(Boolean);
+
+  const venueIds = venues.map(function(venue) {
+    return venue && venue.id ? String(venue.id).trim() : '';
+  }).filter(Boolean);
+
+  const singleVenueName = franchise.venue_name || data.venue_name || '-';
+  const titleVenueText = hasMultipleVenues
+    ? formatInt(venueCount || venueNames.length || venueIds.length) + ' 个场地'
+    : singleVenueName;
+  const venueName = hasMultipleVenues
+    ? (venueNames.length ? venueNames.join('、') : titleVenueText)
+    : singleVenueName;
+  const venueIdText = hasMultipleVenues
+    ? (venueIds.length ? venueIds.map(function(id) { return '#' + id; }).join('、') : '-')
+    : (franchise.venue_id ? '#' + franchise.venue_id : (venueIds[0] ? '#' + venueIds[0] : '-'));
+  const venueCardNote = hasMultipleVenues
+    ? ('当前账号绑定 ' + titleVenueText)
+    : (franchise.venue_name || '当前账号绑定场地');
   const deviceStatusText =
     formatInt(metrics.franchiseOnlineDevices || 0) +
     '/' +
@@ -3717,13 +3742,13 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
     '<div class="workbench-head">' +
       '<div class="workbench-title">' +
         '<h2>首页</h2>' +
-        '<p>' + escapeHtml(venueName || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p>' +
+        '<p>' + escapeHtml(titleVenueText || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p>' +
       '</div>' +
       '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
     '</div>' +
 
     '<div class="stats">' +
-      statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
+      statCard('场地', formatInt(venueCount || 0) + ' 个', venueCardNote, 'venue') +
       statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
       statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
       statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
