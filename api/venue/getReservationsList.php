@@ -1,129 +1,124 @@
 <?php
-require_once '../Database.php';  // 确保路径正确
+require_once '../Database.php';
+require_once __DIR__ . '/../lib/venue_scope.php';
 
-// 创建数据库连接
+header('Content-Type: application/json; charset=utf-8');
+
 $database = new Database();
 
-// 从会话中获取 session_token
 $session_token = $_COOKIE['session_token'] ?? null;
-
-// 验证 session_token 并获取用户信息
 if (!$session_token) {
-    echo json_encode(['code' => 1001, 'msg' => '用户未登录或会话已过期', 'data' => []]);
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或会话已过期', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $user = $database->getUserBySessionToken($session_token);
-
-// 检查用户是否存在和权限获取
-if (!$user || !$user['role_id']) {
-    echo json_encode(['code' => 1001, 'msg' => '用户未登录或无权访问', 'data' => []]);
+if (!$user || empty($user['role_id'])) {
+    echo json_encode(['code' => 1001, 'msg' => '用户未登录或无权访问', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-$role_id = $user['role_id'];
+$role_id = (int)$user['role_id'];
 
-// 获取请求参数，用于分页和搜索
-$page = $_GET['page'] ?? 1;
-$limit = $_GET['limit'] ?? 140;
+$page = max(1, (int)($_GET['page'] ?? 1));
+$limit = max(1, min(200, (int)($_GET['limit'] ?? 140)));
 $offset = ($page - 1) * $limit;
-$orderNumber = $_GET['order_number'] ?? '';
-$reservationDate = $_GET['reservation_date'] ?? ''; // 修改默认为不设置
-$reservationLocation = $_GET['reservation_location'] ?? '';
-$status = $_GET['status'] ?? ''; // 获取状态参数
+$orderNumber = trim((string)($_GET['order_number'] ?? ''));
+$reservationDate = trim((string)($_GET['reservation_date'] ?? ''));
+$reservationLocation = trim((string)($_GET['reservation_location'] ?? ''));
+$status = trim((string)($_GET['status'] ?? ''));
+$requestedVenueId = venue_scope_requested_id($_GET);
 
-// 构建查询语句和参数
-$sql = "SELECT r.id,  r.order_number,  r.reservation_type,  r.reservation_location,  r.reservation_id,  r.reservation_time, 
-        r.user_id,  u.nickname,  r.order_status,  r.driving_start_time,  r.driving_end_time,  r.driving_duration,  r.pay_type,  r.pay_money,  r.start_time, 
-        r.notification_status,  v.name  as vehicle_name
+function apply_reservation_venue_scope(Database $database, array $user, int $role_id, int $requestedVenueId, string &$sql, array &$params): void
+{
+    if (in_array($role_id, [1, 2], true)) {
+        if ($requestedVenueId > 0) {
+            $sql .= " AND r.reservation_id = ?";
+            $params[] = (string)$requestedVenueId;
+        }
+        return;
+    }
+
+    // 加盟商/场地账号：
+    // - 从场地总览进入时，按 URL 里的 venue_id 校验并过滤；
+    // - 未传 venue_id 时，展示该账号绑定的所有场地；
+    // - 传了无权限场地时，自动变成空结果。
+    $sql .= venue_scope_apply_filter($database, $user, 'r.reservation_id', $params, $requestedVenueId);
+}
+
+$sql = "SELECT r.id, r.order_number, r.reservation_type, r.reservation_location, r.reservation_id, r.reservation_time,
+        r.user_id, u.nickname, r.order_status, r.driving_start_time, r.driving_end_time, r.driving_duration,
+        r.pay_type, r.pay_money, r.start_time, r.notification_status, v.name AS vehicle_name
         FROM Reservations r
-        LEFT JOIN users u ON r.user_id  = u.uid 
-        LEFT JOIN vehicles v ON r.user_id  = v.driver_id 
-        WHERE 1=1"; // 使用 1=1 使得后续条件添加更为灵活
+        LEFT JOIN users u ON r.user_id = u.uid
+        LEFT JOIN vehicles v ON r.user_id = v.driver_id
+        WHERE 1=1";
 
 $params = [];
 
-// 只在提供了日期时添加日期条件
-if (!empty($reservationDate)) {
-    $sql .= " AND DATE(r.reservation_time)  = ?";
+if ($reservationDate !== '') {
+    $sql .= " AND DATE(r.reservation_time) = ?";
     $params[] = $reservationDate;
 }
 
-if (!in_array($role_id, [1, 2], true)) {
-    // 非管理员，只能看到绑定的场地数据
-    $sql .= " AND r.reservation_id  = ?";
-    $params[] = $user['venue_id'];
+apply_reservation_venue_scope($database, $user, $role_id, $requestedVenueId, $sql, $params);
+
+if ($orderNumber !== '') {
+    $sql .= " AND r.order_number LIKE ?";
+    $params[] = "%{$orderNumber}%";
 }
 
-// 添加订单编号搜索条件
-if (!empty($orderNumber)) {
-    $sql .= " AND order_number LIKE ?";
-    $params[] = "%$orderNumber%";
+if ($reservationLocation !== '') {
+    $sql .= " AND r.reservation_location LIKE ?";
+    $params[] = "%{$reservationLocation}%";
 }
 
-// 添加预约场地搜索条件
-if (!empty($reservationLocation)) {
-    $sql .= " AND reservation_location LIKE ?";
-    $params[] = "%$reservationLocation%";
-}
-
-// 添加状态搜索条件
-if (!empty($status)) {
-    $sql .= " AND order_status = ?";
+if ($status !== '') {
+    $sql .= " AND r.order_status = ?";
     $params[] = $status;
 }
 
-// 添加排序逻辑，按预约时间降序排序
-$sql .= " ORDER BY reservation_time DESC";
-
-// 添加分页逻辑
+$sql .= " ORDER BY r.reservation_time DESC";
 $sql .= " LIMIT ?, ?";
-$params[] = $offset;
-$params[] = $limit;
+$params[] = (string)$offset;
+$params[] = (string)$limit;
 
-// 执行查询
-$data = $database->query($sql, $params);
+$data = $database->query($sql, $params) ?: [];
 
-// 获取总数（保持与主查询条件一致）
-$countSql = "SELECT COUNT(*) as count FROM Reservations r WHERE 1=1";
+$countSql = "SELECT COUNT(*) AS count FROM Reservations r WHERE 1=1";
 $countParams = [];
 
-if (!empty($reservationDate)) {
+if ($reservationDate !== '') {
     $countSql .= " AND DATE(r.reservation_time) = ?";
     $countParams[] = $reservationDate;
 }
 
-if ($role_id != 1) {
-    $countSql .= " AND r.reservation_id = ?";
-    $countParams[] = $user['venue_id'];
-}
+apply_reservation_venue_scope($database, $user, $role_id, $requestedVenueId, $countSql, $countParams);
 
-if (!empty($orderNumber)) {
+if ($orderNumber !== '') {
     $countSql .= " AND r.order_number LIKE ?";
-    $countParams[] = "%$orderNumber%";
+    $countParams[] = "%{$orderNumber}%";
 }
 
-if (!empty($reservationLocation)) {
+if ($reservationLocation !== '') {
     $countSql .= " AND r.reservation_location LIKE ?";
-    $countParams[] = "%$reservationLocation%";
+    $countParams[] = "%{$reservationLocation}%";
 }
 
-if (!empty($status)) {
+if ($status !== '') {
     $countSql .= " AND r.order_status = ?";
     $countParams[] = $status;
 }
 
 $countResult = $database->query($countSql, $countParams);
-$totalCount = $countResult ? $countResult[0]['count'] : 0;
+$totalCount = $countResult ? (int)($countResult[0]['count'] ?? 0) : 0;
 
-// 输出JSON
 echo json_encode([
     'code' => 0,
     'msg' => '',
     'count' => $totalCount,
-    'data' => $data
-]);
+    'data' => $data,
+], JSON_UNESCAPED_UNICODE);
 
-// 关闭数据库连接
 $database->close();
 ?>

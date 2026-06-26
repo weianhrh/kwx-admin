@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>驾驶管理</title>
+  <style>
+    :root {
+      --bg: #f4f7f8;
+      --panel: #ffffff;
+      --text: #172126;
+      --muted: #6b7d84;
+      --line: #dfe8eb;
+      --line-strong: #c9d8dd;
+      --primary: #0f8f8c;
+      --primary-dark: #08706e;
+      --primary-soft: #e6f6f5;
+      --success: #20a876;
+      --danger: #df5b57;
+      --warning: #d58a16;
+      --warning-soft: #fff5df;
+      --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+
+    .page {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .shell {
+      display: grid;
+      gap: 16px;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .hero,
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px;
+    }
+
+    .title-wrap {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .header-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 10px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-size: 20px;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .header-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .header-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbfb;
+      flex: 0 0 auto;
+    }
+
+    .tab-btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 8px;
+      color: #486169;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 8px 20px rgba(15, 143, 140, .18);
+    }
+
+    .card-head {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .card-title {
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .card-desc {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .refresh-btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #486169;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      transition: border-color .16s ease, color .16s ease, background .16s ease;
+    }
+
+    .refresh-btn:hover {
+      border-color: rgba(15, 143, 140, .4);
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+    }
+
+    .order-list {
+      display: grid;
+      gap: 12px;
+      padding: 16px 20px 20px;
+    }
+
+    .order-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfcfd;
+    }
+
+    .order-id {
+      min-width: 0;
+      color: var(--primary-dark);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 900;
+      word-break: break-all;
+    }
+
+    .status {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status.completed { color: var(--success); background: #e8f7f1; }
+    .status.cancelled { color: var(--danger); background: #ffefef; }
+    .status.pending { color: var(--warning); background: var(--warning-soft); }
+
+    .order-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      min-width: 0;
+      padding: 10px 12px;
+      border: 1px solid #edf2f3;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .value {
+      display: block;
+      margin-top: 5px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.35;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .op-btn {
+      grid-column: 1 / -1;
+      justify-self: end;
+      min-width: 132px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .cancel-btn { background: var(--danger); }
+    .complete-btn { background: var(--primary); }
+
+    .op-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .empty,
+    .loading {
+      padding: 42px 16px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+      background: #fbfcfd;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .loading { color: var(--primary-dark); }
+
+    @media (max-width: 980px) {
+      .hero {
+        flex-direction: column;
+      }
+
+      .header-tabs {
+        width: 100%;
+      }
+
+      .tab-btn {
+        flex: 1;
+      }
+
+      .order-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 12px;
+      }
+
+      .hero,
+      .card-head {
+        padding: 16px;
+      }
+
+      .title-row {
+        align-items: flex-start;
+      }
+
+      .header-title {
+        font-size: 22px;
+      }
+
+      .card-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .refresh-btn,
+      .op-btn {
+        width: 100%;
+      }
+
+      .order-list {
+        padding: 12px 14px 16px;
+      }
+
+      .order-item {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        justify-self: start;
+      }
+
+      .order-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="shell">
+    <section class="hero">
+      <div class="title-wrap">
+        <span class="eyebrow" id="venue-chip">场地驾驶管理</span>
+        <div class="title-row">
+          <div class="header-icon">🚗</div>
+          <div>
+            <h1 class="header-title">驾驶管理</h1>
+            <p class="header-subtitle" id="header-subtitle">查看待驾驶预约记录，并可快速取消未开始的预约订单</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-tabs">
+        <button type="button" class="tab-btn active" id="reservation-tab" onclick="switchTab('reservation')">
+          ⏱ 预约管理
+        </button>
+        <button type="button" class="tab-btn" id="driving-tab" onclick="switchTab('driving')">
+          🚘 订单管理
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title" id="card-title">预约管理</div>
+          <div class="card-desc" id="card-desc">当前展示：等待驾驶的预约订单</div>
+        </div>
+
+        <button type="button" class="refresh-btn" onclick="loadData(currentType)">
+          ↻ 刷新
+        </button>
+      </div>
+
+      <div class="order-list" id="order-list"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    const pageParams = new URLSearchParams(window.location.search);
+    const pageVenueId = pageParams.get('venue_id') || pageParams.get('id') || '';
+
+    // 默认进预约管理
+    let currentType = 'reservation';
+
+    const pageConfig = {
+        reservation: {
+            title: '预约管理',
+            desc: '当前展示：等待驾驶的预约订单',
+            subtitle: '查看待驾驶预约记录，并可快速取消未开始的预约订单',
+            status: '等待驾驶',
+            emptyText: '暂无预约记录'
+        },
+        driving: {
+            title: '订单管理',
+            desc: '当前展示：正在驾驶的订单',
+            subtitle: '查看正在驾驶订单，并可手动结束异常订单',
+            status: '正在驾驶',
+            emptyText: '暂无正在驾驶订单'
+        }
+    };
+
+    function switchTab(type) {
+        currentType = type;
+
+        document.getElementById('reservation-tab').classList.toggle('active', type === 'reservation');
+        document.getElementById('driving-tab').classList.toggle('active', type === 'driving');
+
+        const cfg = pageConfig[type];
+        document.getElementById('card-title').textContent = cfg.title;
+        document.getElementById('card-desc').textContent = cfg.desc;
+        document.getElementById('header-subtitle').textContent = cfg.subtitle;
+
+        loadData(type);
+    }
+
+    function loadData(type) {
+        const cfg = pageConfig[type];
+        const orderListContainer = document.getElementById('order-list');
+
+        orderListContainer.innerHTML = '<div class="loading">正在加载...</div>';
+
+        const params = new URLSearchParams({
+            page: '1',
+            limit: '20',
+            order_number: '',
+            reservation_date: '',
+            reservation_location: '',
+            status: cfg.status
+        });
+        if (pageVenueId) params.set('venue_id', pageVenueId);
+
+        const url = `${API_BASE}/api/venue/getReservationsList.php?${params.toString()}`;
+
+        fetch(url, { credentials: 'same-origin', cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                orderListContainer.innerHTML = '';
+
+                if (data.code === 0 && Array.isArray(data.data) && data.data.length > 0) {
+                    data.data.forEach(order => {
+                        orderListContainer.insertAdjacentHTML('beforeend', renderOrderItem(order, type));
+                    });
+                } else {
+                    orderListContainer.innerHTML = `<div class="empty">${cfg.emptyText}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('数据加载失败:', error);
+                orderListContainer.innerHTML = '<div class="empty">数据加载失败，请稍后重试</div>';
+            });
+    }
+
+    function renderOrderItem(order, type) {
+        const orderNumber = escapeHtml(order.order_number || '');
+        const status = escapeHtml(getStatusText(order.order_status));
+        const statusClass = getStatusClass(order.order_status);
+
+        let rows = '';
+
+        if (type === 'reservation') {
+            rows = `
+                <div class="order-grid">
+                    <div class="field"><span class="label">用户昵称</span><span class="value">${escapeHtml(order.nickname || '-')} (ID: ${escapeHtml(order.user_id || '-')})</span></div>
+                    <div class="field"><span class="label">预约时长</span><span class="value">${escapeHtml(order.driving_duration || '0')}分钟</span></div>
+                    <div class="field"><span class="label">预约时间</span><span class="value">${escapeHtml(order.reservation_time || '-')}</span></div>
+                    <div class="field"><span class="label">支付方式</span><span class="value">${escapeHtml(order.pay_type || '-')}</span></div>
+                </div>
+
+                <button class="op-btn cancel-btn"
+                        data-order="${orderNumber}"
+                        ${order.order_status === "已取消" ? "disabled" : ""}
+                        onclick="cancelReservation(this.dataset.order, this)">
+                    ${order.order_status === "已取消" ? "已取消" : "取消预约"}
+                </button>
+            `;
+        } else {
+            rows = `
+                <div class="order-grid">
+                    <div class="field"><span class="label">用户昵称</span><span class="value">${escapeHtml(order.nickname || '-')} (ID: ${escapeHtml(order.user_id || '-')})</span></div>
+                    <div class="field"><span class="label">可驾驶时长</span><span class="value">${escapeHtml(order.driving_duration || '0')}分钟</span></div>
+                    <div class="field"><span class="label">驾驶开始时间</span><span class="value">${escapeHtml(order.driving_start_time || '-')}</span></div>
+                    <div class="field"><span class="label">支付方式</span><span class="value">${escapeHtml(order.pay_type || '-')}</span></div>
+                    <div class="field"><span class="label">驾驶车辆</span><span class="value">${escapeHtml(order.vehicle_name || '-')}</span></div>
+                </div>
+
+                <button class="op-btn complete-btn"
+                        data-order="${orderNumber}"
+                        ${order.order_status !== "正在驾驶" ? "disabled" : ""}
+                        onclick="completeOrder(this.dataset.order, this)">
+                    结束订单
+                </button>
+            `;
+        }
+
+        return `
+            <div class="order-item">
+                <div class="order-id">订单编号：${orderNumber}</div>
+                <div class="status ${statusClass}">${status}</div>
+                ${rows}
+            </div>
+        `;
+    }
+
+    function getStatusText(status) {
+        if (!status) return '未知';
+        return status;
+    }
+
+    function getStatusClass(status) {
+        const s = String(status || '');
+
+        if (s.includes('完成')) return 'completed';
+        if (s.includes('取消')) return 'cancelled';
+
+        return 'pending';
+    }
+
+    function cancelReservation(orderNumber, buttonElement) {
+        if (!confirm('确认取消该预约吗？')) return;
+
+        const url = `${API_BASE}/api/venue/CancelReservation.php?order_number=${encodeURIComponent(orderNumber)}`;
+
+        fetch(url, { credentials: 'same-origin', cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.msg || '操作完成');
+
+                if (data.code === 200) {
+                    loadData(currentType);
+                }
+            })
+            .catch(error => {
+                console.error('取消预约失败:', error);
+                alert('网络错误，取消预约失败');
+            });
+    }
+
+    function completeOrder(orderNumber, buttonElement) {
+        if (!confirm('确认结束该订单吗？')) return;
+
+        const url = `${API_BASE}/api/orders/CompleteOrder.php?order_id=${encodeURIComponent(orderNumber)}`;
+
+        fetch(url, { credentials: 'same-origin', cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    alert(data.msg || '订单已结束');
+                    loadData(currentType);
+                } else {
+                    alert(data.msg || '结束订单失败');
+                }
+            })
+            .catch(error => {
+                console.error('结束订单失败:', error);
+                alert('网络错误，结束订单失败');
+            });
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function (m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m];
+        });
+    }
+
+    if (pageVenueId) {
+        document.getElementById('venue-chip').textContent = '当前场地 ID：' + pageVenueId;
+    }
+
+    // 默认进入预约管理
+    switchTab('reservation');
+</script>
+</body>
+</html>
