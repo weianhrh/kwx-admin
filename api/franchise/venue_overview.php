@@ -109,7 +109,7 @@ $rows = $db->query("
         GROUP BY reservation_id
     ) o ON o.venue_id = v.id
     WHERE v.id IN ($ph)
-    ORDER BY v.id DESC
+    ORDER BY v.id ASC
 ", $params) ?: [];
 
 $summary = [
