@@ -295,6 +295,7 @@ $quickActions = [
     ['title' => '专区管理', 'group' => 'venue', 'jump' => '/iframe/link/zonemgt', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '消息管理', 'group' => 'ops', 'jump' => '/iframe/link/MessageMgmt', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '资费商品', 'group' => 'finance', 'jump' => '/iframe/link/pricing_options', 'badge' => 0, 'roles' => [1, 2]],
+    // 摄像管理 业绩排行 投诉处理 违规查询 
 ];
 
 $quickActions = array_values(array_filter($quickActions, function ($item) use ($roleId) {
