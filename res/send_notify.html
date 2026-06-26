@@ -18,13 +18,14 @@
       margin:0;
       background:var(--bg);
       min-height:100vh;
-      display:flex;
-      justify-content:center;
-      padding:28px 18px;
+      display:block;
+      padding:0;
       color:var(--text);
     }
     .card{
-      width:min(920px, 96vw);
+      width:100%;
+      max-width:none;
+      min-height:calc(100vh - 2px);
       background:var(--card);
       border:1px solid var(--border);
       border-radius:16px;
@@ -74,7 +75,7 @@
     .ok{ background:#ecfdf3; border:1px solid #a7f3d0; color:#065f46; }
     .bad{ background:#fff1f2; border:1px solid #fecdd3; color:#9f1239; }
     @media (max-width: 520px){
-      body{ padding:18px 12px; }
+      body{ padding:0; }
       .card{ width:100%; padding:18px 16px; border-radius:14px; }
       h1{ font-size:22px; margin-bottom:12px; }
       label{ font-size:14px; margin:12px 0 6px; }

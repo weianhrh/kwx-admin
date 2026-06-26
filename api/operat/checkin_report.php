@@ -142,129 +142,382 @@ function qs(array $params) {
 
 <style>
 :root{
-  --primary:#5b8cff;--secondary:#7f8fa4;
-  --background-gradient-start:#f8f9ff;--background-gradient-end:#f0f3ff;
-  --card-bg:#ffffff;--border-color:#ddd;--text-color:#333;
-  --shadow:0 4px 24px rgba(91,140,255,.08);--transition:all .3s ease;--hover-bg:#f9f9f9;
+  --brand:#0f918d;
+  --brand-dark:#08706d;
+  --brand-soft:#e7f7f6;
+  --ink:#15242c;
+  --muted:#687c86;
+  --line:#dbe7eb;
+  --panel:#ffffff;
+  --panel-soft:#f8fbfb;
+  --page:#f3f7f8;
+  --success:#20a876;
+  --warning:#d98b16;
+  --shadow:0 12px 34px rgba(30,55,66,.08);
+  --secondary:#687c86;
 }
 
-*{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui}
+*{
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",Arial,sans-serif;
+}
+
+html,
 body{
-  background:linear-gradient(135deg,var(--background-gradient-start) 0%,var(--background-gradient-end) 100%);
-  min-height:100vh;padding:16px;display:flex;justify-content:center;align-items:flex-start
+  width:100%;
+  min-height:100%;
+  margin:0;
 }
-.container{max-width:980px;width:100%}
-.card{background:var(--card-bg);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px;transition:var(--transition)}
-.card-title{font-size:20px;color:var(--text-color);margin-bottom:12px;font-weight:600;border-bottom:2px solid var(--primary);padding-bottom:8px;text-align:left}
-.meta{color:var(--secondary);font-size:12px;margin:-4px 0 12px;line-height:1.4}
 
-/* ====== 表单：响应式网格/PC flex ====== */
+body{
+  color:var(--ink);
+  background:var(--page);
+  overflow-x:hidden;
+}
+
+.container{
+  width:100%;
+  max-width:none;
+  min-height:100vh;
+  margin:0;
+  padding:0;
+}
+
+.card{
+  width:100%;
+  min-height:calc(100vh - 2px);
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--panel);
+  box-shadow:var(--shadow);
+}
+
+.card-title{
+  position:relative;
+  display:flex;
+  align-items:center;
+  min-height:72px;
+  margin:0;
+  padding:20px 24px 18px 42px;
+  border-bottom:1px solid var(--line);
+  color:var(--ink);
+  font-size:24px;
+  line-height:1.25;
+  font-weight:800;
+}
+
+.card-title::before{
+  position:absolute;
+  left:24px;
+  top:24px;
+  width:6px;
+  height:24px;
+  border-radius:999px;
+  background:var(--brand);
+  content:"";
+}
+
+.meta{
+  margin:0;
+  padding:14px 24px;
+  border-bottom:1px solid var(--line);
+  color:var(--muted);
+  background:linear-gradient(180deg,#fff 0%,#f8fbfb 100%);
+  font-size:13px;
+  line-height:1.7;
+}
+
+.meta b{
+  color:var(--ink);
+  font-weight:800;
+}
+
 form.filter{
-  display:flex;              /* PC: 一排+自动换行 */
+  display:flex;
   flex-wrap:wrap;
   gap:12px;
   align-items:center;
-  margin-bottom:12px;
+  margin:0;
+  padding:16px 24px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
 }
-form.filter > *{width:auto}
+
+form.filter > *{
+  flex:0 0 auto;
+}
+
 form.filter input,
 form.filter select,
 form.filter button{
-  min-height:38px;
-  padding:8px 12px;
-  border:1px solid var(--border-color);
-  border-radius:10px;
+  min-height:40px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:0 12px;
+  color:var(--ink);
+  background:#fff;
+  outline:0;
   font-size:14px;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+
+form.filter input:focus,
+form.filter select:focus{
+  border-color:rgba(15,145,141,.5);
+  box-shadow:0 0 0 4px rgba(15,145,141,.10);
+}
+
+form.filter button{
+  min-width:86px;
+  border-color:rgba(15,145,141,.22);
+  color:var(--brand-dark);
+  background:#eefaf8;
+  cursor:pointer;
+  font-weight:700;
+}
+
+form.filter button[type="submit"],
+#submitBtn{
+  min-width:108px;
+  border-color:var(--brand);
+  color:#fff;
+  background:var(--brand);
+}
+
+form.filter button:hover{
+  filter:brightness(.98);
+}
+
+form.filter button.quick{
+  color:#35545c;
+  border-color:#d6e4e8;
+  background:#f7fbfb;
+}
+
+#uidSelect{
+  width:150px;
+}
+
+#startInput,
+#endInput{
+  width:230px;
+}
+
+input[name="page_size"]{
+  width:112px !important;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:0;
+  padding:18px 24px 0;
+}
+
+.kpi{
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 16px;
+  color:var(--muted);
+  background:var(--panel-soft);
+  font-size:14px;
+}
+
+.kpi b{
+  color:var(--brand-dark);
+  font-size:24px;
+  line-height:1;
+  font-weight:900;
+}
+
+.table-wrap{
+  width:calc(100% - 48px);
+  margin:18px 24px 0;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
   background:#fff;
 }
-form.filter button{background:var(--primary);color:#fff;border-color:var(--primary);cursor:pointer}
-form.filter button.quick{background:#fff;color:var(--text-color);border-color:var(--border-color)}
-form.filter button:hover{opacity:.95}
 
-/* PC：两个 datetime 输入给个固定宽度更稳 */
-#startInput,#endInput{width:210px}
-#uidSelect{min-width:120px}
-#submitBtn{min-width:120px}
-
-/* KPI */
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 12px}
-.kpi{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px}
-.kpi b{font-size:18px;color:var(--text-color)}
-
-/* 表格容器：小屏可横向滚动 */
-.table-wrap{width:100%;overflow:auto;border:1px solid var(--border-color);border-radius:12px;background:#fff}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:10px 12px;border-bottom:1px solid var(--border-color);font-size:14px;color:var(--text-color);text-align:left;white-space:nowrap}
-.table th{background:#f6f8ff;font-weight:600;position:sticky;top:0;z-index:1}
-.table tr:hover td{background:#fafcff}
-.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px}
-.tag.ok{background:#eaf9f4;color:#0a8f66}
-.tag.warn{background:#fff5e6;color:#b06b00}
-
-/* 分页 */
-.pagination{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
-.pagination a,.pagination span{
-  padding:8px 12px;border:1px solid var(--border-color);border-radius:10px;text-decoration:none;color:var(--text-color);background:#fff
+.table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:auto;
 }
-.pagination a:hover{background:var(--hover-bg)}
-.pagination .active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-/* ====== 768px 以下（平板/常见手机横屏） ====== */
-@media (max-width: 768px){
-  .container{max-width:100%}
-  .card{padding:14px;border-radius:12px}
-  .card-title{font-size:18px}
-  .meta{font-size:12px}
+.table th,
+.table td{
+  padding:13px 14px;
+  border-bottom:1px solid var(--line);
+  color:var(--ink);
+  font-size:14px;
+  text-align:left;
+  white-space:nowrap;
+}
 
-  /* 表单：2列布局 */
+.table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  color:#49606a;
+  background:#f6fbfb;
+  font-weight:800;
+}
+
+.table tbody tr:last-child td{
+  border-bottom:0;
+}
+
+.table tr:hover td{
+  background:#fbfdfd;
+}
+
+.tag{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:62px;
+  min-height:26px;
+  border-radius:999px;
+  padding:3px 10px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.tag.ok{
+  color:#0b7e5e;
+  background:#e9f8f2;
+}
+
+.tag.warn{
+  color:#a8660f;
+  background:#fff5e6;
+}
+
+.pagination{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:0;
+  padding:18px 24px 24px;
+}
+
+.pagination a,
+.pagination span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  min-width:42px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:0 12px;
+  text-decoration:none;
+  color:#49606a;
+  background:#fff;
+  font-size:13px;
+  font-weight:700;
+}
+
+.pagination a:hover{
+  color:var(--brand-dark);
+  background:var(--brand-soft);
+}
+
+.pagination .active{
+  border-color:var(--brand);
+  color:#fff;
+  background:var(--brand);
+}
+
+@media (max-width: 1200px){
   form.filter{
     display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:10px;
+    grid-template-columns:repeat(4,minmax(0,1fr));
   }
-  #submitBtn{grid-column:auto / span 2}
-
-  .kpis{grid-template-columns:1fr 1fr}
-  .table th,.table td{padding:8px 10px;font-size:13px}
-}
-
-/* ====== 480px 以下（小屏/手机竖屏） ====== */
-@media (max-width: 480px){
-  body{padding:12px}
-  .card{padding:12px}
-  .card-title{font-size:16px}
-  .meta{font-size:11px}
-
-  /* 表单：单列 */
-  form.filter{grid-template-columns:1fr}
-  #submitBtn{grid-column:auto / span 1}
-
-  #startInput,#endInput{width:100%}
-
-  .kpis{grid-template-columns:1fr}
-  .kpi b{font-size:16px}
-
-  .table{min-width:640px}
-  .table th,.table td{padding:8px 8px;font-size:12px}
-}
-
-/* <=992px 再切网格，隐藏一些输入 */
-@media (max-width: 992px){
-  form.filter{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:10px;
+  form.filter > *,
+  #uidSelect,
+  #startInput,
+  #endInput,
+  input[name="page_size"]{
+    width:100% !important;
   }
-  #submitBtn{grid-column:auto / span 2}
-  input[name="threshold"],
-  input[name="page_size"],
   span[name="zhi_text"]{
-    display: none;
+    display:none;
+  }
+  #submitBtn{
+    grid-column:auto / span 2;
+  }
+}
+
+@media (max-width: 768px){
+  .card{
+    border-radius:0;
+  }
+  .card-title{
+    min-height:60px;
+    padding:18px 18px 16px 34px;
+    font-size:20px;
+  }
+  .card-title::before{
+    left:18px;
+    top:21px;
+    height:21px;
+  }
+  .meta,
+  form.filter,
+  .kpis,
+  .pagination{
+    padding-left:16px;
+    padding-right:16px;
+  }
+  form.filter{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  .kpis{
+    grid-template-columns:1fr;
+  }
+  .table-wrap{
+    width:calc(100% - 32px);
+    margin-left:16px;
+    margin-right:16px;
+  }
+  .table{
+    min-width:720px;
+  }
+  .table th,
+  .table td{
+    padding:10px 12px;
+    font-size:13px;
+  }
+}
+
+@media (max-width: 480px){
+  form.filter{
+    grid-template-columns:1fr;
+  }
+  #submitBtn{
+    grid-column:auto;
+  }
+  .pagination{
+    justify-content:flex-start;
   }
 }
 </style>
 </head>
-<body>
+<body class="kwx-checkin-report">
 <div class="container">
 
   <div class="card">

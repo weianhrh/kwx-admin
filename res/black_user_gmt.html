@@ -39,10 +39,9 @@ body {
 
 body {
   min-height: 100vh;
-  padding: 18px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+  display: block;
   color: var(--kx-ink);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, 0) 220px),
@@ -61,13 +60,17 @@ body::before {
 }
 
 .container {
-  width: min(100%, 1240px);
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .card {
   position: relative;
   overflow: hidden;
-  margin-bottom: 16px;
+  width: 100%;
+  min-height: calc(100vh - 2px);
+  margin: 0;
   padding: 18px;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(217, 225, 236, .95);
@@ -558,7 +561,7 @@ textarea.input {
 
 @media (max-width: 720px) {
   body {
-    padding: 12px;
+    padding: 0;
   }
 
   .card {
