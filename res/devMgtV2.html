@@ -747,6 +747,531 @@ body {
         transform: rotate(360deg);
     }
 }
+    
+
+/* =========================
+   设备管理优化：顶部状态、胶囊编辑、流状态模态框
+========================= */
+.device-head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.device-name {
+    min-width: 0;
+    max-width: 100%;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.device-status-badges {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.device-status-badges .device-badge {
+    height: 20px;
+    max-width: 78px;
+    padding: 0 7px;
+    font-size: 11px;
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.device-tags-row {
+    gap: 6px;
+}
+
+.device-tag.editable-tag {
+    min-height: 28px;
+    padding: 5px 11px;
+    border-color: #d8e7ff;
+    background: #f7faff;
+    color: #2f5fba;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.device-tag.editable-tag:hover {
+    border-color: var(--primary);
+    background: #edf4ff;
+    color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.device-tag.editable-tag:active {
+    transform: translateY(0);
+}
+
+/* PC端也显示可编辑小笔；图传字段也支持当前页点击修改 */
+body.device-console-page .device-tag.editable-tag::after,
+body.device-console-page.embedded-admin .device-tag.editable-tag::after {
+    content: "✎";
+    margin-left: 5px;
+    flex: 0 0 auto;
+    color: #0f8f8c;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.meta-value.editable-meta {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: 26px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #f8fbff;
+    color: #485366;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
+    transition: var(--transition);
+}
+
+.meta-value.editable-meta:hover {
+    border-color: #d8e7ff;
+    background: #edf4ff;
+    color: var(--primary-hover);
+}
+
+.meta-value.editable-meta::after {
+    content: "✎";
+    margin-left: 6px;
+    flex: 0 0 auto;
+    color: #0f8f8c;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.button-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.check-stream-btn {
+    grid-column: 1 / -1;
+    min-width: 128px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.sync-device-btn,
+.modify-site-btn,
+.modify-uid-btn {
+    display: none !important;
+}
+
+.device-mini-modal .modal-content {
+    max-width: 430px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.device-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #f8fbff, #f4f7ff);
+}
+
+.device-modal-head h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.device-modal-head p {
+    margin: 5px 0 0;
+    color: var(--text-light);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.device-modal-body {
+    padding: 16px 18px;
+}
+
+.device-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 18px 18px;
+}
+
+.device-modal-actions button {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+    color: #55606f;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.device-modal-actions .primary-action {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.device-modal-actions .primary-action:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.device-modal-message {
+    min-height: 22px;
+    margin-top: 10px;
+    color: var(--text-light);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.device-modal-message.success {
+    color: #1f8f3e;
+}
+
+.device-modal-message.error {
+    color: #d93025;
+}
+
+.stream-status-box {
+    display: grid;
+    gap: 10px;
+}
+
+.stream-meta-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 8px;
+    color: #566273;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.stream-meta-row b {
+    color: var(--text-color);
+    font-weight: 700;
+    word-break: break-all;
+}
+
+.stream-result {
+    margin-top: 4px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #fbfcff;
+    color: #485366;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+}
+
+.stream-result.success {
+    border-color: rgba(40, 167, 69, .22);
+    background: rgba(40, 167, 69, .08);
+    color: #1f7a38;
+}
+
+.stream-result.error {
+    border-color: rgba(220, 53, 69, .22);
+    background: rgba(220, 53, 69, .08);
+    color: #bb2d3b;
+}
+
+@media (max-width: 640px) {
+    .device-head {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+    }
+
+    .device-name {
+        font-size: 14px;
+    }
+
+    .device-status-badges {
+        gap: 4px;
+    }
+
+    .device-status-badges .device-badge {
+        height: 19px;
+        max-width: 58px;
+        padding: 0 6px;
+        font-size: 10px;
+        line-height: 19px;
+    }
+
+    .device-tag.editable-tag {
+        min-height: 26px;
+        padding: 4px 9px;
+        font-size: 12px;
+    }
+
+    .meta-value.editable-meta {
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+
+    .meta-value.editable-meta::after {
+        margin-left: 4px;
+        font-size: 10px;
+    }
+
+    .check-stream-btn {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .device-modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+/* =========================
+   手机端胶囊标签防换行：场地ID/绑定用户同一行紧凑展示，宽度不足时内部省略，不撑高卡片
+========================= */
+@media (max-width: 640px) {
+    body.device-console-page .device-tags,
+    body.device-console-page.embedded-admin .device-tags {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    body.device-console-page .device-tags-row,
+    body.device-console-page.embedded-admin .device-tags-row {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+        gap: 5px !important;
+        overflow: hidden !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag,
+    body.device-console-page.embedded-admin .device-tag.editable-tag {
+        min-width: 0 !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 0 7px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 1 auto !important;
+        border-radius: 999px !important;
+        font-size: 11px !important;
+        line-height: 24px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag.device-venue-id,
+    body.device-console-page.embedded-admin .device-tag.editable-tag.device-venue-id {
+        max-width: 88px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag.device-uid,
+    body.device-console-page.embedded-admin .device-tag.editable-tag.device-uid {
+        max-width: 112px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag::after,
+    body.device-console-page.embedded-admin .device-tag.editable-tag::after {
+        content: "\f303";
+        margin-left: 4px;
+        flex: 0 0 auto;
+        color: #0f8f8c;
+        font-family: "Font Awesome 5 Free";
+        font-size: 8px;
+        font-weight: 900;
+        line-height: 1;
+    }
+}
+
+@media (max-width: 360px) {
+    body.device-console-page .device-tags-row,
+    body.device-console-page.embedded-admin .device-tags-row {
+        gap: 4px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag,
+    body.device-console-page.embedded-admin .device-tag.editable-tag {
+        height: 22px !important;
+        min-height: 22px !important;
+        padding: 0 6px !important;
+        font-size: 10px !important;
+        line-height: 22px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag.device-venue-id,
+    body.device-console-page.embedded-admin .device-tag.editable-tag.device-venue-id {
+        max-width: 78px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag.device-uid,
+    body.device-console-page.embedded-admin .device-tag.editable-tag.device-uid {
+        max-width: 98px !important;
+    }
+
+    body.device-console-page .device-tag.editable-tag::after,
+    body.device-console-page.embedded-admin .device-tag.editable-tag::after {
+        margin-left: 3px;
+        font-size: 7px;
+    }
+}
+
+
+/* =========================
+   图传当前页编辑：单胶囊展示 + 模态框内编辑前图传/room_id/后图传
+========================= */
+.device-image-row {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.device-image-pill {
+    width: min(286px, 100%);
+    max-width: 100%;
+    min-width: 0;
+    min-height: 30px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 6px;
+    padding: 5px 11px;
+    border: 1px solid #d8e7ff;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #2f5fba;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    transition: var(--transition);
+}
+
+.device-image-pill:hover {
+    border-color: var(--primary);
+    background: #edf4ff;
+    color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.device-image-pill::after {
+    content: "\f303";
+    flex: 0 0 auto;
+    color: #0f8f8c;
+    font-family: "Font Awesome 5 Free";
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.image-pill-label {
+    flex: 0 0 auto;
+    color: #607086;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.image-pill-value {
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #31405a;
+    font-weight: 800;
+}
+
+.image-back-toggle {
+    width: 100%;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 2px 0 12px;
+    border: 1px dashed #bdd2ff;
+    border-radius: 10px;
+    background: #f7faff;
+    color: #2f5fba;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.image-back-toggle:hover {
+    border-color: var(--primary);
+    background: #edf4ff;
+}
+
+.image-back-editor {
+    display: none;
+    margin-top: -2px;
+}
+
+.image-back-editor.show {
+    display: block;
+}
+
+.image-room-display input[readonly] {
+    background: #f7f9fc;
+    color: #687789;
+}
+
+@media (max-width: 640px) {
+    .device-image-pill {
+        width: 100%;
+        min-height: 26px;
+        padding: 4px 8px;
+        column-gap: 5px;
+        font-size: 12px;
+    }
+
+    .device-image-pill::after {
+        font-size: 8px;
+    }
+
+    .image-back-toggle {
+        min-height: 32px;
+        font-size: 12px;
+    }
+}
+
     </style> 
 </head> 
  
@@ -872,6 +1397,93 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
             </form>
         </div>
     </div>
+
+
+<!-- 场地ID / 用户ID 修改模态框 -->
+<div id="deviceFieldModal" class="modal device-mini-modal" onclick="if(event.target===this) closeDeviceFieldModal()">
+    <div class="modal-content">
+        <div class="device-modal-head">
+            <div>
+                <h2 id="deviceFieldModalTitle">修改信息</h2>
+                <p id="deviceFieldModalSub">点击胶囊标签即可修改对应字段</p>
+            </div>
+            <span class="modal-close" onclick="closeDeviceFieldModal()">&times;</span>
+        </div>
+        <div class="device-modal-body">
+            <div class="form-group">
+                <label id="deviceFieldModalLabel" for="deviceFieldModalInput">新的值</label>
+                <input type="text" id="deviceFieldModalInput" autocomplete="off">
+            </div>
+            <div class="device-modal-message" id="deviceFieldModalMessage"></div>
+        </div>
+        <div class="device-modal-actions">
+            <button type="button" onclick="closeDeviceFieldModal()">取消</button>
+            <button type="button" class="primary-action" id="deviceFieldModalSave" onclick="submitDeviceFieldModal()">保存修改</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- 图传修改模态框 -->
+<div id="imageDeviceModal" class="modal device-mini-modal" onclick="if(event.target===this) closeImageDeviceModal()">
+    <div class="modal-content">
+        <div class="device-modal-head">
+            <div>
+                <h2>编辑图传</h2>
+                <p>前图传可填写 device_information.id 或 room_id，后图传默认收起。</p>
+            </div>
+            <span class="modal-close" onclick="closeImageDeviceModal()">&times;</span>
+        </div>
+        <div class="device-modal-body">
+            <div class="form-group">
+                <label for="imageDeviceFrontInput">前图传ID</label>
+                <input type="text" id="imageDeviceFrontInput" autocomplete="off" placeholder="请输入前图传ID，或直接输入room_id">
+            </div>
+            <div class="form-group image-room-display">
+                <label for="imageDeviceRoomInput">room_id</label>
+                <input type="text" id="imageDeviceRoomInput" readonly placeholder="保存后自动同步显示">
+            </div>
+            <button type="button" class="image-back-toggle" id="imageBackToggle" onclick="toggleBackImageEditor()">
+                <i class="fas fa-plus"></i><span>后图传编辑</span>
+            </button>
+            <div class="image-back-editor" id="imageBackEditor">
+                <div class="form-group">
+                    <label for="imageDeviceBackInput">后图传ID</label>
+                    <input type="text" id="imageDeviceBackInput" autocomplete="off" placeholder="请输入后图传ID，可留空清空">
+                </div>
+            </div>
+            <div class="device-modal-message" id="imageDeviceModalMessage"></div>
+        </div>
+        <div class="device-modal-actions">
+            <button type="button" onclick="closeImageDeviceModal()">取消</button>
+            <button type="button" class="primary-action" id="imageDeviceModalSave" onclick="submitImageDeviceModal()">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- 流状态检测模态框 -->
+<div id="streamStatusModal" class="modal device-mini-modal" onclick="if(event.target===this) closeStreamStatusModal()">
+    <div class="modal-content">
+        <div class="device-modal-head">
+            <div>
+                <h2>流状态检测</h2>
+                <p>检测结果在这里展示</p>
+            </div>
+            <span class="modal-close" onclick="closeStreamStatusModal()">&times;</span>
+        </div>
+        <div class="device-modal-body">
+            <div class="stream-status-box">
+                <div class="stream-meta-row"><span>设备 SN</span><b id="streamStatusSn">-</b></div>
+                <div class="stream-meta-row"><span>房间号</span><b id="streamStatusRoom">-</b></div>
+                <div class="stream-result" id="streamStatusResult">等待检测...</div>
+            </div>
+        </div>
+        <div class="device-modal-actions">
+            <button type="button" onclick="closeStreamStatusModal()">关闭</button>
+        </div>
+    </div>
+</div>
+
  <script src="canvas-nest-colorful.js"></script>
     <script> 
     
@@ -940,9 +1552,9 @@ function cleanMetaText(value) {
 function formatImageSerial(serial, roomId) {
     const main = cleanMetaText(serial);
     const room = cleanMetaText(roomId);
-    if (!main && !room) return '无';
-    if (!room) return main || '无';
-    return `${main || '无'} / 房${room}`;
+    if (!main && !room) return '-';
+    if (!room) return main || '-';
+    return `${main || '-'}/${room}`;
 }
         let currentPage = 1; 
         const limit = 10; 
@@ -1003,8 +1615,9 @@ function switchVenue(venueId) {
     const venue = allVenues.find(v => String(v.id) === String(venueId));
     const venueSearchInput = document.getElementById('venue-fuzzy-search');
 
-    if (venueSearchInput && venue) {
-        venueSearchInput.value = `${venue.id}-${venue.venue_name}`;
+    // 模糊搜索框只作为输入入口，不默认回填“场地ID-场地名称”，避免误以为当前搜索条件一直存在。
+    if (venueSearchInput) {
+        venueSearchInput.value = '';
     }
 
     document.getElementById('global-search').value = '';
@@ -1221,8 +1834,11 @@ function displayDevices(devices) {
 
         const banClass = device.is_banned ? 'badge-ban' : 'badge-normal';
 
-        const imageSerialText = formatImageSerial(device.image_device_serial, device.image_device_room_id);
-        const bkImageSerialText = cleanMetaText(device.bk_image_device_serial) || '无';
+        const frontImageId = cleanMetaText(device.image_device_serial);
+        const frontRoomId = cleanMetaText(device.image_device_room_id);
+        const backImageId = cleanMetaText(device.bk_image_device_serial);
+        const imageSerialText = formatImageSerial(frontImageId, frontRoomId);
+        const bkImageSerialText = backImageId || '-';
         const deviceNameFull = String(device.name || '-').trim() || '-';
         const deviceNameText = truncateText(deviceNameFull, 8);
 
@@ -1232,28 +1848,37 @@ function displayDevices(devices) {
             <div class="device-info">
                 <div class="device-head">
                     <span class="device-name" title="${escapeHtml(deviceNameFull)}">${escapeHtml(deviceNameText)}</span>
-                    <span class="device-badge ${statusClass}">${device.status || '未知'}</span>
-                    <span class="device-badge ${banClass}">${device.is_banned ? '已封禁' : '未封禁'}</span>
-                    <span class="device-badge badge-share">${device.sharing_status || '未知'}</span>
+                    <span class="device-status-badges">
+                        <span class="device-badge ${statusClass}">${escapeHtml(device.status || '未知')}</span>
+                        <span class="device-badge ${banClass}">${device.is_banned ? '已封禁' : '未封禁'}</span>
+                        <span class="device-badge badge-share" title="${escapeHtml(device.sharing_status || '未知')}">${escapeHtml(device.sharing_status || '未知')}</span>
+                    </span>
                 </div>
 
                 <div class="device-serial">序列号：${device.serial_number || '-'}</div>
 
-                <div class="device-meta-list">
-                    <div class="meta-row">
-                        <span class="meta-label">前图传</span>
-       <span class="meta-value device-front-image-serial" title="${escapeHtml(imageSerialText)}">${escapeHtml(imageSerialText)}</span>
-                    </div>
-                    <div class="meta-row">
-                        <span class="meta-label">后图传</span>
-                        <span class="meta-value device-bk-image-serial" title="${escapeHtml(bkImageSerialText)}">${escapeHtml(bkImageSerialText)}</span>
-                    </div>
+                <div class="device-image-row">
+                    <span class="device-image-pill device-front-image-serial"
+                          data-serial="${escapeHtml(device.serial_number || '')}"
+                          data-image-device-serial="${escapeHtml(frontImageId)}"
+                          data-image-device-room-id="${escapeHtml(frontRoomId)}"
+                          data-bk-image-device-serial="${escapeHtml(backImageId)}"
+                          title="点击编辑图传">
+                        <span class="image-pill-label">图传</span>
+                        <span class="image-pill-value">${escapeHtml(imageSerialText)}</span>
+                    </span>
                 </div>
 
                 <div class="device-tags">
                     <div class="device-tags-row">
-                        <span class="device-tag device-venue-id">场地 ID：${device.bind_site ?? '-'}</span>
-                        <span class="device-tag device-uid">绑定用户：${device.uid || '未绑定'}</span>
+                        <span class="device-tag editable-tag device-venue-id"
+                              data-serial="${device.serial_number || ''}"
+                              data-bind-site="${device.bind_site || ''}"
+                              title="点击修改场地ID">场地ID：${device.bind_site ?? '-'}</span>
+                        <span class="device-tag editable-tag device-uid"
+                              data-serial="${device.serial_number || ''}"
+                              data-uid="${device.uid || ''}"
+                              title="点击修改绑定用户ID">绑定用户：${device.uid || '未绑定'}</span>
                     </div>
                 </div>
 
@@ -1271,14 +1896,6 @@ function displayDevices(devices) {
                     <i class="fas fa-bell"></i><span>违规通知</span>
                 </button>
 
-                <button class="modify-site-btn" data-serial="${device.serial_number}" data-bind-site="${device.bind_site || ''}">
-                    <i class="fas fa-map-marker-alt"></i><span>场地ID</span>
-                </button>
-
-                <button class="modify-uid-btn" data-serial="${device.serial_number}" data-uid="${device.uid || ''}">
-                    <i class="fas fa-user-edit"></i><span>用户ID</span>
-                </button>
-
                 <button class="modify-config-btn" onclick="goToConfig(this)" data-device='${JSON.stringify(device)}'>
                     <i class="fas fa-sliders-h"></i><span>配置</span>
                 </button>
@@ -1286,18 +1903,11 @@ function displayDevices(devices) {
                 <button class="modify-info-btn" onclick="goToModify(this)" data-device='${JSON.stringify(device)}'>
                     <i class="fas fa-pen"></i><span>信息</span>
                 </button>
-<div class="device-sync-row">
-    <button class="check-stream-btn"
-            data-serial="${device.serial_number || ''}"
-            data-playing-stream-id="${device.image_device_room_id || ''}">
-        <i class="fas fa-broadcast-tower"></i><span>流状态</span>
-    </button>
-
-    <button class="sync-device-btn"
-            data-serial="${device.serial_number || ''}">
-        <i class="fas fa-sync-alt"></i><span>同步</span>
-    </button>
-</div>
+                <button class="check-stream-btn"
+                        data-serial="${device.serial_number || ''}"
+                        data-playing-stream-id="${device.image_device_room_id || ''}">
+                    <i class="fas fa-broadcast-tower"></i><span>检测流状态</span>
+                </button>
             </div>
         `;
 
@@ -1311,11 +1921,15 @@ function displayDevices(devices) {
             sendViolationNotice(this.dataset.serial);
         });
 
-        card.querySelector('.modify-site-btn').addEventListener('click', function () {
+        card.querySelector('.device-front-image-serial').addEventListener('click', function () {
+            openImageDeviceModal(this);
+        });
+
+        card.querySelector('.device-venue-id').addEventListener('click', function () {
             updateBindSite(this);
         });
 
-        card.querySelector('.modify-uid-btn').addEventListener('click', function () {
+        card.querySelector('.device-uid').addEventListener('click', function () {
             updateUid(this);
         });
 
@@ -1324,9 +1938,6 @@ function displayDevices(devices) {
         });
         card.querySelector('.check-stream-btn').addEventListener('click', function () {
             checkStreamSetSnStatus(this);
-        });
-        card.querySelector('.sync-device-btn').addEventListener('click', function () {
-            syncSingleVehicleToDr(this);
         });
         if (device.is_banned) {
             getBanEndTime(device.serial_number);
@@ -1722,24 +2333,47 @@ function updateDeviceStatus(serialNumber, banStatus, deviceCard) {
 function checkStreamSetSnStatus(button) {
     const serialNumber = (button.dataset.serial || '').trim();
     const playingStreamId = (button.dataset.playingStreamId || '').trim();
+    openStreamStatusModal(serialNumber, playingStreamId, button);
+}
+
+function openStreamStatusModal(serialNumber, playingStreamId, button) {
+    const modal = document.getElementById('streamStatusModal');
+    const snEl = document.getElementById('streamStatusSn');
+    const roomEl = document.getElementById('streamStatusRoom');
+    const resultEl = document.getElementById('streamStatusResult');
+
+    if (!modal || !snEl || !roomEl || !resultEl) return;
+
+    snEl.textContent = serialNumber || '-';
+    roomEl.textContent = playingStreamId || '-';
+    resultEl.className = 'stream-result';
+    resultEl.textContent = '正在准备检测...';
+    modal.style.display = 'block';
 
     if (!serialNumber) {
-        alert('缺少设备序列号');
+        resultEl.className = 'stream-result error';
+        resultEl.textContent = '缺少设备序列号，无法检测。';
         return;
     }
 
     if (!playingStreamId) {
-        alert('缺少房间号 playing_stream_id');
+        resultEl.className = 'stream-result error';
+        resultEl.textContent = '缺少房间号 playing_stream_id，无法检测。';
         return;
     }
 
-    if (!confirm(`确认检测流状态？\n\nSN：${serialNumber}\n房间号：${playingStreamId}`)) {
-        return;
+    runStreamStatusCheck(serialNumber, playingStreamId, button, resultEl);
+}
+
+function runStreamStatusCheck(serialNumber, playingStreamId, button, resultEl) {
+    const oldHtml = button ? button.innerHTML : '';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>检测中</span>';
     }
 
-    const oldText = button.textContent;
-    button.disabled = true;
-    button.textContent = '检测中...';
+    resultEl.className = 'stream-result';
+    resultEl.textContent = '正在检测流状态，请稍候...';
 
     const formData = new URLSearchParams();
     formData.append('sn', serialNumber);
@@ -1757,25 +2391,33 @@ function checkStreamSetSnStatus(button) {
             console.log('检测流状态返回:', data);
 
             if (data.code === 200) {
-                alert(data.msg || '检测完成');
+                resultEl.className = 'stream-result success';
+                resultEl.textContent = data.msg || '检测完成，设备流状态已同步。';
 
-                /**
-                 * 成功后刷新当前列表，保证页面状态和数据库一致
-                 */
                 currentPage = 1;
                 loadDeviceData(currentPage, selectedVenueId);
-            } else {
-                alert('检测失败：' + (data.msg || '未知错误'));
+                return;
             }
+
+            resultEl.className = 'stream-result error';
+            resultEl.textContent = '检测失败：' + (data.msg || '未知错误');
         })
         .catch(error => {
             console.error('检测流状态请求失败:', error);
-            alert('请求失败，请稍后再试');
+            resultEl.className = 'stream-result error';
+            resultEl.textContent = '请求失败，请稍后再试。';
         })
         .finally(() => {
-            button.disabled = false;
-            button.textContent = oldText;
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = oldHtml;
+            }
         });
+}
+
+function closeStreamStatusModal() {
+    const modal = document.getElementById('streamStatusModal');
+    if (modal) modal.style.display = 'none';
 }
 function syncSingleVehicleToDr(button) {
     const serialNumber = (button.dataset.serial || '').trim();
@@ -1855,111 +2497,507 @@ function syncSingleVehicleToDr(button) {
         button.textContent = oldText;
     });
 }
-        // 修改 updateBindSite 函数
-function updateBindSite(button) {
-    const serialNumber = button.dataset.serial;
-    const currentBindSite = button.dataset.bindSite;
+        // 点击胶囊标签修改场地ID / 绑定用户ID
+let deviceFieldModalState = null;
 
-    const newBindSite = prompt('请输入新的场地ID:', currentBindSite);
-    if (newBindSite === null) return;
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/devMgr/devMgtV2.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                const response = JSON.parse(xhr.responseText);
-                if (response.code === 0) {
-                    button.dataset.bindSite = newBindSite;
-
-                    const deviceCard = button.closest('.device-card');
-                    const venueIdSpan = deviceCard.querySelector('.device-venue-id');
-                    if (venueIdSpan) {
-                        venueIdSpan.textContent = `场地 ID：${newBindSite}`;
-                    }
-
-                    const deviceIndex = allDevices.findIndex(device => device.serial_number === serialNumber);
-                    if (deviceIndex !== -1) {
-                        allDevices[deviceIndex].bind_site = newBindSite;
-                    }
-
-                    const deviceInfo = JSON.parse(deviceCard.getAttribute('data-device'));
-                    deviceInfo.bind_site = newBindSite;
-                    deviceCard.setAttribute('data-device', JSON.stringify(deviceInfo));
-
-                    alert('场地ID更新成功');
-                } else {
-                    alert('更新失败: ' + response.msg);
-                }
-            } catch (error) {
-                console.error('更新失败:', error);
-                alert('更新失败，请稍后重试');
-            }
-        }
-    };
-
-    const data = JSON.stringify({
-        update_bind: true,
-        serial_number: serialNumber,
-        bind_site: newBindSite
+function updateBindSite(target) {
+    openDeviceFieldModal({
+        type: 'bind_site',
+        target: target,
+        serialNumber: target.dataset.serial || '',
+        currentValue: target.dataset.bindSite || '',
+        title: '修改场地ID',
+        sub: '修改后会立即更新当前设备卡片上的场地ID标签。',
+        label: '新的场地ID',
+        placeholder: '请输入场地ID'
     });
-    xhr.send(data);
 }
 
-        // 添加修改用户ID的函数
-function updateUid(button) {
-    const serialNumber = button.dataset.serial;
-    const currentUid = button.dataset.uid;
+function updateUid(target) {
+    openDeviceFieldModal({
+        type: 'uid',
+        target: target,
+        serialNumber: target.dataset.serial || '',
+        currentValue: target.dataset.uid || '',
+        title: '修改绑定用户',
+        sub: '可填写新的用户ID，留空则前端显示为未绑定。',
+        label: '新的用户ID',
+        placeholder: '请输入用户ID，可留空'
+    });
+}
 
-    const newUid = prompt('请输入新的用户ID:', currentUid);
-    if (newUid === null) return;
+function updateFrontImageSerial(target) {
+    openDeviceFieldModal({
+        type: 'image_device_serial',
+        target: target,
+        serialNumber: target.dataset.serial || '',
+        currentValue: target.dataset.imageDeviceSerial || '',
+        title: '修改前图传',
+        sub: '可填写 device_information.id 或 room_id；保存时后端会自动转换为对应 id。',
+        label: '前图传ID / 房间号',
+        placeholder: '请输入 device_information.id 或 room_id'
+    });
+}
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/devMgr/devMgtV2.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
+function updateBackImageSerial(target) {
+    openDeviceFieldModal({
+        type: 'bk_image_device_serial',
+        target: target,
+        serialNumber: target.dataset.serial || '',
+        currentValue: target.dataset.bkImageDeviceSerial || '',
+        title: '修改后图传',
+        sub: '后图传按输入值直接保存，留空则清空当前后图传。',
+        label: '后图传ID',
+        placeholder: '请输入后图传ID，可留空'
+    });
+}
 
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                const response = JSON.parse(xhr.responseText);
+function openDeviceFieldModal(state) {
+    const modal = document.getElementById('deviceFieldModal');
+    const title = document.getElementById('deviceFieldModalTitle');
+    const sub = document.getElementById('deviceFieldModalSub');
+    const label = document.getElementById('deviceFieldModalLabel');
+    const input = document.getElementById('deviceFieldModalInput');
+    const msg = document.getElementById('deviceFieldModalMessage');
+    const save = document.getElementById('deviceFieldModalSave');
 
-                if (response.code === 0) {
-                    button.dataset.uid = newUid;
+    if (!modal || !input || !msg) return;
 
-                    const deviceCard = button.closest('.device-card');
-                    const uidElement = deviceCard.querySelector('.device-uid');
-                    if (uidElement) {
-                        uidElement.textContent = `绑定用户：${newUid || '未绑定'}`;
-                    }
+    deviceFieldModalState = state;
+    title.textContent = state.title || '修改信息';
+    sub.textContent = state.sub || '';
+    label.textContent = state.label || '新的值';
+    input.value = state.currentValue || '';
+    input.placeholder = state.placeholder || '';
+    msg.className = 'device-modal-message';
+    msg.textContent = '';
+    save.disabled = false;
+    save.textContent = '保存修改';
+    modal.style.display = 'block';
 
-                    const deviceIndex = allDevices.findIndex(device => device.serial_number === serialNumber);
-                    if (deviceIndex !== -1) {
-                        allDevices[deviceIndex].uid = newUid;
-                    }
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 30);
+}
 
-                    const deviceInfo = JSON.parse(deviceCard.getAttribute('data-device'));
-                    deviceInfo.uid = newUid;
-                    deviceCard.setAttribute('data-device', JSON.stringify(deviceInfo));
+function closeDeviceFieldModal() {
+    const modal = document.getElementById('deviceFieldModal');
+    if (modal) modal.style.display = 'none';
+    deviceFieldModalState = null;
+}
 
-                    alert('用户ID更新成功');
-                } else {
-                    alert('更新失败: ' + response.msg);
-                }
-            } catch (error) {
-                console.error('更新失败:', error);
-                alert('更新失败，请稍后重试');
-            }
-        }
+function submitDeviceFieldModal() {
+    const state = deviceFieldModalState;
+    if (!state) return;
+
+    const input = document.getElementById('deviceFieldModalInput');
+    const msg = document.getElementById('deviceFieldModalMessage');
+    const save = document.getElementById('deviceFieldModalSave');
+    const newValue = String(input.value || '').trim();
+
+    msg.className = 'device-modal-message';
+    msg.textContent = '';
+
+    if (!state.serialNumber) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '缺少设备序列号，无法保存。';
+        return;
+    }
+
+    if (state.type === 'image_device_serial' || state.type === 'bk_image_device_serial') {
+        submitDeviceImageFieldModal(state, newValue, msg, save);
+        return;
+    }
+
+    if (state.type === 'bind_site' && newValue && !/^\d+$/.test(newValue)) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '场地ID只能填写数字。';
+        return;
+    }
+
+    if (state.type === 'uid' && newValue && !/^\d+$/.test(newValue)) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '用户ID只能填写数字，或留空。';
+        return;
+    }
+
+    save.disabled = true;
+    save.textContent = '保存中...';
+
+    const payload = {
+        update_bind: true,
+        serial_number: state.serialNumber
     };
 
-    const data = JSON.stringify({
-        update_bind: true,
-        serial_number: serialNumber,
-        uid: newUid
-    });
-    xhr.send(data);
+    if (state.type === 'bind_site') {
+        payload.bind_site = newValue;
+    } else {
+        payload.uid = newValue;
+    }
+
+    fetch('/api/devMgr/devMgtV2.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+        .then(response => response.json())
+        .then(response => {
+            if (response.code === 0) {
+                updateDeviceFieldStatic(state, newValue);
+                msg.className = 'device-modal-message success';
+                msg.textContent = '修改成功，当前卡片已更新。';
+                save.textContent = '已保存';
+                setTimeout(closeDeviceFieldModal, 650);
+                return;
+            }
+
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败：' + (response.msg || '未知错误');
+            save.disabled = false;
+            save.textContent = '保存修改';
+        })
+        .catch(error => {
+            console.error('更新失败:', error);
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败，请稍后重试。';
+            save.disabled = false;
+            save.textContent = '保存修改';
+        });
+}
+
+function submitDeviceImageFieldModal(state, newValue, msg, save) {
+    if (state.type === 'image_device_serial' && !newValue) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '前图传不能为空。';
+        return;
+    }
+
+    const target = state.target;
+    const deviceCard = target ? target.closest('.device-card') : null;
+    const deviceInfo = deviceCard ? JSON.parse(deviceCard.getAttribute('data-device') || '{}') : {};
+
+    // 复用修改信息页接口。这个接口的前图传输入支持 device_information.id 或 room_id，保存后会返回实际落库 id 与 room_id。
+    const payload = {
+        device_id: state.serialNumber,
+        name: deviceInfo.name || '',
+        share_name: deviceInfo.share_name || deviceInfo.name || '',
+        image_device_serial: state.type === 'image_device_serial' ? newValue : (deviceInfo.image_device_serial || ''),
+        bk_image_device_serial: state.type === 'bk_image_device_serial' ? newValue : (deviceInfo.bk_image_device_serial || ''),
+        sharing_status: deviceInfo.sharing_status || '正在共享',
+        photo_url: deviceInfo.photo_url || '',
+        status: deviceInfo.status || ''
+    };
+
+    save.disabled = true;
+    save.textContent = '保存中...';
+
+    fetch('/api/vehicle/modifyDevice.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+        .then(response => response.json())
+        .then(response => {
+            if (response.code === 0) {
+                updateDeviceImageFieldStatic(state, newValue, response.data || {});
+                msg.className = 'device-modal-message success';
+                msg.textContent = '修改成功，当前卡片已更新。';
+                save.textContent = '已保存';
+                setTimeout(closeDeviceFieldModal, 650);
+                return;
+            }
+
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败：' + (response.msg || '未知错误');
+            save.disabled = false;
+            save.textContent = '保存修改';
+        })
+        .catch(error => {
+            console.error('图传更新失败:', error);
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败，请稍后重试。';
+            save.disabled = false;
+            save.textContent = '保存修改';
+        });
+}
+
+function updateDeviceImageFieldStatic(state, inputValue, responseData) {
+    const target = state.target;
+    const deviceCard = target ? target.closest('.device-card') : null;
+    const serialNumber = state.serialNumber;
+
+    let resolvedFrontId = cleanMetaText(responseData.image_device_serial || inputValue);
+    let resolvedRoomId = cleanMetaText(responseData.image_device_room_id || '');
+
+    if (state.type === 'image_device_serial') {
+        const displayText = formatImageSerial(resolvedFrontId, resolvedRoomId);
+        if (target) {
+            target.dataset.imageDeviceSerial = resolvedFrontId;
+            target.dataset.imageDeviceRoomId = resolvedRoomId;
+            target.textContent = displayText;
+            target.title = '点击修改前图传ID / 房间号';
+        }
+    } else {
+        const displayText = cleanMetaText(inputValue) || '-';
+        if (target) {
+            target.dataset.bkImageDeviceSerial = cleanMetaText(inputValue);
+            target.textContent = displayText;
+            target.title = '点击修改后图传';
+        }
+    }
+
+    const deviceIndex = allDevices.findIndex(device => device.serial_number === serialNumber);
+    if (deviceIndex !== -1) {
+        if (state.type === 'image_device_serial') {
+            allDevices[deviceIndex].image_device_serial = resolvedFrontId;
+            allDevices[deviceIndex].image_device_room_id = resolvedRoomId;
+        } else {
+            allDevices[deviceIndex].bk_image_device_serial = cleanMetaText(inputValue);
+        }
+    }
+
+    if (deviceCard) {
+        const deviceInfo = JSON.parse(deviceCard.getAttribute('data-device') || '{}');
+        if (state.type === 'image_device_serial') {
+            deviceInfo.image_device_serial = resolvedFrontId;
+            deviceInfo.image_device_room_id = resolvedRoomId;
+        } else {
+            deviceInfo.bk_image_device_serial = cleanMetaText(inputValue);
+        }
+        deviceCard.setAttribute('data-device', JSON.stringify(deviceInfo));
+    }
+}
+
+function updateDeviceFieldStatic(state, newValue) {
+    const target = state.target;
+    const deviceCard = target ? target.closest('.device-card') : null;
+    const serialNumber = state.serialNumber;
+    const displayValue = newValue || (state.type === 'uid' ? '未绑定' : '-');
+
+    if (state.type === 'bind_site') {
+        if (target) {
+            target.dataset.bindSite = newValue;
+            target.textContent = `场地ID：${displayValue}`;
+            target.title = '点击修改场地ID';
+        }
+    } else {
+        if (target) {
+            target.dataset.uid = newValue;
+            target.textContent = `绑定用户：${displayValue}`;
+            target.title = '点击修改绑定用户ID';
+        }
+    }
+
+    const deviceIndex = allDevices.findIndex(device => device.serial_number === serialNumber);
+    if (deviceIndex !== -1) {
+        if (state.type === 'bind_site') {
+            allDevices[deviceIndex].bind_site = newValue;
+        } else {
+            allDevices[deviceIndex].uid = newValue;
+        }
+    }
+
+    if (deviceCard) {
+        const deviceInfo = JSON.parse(deviceCard.getAttribute('data-device') || '{}');
+        if (state.type === 'bind_site') {
+            deviceInfo.bind_site = newValue;
+        } else {
+            deviceInfo.uid = newValue;
+        }
+        deviceCard.setAttribute('data-device', JSON.stringify(deviceInfo));
+    }
+}
+
+
+/* 图传编辑模态框：前图传显示为单胶囊，后图传默认收起，需要时点击展开编辑 */
+let imageDeviceModalState = null;
+
+function openImageDeviceModal(target) {
+    const modal = document.getElementById('imageDeviceModal');
+    const frontInput = document.getElementById('imageDeviceFrontInput');
+    const roomInput = document.getElementById('imageDeviceRoomInput');
+    const backInput = document.getElementById('imageDeviceBackInput');
+    const backEditor = document.getElementById('imageBackEditor');
+    const toggle = document.getElementById('imageBackToggle');
+    const msg = document.getElementById('imageDeviceModalMessage');
+    const save = document.getElementById('imageDeviceModalSave');
+
+    if (!modal || !frontInput || !roomInput || !backInput || !backEditor || !toggle || !msg || !save) return;
+
+    const frontId = cleanMetaText(target.dataset.imageDeviceSerial || '');
+    const roomId = cleanMetaText(target.dataset.imageDeviceRoomId || '');
+    const backId = cleanMetaText(target.dataset.bkImageDeviceSerial || '');
+
+    imageDeviceModalState = {
+        target: target,
+        serialNumber: target.dataset.serial || '',
+        originalFrontId: frontId,
+        originalRoomId: roomId,
+        originalBackId: backId,
+        backExpanded: false
+    };
+
+    frontInput.value = frontId;
+    roomInput.value = roomId || '暂无';
+    backInput.value = backId;
+    backEditor.classList.remove('show');
+    toggle.innerHTML = '<i class="fas ' + (backId ? 'fa-pen' : 'fa-plus') + '"></i><span>' + (backId ? '后图传编辑（已设置）' : '新增后图传') + '</span>';
+    msg.className = 'device-modal-message';
+    msg.textContent = '';
+    save.disabled = false;
+    save.textContent = '保存修改';
+    modal.style.display = 'block';
+
+    setTimeout(() => {
+        frontInput.focus();
+        frontInput.select();
+    }, 30);
+}
+
+function toggleBackImageEditor() {
+    const state = imageDeviceModalState;
+    const backEditor = document.getElementById('imageBackEditor');
+    const toggle = document.getElementById('imageBackToggle');
+    const backInput = document.getElementById('imageDeviceBackInput');
+    if (!state || !backEditor || !toggle || !backInput) return;
+
+    state.backExpanded = !state.backExpanded;
+    backEditor.classList.toggle('show', state.backExpanded);
+
+    if (state.backExpanded) {
+        toggle.innerHTML = '<i class="fas fa-chevron-up"></i><span>收起后图传编辑</span>';
+        setTimeout(() => backInput.focus(), 30);
+    } else {
+        toggle.innerHTML = '<i class="fas ' + (state.originalBackId ? 'fa-pen' : 'fa-plus') + '"></i><span>' + (state.originalBackId ? '后图传编辑（已设置）' : '新增后图传') + '</span>';
+    }
+}
+
+function closeImageDeviceModal() {
+    const modal = document.getElementById('imageDeviceModal');
+    if (modal) modal.style.display = 'none';
+    imageDeviceModalState = null;
+}
+
+function submitImageDeviceModal() {
+    const state = imageDeviceModalState;
+    if (!state) return;
+
+    const frontInput = document.getElementById('imageDeviceFrontInput');
+    const roomInput = document.getElementById('imageDeviceRoomInput');
+    const backInput = document.getElementById('imageDeviceBackInput');
+    const msg = document.getElementById('imageDeviceModalMessage');
+    const save = document.getElementById('imageDeviceModalSave');
+
+    const frontValue = cleanMetaText(frontInput.value);
+    const backValue = state.backExpanded ? cleanMetaText(backInput.value) : state.originalBackId;
+
+    msg.className = 'device-modal-message';
+    msg.textContent = '';
+
+    if (!state.serialNumber) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '缺少设备序列号，无法保存。';
+        return;
+    }
+
+    if (!frontValue) {
+        msg.className = 'device-modal-message error';
+        msg.textContent = '前图传ID不能为空，可填写 device_information.id 或 room_id。';
+        return;
+    }
+
+    const deviceCard = state.target ? state.target.closest('.device-card') : null;
+    const deviceInfo = deviceCard ? JSON.parse(deviceCard.getAttribute('data-device') || '{}') : {};
+
+    const payload = {
+        device_id: state.serialNumber,
+        name: deviceInfo.name || '',
+        share_name: deviceInfo.share_name || deviceInfo.name || '',
+        image_device_serial: frontValue,
+        bk_image_device_serial: backValue,
+        sharing_status: deviceInfo.sharing_status || '正在共享',
+        photo_url: deviceInfo.photo_url || '',
+        status: deviceInfo.status || ''
+    };
+
+    save.disabled = true;
+    save.textContent = '保存中...';
+
+    fetch('/api/vehicle/modifyDevice.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+        .then(response => response.json())
+        .then(response => {
+            if (response.code === 0) {
+                const data = response.data || {};
+                const resolvedFrontId = cleanMetaText(data.image_device_serial || frontValue);
+                const resolvedRoomId = cleanMetaText(data.image_device_room_id || (resolvedFrontId === state.originalFrontId ? state.originalRoomId : ''));
+                updateImageDeviceStatic(state, resolvedFrontId, resolvedRoomId, backValue);
+                roomInput.value = resolvedRoomId || '暂无';
+                msg.className = 'device-modal-message success';
+                msg.textContent = '修改成功，当前卡片已更新。';
+                save.textContent = '已保存';
+                setTimeout(closeImageDeviceModal, 650);
+                return;
+            }
+
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败：' + (response.msg || '未知错误');
+            save.disabled = false;
+            save.textContent = '保存修改';
+        })
+        .catch(error => {
+            console.error('图传更新失败:', error);
+            msg.className = 'device-modal-message error';
+            msg.textContent = '更新失败，请稍后重试。';
+            save.disabled = false;
+            save.textContent = '保存修改';
+        });
+}
+
+function updateImageDeviceStatic(state, frontId, roomId, backId) {
+    const target = state.target;
+    const deviceCard = target ? target.closest('.device-card') : null;
+    const serialNumber = state.serialNumber;
+    const displayText = formatImageSerial(frontId, roomId);
+
+    if (target) {
+        target.dataset.imageDeviceSerial = frontId;
+        target.dataset.imageDeviceRoomId = roomId;
+        target.dataset.bkImageDeviceSerial = backId;
+        const valueEl = target.querySelector('.image-pill-value');
+        if (valueEl) {
+            valueEl.textContent = displayText;
+        } else {
+            target.textContent = displayText;
+        }
+        target.title = '点击编辑图传';
+    }
+
+    const deviceIndex = allDevices.findIndex(device => device.serial_number === serialNumber);
+    if (deviceIndex !== -1) {
+        allDevices[deviceIndex].image_device_serial = frontId;
+        allDevices[deviceIndex].image_device_room_id = roomId;
+        allDevices[deviceIndex].bk_image_device_serial = backId;
+    }
+
+    if (deviceCard) {
+        const deviceInfo = JSON.parse(deviceCard.getAttribute('data-device') || '{}');
+        deviceInfo.image_device_serial = frontId;
+        deviceInfo.image_device_room_id = roomId;
+        deviceInfo.bk_image_device_serial = backId;
+        deviceCard.setAttribute('data-device', JSON.stringify(deviceInfo));
+
+        const streamBtn = deviceCard.querySelector('.check-stream-btn');
+        if (streamBtn) {
+            streamBtn.dataset.playingStreamId = roomId || '';
+        }
+    }
 }
 
         // 添加获取封禁结束时间的函数
