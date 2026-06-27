@@ -82,6 +82,31 @@
       font-size: 14px;
     }
 
+    .page-tools {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .password-link-btn {
+      height: 34px;
+      border: 1px solid rgba(15, 145, 141, .24);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: var(--brand-dark);
+      background: #effaf9;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .password-link-btn:hover {
+      border-color: rgba(15, 145, 141, .45);
+      background: var(--brand-soft);
+    }
+
     .status-pill {
       min-width: 78px;
       border-radius: 999px;
@@ -306,6 +331,10 @@
         padding: 18px;
       }
 
+      .page-tools {
+        justify-content: flex-start;
+      }
+
       .form-grid {
         grid-template-columns: 1fr;
       }
@@ -328,7 +357,10 @@
           <h1>基本资料</h1>
           <p>查看当前后台账号信息，维护昵称、性别和手机号。</p>
         </div>
-        <div class="status-pill" id="loadState">读取中</div>
+        <div class="page-tools">
+          <button class="password-link-btn" type="button" id="passwordBtn">修改密码</button>
+          <div class="status-pill" id="loadState">读取中</div>
+        </div>
       </header>
 
       <div class="profile-body">
@@ -391,6 +423,7 @@
     const form = document.getElementById('profileForm');
     const saveBtn = document.getElementById('saveBtn');
     const refreshBtn = document.getElementById('refreshBtn');
+    const passwordBtn = document.getElementById('passwordBtn');
     let profileEditable = false;
 
     const fields = {
@@ -562,6 +595,16 @@
         saveBtn.disabled = false;
         refreshBtn.disabled = false;
       }
+    });
+
+    passwordBtn.addEventListener('click', function() {
+      const currentParams = new URLSearchParams(window.location.search);
+      const targetParams = new URLSearchParams();
+      if (currentParams.get('embed')) {
+        targetParams.set('embed', currentParams.get('embed'));
+      }
+      const query = targetParams.toString();
+      window.location.href = './system_password.html' + (query ? '?' + query : '');
     });
 
     refreshBtn.addEventListener('click', loadAll);

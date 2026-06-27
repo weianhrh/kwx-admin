@@ -58,6 +58,8 @@ function menu_hidden_for_rebuild(array $menu): bool
         '主播认证管理', '主播认证', 'anchor_auth', 'anchorauth',
         '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
         'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage',
+        '修改密码', 'system_password', 'system-password', 'updatepassword', 'setpasswd',
+        '平台数据面板', '数据面板', '全平台数据看板', 'iframe/link/kb', '/kb',
     ]);
 }
 
@@ -90,7 +92,10 @@ function menu_group_key(array $menu): string
 {
     $text = menu_text($menu);
 
-    if (menu_contains($text, ['admindrivingorders', 'order_report', 'reporthand', 'recharge_orders_api', '订单查询', '订单申诉', '订单投诉', '最新支付记录'])) {
+    if (menu_contains($text, ['reporthand', 'order_complaint', 'order-complaint', '订单投诉', '投诉处理'])) {
+        return 'audit';
+    }
+    if (menu_contains($text, ['admindrivingorders', 'order_report', 'recharge_orders_api', '订单查询', '订单申诉', '最新支付记录'])) {
         return 'order';
     }
     if (menu_contains($text, ['dev', 'device', 'vehicle', 'vehicles', 'camera', 'fault', 'imgnumber', 'photol', 'stream', '设备', '摄像', '故障'])) {
@@ -153,15 +158,6 @@ function menu_append_system_tools(array &$groups, int $roleId): void
         'icon' => 'user',
         'jump' => '/iframe/link/system_profile',
         'sort' => 9101,
-    ]);
-    $append([
-        'id' => 9102,
-        'parent_id' => $toolsId,
-        'name' => 'system-password',
-        'title' => '修改密码',
-        'icon' => 'tools',
-        'jump' => '/iframe/link/system_password',
-        'sort' => 9102,
     ]);
 }
 function menu_append_user_blacklist_menu(array &$groups, int $roleId): void
@@ -274,15 +270,6 @@ function menu_franchise_tree(): array
                     'icon' => 'user',
                     'jump' => '/iframe/link/system_profile',
                     'sort' => 10,
-                ],
-                [
-                    'id' => 9392,
-                    'parent_id' => 9390,
-                    'name' => 'franchise-system-password',
-                    'title' => '修改密码',
-                    'icon' => 'tools',
-                    'jump' => '/iframe/link/system_password',
-                    'sort' => 20,
                 ],
             ],
         ],

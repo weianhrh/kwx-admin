@@ -323,13 +323,15 @@ $db->close();
 
 $quickActions = [
     ['title' => '设备管理', 'group' => 'device', 'jump' => '/iframe/link/deviceMgt', 'badge' => 0, 'roles' => [1, 2]],
-    ['title' => '场地管理', 'group' => 'venue', 'jump' => '/iframe/link/VenuesManagement', 'badge' => 0, 'roles' => [1, 2]],
+    ['title' => '场地管理', 'group' => 'map', 'jump' => '/iframe/link/VenuesManagement', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '用户管理', 'group' => 'user', 'jump' => '/iframe/link/Balancerecharge', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '订单查询', 'group' => 'order', 'jump' => '/iframe/link/AdminDrivingOrders', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '消费查询', 'group' => 'finance', 'jump' => '/iframe/link/Comsumquery_v2', 'badge' => 0, 'roles' => [1, 2]],
+ 
     ['title' => '专区管理', 'group' => 'venue', 'jump' => '/iframe/link/zonemgt', 'badge' => 0, 'roles' => [1, 2]],
     ['title' => '消息管理', 'group' => 'ops', 'jump' => '/iframe/link/MessageMgmt', 'badge' => 0, 'roles' => [1, 2]],
-    ['title' => '资费商品', 'group' => 'finance', 'jump' => '/iframe/link/pricing_options', 'badge' => 0, 'roles' => [1, 2]],
+    ['title' => '资费商品', 'group' => 'file', 'jump' => '/iframe/link/pricing_options', 'badge' => 0, 'roles' => [1, 2]],
+    ['title' => '数据面板', 'group' => 'chart', 'jump' => '/iframe/link/kb', 'badge' => 0, 'roles' => [1, 2]],
     // 摄像管理 业绩排行 投诉处理 违规查询 
 ];
 
