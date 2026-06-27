@@ -613,6 +613,184 @@ select.form-input,
     padding: 0 12px 12px;
   }
 }
+
+
+/* =========================
+   订单查询：手机端紧凑卡片
+   只压缩展示，不改查询/退款/锁定逻辑
+========================= */
+@media (max-width: 760px) {
+  .cards-container {
+    gap: 10px;
+    padding: 10px 12px 12px;
+  }
+
+  .order-card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(30, 55, 66, .06);
+  }
+
+  .order-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .order-no {
+    grid-column: 1 / -1;
+    gap: 3px;
+  }
+
+  .order-no-label,
+  .order-money-label {
+    font-size: 11px;
+  }
+
+  .order-no-value {
+    max-width: 100%;
+    font-size: 15px;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .order-head > .status-badge {
+    grid-column: 1;
+    justify-self: start;
+    min-height: 22px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .order-money {
+    grid-column: 2;
+    grid-row: 2;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+  }
+
+  .order-money-value {
+    font-size: 17px;
+    line-height: 1.15;
+  }
+
+  .order-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 2px;
+  }
+
+  .order-actions .form-button {
+    width: 100%;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .order-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+
+  .order-field,
+  .order-item {
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid #edf3f5;
+    border-radius: 9px;
+    background: #fbfcfd;
+  }
+
+  .order-field:nth-last-child(-n+4),
+  .order-item:last-child {
+    border-bottom-color: #edf3f5;
+  }
+
+  .field-label,
+  .item-label {
+    font-size: 11px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .field-value,
+  .item-value {
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .mono {
+    font-size: 11.5px;
+  }
+
+  .refund-status-text,
+  .lock-status-badge {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .pagination {
+    gap: 8px;
+    padding: 0 12px 12px;
+  }
+
+  .pagination .form-button {
+    width: auto;
+    min-width: 86px;
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
+  #pageInfo,
+  .page-info {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .cards-container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .order-body {
+    gap: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .order-field,
+  .order-item {
+    min-height: 50px;
+    padding: 7px 8px;
+  }
+
+  .field-value,
+  .item-value,
+  .mono {
+    font-size: 11px;
+  }
+}
+
 [hidden] {
   display: none !important;
 }

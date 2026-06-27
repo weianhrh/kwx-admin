@@ -873,6 +873,393 @@ button.venue-pill:hover {
     padding: 16px !important;
   }
 }
+
+
+/* =========================
+   场地管理页面整理：顶部工具栏 + 列表按钮规整
+   仅调整布局与展示，不改接口逻辑
+========================= */
+.card {
+  display: grid;
+  grid-template-columns: 132px minmax(260px, 1fr) 180px;
+  gap: 12px;
+  padding: 0;
+}
+
+.card-title {
+  grid-column: 1 / -1;
+  min-height: 64px;
+  padding: 0 20px;
+  font-size: 21px;
+  background: linear-gradient(180deg, #ffffff, #fbfcfd);
+}
+
+.add-btn {
+  grid-column: 1;
+  width: calc(100% - 18px);
+  margin: 0 0 0 18px;
+  align-self: stretch;
+  min-height: 40px;
+}
+
+#venue_search {
+  grid-column: 2;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  height: 40px !important;
+  align-self: stretch;
+}
+
+.venue-level-filter {
+  grid-column: 3;
+  width: calc(100% - 18px) !important;
+  min-width: 0 !important;
+  margin: 0 18px 0 0 !important;
+  height: 40px !important;
+  align-self: stretch;
+}
+
+#venue_options {
+  display: none;
+}
+
+.add-venue-form {
+  grid-column: 1 / -1;
+  margin: 0 18px 4px;
+}
+
+.venue-toolbar {
+  grid-column: 1 / -1;
+  padding: 2px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.venue-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat-card {
+  min-height: 58px;
+  align-content: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.stat-label {
+  font-size: 12px;
+}
+
+.stat-value {
+  font-size: 22px;
+}
+
+#venue-list,
+#loading {
+  grid-column: 1 / -1;
+}
+
+#venue-list {
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.venue-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 152px;
+  align-items: stretch;
+}
+
+.venue-card-top {
+  grid-column: 1;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.venue-img {
+  width: 120px;
+  height: 88px;
+}
+
+.venue-info {
+  gap: 8px;
+}
+
+.venue-name {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venue-meta-row {
+  gap: 6px;
+}
+
+.venue-status-badge,
+.venue-live-badge,
+.venue-review-badge,
+.venue-level-control {
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.review-time-row,
+.live-time-row {
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.venue-detail-grid {
+  /* PC端保持四项同一行：描述 / 标签 / 开放时间 / 高消费 */
+  grid-template-columns: minmax(0, 1fr) minmax(110px, .72fr) minmax(150px, .92fr) minmax(112px, .68fr);
+  gap: 7px;
+}
+
+.venue-pill {
+  min-height: 28px;
+  min-width: 0;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.venue-pill-desc {
+  grid-column: auto;
+  max-width: 100%;
+}
+
+.venue-pill-text {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venue-action-area {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border-top: 0;
+  border-left: 1px solid var(--line);
+  background: linear-gradient(180deg, #fbfcfd, #f7fafb);
+}
+
+.venue-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.edit-btn,
+.unban-btn,
+.ban-btn,
+.live-btn {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.edit-btn::before {
+  content: "✎";
+  font-size: 12px;
+  line-height: 1;
+}
+
+.ban-btn::before {
+  content: "⚠";
+  font-size: 12px;
+  line-height: 1;
+}
+
+.unban-btn::before {
+  content: "✓";
+  font-size: 12px;
+  line-height: 1;
+}
+
+@media (max-width: 1180px) {
+  .card {
+    grid-template-columns: 128px minmax(220px, 1fr) 170px;
+  }
+
+  .venue-card {
+    grid-template-columns: 1fr 140px;
+  }
+
+  .venue-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .venue-pill-desc {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .card-title,
+  .add-btn,
+  #venue_search,
+  .venue-level-filter,
+  .add-venue-form,
+  .venue-toolbar,
+  #venue-list,
+  #loading {
+    grid-column: 1;
+  }
+
+  .add-btn,
+  #venue_search,
+  .venue-level-filter {
+    width: calc(100% - 28px) !important;
+    margin-left: 14px !important;
+    margin-right: 14px !important;
+  }
+
+  .venue-level-filter {
+    margin-top: 0 !important;
+  }
+
+  .venue-toolbar {
+    padding: 0 14px 12px;
+  }
+
+  #venue-list {
+    padding: 14px;
+  }
+
+  .venue-card {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-action-area {
+    grid-column: 1;
+    grid-row: auto;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .venue-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .card-title {
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 18px;
+  }
+
+  .add-btn {
+    min-height: 38px;
+  }
+
+  .venue-stats {
+    gap: 8px;
+  }
+
+  .stat-card {
+    min-height: 54px;
+    padding: 9px 11px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .venue-card-top {
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .venue-img {
+    width: 74px;
+    height: 58px;
+  }
+
+  .venue-name {
+    font-size: 14px;
+  }
+
+  .venue-meta-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .venue-status-badge,
+  .venue-live-badge,
+  .venue-review-badge,
+  .venue-level-control {
+    flex: 0 0 auto;
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .venue-level-select {
+    max-width: 42px;
+    height: 22px;
+    padding: 0 4px;
+    font-size: 11px;
+  }
+
+  .review-time-row,
+  .live-time-row {
+    min-height: 30px;
+    padding: 6px 8px;
+  }
+
+  .venue-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .venue-pill-desc {
+    grid-column: auto;
+  }
+
+  .venue-pill {
+    min-height: 27px;
+    font-size: 11px;
+  }
+
+  .venue-action-area {
+    padding: 10px 12px 12px;
+  }
+
+  .venue-actions {
+    gap: 8px;
+  }
+
+  .edit-btn,
+  .unban-btn,
+  .ban-btn,
+  .live-btn {
+    min-height: 36px;
+  }
+}
+
   </style>
 </head>
 
@@ -1187,7 +1574,7 @@ ${isLive ? `
 
 <div class="venue-detail-grid">
     <span class="venue-pill venue-pill-blue venue-pill-desc" title="${escapeHtml(venue.venue_description || '')}">
-        ${escapeHtml(venue.venue_description || '暂无描述')}
+        <span class="venue-pill-text">${escapeHtml(venue.venue_description || '暂无描述')}</span>
     </span>
 
     <span class="venue-pill venue-pill-amber venue-pill-tag">
@@ -1207,10 +1594,10 @@ ${isLive ? `
 
 <div class="venue-action-area">
     <div class="venue-actions">
-        <button class="edit-btn" onclick="editVenue(${venue.id})">修改场地信息</button>
+        <button class="edit-btn" onclick="editVenue(${venue.id})">修改信息</button>
         ${venue.is_banned_venue
-            ? `<button class="unban-btn" onclick="openUnbanModal(${venue.id})">解封场地</button>`
-            : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁场地</button>`
+            ? `<button class="unban-btn" onclick="openUnbanModal(${venue.id})">解封</button>`
+            : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁</button>`
         }
 
     </div>

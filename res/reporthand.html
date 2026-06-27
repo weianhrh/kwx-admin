@@ -303,6 +303,336 @@
         }
     </style>
   <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
+
+  <style id="reporthand-compact-style">
+    /* 投诉处理页紧凑布局：同时优化 role_1 可操作视角与 role_3 只读视角 */
+    body.kwx-legacy-page {
+      padding: 18px 20px 28px;
+      background: #f4f7f8;
+    }
+
+    body.kwx-legacy-page .container {
+      width: 100%;
+      max-width: none;
+    }
+
+    body.kwx-legacy-page .card {
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #dfe8eb;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 12px 34px rgba(30, 55, 66, .08);
+    }
+
+    body.kwx-legacy-page .card:hover {
+      box-shadow: 0 12px 34px rgba(30, 55, 66, .08);
+    }
+
+    body.kwx-legacy-page .card-title {
+      min-height: 58px;
+      margin: 0 !important;
+      padding: 0 18px 0 18px;
+      border-bottom: 1px solid #dfe8eb;
+      color: #172126;
+      background: linear-gradient(180deg, #fff, #fbfcfd);
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    body.kwx-legacy-page .card-title > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body.kwx-legacy-page .card-title > span::before {
+      content: "";
+      width: 7px;
+      height: 20px;
+      border-radius: 999px;
+      background: #0f8f8c;
+    }
+
+    body.kwx-legacy-page .card-title .action-button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid rgba(15, 143, 140, .28);
+      border-radius: 8px;
+      color: #08706e;
+      background: #e6f6f5;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    body.kwx-legacy-page .readonly-tip {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      margin: 0 !important;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    body.kwx-legacy-page .complaint-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 0;
+      padding: 16px 18px 18px;
+    }
+
+    body.kwx-legacy-page .complaint-item {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 14px;
+      border: 1px solid #dfe8eb;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(30, 55, 66, .05);
+    }
+
+    body.kwx-legacy-page .complaint-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body.kwx-legacy-page .complaint-top-left {
+      gap: 6px;
+    }
+
+    body.kwx-legacy-page .complaint-top > div:last-child {
+      color: #7f8fa4 !important;
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+
+    body.kwx-legacy-page .badge {
+      min-height: 24px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    body.kwx-legacy-page .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+
+    body.kwx-legacy-page .detail-item {
+      min-height: 48px;
+      padding: 8px 10px;
+      border: 1px solid #edf1f5;
+      border-radius: 8px;
+      background: #fbfcfd;
+      line-height: 1.4;
+    }
+
+    body.kwx-legacy-page .detail-item[data-label*="名称"],
+    body.kwx-legacy-page .detail-item[data-label*="昵称"] {
+      min-width: 220px;
+    }
+
+    body.kwx-legacy-page .detail-label {
+      margin-bottom: 3px !important;
+      color: #6b7d84;
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    body.kwx-legacy-page .detail-value {
+      color: #233139;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    body.kwx-legacy-page .content-box {
+      min-height: 0;
+      padding: 9px 10px;
+      border: 1px solid #edf1f5;
+      border-radius: 8px;
+      background: #fbfcfd;
+      color: #233139;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    body.kwx-legacy-page .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    body.kwx-legacy-page .action-button {
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    body.kwx-legacy-page .image-thumb {
+      max-width: 160px;
+      border-radius: 8px;
+    }
+
+    body.kwx-legacy-page .ban-modal-content {
+      border-radius: 10px;
+    }
+
+    @media (min-width: 1200px) {
+      body.kwx-legacy-page .detail-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      body.kwx-legacy-page .detail-item[data-label*="名称"],
+      body.kwx-legacy-page .detail-item[data-label*="昵称"] {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body.kwx-legacy-page {
+        padding: 10px 8px 18px;
+      }
+
+      body.kwx-legacy-page .card {
+        border-radius: 10px;
+      }
+
+      body.kwx-legacy-page .card-title {
+        min-height: 48px;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px !important;
+        padding: 0 12px;
+        font-size: 17px;
+      }
+
+      body.kwx-legacy-page .card-title > div {
+        justify-content: flex-end;
+        gap: 6px !important;
+      }
+
+      body.kwx-legacy-page .card-title .action-button {
+        min-height: 30px;
+        padding: 0 9px;
+        font-size: 12px;
+      }
+
+      body.kwx-legacy-page .readonly-tip {
+        max-width: 150px;
+        min-height: 26px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
+      }
+
+      body.kwx-legacy-page .complaint-list {
+        gap: 10px;
+        padding: 12px;
+      }
+
+      body.kwx-legacy-page .complaint-item {
+        gap: 8px;
+        padding: 12px;
+        border-radius: 12px;
+      }
+
+      body.kwx-legacy-page .complaint-top {
+        grid-template-columns: 1fr;
+        gap: 7px;
+      }
+
+      body.kwx-legacy-page .complaint-top-left {
+        gap: 6px;
+      }
+
+      body.kwx-legacy-page .badge {
+        min-height: 23px;
+        padding: 0 9px;
+        font-size: 12px;
+      }
+
+      body.kwx-legacy-page .complaint-top > div:last-child {
+        font-size: 12px !important;
+      }
+
+      body.kwx-legacy-page .detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      body.kwx-legacy-page .detail-item {
+        min-height: 48px;
+        padding: 8px;
+        border-radius: 8px;
+      }
+
+      body.kwx-legacy-page .detail-item[data-label*="名称"],
+      body.kwx-legacy-page .detail-item[data-label*="昵称"] {
+        grid-column: 1 / -1;
+        min-width: 0;
+      }
+
+      body.kwx-legacy-page .detail-label {
+        font-size: 11px;
+      }
+
+      body.kwx-legacy-page .detail-value {
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      body.kwx-legacy-page .content-box {
+        padding: 9px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      body.kwx-legacy-page .action-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      body.kwx-legacy-page .action-button {
+        width: 100%;
+        min-height: 34px;
+        margin: 0;
+        padding: 0 6px;
+        font-size: 12px;
+      }
+
+      body.kwx-legacy-page .image-thumb {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 360px) {
+      body.kwx-legacy-page .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body.kwx-legacy-page .action-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body class="kwx-legacy-page">
@@ -429,7 +759,7 @@
 
         function detailItem(label, value) {
             return `
-                <div class="detail-item">
+                <div class="detail-item" data-label="${escapeHtml(label)}">
                     <div class="detail-label">${escapeHtml(label)}</div>
                     <div class="detail-value">${escapeHtml(value || '-')}</div>
                 </div>
