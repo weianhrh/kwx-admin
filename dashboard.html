@@ -716,6 +716,17 @@
       line-height: 1.7;
     }
 
+    .dashboard-boot-loading {
+      min-height: 260px;
+    }
+
+    @media (max-width: 760px) {
+      .dashboard-boot-loading {
+        min-height: 180px;
+        padding: 24px 18px;
+      }
+    }
+
     .module-meta {
       display: flex;
       flex-wrap: wrap;
@@ -2479,6 +2490,592 @@
         grid-template-columns: 1fr;
       }
     }
+
+
+    /* 管理员工作台手机端紧凑布局：参考资料库列表式密度，避免每个入口单独占一整行 */
+    @media (max-width: 760px) {
+      .admin-workbench .workbench-head {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .admin-workbench .workbench-title {
+        min-width: 0;
+        gap: 4px;
+      }
+
+      .admin-workbench .workbench-title h2 {
+        font-size: 21px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .workbench-title p {
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .workbench-head > .ghost-btn {
+        min-height: 34px;
+        flex: 0 0 auto;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .admin-workbench .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .admin-workbench .stat {
+        min-height: 82px;
+        padding: 11px;
+        box-shadow: 0 8px 20px rgba(30, 55, 66, .06);
+      }
+
+      .admin-workbench .stat-head {
+        gap: 6px;
+        font-size: 12px;
+      }
+
+      .admin-workbench .stat-head > span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .stat-icon {
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+      }
+
+      .admin-workbench .stat-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .admin-workbench .stat strong {
+        margin-top: 9px;
+        font-size: 20px;
+        line-height: 1.05;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .stat small {
+        margin-top: 5px;
+        font-size: 11px;
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .workbench-grid {
+        gap: 12px;
+      }
+
+      .admin-workbench .panel-head {
+        min-height: 48px;
+        padding: 0 12px;
+      }
+
+      .admin-workbench .panel-title {
+        gap: 1px;
+      }
+
+      .admin-workbench .panel-title strong {
+        font-size: 15px;
+      }
+
+      .admin-workbench .panel-title span:empty {
+        display: none;
+      }
+
+      .admin-workbench .quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .admin-workbench .quick-card {
+        min-height: 58px;
+        grid-template-columns: 22px minmax(0, 1fr);
+        align-content: center;
+        align-items: center;
+        justify-items: start;
+        gap: 8px;
+        padding: 10px 9px;
+        box-shadow: none;
+      }
+
+      .admin-workbench .quick-card svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .admin-workbench .quick-card span {
+        min-width: 0;
+        width: 100%;
+        font-size: 12px;
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .quick-badge {
+        top: 5px;
+        right: 5px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        font-size: 11px;
+      }
+
+      .admin-workbench .side-stack {
+        gap: 12px;
+      }
+
+      .admin-workbench .todo-list {
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .admin-workbench .todo-link {
+        min-height: 42px;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+
+      .admin-workbench .todo-link strong {
+        font-size: 13px;
+      }
+
+      .admin-workbench .todo-link span {
+        font-size: 11px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-workbench .todo-count {
+        min-width: 28px;
+        height: 25px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .admin-workbench .stats,
+      .admin-workbench .quick-grid {
+        gap: 8px;
+      }
+
+      .admin-workbench .stat {
+        padding: 10px;
+      }
+
+      .admin-workbench .stat strong {
+        font-size: 18px;
+      }
+
+      .admin-workbench .quick-card {
+        min-height: 54px;
+        padding: 9px 8px;
+      }
+    }
+
+
+    /* 加盟商/role_3 工作台手机端紧凑布局：避免统计卡、场地概况一项一整行拉太长 */
+    @media (max-width: 760px) {
+      .franchise-workbench .workbench-head {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .franchise-workbench .workbench-title {
+        min-width: 0;
+        gap: 4px;
+      }
+
+      .franchise-workbench .workbench-title h2 {
+        font-size: 21px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .franchise-workbench .workbench-title p {
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .franchise-workbench .workbench-head > .ghost-btn {
+        min-height: 34px;
+        flex: 0 0 auto;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .franchise-workbench .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .franchise-workbench .stat {
+        min-height: 82px;
+        padding: 11px;
+        box-shadow: 0 8px 20px rgba(30, 55, 66, .06);
+      }
+
+      .franchise-workbench .stat-head {
+        gap: 6px;
+        font-size: 12px;
+      }
+
+      .franchise-workbench .stat-head > span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .franchise-workbench .stat-icon {
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+      }
+
+      .franchise-workbench .stat-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .franchise-workbench .stat strong {
+        margin-top: 9px;
+        font-size: 20px;
+        line-height: 1.05;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .franchise-workbench .stat small {
+        margin-top: 5px;
+        font-size: 11px;
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .franchise-workbench .franchise-home-stack {
+        gap: 12px;
+      }
+
+      .franchise-workbench .panel-head {
+        min-height: 48px;
+        padding: 0 12px;
+      }
+
+      .franchise-workbench .panel-title {
+        gap: 1px;
+      }
+
+      .franchise-workbench .panel-title strong {
+        font-size: 15px;
+      }
+
+      .franchise-workbench .panel-title span {
+        font-size: 11px;
+      }
+
+      .franchise-workbench .franchise-overview-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .franchise-workbench .franchise-overview-item {
+        min-height: 68px;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .franchise-workbench .franchise-overview-item.has-venue-summary {
+        min-height: 82px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .franchise-workbench .franchise-overview-item:nth-child(3) {
+        grid-column: 1 / -1;
+      }
+
+      .franchise-workbench .franchise-overview-item strong {
+        font-size: 12px;
+      }
+
+      .franchise-workbench .franchise-overview-item span {
+        margin-top: 5px;
+        font-size: 15px;
+        line-height: 1.2;
+      }
+
+      .franchise-workbench .franchise-overview-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+      }
+
+      .franchise-workbench .franchise-overview-icon svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .franchise-workbench .franchise-overview-item .franchise-venue-summary {
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .franchise-workbench .franchise-overview-item .franchise-venue-summary-row {
+        grid-template-columns: 23px minmax(0, 1fr);
+        gap: 6px;
+        min-height: 19px;
+      }
+
+      .franchise-workbench .franchise-overview-item .franchise-venue-summary-label {
+        width: 21px;
+        min-width: 21px;
+        height: 18px;
+        min-height: 18px;
+        font-size: 11px;
+      }
+
+      .franchise-workbench .franchise-overview-item .franchise-venue-summary-text {
+        font-size: 12px;
+        line-height: 19px;
+      }
+
+      .franchise-workbench .dashboard-notice-panel {
+        min-height: 0;
+      }
+
+      .franchise-workbench .dashboard-notice-list {
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .franchise-workbench .dashboard-notice-card {
+        gap: 7px;
+        padding: 12px 11px 11px 14px;
+      }
+
+      .franchise-workbench .dashboard-notice-card::before {
+        top: 12px;
+        height: 28px;
+      }
+
+      .franchise-workbench .dashboard-notice-badge {
+        min-height: 20px;
+        padding: 0 7px;
+        font-size: 11px;
+      }
+
+      .franchise-workbench .dashboard-notice-title {
+        font-size: 13px;
+      }
+
+      .franchise-workbench .dashboard-notice-time {
+        font-size: 11px;
+      }
+
+      .franchise-workbench .dashboard-notice-content {
+        font-size: 12px;
+        line-height: 1.55;
+        -webkit-line-clamp: 2;
+      }
+
+      .franchise-workbench .dashboard-notice-actions .ghost-btn {
+        min-height: 32px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .franchise-workbench .dashboard-empty,
+      .franchise-workbench .empty-state {
+        padding: 18px 12px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .franchise-workbench .stats,
+      .franchise-workbench .franchise-overview-strip {
+        gap: 8px;
+      }
+
+      .franchise-workbench .stat {
+        padding: 10px;
+      }
+
+      .franchise-workbench .stat strong {
+        font-size: 18px;
+      }
+
+      .franchise-workbench .stat small {
+        font-size: 10px;
+      }
+
+      .franchise-workbench .franchise-overview-item {
+        padding: 9px;
+      }
+    }
+
+
+    /* 手机端顶部栏统一整理：role_1/role_2/role_3 共用
+       菜单、账号、退出同一行；搜索和闹铃在手机端隐藏 */
+    @media (max-width: 760px) {
+      .topbar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 8px 10px;
+        padding: 12px 14px 10px;
+      }
+
+      .mobile-menu {
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 32px;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .mobile-menu svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .topbar .actions {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        width: auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        gap: 6px;
+      }
+
+      .topbar .search,
+      .topbar .notice-button {
+        display: none !important;
+      }
+
+      .topbar .user-chip {
+        max-width: 106px;
+        min-height: 32px;
+        height: 32px;
+        padding: 0 8px;
+        gap: 6px;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+
+      .topbar .user-chip i {
+        width: 7px;
+        height: 7px;
+        flex: 0 0 auto;
+      }
+
+      .topbar .user-chip span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .topbar #logoutButton {
+        min-height: 32px;
+        height: 32px;
+        padding: 0 9px;
+        border-radius: 8px;
+        gap: 5px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .topbar #logoutButton svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .topbar .crumb {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        gap: 3px;
+        min-width: 0;
+      }
+
+      .topbar .crumb span {
+        font-size: 10px;
+        line-height: 1.2;
+      }
+
+      .topbar .crumb strong {
+        font-size: 17px;
+        line-height: 1.2;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .topbar {
+        gap: 8px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .mobile-menu {
+        padding: 0 9px;
+        font-size: 12px;
+      }
+
+      .topbar .actions {
+        gap: 5px;
+      }
+
+      .topbar .user-chip {
+        max-width: 92px;
+        padding: 0 7px;
+      }
+
+      .topbar #logoutButton {
+        padding: 0 8px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -2535,146 +3132,10 @@
       </header>
 
       <section class="content" id="pageContent">
-        <div class="stats">
-          <article class="stat">
-            <div class="stat-head">
-              <span>在线设备</span>
-              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/></svg></span>
-            </div>
-            <strong>128</strong>
-            <small>较昨日 +6 台</small>
-          </article>
-          <article class="stat">
-            <div class="stat-head">
-              <span>今日订单</span>
-              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/></svg></span>
-            </div>
-            <strong>936</strong>
-            <small>支付成功率 97.4%</small>
-          </article>
-          <article class="stat">
-            <div class="stat-head">
-              <span>今日流水</span>
-              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-            </div>
-            <strong>¥18,420</strong>
-            <small>退款金额 ¥260</small>
-          </article>
-          <article class="stat">
-            <div class="stat-head">
-              <span>异常提醒</span>
-              <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span>
-            </div>
-            <strong>5</strong>
-            <small>需处理 2 条</small>
-          </article>
-        </div>
-
-        <div class="grid">
-          <section class="panel">
-            <div class="panel-head">
-              <div class="panel-title">
-                <strong>设备运行状态</strong>
-                <span>模板表格，可直接替换为真实接口数据</span>
-              </div>
-              <button class="ghost-btn" type="button">查看全部</button>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>设备</th>
-                    <th>场地</th>
-                    <th>状态</th>
-                    <th>今日订单</th>
-                    <th>最后心跳</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div class="device">
-                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M8 18v3"/><path d="M16 18v3"/></svg></span>
-                        <div><b>工程车 A-018</b><span>ID: KWX-0018</span></div>
-                      </div>
-                    </td>
-                    <td>杭州滨江店</td>
-                    <td><span class="tag ok">在线</span></td>
-                    <td>86</td>
-                    <td>刚刚</td>
-                    <td><a href="#">详情</a></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="device">
-                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1-7H6l-1 7z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-                        <div><b>遥控车 R-032</b><span>ID: KWX-0032</span></div>
-                      </div>
-                    </td>
-                    <td>上海浦东店</td>
-                    <td><span class="tag warn">维护</span></td>
-                    <td>24</td>
-                    <td>6 分钟前</td>
-                    <td><a href="#">详情</a></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="device">
-                        <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7 16 12l7 5V7z"/><rect width="15" height="14" x="1" y="5" rx="2"/></svg></span>
-                        <div><b>云台摄像 C-011</b><span>ID: KWX-0011</span></div>
-                      </div>
-                    </td>
-                    <td>成都高新店</td>
-                    <td><span class="tag off">离线</span></td>
-                    <td>0</td>
-                    <td>38 分钟前</td>
-                    <td><a href="#">详情</a></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <aside class="side-stack">
-            <section class="panel">
-              <div class="panel-head">
-                <div class="panel-title">
-                  <strong>待办事项</strong>
-                  <span>运营人员每日处理</span>
-                </div>
-              </div>
-              <div class="todo">
-                <label class="todo-item"><input type="checkbox" /> <span>审核新场地接入资料</span> <time>10:30</time></label>
-                <label class="todo-item"><input type="checkbox" /> <span>处理 2 条退款申请</span> <time>11:00</time></label>
-                <label class="todo-item"><input type="checkbox" /> <span>检查离线设备工单</span> <time>14:00</time></label>
-              </div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <div class="panel-title">
-                  <strong>系统健康度</strong>
-                  <span>示例进度组件</span>
-                </div>
-              </div>
-              <div class="health">
-                <div class="health-row">
-                  <div><span>设备在线率</span><strong>96%</strong></div>
-                  <div class="bar"><span style="width: 96%"></span></div>
-                </div>
-                <div class="health-row">
-                  <div><span>支付通道</span><strong>99%</strong></div>
-                  <div class="bar"><span style="width: 99%"></span></div>
-                </div>
-                <div class="health-row">
-                  <div><span>指令响应</span><strong>92%</strong></div>
-                  <div class="bar"><span style="width: 92%"></span></div>
-                </div>
-              </div>
-            </section>
-          </aside>
-        </div>
+        <section class="module-empty dashboard-boot-loading">
+          <h2>工作台加载中</h2>
+          <p>正在读取账号权限和今日运营数据，请稍候。</p>
+        </section>
       </section>
     </main>
   </div>
@@ -3122,7 +3583,7 @@
       const feature = franchiseFeatureKey(item);
       const descriptions = {
         device: '先查看名下所有场地的设备概况，再进入某个场地维护设备。',
-        order: '先汇总各场地订单和收入，再进入某个场地查看订单明细。',
+        order: '先汇总各场地订单和收入，再进入某个场地管理预约订单。',
         finance: '先查看各场地收入和设备经营状态，再进入某个场地处理财务功能。',
         venue: '先查看名下场地列表，再进入某个场地维护资料和配置。',
         ops: '先选择要处理的场地，再进入对应运营功能。'
@@ -3219,7 +3680,7 @@
 
     function categoryDescription(name) {
       const descriptions = {
-        device: '围绕设备建档、运行状态、故障审批、摄像管理、图片维护等入口整理。当前先完成分类级改造，后续每个子功能会逐步接入旧接口并重做新页面。',
+        device: '围绕设备建档、运行状态、故障审批、摄像管理、图片维护等入口整理。',
         venue: '围绕场地资料、专区和场地配置整理。',
         order: '围绕订单查询、订单申诉、投诉和最新支付记录整理。',
         user: '围绕用户、加盟和邀请相关能力整理。',
@@ -3307,7 +3768,7 @@
         '<div class="subpage-head">' +
         '<div class="subpage-title-row">' +
         '<div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(detail.description) + '</p></div>' +
-        '<div class="subpage-status">待接入真实数据</div>' +
+        '<div class="subpage-status"></div>' +
         '</div>' +
         '<div class="subpage-meta">' +
         '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
@@ -3319,7 +3780,7 @@
         '<section class="subpage-section"><h3>页面结构</h3><ul class="subpage-list">' +
         detail.sections.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
         '</ul></section>' +
-        '<aside class="subpage-section"><h3>待接接口</h3><ul class="subpage-list">' +
+        '<aside class="subpage-section"><h3></h3><ul class="subpage-list">' +
         detail.apis.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
         '</ul></aside>' +
         '</div>' +
@@ -3346,13 +3807,13 @@
         if (result.code !== 0) throw new Error(result.msg || 'form data failed');
         const venues = (result.data && result.data.venues) || [];
         pageContent.innerHTML = '<section class="subpage">' +
-          '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>新增设备页已接入真实场地下拉数据。当前为安全预览状态，暂不向生产库写入设备。</p></div><div class="subpage-status">表单预览</div></div></div>' +
+          '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>新增设备页面</p></div><div class="subpage-status">表单预览</div></div></div>' +
           '<section class="subpage-section"><h3>设备基础信息</h3><div class="form-grid">' +
           formField('设备编号', '<input type="text" placeholder="请输入 serial_number">') +
           formField('设备名称', '<input type="text" placeholder="请输入设备名称">') +
           formField('所属场地', '<select><option>请选择场地</option>' + venues.map(function(v){ return '<option>' + escapeHtml(v.venue_name || ('场地 ' + v.id)) + '</option>'; }).join('') + '</select>') +
           formField('摄像设备 ID', '<input type="text" placeholder="image_device_serial">') +
-          '</div><div class="device-pager"><span>写入接口待确认后开启</span><button class="primary-btn" type="button" disabled>保存设备</button></div></section>' +
+          '</div><div class="device-pager"><span></span><button class="primary-btn" type="button" disabled>保存设备</button></div></section>' +
           '</section>';
       } catch (error) {
         pageContent.innerHTML = '<section class="subpage"><div class="empty-state">新增设备表单加载失败。</div></section>';
@@ -3429,7 +3890,7 @@
     async function renderDeviceListPage(item) {
       document.querySelector('.crumb span').textContent = '设备管理 / list';
       document.querySelector('.crumb strong').textContent = item.title;
-      pageContent.innerHTML = '<section class="subpage"><div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>设备列表已接入真实接口。桌面端使用表格，手机端自动切换为卡片，避免横向拖动。</p></div><div class="subpage-status">真实数据</div></div></div><div class="empty-state">正在加载设备数据...</div></section>';
+      pageContent.innerHTML = '<section class="subpage"><div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>设备列表</p></div><div class="subpage-status"></div></div></div><div class="empty-state">正在加载设备数据...</div></section>';
       await loadDeviceList(1);
     }
 
@@ -3527,35 +3988,35 @@
       const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
       if (text.includes('adddev') || text.includes('添加')) {
         return {
-          description: '用于新增设备资料、绑定场地和录入基础参数。当前先按新后台样式整理页面骨架，后续接入新增设备接口。',
+          description: '用于新增设备资料、绑定场地和录入基础参数。',
           sections: ['基础信息：设备编号、设备类型、所属场地', '连接信息：推流地址、控制协议、在线状态', '提交区：保存、重置和返回设备列表'],
           apis: ['/api/devMgr/addDev.php', '/api/devMgr/devMgtV2.php?get_venues']
         };
       }
       if (text.includes('fault') || text.includes('故障')) {
         return {
-          description: '用于查看设备故障、审批处理结果和维护记录，后续会接入故障列表与状态更新接口。',
+          description: '用于查看设备故障、审批处理结果和维护记录。',
           sections: ['故障概览：待处理、处理中、已完成', '故障列表：设备、场地、原因、上报时间', '处理动作：通过、驳回、备注'],
           apis: ['/api/devMgr/getFaultDevices.php', '/api/devMgr/updateFaultStatus.php', '/api/devMgr/get_fault_summary.php']
         };
       }
       if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) {
         return {
-          description: '用于管理设备摄像头、画面状态和直播相关信息，后续会接入摄像管理接口。',
+          description: '用于管理设备摄像头、画面状态和直播相关信息。',
           sections: ['摄像设备列表：场地、设备、在线状态', '画面状态：最近心跳、异常提示', '维护动作：刷新、查看、重新绑定'],
           apis: ['/api/devMgr/device_information.php', '/api/devMgr/check_stream_set_sn_status.php']
         };
       }
       if (text.includes('photo') || text.includes('img') || text.includes('图片')) {
         return {
-          description: '用于维护设备图片、编号图片和展示素材，后续接入上传与批量更新接口。',
+          description: '用于维护设备图片、编号图片和展示素材。',
           sections: ['图片列表：设备编号、当前图片、更新时间', '上传区：单图上传、批量替换', '校验区：图片缺失、格式异常'],
           apis: ['/api/devMgr/UploadImgNumber.php', '/api/devMgr/QueryImgNumber.php', '/api/operat/update_vehicle_photos.php']
         };
       }
       if (text.includes('bind') || text.includes('vehicles_manage')) {
         return {
-          description: '用于管理设备绑定关系、车辆资料和场地关联，后续会接入车辆管理接口。',
+          description: '用于管理设备绑定关系、车辆资料和场地关联。',
           sections: ['绑定列表：设备、车辆、场地、状态', '筛选工具：场地、设备类型、关键词', '维护动作：绑定、解绑、同步'],
           apis: ['/api/devMgr/vehicles_manage.php', '/api/devMgr/syncSingleVehicleToDr.php']
         };
@@ -3931,6 +4392,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         return !isDeferredEntry(action);
       });
       return '' +
+        '<div class="admin-workbench">' +
         '<div class="workbench-head">' +
         '<div class="workbench-title"><h2>' + escapeHtml(data.venue_name || '酷玩星工作台') + '</h2><p>当前展示今日实时概览</p></div>' +
         '<button class="ghost-btn" type="button" onclick="location.reload()">刷新数据</button>' +
@@ -3954,6 +4416,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         todoItem('加盟申请', '未处理加盟资料', todos.franchiseCount, '/iframe/link/FranchiseManagement') +
         '</div></section>' +
         '</aside>' +
+        '</div>' +
         '</div>';
     }
 
@@ -4026,6 +4489,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
     ' 台在线';
 
   return '' +
+    '<div class="franchise-workbench">' +
     '<div class="workbench-head">' +
       '<div class="workbench-title">' +
         '<h2>首页</h2>' +
@@ -4070,6 +4534,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         '</div>' +
       '</section>' +
 
+    '</div>' +
     '</div>';
 }
 
@@ -4163,7 +4628,7 @@ function franchiseVenuePillsHtml(list, type) {
 
   function valueText(venue) {
     if (!venue) return '-';
-    return type === 'id' ? ('#' + (venue.id || '-')) : (venue.name || '-');
+    return type === 'id' ? ('' + (venue.id || '-')) : (venue.name || '-');
   }
 
   const primaryText = valueText(primary);
@@ -4237,9 +4702,9 @@ function openFranchiseVenueModal() {
           '<span class="franchise-venue-modal-badge">' + roleText + '</span>' +
           '<div class="franchise-venue-modal-name">' +
             '<strong>' + escapeHtml(venue.name || '-') + '</strong>' +
-            '<span>场地编号：#' + escapeHtml(venue.id || '-') + '</span>' +
+            '<span>场地编号：' + escapeHtml(venue.id || '-') + '</span>' +
           '</div>' +
-          '<span class="franchise-venue-modal-id">#' + escapeHtml(venue.id || '-') + '</span>' +
+   
         '</div>';
     }).join('') + '</div>';
   }
@@ -4311,7 +4776,7 @@ function franchiseOverviewItem(label, value, icon) {
         renderLegacyModule(fallbackItem);
         return;
       }
-      pageContent.innerHTML = '<section class="module-empty"><h2>待迁移模块</h2><p></p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
+      pageContent.innerHTML = '<section class="module-empty"><h2></h2><p></p><div class="module-meta"><span>legacy_jump: ' + escapeHtml(jump || '-') + '</span></div></section>';
     }
 
     function noticeBody(action, extra) {
