@@ -49,6 +49,7 @@ function menu_hidden_for_rebuild(array $menu): bool
     $text = menu_text($menu);
 
     return menu_contains($text, [
+        '我的工具',
         '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
         '礼物', 'gift',
         '金币', 'gold', 'gold_package', 'coin', 'coins',
