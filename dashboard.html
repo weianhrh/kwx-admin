@@ -3498,11 +3498,12 @@
     }
 
     function renderModule(item) {
+      const desc = moduleDescription(item);
       document.querySelector('.crumb span').textContent = 'Menu / ' + item.name;
       document.querySelector('.crumb strong').textContent = item.title;
       pageContent.innerHTML = '<section class="module-empty">' +
         '<h2>' + escapeHtml(item.title) + '</h2>' +
-        '<p></p>' +
+        '<p>' + escapeHtml(desc) + '</p>' +
         '<div class="module-meta">' +
         '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
         '<span>name: ' + escapeHtml(item.name || '-') + '</span>' +
@@ -3708,7 +3709,7 @@
         '<div class="category-card-head">' +
         '<div>' +
         '<h3>' + escapeHtml(item.title) + '</h3>' +
-        (desc ? '<p>' + desc + '</p>' : '') +
+        (desc ? '<p>' + escapeHtml(desc) + '</p>' : '') +
         '</div>' +
         '<span class="category-card-icon">' + menuIcon(categoryIconName(item)) + '</span>' +
         '</div>' +
@@ -3731,17 +3732,121 @@
     }
 
     function moduleDescription(item) {
-      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
-      if (text.includes('profile') || text.includes('基本资料')) return '查看和维护当前后台账号的基础资料。';
-      if (text.includes('password') || text.includes('修改密码')) return '修改当前后台账号登录密码。';
-      if (text.includes('franchise') || text.includes('加盟')) return '';
-      if (text.includes('devicemgt') || text.includes('设备管理')) return '设备列表、状态、绑定关系与基础维护入口。';
-      if (text.includes('adddev') || text.includes('添加')) return '新增设备资料并完成初始配置。';
-      if (text.includes('fault') || text.includes('故障')) return '查看并处理设备故障审批记录。';
-      if (text.includes('camera') || text.includes('摄像')) return '摄像头、直播画面和设备视频相关管理。';
-      if (text.includes('photo') || text.includes('图片')) return '维护设备展示图、编号图和相关素材。';
-      if (text.includes('bind') || text.includes('vehicles')) return '设备绑定、车辆资料和关联关系管理。';
-      return '';
+      const title = String(item.title || '').trim();
+      const text = ((item.name || '') + ' ' + title + ' ' + (item.jump || '')).toLowerCase();
+      const exactDescriptions = {
+        '首页': '查看当前账号的核心数据、快捷入口和待处理事项。',
+        '工作台': '汇总今日经营数据、待办提醒和常用功能入口。',
+        '设备管理': '查看设备列表、运行状态、绑定关系和基础维护操作。',
+        '添加设备': '新增设备资料，录入编号、类型、场地和基础参数。',
+        '故障审批': '查看设备故障上报，处理通过、驳回和维护备注。',
+        '故障记录': '沉淀设备故障历史，便于追踪维修和复盘。',
+        '摄像管理': '维护摄像设备、房间号、推流状态和远程控制指令。',
+        '图传管理': '管理图传编号、设备画面绑定和图传相关配置。',
+        '图床管理': '维护设备图片、编号图片和页面展示素材。',
+        '设备图片': '维护设备展示图、编号图和相关素材。',
+        '设备绑定': '管理设备、车辆、场地之间的绑定和同步关系。',
+        '挂车占有': '查看和处理设备占有、挂车锁定和异常释放。',
+        '场地管理': '维护场地资料、营业状态、配置项和场地基础信息。',
+        '专区管理': '管理首页专区、场地专区和展示入口配置。',
+        '资费套餐': '维护场地资费套餐、计费规则和商品展示。',
+        '套餐管理': '维护可售套餐、价格、时长和上下架状态。',
+        '资费商品': '管理资费商品配置，维护价格、库存和展示顺序。',
+        '订单管理': '查看订单列表、订单状态、支付情况和场地订单汇总。',
+        '订单查询': '按用户、设备、场地和时间筛选查询订单。',
+        '消费查询': '查询用户消费记录、订单金额和支付明细。',
+        '充值查询': '查询用户充值订单、支付渠道和到账状态。',
+        '最新支付记录': '查看最新支付流水，辅助核对订单和到账情况。',
+        '退款记录': '查看退款申请、退款状态和退款处理结果。',
+        '订单申诉': '处理用户订单申诉、异常订单和补偿记录。',
+        '订单申诉历史': '查看历史申诉处理结果和订单争议记录。',
+        '订单投诉': '查看订单投诉，按场地和处理状态跟进。',
+        '投诉处理': '处理用户投诉、上传处理结果并追踪状态。',
+        '投诉处理记录': '查看历史投诉处理记录，便于复核和追溯。',
+        '巡查审核': '集中处理巡查、违规、投诉和审核类事项。',
+        '违规记录': '查看场地或设备违规记录，辅助风控和处罚。',
+        '封禁记录': '查看设备、用户或场地封禁历史和解除情况。',
+        '拉黑用户': '管理场地拉黑用户，限制异常用户继续下单。',
+        '用户拉黑管理': '查看、筛选和解除用户拉黑记录。',
+        '禁言用户': '管理语音房或场地禁言用户，处理禁言解除。',
+        '用户管理': '查看用户资料、状态、等级和基础账户信息。',
+        '加盟管理': '管理加盟商资料、申请状态和场地归属关系。',
+        '加盟申请': '审核加盟申请，维护申请人和合作信息。',
+        '邀请排行': '查看邀请数据排行，评估拉新和推广效果。',
+        '财务管理': '管理收入、提现、退款、资金核对和财务流水。',
+        '收入明细': '查看场地收入、设备收入和订单收益明细。',
+        '提现申请': '发起或查看提现申请，核对可提现金额。',
+        '提现审批': '审核提现申请，核对到账金额和处理状态。',
+        '提现记录': '查看历史提现单、到账金额和审核结果。',
+        '金额查询': '核对用户余额、充值、消费和账户异常金额。',
+        '用户金额核对': '核对用户钱包、充值消费和异常资金差异。',
+        '场地资金': '查看场地余额、冻结金额、可提现和结算数据。',
+        '账户管理': '维护支付账户、收款资料和结算基础信息。',
+        '支付管理': '维护支付通道、支付配置和支付状态。',
+        '业绩排行': '查看场地、设备或人员的收入和订单排行。',
+        '平台数据面板': '查看平台关键经营指标、趋势和数据总览。',
+        '数据面板': '查看平台关键经营指标、趋势和数据总览。',
+        '运营管理': '集中管理公告、活动、反馈和运营辅助工具。',
+        '运营配置': '维护平台运营配置、消息通知和辅助工具。',
+        '全局配置': '维护平台级参数、支付配置和业务开关。',
+        '手机通知': '向用户手机端发送APP通知消息。',
+        '发送通知': '编辑并推送通知内容，触达指定用户或场地。',
+        '反馈信息': '查看用户反馈内容，记录回复和处理状态。',
+        '基本资料': '查看和维护当前后台账号的基础资料。',
+        '修改密码': '修改当前后台账号登录密码。',
+        '系统工具': '系统维护、账号资料和内部管理工具入口。',
+        '菜单管理': '维护后台菜单、角色可见范围和排序配置。',
+        '直播设置': '维护直播、语音房和推流相关基础配置。',
+        '开播时长': '统计场地开关播记录和直播时长数据。'
+      };
+
+      if (exactDescriptions[title]) return exactDescriptions[title];
+
+      const has = function(words) {
+        return words.some(function(word) {
+          return text.includes(String(word).toLowerCase());
+        });
+      };
+
+      if (has(['profile', 'system_profile', '基本资料'])) return '查看和维护当前后台账号的基础资料。';
+      if (has(['password', 'setpasswd', 'updatepassword', '修改密码'])) return '修改当前后台账号登录密码。';
+      if (has(['device_information', 'camera', '摄像'])) return '维护摄像设备、房间号、推流状态和远程控制指令。';
+      if (has(['devicemgt', 'devmgt', 'vehicleslite', 'device-list', '设备管理'])) return '查看设备列表、运行状态、绑定关系和基础维护操作。';
+      if (has(['adddev', 'device-add', '添加', '新增设备'])) return '新增设备资料，录入编号、类型、场地和基础参数。';
+      if (has(['fault', '故障'])) return '查看设备故障上报，处理通过、驳回和维护备注。';
+      if (has(['imgnumber', 'photol', 'photo', 'image', '图床', '图片'])) return '维护设备展示图、编号图和相关素材。';
+      if (has(['vehicles_manage', 'device_bind', 'bind', '绑定'])) return '管理设备、车辆、场地之间的绑定和同步关系。';
+      if (has(['fill_energy', 'lock', '挂车', '占有'])) return '查看和处理设备占有、挂车锁定和异常释放。';
+      if (has(['pricing', 'tariff', 'commodity', 'package', '资费', '套餐', '商品'])) return '维护资费套餐、计费规则和可售商品。';
+      if (has(['zone', '专区'])) return '管理首页专区、场地专区和展示入口配置。';
+      if (has(['venue', '场地'])) return '维护场地资料、营业状态、配置项和场地基础信息。';
+      if (has(['refund', '退款'])) return '查看退款申请、退款状态和退款处理结果。';
+      if (has(['appeal', '申诉'])) return '处理订单申诉、异常订单和争议记录。';
+      if (has(['reporthand', 'complaint', '投诉'])) return '处理用户投诉、上传处理结果并追踪状态。';
+      if (has(['ban_record', 'violation', '违规', '封禁'])) return '查看违规封禁历史，辅助风控和处罚处理。';
+      if (has(['patrol', 'audit', '巡查', '审核'])) return '集中处理巡查、违规、投诉和审核类事项。';
+      if (has(['order', 'driving', '订单'])) return '查看订单列表、订单状态、支付情况和场地订单汇总。';
+      if (has(['black_user', 'blacklist', '拉黑'])) return '查看、筛选和解除用户拉黑记录。';
+      if (has(['mute', '禁言'])) return '管理禁言用户，处理禁言新增和解除。';
+      if (has(['invite', 'invitation', '邀请'])) return '查看邀请数据和推广效果，维护邀请关系。';
+      if (has(['franchise', '加盟'])) return '管理加盟商资料、申请状态和场地归属关系。';
+      if (has(['anchor', 'user', 'nickname', '用户', '主播'])) return '查看用户资料、状态、等级和基础账户信息。';
+      if (has(['withdraw', '提现'])) return '管理提现申请、审核状态和到账金额。';
+      if (has(['recharge', '充值'])) return '查询充值订单、支付渠道和到账状态。';
+      if (has(['comsum', 'consume', '消费'])) return '查询用户消费记录、订单金额和支付明细。';
+      if (has(['payment', 'pay', '支付'])) return '维护支付通道、支付配置和支付状态。';
+      if (has(['amount', 'finance_demo', 'money', '金额', '核对'])) return '核对用户余额、充值消费和异常资金差异。';
+      if (has(['fund', 'funds', 'balance', '账户', '资金'])) return '查看账户资金、冻结金额、可提现和结算数据。';
+      if (has(['income', 'revenue', 'profit', '收入', '营收', '收益'])) return '查看收入流水、收益明细和结算数据。';
+      if (has(['rank', 'ranking', '排行', '业绩'])) return '查看收入、订单或推广排行，评估运营表现。';
+      if (has(['kanban', 'dashboard', 'kb', '数据', '面板'])) return '查看平台关键经营指标、趋势和数据总览。';
+      if (has(['message', 'notify', 'notice', 'msg', '公告', '通知'])) return '编辑并推送通知公告，触达指定用户或场地。';
+      if (has(['feedback', '反馈'])) return '查看用户反馈内容，记录回复和处理状态。';
+      if (has(['global_config', 'config', 'setting', '配置', '设置'])) return '维护平台配置、业务开关和系统参数。';
+      if (has(['menu', '菜单'])) return '维护后台菜单、角色可见范围和排序配置。';
+      if (has(['tool', 'tools', 'system', '系统', '工具'])) return '系统维护、账号资料和内部管理工具入口。';
+
+      return '进入该模块查看、筛选和维护对应业务数据。';
     }
 
     function openCategoryChild(el) {
