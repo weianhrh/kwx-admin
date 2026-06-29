@@ -1909,6 +1909,50 @@
       white-space: nowrap;
     }
 
+    /* 场地总览卡片动态布局：4项=2x2，3项/2项=纵向信息条 */
+    .franchise-venue-stats.layout-3,
+    .franchise-venue-stats.layout-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .franchise-venue-stats.layout-3 div,
+    .franchise-venue-stats.layout-2 div {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .franchise-venue-stats.layout-3 strong,
+    .franchise-venue-stats.layout-2 strong {
+      margin-top: 0;
+      text-align: right;
+      flex: 0 0 auto;
+    }
+
+    .franchise-venue-extra {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: -4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .franchise-venue-extra span {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid #d8eeee;
+      border-radius: 999px;
+      background: #f5fbfb;
+      color: #486169;
+    }
+
 .franchise-venue-actions {
   display: grid;
   grid-template-columns: auto auto;
@@ -3638,7 +3682,34 @@
       return 'ops';
     }
 
+    function franchiseOverviewModuleKey(item) {
+      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
+      if (text.includes('withdraw') || text.includes('paymentdisbursement') || text.includes('提现申请') || text.includes('提现')) return 'withdraw';
+      if (text.includes('refund') || text.includes('refund_records') || text.includes('退款记录') || text.includes('退款')) return 'refund';
+      if (text.includes('ban_record') || text.includes('violation') || text.includes('违规记录') || text.includes('封禁记录') || text.includes('违规') || text.includes('封禁')) return 'violation';
+      if (text.includes('reporthand') || text.includes('complaint') || text.includes('投诉处理') || text.includes('投诉')) return 'complaint';
+      if (text.includes('income') || text.includes('收入明细')) return 'income';
+      if (text.includes('device') || text.includes('vehicle') || text.includes('设备')) return 'device';
+      if (text.includes('order') || text.includes('订单')) return 'order';
+      if (text.includes('venue') || text.includes('场地')) return 'venue';
+      return '';
+    }
+
     function franchiseOverviewDescription(item) {
+      const moduleKey = franchiseOverviewModuleKey(item);
+      if (moduleKey === 'withdraw') {
+        return '先查看各场地总余额和可提现金额，再进入某个场地提交提现申请。';
+      }
+      if (moduleKey === 'refund') {
+        return '先查看各场地已退款金额和待退款金额，再进入某个场地查看退款记录。';
+      }
+      if (moduleKey === 'violation') {
+        return '先查看各场地当日违规次数，再进入某个场地查看违规记录。';
+      }
+      if (moduleKey === 'complaint') {
+        return '先查看各场地投诉处理情况，再进入某个场地处理投诉。';
+      }
+
       const feature = franchiseFeatureKey(item);
       const descriptions = {
         device: '先查看名下所有场地的设备概况，再进入某个场地维护设备。',
@@ -3652,12 +3723,16 @@
 
     async function renderFranchiseVenueOverview(item) {
       const feature = franchiseFeatureKey(item);
+      const moduleKey = franchiseOverviewModuleKey(item);
+      const params = new URLSearchParams({ feature: feature });
+      if (moduleKey) params.set('module', moduleKey);
+
       document.querySelector('.crumb span').textContent = '加盟商 / 场地总览';
       document.querySelector('.crumb strong').textContent = item.title;
       pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载场地总览...</div></section>';
 
       try {
-        const response = await fetch('./api/franchise/venue_overview.php?feature=' + encodeURIComponent(feature), {
+        const response = await fetch('./api/franchise/venue_feature_overview.php?' + params.toString(), {
           credentials: 'same-origin',
           cache: 'no-store'
         });
@@ -3675,6 +3750,15 @@
     function buildFranchiseVenueOverviewHtml(item, data) {
       const summary = data.summary || {};
       const venues = Array.isArray(data.venues) ? data.venues : [];
+      const summaryItems = Array.isArray(data.summary_items) && data.summary_items.length
+        ? data.summary_items
+        : [
+            { label: '场地', value_text: formatInt(summary.venue_count || venues.length) + ' 个' },
+            { label: '今日收入', value_text: formatMoney(summary.today_revenue || 0) },
+            { label: '今日订单', value_text: formatInt(summary.today_order_count || 0) + ' 单' },
+            { label: '在线设备', value_text: formatInt(summary.online_devices || 0) + '/' + formatInt(summary.total_devices || 0) }
+          ];
+
       return '<section class="subpage">' +
         '<div class="subpage-head">' +
         '<div class="subpage-title-row">' +
@@ -3682,36 +3766,54 @@
         '<div class="subpage-status">先选场地</div>' +
         '</div>' +
         '<div class="subpage-meta">' +
-        '<span>场地：' + formatInt(summary.venue_count || venues.length) + ' 个</span>' +
-        '<span>今日收入：' + formatMoney(summary.today_revenue || 0) + '</span>' +
-        '<span>今日订单：' + formatInt(summary.today_order_count || 0) + ' 单</span>' +
-        '<span>在线设备：' + formatInt(summary.online_devices || 0) + '/' + formatInt(summary.total_devices || 0) + '</span>' +
+        summaryItems.map(function(meta) {
+          return '<span>' + escapeHtml(meta.label || '') + '：' + escapeHtml(meta.value_text || meta.value || '-') + '</span>';
+        }).join('') +
         '</div>' +
         '</div>' +
         (venues.length ? '<div class="franchise-venue-grid">' + venues.map(function(venue) {
-          return franchiseVenueCard(item, venue);
+          return franchiseVenueCard(item, venue, data.card_layout || 'layout-4');
         }).join('') + '</div>' : '<div class="empty-state">当前账号暂无可管理场地。</div>') +
         '</section>';
     }
 
-    function franchiseVenueCard(item, venue) {
+    function franchiseOverviewStatHtml(stat) {
+      return '<div><span>' + escapeHtml(stat.label || '-') + '</span><strong>' + escapeHtml(stat.value_text || stat.value || '-') + '</strong></div>';
+    }
+
+    function franchiseOverviewExtraHtml(extraItems) {
+      if (!Array.isArray(extraItems) || !extraItems.length) return '';
+      return '<div class="franchise-venue-extra">' + extraItems.map(function(item) {
+        return '<span>' + escapeHtml(item.label || '-') + '：' + escapeHtml(item.value_text || item.value || '-') + '</span>';
+      }).join('') + '</div>';
+    }
+
+    function franchiseVenueCard(item, venue, defaultLayout) {
       const status = venue.venue_status || '未设置';
       const statusClass = status === '营业中' ? 'ok' : (status === '休息中' ? 'warn' : 'off');
       const showPricingShortcut = isVenueDetailModule(item);
       const pricingButton = showPricingShortcut
         ? '<button class="primary-btn franchise-pricing-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenuePricing(event, this)">进入资费套餐</button>'
         : '';
+      const stats = Array.isArray(venue.overview_stats) && venue.overview_stats.length
+        ? venue.overview_stats
+        : [
+            { label: '今日收入', value_text: formatMoney(venue.today_revenue || 0) },
+            { label: '今日订单', value_text: formatInt(venue.today_order_count || 0) + ' 单' },
+            { label: '在线设备', value_text: formatInt(venue.online_devices || 0) + '/' + formatInt(venue.total_devices || 0) },
+            { label: '离线设备', value_text: formatInt(venue.offline_devices || 0) + ' 台' }
+          ];
+      const layout = venue.overview_layout || defaultLayout || ('layout-' + Math.min(4, Math.max(1, stats.length)));
+
       return '<article class="franchise-venue-card">' +
         '<div class="franchise-venue-top">' +
         '<div class="franchise-venue-title"><h3>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) + '</h3><span>场地 ID：' + escapeHtml(String(venue.id || '-')) + '</span></div>' +
         '<span class="tag ' + statusClass + '">' + escapeHtml(status) + '</span>' +
         '</div>' +
-        '<div class="franchise-venue-stats">' +
-        '<div><span>今日收入</span><strong>' + formatMoney(venue.today_revenue || 0) + '</strong></div>' +
-        '<div><span>今日订单</span><strong>' + formatInt(venue.today_order_count || 0) + ' 单</strong></div>' +
-        '<div><span>在线设备</span><strong>' + formatInt(venue.online_devices || 0) + '/' + formatInt(venue.total_devices || 0) + '</strong></div>' +
-        '<div><span>离线设备</span><strong>' + formatInt(venue.offline_devices || 0) + ' 台</strong></div>' +
+        '<div class="franchise-venue-stats ' + escapeHtml(layout) + '">' +
+        stats.map(franchiseOverviewStatHtml).join('') +
         '</div>' +
+        franchiseOverviewExtraHtml(venue.overview_extra) +
         '<div class="franchise-venue-actions">' +
         pricingButton +
         '<button class="primary-btn franchise-manage-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenue(this)">进入' + escapeHtml(item.title) + '</button>' +

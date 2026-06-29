@@ -925,23 +925,107 @@
       }
     }
 
+    /* 手机端余额详情：两项一行，去掉原来 520px 以下强制单列导致的纵向过长 */
     @media (max-width: 520px) {
       .amount-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+        padding: 0 12px 12px;
+      }
+
+      .amount-item {
+        min-height: 86px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .amount-icon {
+        width: 30px;
+        min-width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 18px;
+      }
+
+      .amount-content {
+        width: 100%;
+      }
+
+      .amount-label {
+        min-height: 18px;
+        gap: 4px;
+        font-size: 11px;
+        line-height: 1.25;
+      }
+
+      .amount-value {
+        margin-top: 5px;
+        font-size: 17px;
+        line-height: 1.15;
+      }
+
+      .amount-value small {
+        font-size: 11px;
+      }
+
+      .amount-grid.has-full .amount-item.amount-full {
+        grid-column: auto;
+        min-height: 86px;
+        padding: 10px;
       }
 
       .amount-grid.has-full .amount-item.amount-full .amount-content {
         display: block;
+        width: 100%;
+      }
+
+      .amount-grid.has-full .amount-item.amount-full .amount-label {
+        font-size: 11px;
+        white-space: normal;
       }
 
       .amount-grid.has-full .amount-item.amount-full .amount-value {
-        margin-top: 6px;
+        margin-top: 5px;
         text-align: left;
+        font-size: 17px;
+      }
+
+      .check-money-btn {
+        min-height: 20px;
+        padding: 0 6px;
+        font-size: 10px;
+      }
+
+      .help-dot {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
       }
 
       .account-chip {
         width: 100%;
         justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .amount-grid {
+        gap: 8px;
+        padding: 0 10px 12px;
+      }
+
+      .amount-item {
+        padding: 9px;
+      }
+
+      .amount-label {
+        font-size: 10px;
+      }
+
+      .amount-value {
+        font-size: 16px;
       }
     }
   </style>
@@ -1159,10 +1243,10 @@ const feeHelp = `
           <div class="amount-icon">≋</div>
           <div class="amount-content"><div class="amount-label">总余额:</div><div class="amount-value">${formatAmount(data.account_balance)}</div></div>
         </div>
-<div class="amount-item is-primary">
+<!--<div class="amount-item is-primary">
   <div class="amount-icon">❄</div>
   <div class="amount-content"><div class="amount-label">可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
-</div>
+</div>-->
 <div class="amount-item is-warning">
   <div class="amount-icon">↔</div>
   <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
