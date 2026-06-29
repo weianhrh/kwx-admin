@@ -1909,14 +1909,34 @@
       white-space: nowrap;
     }
 
-    .franchise-venue-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      padding-top: 4px;
-    }
+.franchise-venue-actions {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
 
+.franchise-venue-actions .franchise-pricing-btn,
+.franchise-venue-actions .franchise-manage-btn {
+  min-height: 38px;
+  min-width: 128px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  margin: 0 !important;
+}
+
+.franchise-venue-actions .franchise-pricing-btn {
+  justify-self: start;
+}
+
+.franchise-venue-actions .franchise-manage-btn {
+  justify-self: end;
+}
     .category-card {
       min-height: 132px;
       display: grid;
@@ -2461,6 +2481,20 @@
       .franchise-venue-stats strong {
         white-space: normal;
       }
+
+.franchise-venue-actions {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.franchise-venue-actions .franchise-pricing-btn,
+.franchise-venue-actions .franchise-manage-btn {
+  width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+  font-size: 13px;
+  margin: 0 !important;
+}
 
       .subpage-title-row {
         flex-direction: column;
@@ -3459,6 +3493,11 @@
         renderCategory(item);
         return;
       }
+      const module = params.get('module') || '';
+      if (isFranchiseUser() && module === 'pricing' && venueId) {
+        renderFranchisePricingShortcut(item, venueId);
+        return;
+      }
       if (shouldShowFranchiseVenueOverview(item, venueId)) {
         renderFranchiseVenueOverview(item);
         return;
@@ -3551,6 +3590,25 @@
         '</section>';
     }
 
+    function franchisePricingShortcutItem() {
+      return {
+        id: 'franchise-pricing-shortcut',
+        name: 'franchise-pricing',
+        title: '资费套餐',
+        jump: '/iframe/link/pricing_options'
+      };
+    }
+
+    function renderFranchisePricingShortcut(item, venueId) {
+      const pricingItem = franchisePricingShortcutItem();
+      const src = legacyModuleUrl(pricingItem, { venueId: venueId });
+      document.querySelector('.crumb span').textContent = '加盟商 / 场地总览';
+      document.querySelector('.crumb strong').textContent = '资费套餐';
+      pageContent.innerHTML = '<section class="legacy-module">' +
+        '<iframe src="' + escapeHtml(src) + '" title="资费套餐"></iframe>' +
+        '</section>';
+    }
+
     function isFranchiseUser() {
       return Number((currentUser && currentUser.role_id) || 0) === 3;
     }
@@ -3639,6 +3697,10 @@
     function franchiseVenueCard(item, venue) {
       const status = venue.venue_status || '未设置';
       const statusClass = status === '营业中' ? 'ok' : (status === '休息中' ? 'warn' : 'off');
+      const showPricingShortcut = isVenueDetailModule(item);
+      const pricingButton = showPricingShortcut
+        ? '<button class="primary-btn franchise-pricing-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenuePricing(event, this)">进入资费套餐</button>'
+        : '';
       return '<article class="franchise-venue-card">' +
         '<div class="franchise-venue-top">' +
         '<div class="franchise-venue-title"><h3>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) + '</h3><span>场地 ID：' + escapeHtml(String(venue.id || '-')) + '</span></div>' +
@@ -3651,7 +3713,8 @@
         '<div><span>离线设备</span><strong>' + formatInt(venue.offline_devices || 0) + ' 台</strong></div>' +
         '</div>' +
         '<div class="franchise-venue-actions">' +
-        '<button class="primary-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenue(this)">进入' + escapeHtml(item.title) + '</button>' +
+        pricingButton +
+        '<button class="primary-btn franchise-manage-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenue(this)">进入' + escapeHtml(item.title) + '</button>' +
         '</div>' +
         '</article>';
     }
@@ -3659,6 +3722,23 @@
     function openFranchiseVenue(el) {
       if (!el) return;
       navigateToMenu(el.dataset.menuId, el.dataset.venueId);
+    }
+
+    function openFranchiseVenuePricing(event, el) {
+      if (event) event.stopPropagation();
+      if (!el) return;
+      const menuId = el.dataset.menuId || '';
+      const venueId = el.dataset.venueId || '';
+      if (!menuId || !venueId) return;
+      const target = 'menu=' + encodeURIComponent(menuId) + '&venue=' + encodeURIComponent(venueId) + '&module=pricing';
+      if (location.hash.replace(/^#/, '') === target) {
+        routeFromHash();
+      } else {
+        location.hash = target;
+      }
+      if (isMobileSidebar()) {
+        closeSidebar();
+      }
     }
 
     function renderCategory(item) {

@@ -229,7 +229,6 @@ function menu_franchise_tree(): array
             'icon' => 'venue',
             'children' => [
                 ['id' => 9331, 'parent_id' => 9303, 'name' => 'franchise-venues', 'title' => '场地管理', 'icon' => 'venue', 'jump' => '/iframe/link/venue', 'sort' => 10],
-                ['id' => 9332, 'parent_id' => 9303, 'name' => 'franchise-pricing', 'title' => '资费套餐', 'icon' => 'finance', 'jump' => '/iframe/link/pricing_options', 'sort' => 20],
             ],
         ],
         [
