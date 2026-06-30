@@ -1237,16 +1237,15 @@ const feeHelp = `
 `;
 
       const amountGrid = document.getElementById('amount-info');
-      amountGrid.classList.add('has-full');
       amountGrid.innerHTML = `
         <div class="amount-item">
           <div class="amount-icon">≋</div>
           <div class="amount-content"><div class="amount-label">总余额:</div><div class="amount-value">${formatAmount(data.account_balance)}</div></div>
         </div>
-<!--<div class="amount-item is-primary">
+<div class="amount-item is-primary">
   <div class="amount-icon">❄</div>
   <div class="amount-content"><div class="amount-label">可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
-</div>-->
+</div>
 <div class="amount-item is-warning">
   <div class="amount-icon">↔</div>
   <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
@@ -1274,10 +1273,6 @@ const feeHelp = `
     <div class="amount-value">${formatAmount(unsettledFee)}</div>
   </div>
 </div>
-<div class="amount-item amount-full is-primary">
-          <div class="amount-icon">✓</div>
-          <div class="amount-content"><div class="amount-label">实际可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
-        </div>
       `;
     }
 
