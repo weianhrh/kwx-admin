@@ -948,7 +948,7 @@ user023968912_80039"></textarea>
   </div>
   <div class="row-1">
     <label class="muted">电压回传地址</label>
-    <input id="cmd_voltage_upload_url" value="http://rcwulian.cn/app/dump/dump_post.php" />
+    <input id="cmd_voltage_upload_url" value="http://app.kwxapp.cn/app/dump/dump_post.php" />
   </div>
   <div class="actions">
     <button class="edit-btn" type="button" data-send="voltage_url">发送电压回传地址</button>
@@ -983,7 +983,7 @@ user023968912_80039"></textarea>
   </div>
   <div class="row-1">
     <label class="muted">硬件 OTA 固件地址</label>
-    <input id="cmd_hardware_ota_url" value="https://rcwulian.cn/OTA/zxb.bin" />
+    <input id="cmd_hardware_ota_url" value="https://app.kwxapp.cn/OTA/zxb.bin" />
   </div>
   <div class="actions">
     <button class="edit-btn" type="button" data-send="hardware_ota">发送硬件 OTA 升级</button>
@@ -1118,7 +1118,7 @@ function buildCommandText(type) {
         }
       });
 case 'voltage_url': {
-  const url = (cVoltageUploadUrl.value || '').trim() || 'http://rcwulian.cn/app/dump/dump_post.php';
+  const url = (cVoltageUploadUrl.value || '').trim() || 'http://app.kwxapp.cn/app/dump/dump_post.php';
 
   if (!/^https?:\/\//i.test(url)) {
     showToast('电压回传地址必须以 http:// 或 https:// 开头');
@@ -1140,7 +1140,7 @@ case 'voltage_reset':
         }
       });
     case 'hardware_ota': {
-      const url = (cHardwareOtaUrl.value || '').trim() || 'https://rcwulian.cn/OTA/zxb.bin';
+      const url = (cHardwareOtaUrl.value || '').trim() || 'https://app.kwxapp.cn/OTA/zxb.bin';
     
       if (!/^https?:\/\//i.test(url)) {
         showToast('硬件 OTA 地址必须以 http:// 或 https:// 开头');
@@ -1167,8 +1167,8 @@ function openControlModal(row) {
   cOtaVer.value = '1.0.1';
   cOtaUrl.value = 'http://120.79.154.209/models/cv181x/firmware_CIVTEK-1811CA-SC4336-APP_1.0.1_20260129185732.bin';
   cOtaForce.value = '0';
-  cHardwareOtaUrl.value = 'https://rcwulian.cn/OTA/zxb.bin';
-  cVoltageUploadUrl.value = 'http://rcwulian.cn/app/dump/dump_post.php';
+  cHardwareOtaUrl.value = 'https://app.kwxapp.cn/OTA/zxb.bin';
+  cVoltageUploadUrl.value = 'http://app.kwxapp.cn/app/dump/dump_post.php';
   refreshCaptureUploadUrl();
 
   controlModalTitle.textContent = `设备控制 - ${row?.device_id ?? ''}`;
@@ -1259,7 +1259,7 @@ voltage_reset: '电压回传地址恢复默认指令已发送'
   }
 }
 // async function sendHardwareOta(triggerBtn = null) {
-//   const url = (cHardwareOtaUrl.value || '').trim() || 'https://rcwulian.cn/OTA/zxb.bin';
+//   const url = (cHardwareOtaUrl.value || '').trim() || 'https://app.kwxapp.cn/OTA/zxb.bin';
 
 //   if (!url) {
 //     showToast('硬件 OTA 地址不能为空');

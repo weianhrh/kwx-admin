@@ -66,7 +66,7 @@ function getZegoRoomIdBySerialNumber(Database $database, string $serial_number):
 function notifyRoomBanMessage(string $room_id, string $ban_reason, string $from_user_id = 'server_bot_1'): array
 {
     // 改成你的真实访问地址
-    $url = 'https://open.rcwulian.cn/api/devMgr/send_room_ban_message.php';
+    $url = 'https://open.kwxapp.cn/api/devMgr/send_room_ban_message.php';
 
     $payload = [
         'room_id'      => $room_id,

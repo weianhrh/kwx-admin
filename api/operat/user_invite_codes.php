@@ -1,5 +1,5 @@
 <?php
-// /www/wwwroot/open.rcwulian.cn/api/operat/user_invite_codes.php
+// /www/wwwroot/open.kwxapp.cn/api/operat/user_invite_codes.php
 
 require_once '../Database.php';
 

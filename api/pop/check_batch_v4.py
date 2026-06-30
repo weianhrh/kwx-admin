@@ -15,9 +15,9 @@ REDIS_HOST, REDIS_PORT = '127.0.0.1', 6379
 CAPTURE_TIMEOUT = 15
 SIM_THRESHOLD = 0.49
 THREAD_COUNT = 10
-FEATURE_NPY_PATH = "/www/wwwroot/open.rcwulian.cn/single/api/pop/features.npy"
-LABEL_MAP_PATH = "/www/wwwroot/open.rcwulian.cn/single/api/pop/label_map.json"
-MODEL_PATH = "/www/wwwroot/open.rcwulian.cn/single/api/pop/risk_vuln_b0.pt"
+FEATURE_NPY_PATH = "/www/wwwroot/open.kwxapp.cn/single/api/pop/features.npy"
+LABEL_MAP_PATH = "/www/wwwroot/open.kwxapp.cn/single/api/pop/label_map.json"
+MODEL_PATH = "/www/wwwroot/open.kwxapp.cn/single/api/pop/risk_vuln_b0.pt"
 
 MYSQL_CONFIG = {
     "host": "localhost", "user": "5grc", "password": "f6eca7806e73cd25",
@@ -62,7 +62,7 @@ def get_device_image_serial(sn):
 
 def get_capture_image_url(sn):
     try:
-        resp = requests.get(f"https://open.rcwulian.cn/api/pop/capture.php?sn={sn}", timeout=CAPTURE_TIMEOUT)
+        resp = requests.get(f"https://open.kwxapp.cn/api/pop/capture.php?sn={sn}", timeout=CAPTURE_TIMEOUT)
         return resp.json().get("image_url", None)
     except:
         return None

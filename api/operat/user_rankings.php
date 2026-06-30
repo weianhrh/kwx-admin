@@ -93,7 +93,7 @@ foreach ($list as $i => $row) {
     $row['rank'] = $rankStart + $i;
     // 兜底：头像空就给默认
     if (!isset($row['headimgurl']) || $row['headimgurl'] === '' || $row['headimgurl'] === null) {
-        $row['headimgurl'] = "https://rcwulian.cn/img/logo.png";
+        $row['headimgurl'] = "https://app.kwxapp.cn/img/logo.png";
     }
     // 金额转字符串避免前端精度坑
     $row['cumulative_spending'] = (string)$row['cumulative_spending'];

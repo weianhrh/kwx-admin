@@ -2315,7 +2315,7 @@ function updateDeviceStatus(serialNumber, banStatus, deviceCard) {
 
         // 发送违规通知 
         function sendViolationNotice(serialNumber) { 
-            const url = `https://rcwulian.cn/app/code/send-Reports.php?serial_number=${serialNumber}`;  
+            const url = `https://app.kwxapp.cn/app/code/send-Reports.php?serial_number=${serialNumber}`;  
             fetch(url) 
               .then(response => response.json())  
               .then(data => { 

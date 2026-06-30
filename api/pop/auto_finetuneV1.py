@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 # === 本地 EfficientNet 权重路径 ===
-LOCAL_MODEL_PATH = "/www/wwwroot/open.rcwulian.cn/single/api/pop/efficientnet_b0.pth"  # 👈 修改成你实际保存的路径
+LOCAL_MODEL_PATH = "/www/wwwroot/open.kwxapp.cn/single/api/pop/efficientnet_b0.pth"  # 👈 修改成你实际保存的路径
 
 # === 日志系统初始化 ===
 logging.basicConfig(
@@ -147,7 +147,7 @@ def finetune_on_keys(keys):
         logging.info(f"Epoch {epoch+1} Loss: {total_loss:.4f}")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_path = f"/www/wwwroot/open.rcwulian.cn/single/api/pop/risk_vuln_b0_{timestamp}.pt"
+    model_path = f"/www/wwwroot/open.kwxapp.cn/single/api/pop/risk_vuln_b0_{timestamp}.pt"
     torch.save(model.state_dict(), model_path)
     logging.info(f"✅ 模型保存成功: {model_path}")
 

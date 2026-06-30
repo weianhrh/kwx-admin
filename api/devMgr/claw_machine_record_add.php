@@ -1,6 +1,6 @@
 <?php
 require_once '../Database.php';
-// open.rcwulian.cn/single/api/devMgr/claw_machine_record_add.php
+// open.kwxapp.cn/single/api/devMgr/claw_machine_record_add.php
 header('Content-Type: application/json; charset=utf-8');
 
 /**

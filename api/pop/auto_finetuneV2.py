@@ -12,12 +12,12 @@ from datetime import datetime
 from pathlib import Path
 
 # === 路径配置 ===
-LOCAL_DATA_DIR = "/www/wwwroot/open.rcwulian.cn/single/api/pop/virus_vuln_inject/"
-LOCAL_MODEL_PATH = "/www/wwwroot/open.rcwulian.cn/single/api/pop/efficientnet_b0.pth"
+LOCAL_DATA_DIR = "/www/wwwroot/open.kwxapp.cn/single/api/pop/virus_vuln_inject/"
+LOCAL_MODEL_PATH = "/www/wwwroot/open.kwxapp.cn/single/api/pop/efficientnet_b0.pth"
 
 # === 日志系统初始化 ===
 logging.basicConfig(
-    filename='/www/wwwroot/open.rcwulian.cn/single/api/pop/log/finetune_local.log',
+    filename='/www/wwwroot/open.kwxapp.cn/single/api/pop/log/finetune_local.log',
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'

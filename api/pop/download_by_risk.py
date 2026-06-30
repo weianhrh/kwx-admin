@@ -5,8 +5,8 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 # 路径配置
-log_path = Path("/www/wwwroot/open.rcwulian.cn/single/api/pop/log.txt")
-save_root = Path("/www/wwwroot/open.rcwulian.cn/single/api/pop/downloads")
+log_path = Path("/www/wwwroot/open.kwxapp.cn/single/api/pop/log.txt")
+save_root = Path("/www/wwwroot/open.kwxapp.cn/single/api/pop/downloads")
 
 # 风险等级对应目录
 risk_dirs = {

@@ -27,7 +27,7 @@ MYSQL_CONFIG = {
     "charset": "utf8mb4"
 }
 def append_log(risk_level, image_url):
-    with open("/www/wwwroot/open.rcwulian.cn/single/api/pop/log.txt", "a", encoding="utf-8") as f:
+    with open("/www/wwwroot/open.kwxapp.cn/single/api/pop/log.txt", "a", encoding="utf-8") as f:
         f.write(f"[{get_current_time()}] {risk_level} {image_url}\n")
 
 # === 自定义 Resize + Padding ===
@@ -49,12 +49,12 @@ class ResizeWithPad:
 # === 加载模型和标签 ===
 def load_model():
     model = efficientnet_b0(weights=None)
-    with open("/www/wwwroot/open.rcwulian.cn/single/api/pop/label_map.json", 'r', encoding='utf-8') as f:
+    with open("/www/wwwroot/open.kwxapp.cn/single/api/pop/label_map.json", 'r', encoding='utf-8') as f:
         idx2label = json.load(f)
 
     num_classes = len(idx2label)
     model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, num_classes)
-    model.load_state_dict(torch.load("/www/wwwroot/open.rcwulian.cn/single/api/pop/risk_vuln_b0_v1.pt", map_location='cpu', weights_only=True))
+    model.load_state_dict(torch.load("/www/wwwroot/open.kwxapp.cn/single/api/pop/risk_vuln_b0_v1.pt", map_location='cpu', weights_only=True))
     model.eval()
 
     return model, idx2label
@@ -119,7 +119,7 @@ def get_image_device_serial(sn):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 def get_capture_image_url(sn):
-    capture_api = f"https://open.rcwulian.cn/api/pop/capture.php?sn={sn}"
+    capture_api = f"https://open.kwxapp.cn/api/pop/capture.php?sn={sn}"
     for attempt in range(2):
         try:
             resp = requests.get(capture_api, timeout=15)

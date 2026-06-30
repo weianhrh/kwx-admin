@@ -75,7 +75,7 @@ if (!in_array($role_id, [1, 2], true)) {
     // 非管理员
     $sql = "SELECT uid AS id,
                    nickname AS username,
-                   IFNULL(headimgurl, 'https://rcwulian.cn/img/logo.png') AS avatar,
+                   IFNULL(headimgurl, 'https://app.kwxapp.cn/img/logo.png') AS avatar,
                    created_at,
                    wallet,
                    gold_balance,
@@ -88,7 +88,7 @@ if (!in_array($role_id, [1, 2], true)) {
     // 管理员
     $sql = "SELECT uid AS id,
                    nickname AS username,
-                   IFNULL(headimgurl, 'https://rcwulian.cn/img/logo.png') AS avatar,
+                   IFNULL(headimgurl, 'https://app.kwxapp.cn/img/logo.png') AS avatar,
                    phone_number AS phone,
                    sex,
                    wallet,

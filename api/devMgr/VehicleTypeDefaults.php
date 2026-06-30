@@ -126,55 +126,55 @@ function getVehicleTypeMap(): array
     return [
         1 => [
             'label' => '汽车',
-            'photo_url' => 'https://rcwulian.cn/img/m1282.jpg',
+            'photo_url' => 'https://app.kwxapp.cn/img/m1282.jpg',
             'control_settings' => carControlDefaults(),
         ],
 
         2 => [
             'label' => '坦克',
-            'photo_url' => 'https://rcwulian.cn/app/img/tl.png',
+            'photo_url' => 'https://app.kwxapp.cn/app/img/tl.png',
             'control_settings' => tankControlDefaults(),
         ],
 
         3 => [
             'label' => '挖掘机',
-            'photo_url' => 'https://rcwulian.cn/img/wj01.jpg',
+            'photo_url' => 'https://app.kwxapp.cn/img/wj01.jpg',
             'control_settings' => excavatorControlDefaults(),
         ],
 
         4 => [
             'label' => '推土机',
-            'photo_url' => 'https://rcwulian.cn/app/img/583.jpg',
+            'photo_url' => 'https://app.kwxapp.cn/app/img/583.jpg',
             'control_settings' => bulldozerControlDefaults(),
         ],
 
         5 => [
             'label' => '翻斗车',
-            'photo_url' => 'https://rcwulian.cn/app/img/573.jpg',
+            'photo_url' => 'https://app.kwxapp.cn/app/img/573.jpg',
             'control_settings' => dumpTruckControlDefaults(),
         ],
 
         6 => [
             'label' => '娃娃机',
-            'photo_url' => 'https://rcwulian.cn/img/m1282.jpg',
+            'photo_url' => 'https://app.kwxapp.cn/img/m1282.jpg',
             'control_settings' => clawMachineControlDefaults(),
         ],
 
         7 => [
             'label' => '液压推土机',
-            'photo_url' => 'https://rcwulian.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png',
+            'photo_url' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1759200866_68db4662ee4ef.png',
             'control_settings' => hydraulicBulldozerControlDefaults(),
         ],
 
         8 => [
             'label' => '液压翻斗',
-            'photo_url' => 'https://rcwulian.cn/img/latuche.png',
+            'photo_url' => 'https://app.kwxapp.cn/img/latuche.png',
             'control_settings' => hydraulicDumpTruckControlDefaults(),
         ],
 
         9 => [
             'label' => '液压挖掘机',
-            'photo_url' => 'https://rcwulian.cn/img/wj01.png',
+            'photo_url' => 'https://app.kwxapp.cn/img/wj01.png',
             'control_settings' => hydraulicExcavatorControlDefaults(),
         ],
     ];

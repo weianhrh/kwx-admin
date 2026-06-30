@@ -271,7 +271,7 @@ $rtc_user_id_str        = $_POST['rtc_user_id'] ?? '';
 $bind_site      = isset($_POST['bind_site']) && $_POST['bind_site'] !== '' ? (int)$_POST['bind_site'] : 0;
 $sharing_status = $_POST['sharing_status'] ?? '正在共享';
 $name           = trim($_POST['name'] ?? '');
-$photo_url      = $_POST['photo_url'] ?? 'https://rcwulian.cn/img/m1282.jpg';
+$photo_url      = $_POST['photo_url'] ?? 'https://app.kwxapp.cn/img/m1282.jpg';
 $car_type       = isset($_POST['car_type']) && $_POST['car_type'] !== '' ? (int)$_POST['car_type'] : 1;
 $uid            = isset($_POST['uid']) && $_POST['uid'] !== '' ? (int)$_POST['uid'] : 10015;
 $throttle_max   = isset($_POST['throttle_max']) && $_POST['throttle_max'] !== '' ? (int)$_POST['throttle_max'] : 1640;

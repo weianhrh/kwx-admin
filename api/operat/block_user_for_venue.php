@@ -28,7 +28,7 @@ function call_open_send_zego_custom_msg($target_uid, $venue_id) {
 
     $ch = curl_init();
     curl_setopt_array($ch, [
-        CURLOPT_URL => 'https://open.rcwulian.cn/api/operat/send_zego_custom_msg.php',
+        CURLOPT_URL => 'https://open.kwxapp.cn/api/operat/send_zego_custom_msg.php',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $postData,

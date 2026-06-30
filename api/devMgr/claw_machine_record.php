@@ -1,5 +1,5 @@
 <?php
-// open.rcwulian.cn/single/api/devMgr/claw_machine_record.php
+// open.kwxapp.cn/single/api/devMgr/claw_machine_record.php
 require_once '../Database.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -162,7 +162,7 @@ if ($action === 'update' || $action === 'save') {
     // 新增时 product_name 最好必填
     if ($product_name === '') {
         // json_out(1005, '记录不存在，新增时 product_name 不能为空', []);
-        $product_name === 'https://rcwulian.cn/pic/1.png';
+        $product_name === 'https://app.kwxapp.cn/pic/1.png';
     }
 
     // 你的表里 product_image / product_introduction 是 NOT NULL

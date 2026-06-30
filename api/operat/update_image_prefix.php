@@ -20,9 +20,9 @@ $mode = $_POST['mode'] ?? 'local';
 
 if ($mode === 'local') {
     $from = 'https://ruoche.oss-cn-beijing.aliyuncs.com/app/';
-    $to   = 'https://rcwulian.cn/app/imgv2/';
+    $to   = 'https://app.kwxapp.cn/app/imgv2/';
 } elseif ($mode === 'oss') {
-    $from = 'https://rcwulian.cn/app/imgv2/';
+    $from = 'https://app.kwxapp.cn/app/imgv2/';
     $to   = 'https://ruoche.oss-cn-beijing.aliyuncs.com/app/';
 } else {
     echo json_encode(['code' => 1003, 'msg' => '无效的模式']);

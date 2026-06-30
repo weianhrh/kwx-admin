@@ -23,7 +23,7 @@ foreach($daterange as $date){
     // 下面的代码仅用于演示如何格式化和输出日期
 
     // 你的更新脚本 URL
-    $url = "https://open.rcwulian.cn/api/venue/script.php?date=" . $currentDate;
+    $url = "https://open.kwxapp.cn/api/venue/script.php?date=" . $currentDate;
 
     // 使用CURL发起请求
     $ch = curl_init();

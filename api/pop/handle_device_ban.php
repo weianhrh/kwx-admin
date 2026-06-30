@@ -218,7 +218,7 @@ function getZegoRoomIdBySerialNumber(Database $db, string $serialNumber): string
  */
 function notifyRoomBanMessage(string $roomId, string $banReason, string $fromUserId = 'server_bot_1'): array
 {
-    $url = 'https://open.rcwulian.cn/api/devMgr/send_room_ban_message.php';
+    $url = 'https://open.kwxapp.cn/api/devMgr/send_room_ban_message.php';
 
     $banReason = trim($banReason);
     if ($banReason === '') {
@@ -449,7 +449,7 @@ try {
     ]);
 
 // 6) 发送封禁通知（保留你原来的逻辑）
-$notificationUrl = "https://rcwulian.cn/app/code/send-Ban.php?venue_id="
+$notificationUrl = "https://app.kwxapp.cn/app/code/send-Ban.php?venue_id="
     . urlencode($venueId)
     . "&ban_type=场地设备&time="
     . urlencode($banMinutes);

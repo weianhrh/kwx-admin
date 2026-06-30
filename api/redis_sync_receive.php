@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-// open.rcwulian.cn/single/api/redis_sync_receive.php
+// open.kwxapp.cn/single/api/redis_sync_receive.php
 function ret($code, $msg, $data = []) {
     echo json_encode([
         'code' => $code,

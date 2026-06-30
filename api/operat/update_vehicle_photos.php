@@ -5,13 +5,13 @@ $db = new Database();
 
 // 定义 serial_number => photo_url 映射
 $photoUpdates = [
-    '8C4F00AC4D1C' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629733_682ab6a512ab2.png',
-    '80646F1DBEE0' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629774_682ab6ceb6c1f.png',
-    '3C8A1F0B2470' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629800_682ab6e8e2abe.png',
-    '3C8A1F0923DC' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629820_682ab6fc17c22.png',
-    '3C8A1F0A6BB8' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629842_682ab712a17aa.png',
-    'C4F00AC4DCC'  => 'https://rcwulian.cn/app/imgv2/img/upload_1747629871_682ab72fb73e0.png',
-    '8C4F00AC4424' => 'https://rcwulian.cn/app/imgv2/img/upload_1747629889_682ab7411869e.png',
+    '8C4F00AC4D1C' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629733_682ab6a512ab2.png',
+    '80646F1DBEE0' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629774_682ab6ceb6c1f.png',
+    '3C8A1F0B2470' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629800_682ab6e8e2abe.png',
+    '3C8A1F0923DC' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629820_682ab6fc17c22.png',
+    '3C8A1F0A6BB8' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629842_682ab712a17aa.png',
+    'C4F00AC4DCC'  => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629871_682ab72fb73e0.png',
+    '8C4F00AC4424' => 'https://app.kwxapp.cn/app/imgv2/img/upload_1747629889_682ab7411869e.png',
 ];
 
 try {

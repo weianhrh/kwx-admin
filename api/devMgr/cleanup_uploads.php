@@ -4,7 +4,7 @@
  * 清理违规上传：按目录 uploads/YYYYMMDD 删除 7 天前（含）的目录
  *
  * 运行方式：
- *   php /www/wwwroot/open.rcwulian.cn/single/api/devMgr/cleanup_uploads.php
+ *   php /www/wwwroot/open.kwxapp.cn/single/api/devMgr/cleanup_uploads.php
  */
 
 date_default_timezone_set('Asia/Shanghai');

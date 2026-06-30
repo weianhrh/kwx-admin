@@ -49,7 +49,7 @@ def get_current_time():
 
 # === 写入日志 ===
 def append_log(risk_level, image_url):
-    with open("/www/wwwroot/open.rcwulian.cn/single/api/pop/log/check_log.txt", "a", encoding="utf-8") as f:
+    with open("/www/wwwroot/open.kwxapp.cn/single/api/pop/log/check_log.txt", "a", encoding="utf-8") as f:
         f.write(f"[{get_current_time()}] {risk_level} {image_url}\n")
 
 # === 风险标签映射 ===
@@ -62,7 +62,7 @@ def map_risk_level(label):
 
 # === 获取抓拍图 URL ===
 def get_capture_image_url(sn):
-    capture_api = f"https://open.rcwulian.cn/api/pop/capture.php?sn={sn}"
+    capture_api = f"https://open.kwxapp.cn/api/pop/capture.php?sn={sn}"
     for _ in range(2):
         try:
             resp = requests.get(capture_api, timeout=15)
@@ -93,12 +93,12 @@ def get_image_device_serial(sn):
 # === 加载模型、映射、特征库 ===
 def load_model():
     model = efficientnet_b0(weights=None)
-    with open("/www/wwwroot/open.rcwulian.cn/single/api/pop/label_map.json", 'r', encoding='utf-8') as f:
+    with open("/www/wwwroot/open.kwxapp.cn/single/api/pop/label_map.json", 'r', encoding='utf-8') as f:
         idx2label = json.load(f)
 
     num_classes = len(idx2label)
     model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, num_classes)
-    model.load_state_dict(torch.load("/www/wwwroot/open.rcwulian.cn/single/api/pop/risk_vuln_b0.pt", map_location='cpu', weights_only=True))
+    model.load_state_dict(torch.load("/www/wwwroot/open.kwxapp.cn/single/api/pop/risk_vuln_b0.pt", map_location='cpu', weights_only=True))
     model.eval()
 
     # === 提取器 ===
@@ -114,7 +114,7 @@ def load_model():
     extractor = FeatureExtractor(model)
 
     # === 加载特征库 ===
-    feature_path = "/www/wwwroot/open.rcwulian.cn/single/api/pop/features.npy"
+    feature_path = "/www/wwwroot/open.kwxapp.cn/single/api/pop/features.npy"
     feature_library = np.load(feature_path) if os.path.exists(feature_path) else None
 
     return model, extractor, feature_library, idx2label

@@ -1,6 +1,6 @@
 <?php
 require_once '../../Database.php';
-// https://open.rcwulian.cn/api/pop/review_backup/cleared.php?date=2026-05-13
+// https://open.kwxapp.cn/api/pop/review_backup/cleared.php?date=2026-05-13
 header('Content-Type: application/json; charset=utf-8');
 
 // 日志记录函数

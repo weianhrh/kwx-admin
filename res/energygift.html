@@ -184,7 +184,7 @@
             // 获取场地信息
             const venueSelect = document.getElementById('venue_id');  
             const xhr = new XMLHttpRequest();
-            xhr.open('POST',   'https://open.rcwulian.cn/api/operat/EnergyGift.php',   true);
+            xhr.open('POST',   'https://open.kwxapp.cn/api/operat/EnergyGift.php',   true);
             xhr.setRequestHeader('Content-Type',   'application/x-www-form-urlencoded');
             xhr.onreadystatechange   = function () {
                 if (xhr.readyState   === 4 && xhr.status   === 200) {
@@ -230,7 +230,7 @@
                 const energyAmount = document.getElementById('energy_amount').value;  
 
                 const xhrGift = new XMLHttpRequest();
-                xhrGift.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhrGift.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                 xhrGift.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhrGift.onreadystatechange = function () {
                     if (xhrGift.readyState === 4 && xhrGift.status === 200) {
@@ -260,7 +260,7 @@
                 }
 
                 const xhrQuery = new XMLHttpRequest();
-                xhrQuery.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhrQuery.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                 xhrQuery.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhrQuery.onreadystatechange = function() {
                     if (xhrQuery.readyState === 4 && xhrQuery.status === 200) {
@@ -291,7 +291,7 @@
                     // 如果输入框有值，则进行减法清除
                     if (confirm(`确定要清除 ${energyAmount} 点能量吗？`)) {
                         const xhrClear = new XMLHttpRequest();
-                        xhrClear.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                        xhrClear.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                         xhrClear.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                         xhrClear.onreadystatechange = function() {
                             if (xhrClear.readyState === 4 && xhrClear.status === 200) {
@@ -311,7 +311,7 @@
                 } else {
                     // 如果输入框没有值，则查询当前能量并一次性清除
                     const xhrQuery = new XMLHttpRequest();
-                    xhrQuery.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                    xhrQuery.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                     xhrQuery.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhrQuery.onreadystatechange = function() {
                         if (xhrQuery.readyState === 4 && xhrQuery.status === 200) {
@@ -321,7 +321,7 @@
                                 if (currentEnergy > 0) {
                                     if (confirm(`确定要清除全部 ${currentEnergy} 点能量吗？`)) {
                                         const xhrClear = new XMLHttpRequest();
-                                        xhrClear.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                                        xhrClear.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                                         xhrClear.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                                         xhrClear.onreadystatechange = function() {
                                             if (xhrClear.readyState === 4 && xhrClear.status === 200) {
@@ -364,7 +364,7 @@
                 if (!confirm(`确定给用户 ${userId} 全场地赠送 ${energyAmount} 点能量吗？`)) return;
             
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhr.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4 && xhr.status === 200) {
@@ -386,7 +386,7 @@
                 if (!confirm(`确定将用户 ${userId} 所有场地能量清零吗？`)) return;
             
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://open.rcwulian.cn/api/operat/EnergyGift.php', true);
+                xhr.open('POST', 'https://open.kwxapp.cn/api/operat/EnergyGift.php', true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4 && xhr.status === 200) {

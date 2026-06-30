@@ -1,5 +1,5 @@
 <?php
-// open.rcwulian.cn/single/api/vehicle/modifyDevice.php
+// open.kwxapp.cn/single/api/vehicle/modifyDevice.php
 require_once '../Database.php';
 require_once '../RedisHelper.php';
 

@@ -101,7 +101,7 @@ if (!move_uploaded_file($f['tmp_name'], $dest)) {
 }
 
 // ✅ 返回 URL 也带日期目录
-$url = 'https://open.rcwulian.cn/api/devMgr/uploads/' . $ymd . '/' . $filename;
+$url = 'https://open.kwxapp.cn/api/devMgr/uploads/' . $ymd . '/' . $filename;
 
 json_out(0, '成功', [
     'image_url' => $url,     // 兼容你现有字段名

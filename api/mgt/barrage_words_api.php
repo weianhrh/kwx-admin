@@ -2,10 +2,10 @@
 header('Content-Type: application/json; charset=utf-8');
 mb_internal_encoding('UTF-8');
 
-// open.rcwulian.cn/api/mgt/barrage_words_api.php
+// open.kwxapp.cn/api/mgt/barrage_words_api.php
 // 无密钥版本
 
-define('BARRAGE_WORDS_FILE', '/www/wwwroot/open.rcwulian.cn/single/res/barrage_banned_words.json');
+define('BARRAGE_WORDS_FILE', '/www/wwwroot/open.kwxapp.cn/single/res/barrage_banned_words.json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);

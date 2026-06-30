@@ -48,7 +48,7 @@ def train_one_feedback(key, data):
     model = efficientnet_b0(weights=None)
     
     # 手动加载本地权重
-    state_dict = torch.load("/www/wwwroot/open.rcwulian.cn/single/api/pop/efficientnet_b0.pth", map_location="cpu")
+    state_dict = torch.load("/www/wwwroot/open.kwxapp.cn/single/api/pop/efficientnet_b0.pth", map_location="cpu")
     model.load_state_dict(state_dict)
 
     model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 4)
@@ -69,7 +69,7 @@ def train_one_feedback(key, data):
         optimizer.step()
         print(f"✅ [{key}] Epoch {epoch+1} Loss: {loss.item():.4f}")
 
-    torch.save(model.state_dict(), "/www/wwwroot/open.rcwulian.cn/single/api/pop/risk_vuln_b0_finetuned.pt")
+    torch.save(model.state_dict(), "/www/wwwroot/open.kwxapp.cn/single/api/pop/risk_vuln_b0_finetuned.pt")
     print(f"💾 模型保存完成（已处理 {key}）")
 
     r.delete(key)

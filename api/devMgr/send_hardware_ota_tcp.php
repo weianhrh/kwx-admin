@@ -11,11 +11,11 @@ header('Content-Type: application/json; charset=utf-8');
 
 /**
  * 硬件 OTA TCP 下发
- * 连接 rcwulian.cn:6363
- * 发送 +UP#https://rcwulian.cn/OTA/zxb.bin-
+ * 连接 app.kwxapp.cn:6363
+ * 发送 +UP#https://app.kwxapp.cn/OTA/zxb.bin-
  */
 
-$host = 'rcwulian.cn';
+$host = 'app.kwxapp.cn';
 $port = 6363;
 $timeout = 5;
 
@@ -36,7 +36,7 @@ function normalize_ota_cmd($rawCmd, $url) {
         $cmd = $rawCmd;
     } else {
         if ($url === '') {
-            $url = 'https://rcwulian.cn/OTA/zxb.bin';
+            $url = 'https://app.kwxapp.cn/OTA/zxb.bin';
         }
 
         if (!preg_match('#^https?://#i', $url)) {

@@ -18,13 +18,13 @@ risk_label_map = {
     "medium": 0,
     "high": 3
 }
-save_root = Path("/www/wwwroot/open.rcwulian.cn/single/api/pop/virus_vuln_inject")
+save_root = Path("/www/wwwroot/open.kwxapp.cn/single/api/pop/virus_vuln_inject")
 for level in risk_label_map.keys():
     (save_root / level).mkdir(parents=True, exist_ok=True)
 
 # === 日志系统 ===
 logging.basicConfig(
-    filename='/www/wwwroot/open.rcwulian.cn/single/api/pop/log/download_images.log',
+    filename='/www/wwwroot/open.kwxapp.cn/single/api/pop/log/download_images.log',
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'

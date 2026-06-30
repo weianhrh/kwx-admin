@@ -451,6 +451,21 @@
       box-shadow: var(--shadow);
     }
 
+    .stat.is-clickable {
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .stat.is-clickable:hover {
+      border-color: rgba(15, 143, 140, .36);
+      box-shadow: 0 14px 34px rgba(30, 55, 66, .12);
+      transform: translateY(-1px);
+    }
+
+    .stat.is-clickable:active {
+      transform: translateY(0);
+    }
+
     .stat-head {
       display: flex;
       align-items: center;
@@ -4685,8 +4700,14 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         '<button class="ghost-btn" type="button" onclick="location.reload()">刷新数据</button>' +
         '</div>' +
         '<div class="stats">' +
-        statCard('今日注册', formatInt(metrics.registerCount) + ' 人', 'APP 新注册用户', 'user') +
-        statCard('今日活跃', formatInt(metrics.activeUserCount) + ' 人', '今日活跃用户数', 'ops') +
+        statCard('今日注册', formatInt(metrics.registerCount) + ' 人', 'APP 新注册用户', 'user', {
+          url: './api/index/user_register_detail.php',
+          title: '注册用户统计'
+        }) +
+        statCard('今日活跃', formatInt(metrics.activeUserCount) + ' 人', '今日活跃用户数', 'ops', {
+          url: './api/index/user_active_detail.php',
+          title: '活跃用户统计'
+        }) +
         statCard('平台收益', formatMoney(metrics.totalRecharge), '今日平台总收益', 'finance') +
         statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费汇总', 'order') +
         '</div>' +
@@ -5017,9 +5038,39 @@ function franchiseOverviewItem(label, value, icon) {
       '<i class="franchise-overview-icon">' + menuIcon(icon || 'venue') + '</i>' +
     '</div>';
 }
-    function statCard(label, value, note, icon) {
-      return '<article class="stat">' + statInner(label, value, note, icon) + '</article>';
+    function statCard(label, value, note, icon, options) {
+      options = options || {};
+      const detailUrl = String(options.url || '');
+      const detailTitle = String(options.title || label || '数据详情');
+      const classes = 'stat' + (detailUrl ? ' is-clickable' : '');
+      const attrs = detailUrl
+        ? ' role="button" tabindex="0" title="点击查看详情" data-dashboard-detail-url="' + escapeHtml(detailUrl) + '" data-dashboard-detail-title="' + escapeHtml(detailTitle) + '" onclick="openDashboardMetricDetail(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openDashboardMetricDetail(this);}"'
+        : '';
+
+      return '<article class="' + classes + '"' + attrs + '>' + statInner(label, value, note, icon) + '</article>';
     }
+
+    function openDashboardMetricDetail(el) {
+      if (!el) return;
+      const src = el.dataset.dashboardDetailUrl || '';
+      if (!src) return;
+      const title = el.dataset.dashboardDetailTitle || '数据详情';
+      const crumbText = document.querySelector('.crumb span');
+      const crumbTitle = document.querySelector('.crumb strong');
+
+      if (crumbText) crumbText.textContent = 'Dashboard / 用户统计';
+      if (crumbTitle) crumbTitle.textContent = title;
+
+      pageContent.innerHTML = '<section class="legacy-module">' +
+        '<iframe src="' + escapeHtml(src) + '" title="' + escapeHtml(title) + '"></iframe>' +
+        '</section>';
+
+      if (isMobileSidebar()) {
+        closeSidebar();
+      }
+    }
+
+    window.openDashboardMetricDetail = openDashboardMetricDetail;
 
     function statInner(label, value, note, icon) {
       return '<div class="stat-head"><span>' + escapeHtml(label) + '</span><span class="stat-icon">' + menuIcon(icon) + '</span></div>' +

@@ -16,7 +16,7 @@ function logMessage($message) {
 }
 
 /**
- * 发送 TCP 指令到 rcwulian.cn:6363
+ * 发送 TCP 指令到 app.kwxapp.cn:6363
  * 返回 [ok(bool), err(string), sent(int)]
  */
 function tcp_send_command($host, $port, $command, $timeoutSec = 3) {
@@ -85,11 +85,11 @@ if (!preg_match('/^[A-Za-z0-9_-]{4,64}$/', $serial_number)) {
 }
 
 // 4) 拼指令并下发
-$host = 'rcwulian.cn';
+$host = 'app.kwxapp.cn';
 $port = 6363;
 
-// 你要求的命令格式：+F+{serial_number}+UP#rcwulian.cn-
-$cmd = "+F+{$serial_number}+UP#rcwulian.cn-";
+// 你要求的命令格式：+F+{serial_number}+UP#app.kwxapp.cn-
+$cmd = "+F+{$serial_number}+UP#app.kwxapp.cn-";
 
 logMessage("准备下发：SN={$serial_number} CMD={$cmd}");
 

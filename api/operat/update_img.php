@@ -41,7 +41,7 @@
 // foreach ($result as $row) {
 //     $id = $row['id'];
 //     $oldImageUrl = $row['image_url'];
-//     $newImageUrl = "https://rcwulian.cn/app/imgv2/img/wj.jpg";
+//     $newImageUrl = "https://app.kwxapp.cn/app/imgv2/img/wj.jpg";
 
 //     $updateSql = "UPDATE venues SET backup_image_url = ?, image_url = ? WHERE id = ?";
 //     $database->query($updateSql, [$newImageUrl, $id], true);
@@ -93,7 +93,7 @@ $result = $database->query($sql);
 foreach ($result as $row) {
     $id = $row['id'];
     $oldImageUrl = $row['backup_image_url'];
-    // $newImageUrl = "https://open.rcwulian.cn/api/1/venue_{$id}.jpg";
+    // $newImageUrl = "https://open.kwxapp.cn/api/1/venue_{$id}.jpg";
 
     $updateSql = "UPDATE venues SET image_url = ? WHERE id = ?";
     $database->query($updateSql, [$oldImageUrl, $id], true);

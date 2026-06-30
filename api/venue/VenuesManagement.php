@@ -783,7 +783,7 @@ elseif ($action === 'set_voice_room_ban') {
         $sendResult = null;
 
         if ($roomId !== '') {
-            $sendUrl = 'https://open.rcwulian.cn/api/devMgr/send_voice_room_ban_message.php';
+            $sendUrl = 'https://open.kwxapp.cn/api/devMgr/send_voice_room_ban_message.php';
 
             $payload = json_encode([
                 'room_id' => $roomId,

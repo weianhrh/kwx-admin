@@ -139,10 +139,10 @@ function is_user_capture_report_reason($reason) {
  * 把本地备份路径转成可访问 URL
  *
  * 例如：
- * /www/wwwroot/open.rcwulian.cn/single/api/pop/review_backup/2026-04-29/xxx.jpeg
+ * /www/wwwroot/open.kwxapp.cn/single/api/pop/review_backup/2026-04-29/xxx.jpeg
  *
  * 转成：
- * http://open.rcwulian.cn/api/pop/review_backup/2026-04-29/xxx.jpeg
+ * http://open.kwxapp.cn/api/pop/review_backup/2026-04-29/xxx.jpeg
  */
 function convert_local_review_image_path_to_url($localPath) {
     $localPath = trim((string)$localPath);
@@ -157,8 +157,8 @@ function convert_local_review_image_path_to_url($localPath) {
         return $localPath;
     }
 
-    $localRoot = '/www/wwwroot/open.rcwulian.cn/single';
-    $publicHost = 'http://open.rcwulian.cn';
+    $localRoot = '/www/wwwroot/open.kwxapp.cn/single';
+    $publicHost = 'http://open.kwxapp.cn';
 
     if (strpos($localPath, $localRoot) === 0) {
         $relativePath = substr($localPath, strlen($localRoot));

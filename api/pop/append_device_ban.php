@@ -182,7 +182,7 @@ try {
 
     // 6. 发通知（沿用你原来逻辑）
     if ($venueId !== '') {
-        $notificationUrl = "https://rcwulian.cn/app/code/send-Ban.php?venue_id="
+        $notificationUrl = "https://app.kwxapp.cn/app/code/send-Ban.php?venue_id="
             . urlencode($venueId)
             . "&ban_type=场地设备&time="
             . urlencode($banMinutes);

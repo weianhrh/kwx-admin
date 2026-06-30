@@ -1,6 +1,6 @@
 <?php
 /**
- * https://open.rcwulian.cn/api/devMgr/send_room_ban_message.php
+ * https://open.kwxapp.cn/api/devMgr/send_room_ban_message.php
  *
  * 接收：
  * room_id       必填
