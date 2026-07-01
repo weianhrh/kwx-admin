@@ -305,7 +305,7 @@
   <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
 
   <style id="reporthand-compact-style">
-    /* 投诉处理页紧凑布局：同时优化 role_1 可操作视角与 role_3 只读视角 */
+    /* 投诉处理页：按正确排版重做投诉卡片，保留原接口和业务 JS */
     body.kwx-legacy-page {
       padding: 18px 20px 28px;
       background: #f4f7f8;
@@ -333,7 +333,7 @@
     body.kwx-legacy-page .card-title {
       min-height: 58px;
       margin: 0 !important;
-      padding: 0 18px 0 18px;
+      padding: 0 18px;
       border-bottom: 1px solid #dfe8eb;
       color: #172126;
       background: linear-gradient(180deg, #fff, #fbfcfd);
@@ -387,30 +387,97 @@
     }
 
     body.kwx-legacy-page .complaint-item {
-      display: grid;
-      gap: 10px;
+      display: block;
       margin: 0;
-      padding: 14px;
+      padding: 0;
+      overflow: hidden;
       border: 1px solid #dfe8eb;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 8px 22px rgba(30, 55, 66, .05);
     }
 
-    body.kwx-legacy-page .complaint-top {
+    /* 正确排版：左侧基础信息 / 中间举报信息 / 右侧浅蓝举报人块 / 最右状态操作 */
+    body.kwx-legacy-page .complaint-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
+      grid-template-columns: 160px minmax(260px, 1fr) 220px 230px;
+      align-items: stretch;
+      min-height: 102px;
+    }
+
+    body.kwx-legacy-page .complaint-basic,
+    body.kwx-legacy-page .complaint-content-col,
+    body.kwx-legacy-page .complaint-highlight,
+    body.kwx-legacy-page .complaint-side {
+      min-width: 0;
+    }
+
+    body.kwx-legacy-page .complaint-basic,
+    body.kwx-legacy-page .complaint-content-col {
+      display: grid;
+      align-content: start;
       gap: 10px;
+      padding: 14px 16px;
+      border-right: 1px solid #edf1f5;
     }
 
-    body.kwx-legacy-page .complaint-top-left {
-      gap: 6px;
+    body.kwx-legacy-page .complaint-highlight {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      margin: 12px 10px;
+      padding: 10px 14px;
+      border: 1px solid #e5f0fb;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #eef6ff 0%, #f7fbff 100%);
     }
 
-    body.kwx-legacy-page .complaint-top > div:last-child {
-      color: #7f8fa4 !important;
-      font-size: 12px !important;
+    body.kwx-legacy-page .complaint-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+
+    body.kwx-legacy-page .complaint-field {
+      min-width: 0;
+    }
+
+    body.kwx-legacy-page .detail-label {
+      margin-bottom: 4px !important;
+      color: #6b7d84;
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    body.kwx-legacy-page .detail-value {
+      color: #172126;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    body.kwx-legacy-page .complaint-content-field .detail-value {
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 950;
+      letter-spacing: -.2px;
+    }
+
+    body.kwx-legacy-page .complaint-status-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    body.kwx-legacy-page .complaint-time {
+      color: #7f8fa4;
+      font-size: 12px;
       white-space: nowrap;
     }
 
@@ -421,70 +488,72 @@
       font-weight: 900;
     }
 
-    body.kwx-legacy-page .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
+    body.kwx-legacy-page .badge-blue {
+      background: #eef4ff;
+      color: #2f6bff;
     }
 
-    body.kwx-legacy-page .detail-item {
-      min-height: 48px;
-      padding: 8px 10px;
-      border: 1px solid #edf1f5;
-      border-radius: 8px;
-      background: #fbfcfd;
-      line-height: 1.4;
+    body.kwx-legacy-page .badge-green {
+      background: #ebfff2;
+      color: #17a05d;
     }
 
-    body.kwx-legacy-page .detail-item[data-label*="名称"],
-    body.kwx-legacy-page .detail-item[data-label*="昵称"] {
-      min-width: 220px;
+    body.kwx-legacy-page .badge-orange {
+      background: #fff5e8;
+      color: #d9822b;
     }
 
-    body.kwx-legacy-page .detail-label {
-      margin-bottom: 3px !important;
-      color: #6b7d84;
-      font-size: 11px;
-      line-height: 1.2;
-      font-weight: 800;
-    }
-
-    body.kwx-legacy-page .detail-value {
-      color: #233139;
-      font-size: 13px;
-      line-height: 1.35;
-      font-weight: 700;
-      word-break: break-word;
-    }
-
-    body.kwx-legacy-page .content-box {
-      min-height: 0;
-      padding: 9px 10px;
-      border: 1px solid #edf1f5;
-      border-radius: 8px;
-      background: #fbfcfd;
-      color: #233139;
-      font-size: 13px;
-      line-height: 1.5;
+    body.kwx-legacy-page .badge-red {
+      background: #ffefef;
+      color: #df4d4d;
     }
 
     body.kwx-legacy-page .action-row {
       display: flex;
+      justify-content: flex-end;
       flex-wrap: wrap;
       gap: 8px;
-      padding-top: 2px;
+      padding-top: 0;
     }
 
     body.kwx-legacy-page .action-button {
       min-height: 32px;
       padding: 0 12px;
+      border: 1px solid rgba(15, 143, 140, .24);
       border-radius: 8px;
+      background: #e6f6f5;
+      color: #08706e;
       font-size: 12px;
       line-height: 1;
       font-weight: 800;
+      box-shadow: none;
     }
 
-    body.kwx-legacy-page .image-thumb {
+    body.kwx-legacy-page .action-button:hover {
+      background: #d6f0ef;
+    }
+
+    body.kwx-legacy-page .action-button.red {
+      border-color: rgba(223, 77, 77, .22);
+      background: #fff0f0;
+      color: #cf3f3f;
+    }
+
+    body.kwx-legacy-page .action-button.red:hover {
+      background: #ffe4e4;
+    }
+
+    body.kwx-legacy-page .action-button.green {
+      border-color: rgba(15, 143, 140, .24);
+      background: #e6f6f5;
+      color: #08706e;
+    }
+
+    body.kwx-legacy-page .complaint-media {
+      padding: 0 16px 14px;
+    }
+
+    body.kwx-legacy-page .complaint-media .image-thumb {
       max-width: 160px;
       border-radius: 8px;
     }
@@ -493,14 +562,17 @@
       border-radius: 10px;
     }
 
-    @media (min-width: 1200px) {
-      body.kwx-legacy-page .detail-grid {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+    @media (max-width: 1180px) {
+      body.kwx-legacy-page .complaint-layout {
+        grid-template-columns: 150px minmax(220px, 1fr) 200px;
       }
 
-      body.kwx-legacy-page .detail-item[data-label*="名称"],
-      body.kwx-legacy-page .detail-item[data-label*="昵称"] {
-        grid-column: span 2;
+      body.kwx-legacy-page .complaint-side {
+        grid-column: 1 / -1;
+        border-top: 1px solid #edf1f5;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
       }
     }
 
@@ -548,60 +620,43 @@
       }
 
       body.kwx-legacy-page .complaint-item {
-        gap: 8px;
-        padding: 12px;
         border-radius: 12px;
       }
 
-      body.kwx-legacy-page .complaint-top {
+      body.kwx-legacy-page .complaint-layout {
         grid-template-columns: 1fr;
-        gap: 7px;
+        min-height: 0;
       }
 
-      body.kwx-legacy-page .complaint-top-left {
-        gap: 6px;
-      }
-
-      body.kwx-legacy-page .badge {
-        min-height: 23px;
-        padding: 0 9px;
-        font-size: 12px;
-      }
-
-      body.kwx-legacy-page .complaint-top > div:last-child {
-        font-size: 12px !important;
-      }
-
-      body.kwx-legacy-page .detail-grid {
+      body.kwx-legacy-page .complaint-basic,
+      body.kwx-legacy-page .complaint-content-col {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 7px;
+        gap: 8px;
+        padding: 12px;
+        border-right: 0;
+        border-bottom: 1px solid #edf1f5;
       }
 
-      body.kwx-legacy-page .detail-item {
-        min-height: 48px;
-        padding: 8px;
-        border-radius: 8px;
-      }
-
-      body.kwx-legacy-page .detail-item[data-label*="名称"],
-      body.kwx-legacy-page .detail-item[data-label*="昵称"] {
+      body.kwx-legacy-page .complaint-content-field {
         grid-column: 1 / -1;
-        min-width: 0;
       }
 
-      body.kwx-legacy-page .detail-label {
-        font-size: 11px;
+      body.kwx-legacy-page .complaint-highlight {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 10px 12px;
+        padding: 10px 12px;
       }
 
-      body.kwx-legacy-page .detail-value {
-        font-size: 13px;
-        line-height: 1.35;
+      body.kwx-legacy-page .complaint-side {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 0 12px 12px;
+        border-top: 0;
       }
 
-      body.kwx-legacy-page .content-box {
-        padding: 9px;
-        font-size: 13px;
-        line-height: 1.45;
+      body.kwx-legacy-page .complaint-status-line {
+        justify-content: flex-start;
       }
 
       body.kwx-legacy-page .action-row {
@@ -618,16 +673,19 @@
         font-size: 12px;
       }
 
-      body.kwx-legacy-page .image-thumb {
+      body.kwx-legacy-page .complaint-media {
+        padding: 0 12px 12px;
+      }
+
+      body.kwx-legacy-page .complaint-media .image-thumb {
         max-width: 100%;
       }
     }
 
     @media (max-width: 360px) {
-      body.kwx-legacy-page .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
+      body.kwx-legacy-page .complaint-basic,
+      body.kwx-legacy-page .complaint-content-col,
+      body.kwx-legacy-page .complaint-highlight,
       body.kwx-legacy-page .action-row {
         grid-template-columns: 1fr;
       }
@@ -766,6 +824,37 @@
             `;
         }
 
+        function compactField(label, value, extraClass = '') {
+            return `
+                <div class="complaint-field ${escapeHtml(extraClass)}">
+                    <div class="detail-label">${escapeHtml(label)}</div>
+                    <div class="detail-value">${escapeHtml(value || '-')}</div>
+                </div>
+            `;
+        }
+
+        function renderScreenshotBlock(complaint, altText = '举报截图') {
+            if (!complaint.image_url || complaint.image_url.trim() === '') return '';
+            return `
+                <div class="complaint-media">
+                    <div class="detail-label" style="margin-bottom:8px;">举报截图</div>
+                    <img src="${escapeHtml(complaint.image_url)}" alt="${escapeHtml(altText)}" class="image-thumb" onclick="showModal('${escapeHtml(complaint.image_url)}')" />
+                </div>
+            `;
+        }
+
+        function renderComplaintSide(complaint) {
+            return `
+                <div class="complaint-side">
+                    <div class="complaint-status-line">
+                        ${getStatusBadge(complaint.status)}
+                        <span class="complaint-time">${escapeHtml(complaint.insert_time)}</span>
+                    </div>
+                    ${renderActionButtons(complaint)}
+                </div>
+            `;
+        }
+
         function loadComplaintRecords() {
             const url = withVenueParam('/api/operat/ReporthandV2.php');
             fetch(url)
@@ -784,37 +873,26 @@
         }
 
 function renderDeviceComplaint(complaint) {
+    // 正确排版：左侧基础信息只保留“设备 ID / 处理人 ID”，举报人 UID 只放在右侧浅蓝块，避免重复展示。
     let html = `
-        <div class="complaint-top">
-            <div class="complaint-top-left">
-                ${getSourceBadge(complaint.source_table, complaint.report_type_text)}
-                ${getStatusBadge(complaint.status)}
+        <div class="complaint-layout complaint-layout-device">
+            <div class="complaint-basic">
+                ${compactField('设备 ID', complaint.device_id)}
+                ${compactField('处理人 ID', complaint.handler_uid)}
             </div>
-            <div style="color:#7f8fa4;font-size:13px;">${escapeHtml(complaint.insert_time)}</div>
-        </div>
-        <div class="detail-grid">
-            ${detailItem('设备 ID', complaint.device_id)}
-            ${detailItem('设备名称', complaint.vehicle_name)}
-            ${detailItem('绑定场地', complaint.bind_site)}
-            ${detailItem('举报人 UID', complaint.reporter_uid)}
-            ${detailItem('处理人 ID', complaint.handler_uid)}
-        </div>
-        <div>
-            <div class="detail-label" style="margin-bottom:8px;">举报内容</div>
-            <div class="content-box">${escapeHtml(complaint.report_content || '-')}</div>
+            <div class="complaint-content-col">
+                ${compactField('举报内容', complaint.report_content || '-', 'complaint-content-field')}
+                ${compactField('设备名称', complaint.vehicle_name)}
+            </div>
+            <div class="complaint-highlight">
+                ${compactField('举报人 UID', complaint.reporter_uid)}
+                ${compactField('绑定场地', complaint.bind_site)}
+            </div>
+            ${renderComplaintSide(complaint)}
         </div>
     `;
 
-    if (complaint.image_url && complaint.image_url.trim() !== '') {
-        html += `
-            <div>
-                <div class="detail-label" style="margin-bottom:8px;">举报截图</div>
-                <img src="${escapeHtml(complaint.image_url)}" alt="违规截图" class="image-thumb" onclick="showModal('${escapeHtml(complaint.image_url)}')" />
-            </div>
-        `;
-    }
-
-    html += renderActionButtons(complaint);
+    html += renderScreenshotBlock(complaint, '违规截图');
     return html;
 }
 
@@ -824,35 +902,24 @@ function renderDeviceComplaint(complaint) {
             const targetName = complaint.target_name ? `${complaint.target_name}` : '-';
 
             let html = `
-                <div class="complaint-top">
-                    <div class="complaint-top-left">
-                        ${getSourceBadge(complaint.source_table, complaint.report_type_text)}
-                        ${getStatusBadge(complaint.status)}
+                <div class="complaint-layout complaint-layout-voice">
+                    <div class="complaint-basic">
+                        ${compactField('举报类型', complaint.report_type_text || '语音房举报')}
+                        ${compactField(targetTitle + ' ID', complaint.target_id || complaint.handler_uid)}
                     </div>
-                    <div style="color:#7f8fa4;font-size:13px;">${escapeHtml(complaint.insert_time)}</div>
-                </div>
-                <div class="detail-grid">
-                    ${detailItem('举报人 UID', complaint.reporter_uid)}
-                    ${detailItem('举报人昵称', complaint.reporter_name)}
-                    ${detailItem(targetTitle + ' ID', complaint.target_id || complaint.handler_uid)}
-                    ${detailItem(targetTitle + ' 名称', targetName)}
-                </div>
-                <div>
-                    <div class="detail-label" style="margin-bottom:8px;">举报内容</div>
-                    <div class="content-box">${escapeHtml(complaint.report_content || '-')}</div>
+                    <div class="complaint-content-col">
+                        ${compactField('举报内容', complaint.report_content || '-', 'complaint-content-field')}
+                        ${compactField(targetTitle + ' 名称', targetName)}
+                    </div>
+                    <div class="complaint-highlight">
+                        ${compactField('举报人 UID', complaint.reporter_uid)}
+                        ${compactField('举报人昵称', complaint.reporter_name)}
+                    </div>
+                    ${renderComplaintSide(complaint)}
                 </div>
             `;
 
-            if (complaint.image_url && complaint.image_url.trim() !== '') {
-                html += `
-                    <div>
-                        <div class="detail-label" style="margin-bottom:8px;">举报截图</div>
-                        <img src="${escapeHtml(complaint.image_url)}" alt="举报截图" class="image-thumb" onclick="showModal('${escapeHtml(complaint.image_url)}')" />
-                    </div>
-                `;
-            }
-
-            html += renderActionButtons(complaint);
+            html += renderScreenshotBlock(complaint, '举报截图');
             return html;
         }
 
@@ -1005,7 +1072,7 @@ function renderDeviceComplaint(complaint) {
             document.getElementById('banReportId').value = complaint.id;
             document.getElementById('banSourceTable').value = complaint.source_table || 'Reports';
             document.getElementById('banReason').value = complaint.report_content || '';
-document.getElementById('banDuration').value = '600';
+            document.getElementById('banDuration').value = '600';
             document.getElementById('banImageUrl').value = complaint.image_url || '';
 
             const imageSerial = getImageDeviceSerial(complaint);
