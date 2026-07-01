@@ -126,6 +126,8 @@ $orderSql = "
     FROM orders
     WHERE end_time >= ?
       AND end_time < ?
+      AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
     GROUP BY reservation_id
 ";
 $orderRows = $database->query($orderSql, [$date, $dateEnd]);
@@ -160,7 +162,8 @@ $paymentSql = "
     FROM orders
     WHERE end_time >= ?
       AND end_time < ?
-      AND pays_type != '能量'
+      AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
     GROUP BY reservation_id
 ";
 $paymentRows = $database->query($paymentSql, [$date, $dateEnd]);

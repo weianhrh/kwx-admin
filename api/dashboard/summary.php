@@ -161,10 +161,11 @@ $activeUserCount = dashboard_scalar($db, "
 ", [$todayStart, $tomorrowStart], 'total', 0);
 
 $totalRecharge = dashboard_scalar($db, "
-    SELECT COALESCE(ROUND(SUM(payer_total), 2), 0) AS total
-    FROM RechargeOrders
-    WHERE status = '支付成功'
-      AND created_at >= ? AND created_at < ?
+    SELECT COALESCE(ROUND(SUM(payment_amount), 2), 0) AS total
+    FROM orders
+    WHERE end_time >= ? AND end_time < ?
+      AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
 ", [$todayStart, $tomorrowStart], 'total', '0.00');
 
 $orderConsumption = dashboard_scalar($db, "

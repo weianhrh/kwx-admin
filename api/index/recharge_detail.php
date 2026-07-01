@@ -3,28 +3,37 @@ require_once '../Database.php';
 $database = new Database();
 
 $period = $_GET['period'] ?? 'day'; // day, week, month
+if (!in_array($period, ['day', 'week', 'month'], true)) {
+    $period = 'day';
+}
+
+// 平台收益：只保留驾驶订单收入，剔除礼物、金币、娃娃机和能量订单。
+$driveOrderWhere = "
+    FROM orders
+    WHERE end_time IS NOT NULL
+      AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
+";
 
 switch ($period) {
-case 'week':
-    $sql = "
-        SELECT 
-            YEARWEEK(created_at, 3) AS label,
-            ROUND(SUM(payer_total), 2) AS total
-        FROM RechargeOrders
-        WHERE status = '支付成功'
-        GROUP BY label
-        ORDER BY label DESC
-        LIMIT 12
-    ";
-    break;
+    case 'week':
+        $sql = "
+            SELECT 
+                YEARWEEK(end_time, 3) AS label,
+                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
+            {$driveOrderWhere}
+            GROUP BY label
+            ORDER BY label DESC
+            LIMIT 12
+        ";
+        break;
 
     case 'month':
         $sql = "
             SELECT 
-                DATE_FORMAT(created_at, '%Y-%m') AS label,
-                ROUND(SUM(payer_total), 2) AS total
-            FROM RechargeOrders
-            WHERE status = '支付成功'
+                DATE_FORMAT(end_time, '%Y-%m') AS label,
+                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
+            {$driveOrderWhere}
             GROUP BY label
             ORDER BY label DESC
             LIMIT 12
@@ -35,10 +44,9 @@ case 'week':
     default:
         $sql = "
             SELECT 
-                DATE(created_at) AS label,
-                ROUND(SUM(payer_total), 2) AS total
-            FROM RechargeOrders
-            WHERE status = '支付成功'
+                DATE(end_time) AS label,
+                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
+            {$driveOrderWhere}
             GROUP BY label
             ORDER BY label DESC
             LIMIT 30
@@ -46,7 +54,7 @@ case 'week':
         break;
 }
 
-$data = $database->query($sql);
+$data = $database->query($sql) ?: [];
 $database->close();
 ?>
 
@@ -54,7 +62,7 @@ $database->close();
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>平台流水统计</title>
+    <title>平台驾驶订单收益统计</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,6 +76,14 @@ $database->close();
             word-break: break-word;
             text-align: center;
         }
+        .desc {
+            max-width: 760px;
+            margin: -8px auto 18px;
+            color: #666;
+            font-size: 13px;
+            line-height: 1.7;
+            text-align: center;
+        }
         .toolbar {
             margin-bottom: 20px;
             display: flex;
@@ -79,13 +95,13 @@ $database->close();
             padding: 8px 12px;
             border: none;
             border-radius: 6px;
-            background: #5b8cff;
+            background: #0f8f8c;
             color: #fff;
             cursor: pointer;
             font-size: 14px;
         }
         .toolbar button.active {
-            background: #2a66e0;
+            background: #0f8f8c;
         }
         .card-container {
             display: flex;
@@ -98,7 +114,7 @@ $database->close();
             border-radius: 8px;
             padding: 15px 20px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            width: 160px;
+            width: 180px;
             text-align: center;
         }
         .card-link {
@@ -123,10 +139,22 @@ $database->close();
             color: #333;
             font-weight: bold;
         }
+        .empty {
+            width: 100%;
+            max-width: 520px;
+            margin: 20px auto;
+            padding: 22px;
+            color: #777;
+            background: #fff;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body>
-    <h2>平台流水统计</h2>
+    <h2>平台驾驶订单收益统计</h2>
+    <div class="desc">当前只统计驾驶订单收入，已剔除礼物、金币、娃娃机和能量订单。点击日期卡片可查看对应周期的场地业绩排行。</div>
 
     <div class="toolbar">
         <button onclick="changePeriod('day')" class="<?= $period == 'day' ? 'active' : '' ?>">按天</button>
@@ -135,6 +163,9 @@ $database->close();
     </div>
 
     <div class="card-container">
+<?php if (empty($data)): ?>
+        <div class="empty">暂无驾驶订单收益数据</div>
+<?php endif; ?>
 <?php foreach ($data as $row): ?>
 <?php
     $topPageUrl = '/res/top.html';
@@ -201,13 +232,13 @@ $database->close();
 ?>
         
         <?php if ($cardHref): ?>
-            <a class="card card-link" href="<?= htmlspecialchars($cardHref, ENT_QUOTES, 'UTF-8') ?>">
+            <a class="card card-link" href="<?= htmlspecialchars($cardHref, ENT_QUOTES, 'UTF-8') ?>" title="点击查看该周期业绩排行">
         <?php else: ?>
             <div class="card">
         <?php endif; ?>
         
-            <div class="card-label"><?= $label ?></div>
-            <div class="card-value"><?= $row['total'] ?> 元</div>
+            <div class="card-label"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="card-value"><?= number_format((float)$row['total'], 2, '.', '') ?> 元</div>
         
         <?php if ($cardHref): ?>
             </a>
