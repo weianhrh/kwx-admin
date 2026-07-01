@@ -6,354 +6,168 @@ require_once __DIR__ . '/_common.php';
 auth_json_headers();
 auth_handle_options();
 
-function menu_visible_for_role(array $menu, int $roleId): bool
-{
-    $roleIds = trim((string)($menu['role_ids'] ?? ''));
-    if ($roleIds === '') {
-        return false;
-    }
-    $allowed = array_filter(array_map('trim', explode(',', $roleIds)), 'strlen');
-    return in_array((string)$roleId, $allowed, true);
-}
+/**
+ * 临时硬编码菜单接口
+ *
+ * 写法参考旧版 getMenuByRoleId($roleId)：
+ * - 菜单直接在 PHP 数组里维护；
+ * - 不读取 admin_menus 表；
+ * - 仍保留 session_token 登录校验；
+ * - 仍返回新后台需要的 data.menus + data.user 结构。
+ */
 
-function menu_normalize_jump(?string $jump): string
-{
-    $jump = trim((string)$jump);
-    if ($jump === '' || $jump === '/') {
-        return '';
-    }
-    return '/' . ltrim($jump, '/');
-}
-
-function menu_text(array $menu): string
-{
-    return strtolower(
-        (string)($menu['name'] ?? '') . ' ' .
-        (string)($menu['title'] ?? '') . ' ' .
-        (string)($menu['jump'] ?? '')
-    );
-}
-
-function menu_contains(string $text, array $needles): bool
-{
-    foreach ($needles as $needle) {
-        if ($needle !== '' && strpos($text, strtolower($needle)) !== false) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function menu_hidden_for_rebuild(array $menu): bool
-{
-    $text = menu_text($menu);
-
-    return menu_contains($text, [
-        '我的工具',
-        '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
-        '礼物', 'gift',
-        '金币', 'gold', 'gold_package', 'coin', 'coins',
-        '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
-        '开播时长', '场地开关播记录', '开关播记录', '开关播',
-        'live_duration', 'live_record', 'live_log', 'live_logs',
-        '主播认证管理', '主播认证', 'anchor_auth', 'anchorauth',
-        '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
-        'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage',
-        '修改密码', 'system_password', 'system-password', 'updatepassword', 'setpasswd',
-        '平台数据面板', '数据面板', '全平台数据看板', 'iframe/link/kb', '/kb',
-    ]);
-}
-
-function menu_hidden_ids(array $menus): array
-{
-    $hiddenIds = [];
-
-    foreach ($menus as $menu) {
-        if (menu_hidden_for_rebuild($menu)) {
-            $hiddenIds[(int)$menu['id']] = true;
-        }
-    }
-
-    do {
-        $changed = false;
-        foreach ($menus as $menu) {
-            $id = (int)$menu['id'];
-            $parentId = (int)($menu['parent_id'] ?? 0);
-            if (!isset($hiddenIds[$id]) && isset($hiddenIds[$parentId])) {
-                $hiddenIds[$id] = true;
-                $changed = true;
-            }
-        }
-    } while ($changed);
-
-    return $hiddenIds;
-}
-
-function menu_group_key(array $menu): string
-{
-    $text = menu_text($menu);
-
-    if (menu_contains($text, ['reporthand', 'order_complaint', 'order-complaint', '订单投诉', '投诉处理'])) {
-        return 'audit';
-    }
-    if (menu_contains($text, ['admindrivingorders', 'order_report', 'recharge_orders_api', '订单查询', '订单申诉', '最新支付记录'])) {
-        return 'order';
-    }
-    if (menu_contains($text, ['dev', 'device', 'vehicle', 'vehicles', 'camera', 'fault', 'imgnumber', 'photol', 'stream', '设备', '摄像', '故障'])) {
-        return 'device';
-    }
-    if (menu_contains($text, [ 'zone', 'reserva', '场地', '专区', '预约', '开播'])) {
-        return 'venue';
-    }
-    if (menu_contains($text, ['order', 'doll', 'shipping', 'driving', '订单', '抓中', '发货'])) {
-        return 'order';
-    }
-    if (menu_contains($text, ['pay', 'payment', 'withdraw', 'refund',  'comsum', 'amount', 'fund', 'funds', 'income', 'revenue', 'tariff', 'commodity', 'pricing', 'gold_package', '财务', '支付', '提现', '退款', '充值', '流水', '账户', '套餐'])) {
-        return 'finance';
-    }
-    if (menu_contains($text, ['user', 'franchise', 'anchor', 'invitation', 'nickname', '用户','recharge', '加盟', '主播', '邀请'])) {
-        return 'user';
-    }
-    if (menu_contains($text, ['report', 'patrol', 'violation', 'ban', 'audit', 'barrage', 'pid', 'complaint', '巡查', '审核', '违规', '投诉'])) {
-        return 'audit';
-    }
-    if (menu_contains($text, ['gift', 'energy', 'message', 'notify', 'redis', 'voice', 'global_config', 'config', 'kanban', 'kb', 'app_images', 'points', 'checkin', '运营', '消息', '礼物', '公告','业绩', '配置', '数据'])) {
-        return 'ops';
-    }
-    return 'tools';
-}
-
-function menu_feature_key(array $menu): string
-{
-    $text = menu_text($menu);
-    if (menu_contains($text, ['devicemgt', 'device-list', '设备管理'])) return 'device_list';
-    if (menu_contains($text, ['adddev', 'device-add', '添加设备'])) return 'device_add';
-    if (menu_contains($text, ['fault', '故障'])) return 'device_fault';
-    if (menu_contains($text, ['camera', 'device_information', '摄像'])) return 'device_camera';
-    if (menu_contains($text, ['vehicles_manage', 'device_bind', '设备绑定'])) return 'device_binding';
-    if (menu_contains($text, ['photo', 'photol', 'imgnumber', '图片', '图传'])) return 'device_photo';
-    return '';
-}
-
-function menu_append_system_tools(array &$groups, int $roleId): void
-{
-    if ($roleId <= 0 || $roleId === 3) {
-        return;
-    }
-
-    $toolsId = (int)$groups['tools']['id'];
-    $append = function (array $item) use (&$groups): void {
-        foreach ($groups['tools']['children'] as $child) {
-            if (($child['jump'] ?? '') === $item['jump'] || ($child['title'] ?? '') === $item['title']) {
-                return;
-            }
-        }
-        $groups['tools']['children'][] = $item;
-    };
-
-    $append([
-        'id' => 9101,
-        'parent_id' => $toolsId,
-        'name' => 'system-profile',
-        'title' => '基本资料',
-        'icon' => 'user',
-        'jump' => '/iframe/link/system_profile',
-        'sort' => 9101,
-    ]);
-}
-function menu_append_user_blacklist_menu(array &$groups, int $roleId): void
-{
-    if (!in_array($roleId, [1, 2], true) || !isset($groups['user'])) {
-        return;
-    }
-
-    $targetJump = '/iframe/link/black_user_gmt';
-
-    foreach ($groups as $group) {
-        foreach (($group['children'] ?? []) as $child) {
-            if (($child['jump'] ?? '') === $targetJump) {
-                return;
-            }
-        }
-    }
-
-    $groups['user']['children'][] = [
-        'id' => 9201,
-        'parent_id' => (int)$groups['user']['id'],
-        'name' => 'user-blacklist',
-        'title' => '用户拉黑管理',
-        'icon' => 'user',
-        'jump' => $targetJump,
-        'sort' => 9201,
-    ];
-}
-function menu_franchise_tree(): array
+function menu_leaf(int $id, int $parentId, string $name, string $title, string $jump, string $icon = '', int $sort = 0): array
 {
     return [
-        [
-            'id' => 9000,
-            'parent_id' => 0,
-            'name' => 'dashboard',
-            'title' => '首页',
-            'icon' => 'home',
-            'jump' => '',
-            'sort' => 0,
-        ],
-        [
-            'id' => 9301,
-            'parent_id' => 0,
-            'name' => 'franchise-order',
-            'title' => '订单管理',
-            'icon' => 'order',
-            'children' => [
-                ['id' => 9311, 'parent_id' => 9301, 'name' => 'franchise-orders', 'title' => '订单管理', 'icon' => 'order', 'jump' => '/iframe/link/franchise_driving_orders', 'sort' => 10],
-                ['id' => 9312, 'parent_id' => 9301, 'name' => 'franchise-refunds', 'title' => '退款记录', 'icon' => 'finance', 'jump' => '/iframe/link/refund_records_fi', 'sort' => 20],
-            ],
-        ],
-        [
-            'id' => 9302,
-            'parent_id' => 0,
-            'name' => 'franchise-device',
-            'title' => '设备管理',
-            'icon' => 'device',
-            'children' => [
-                ['id' => 9321, 'parent_id' => 9302, 'name' => 'franchise-devices', 'title' => '设备管理', 'icon' => 'device', 'jump' => '/iframe/link/vehicleslite', 'sort' => 10],
-                ['id' => 9322, 'parent_id' => 9302, 'name' => 'franchise-device-lock', 'title' => '挂车占有', 'icon' => 'tools', 'jump' => '/iframe/link/fill_energy', 'sort' => 20],
-            ],
-        ],
-        [
-            'id' => 9303,
-            'parent_id' => 0,
-            'name' => 'franchise-venue',
-            'title' => '场地管理',
-            'icon' => 'venue',
-            'children' => [
-                ['id' => 9331, 'parent_id' => 9303, 'name' => 'franchise-venues', 'title' => '场地管理', 'icon' => 'venue', 'jump' => '/iframe/link/venue', 'sort' => 10],
-            ],
-        ],
-        [
-            'id' => 9304,
-            'parent_id' => 0,
-            'name' => 'franchise-finance',
-            'title' => '财务管理',
-            'icon' => 'finance',
-            'children' => [
-                ['id' => 9341, 'parent_id' => 9304, 'name' => 'franchise-income', 'title' => '收入明细', 'icon' => 'finance', 'jump' => '/iframe/link/incomedetails', 'sort' => 10],
-                ['id' => 9342, 'parent_id' => 9304, 'name' => 'franchise-withdraw', 'title' => '提现申请', 'icon' => 'finance', 'jump' => '/iframe/link/PaymentDisbursement_optimized', 'sort' => 20],
-            ],
-        ],
-        [
-            'id' => 9305,
-            'parent_id' => 0,
-            'name' => 'franchise-ops',
-            'title' => '运营管理',
-            'icon' => 'ops',
-            'children' => [
-                ['id' => 9351, 'parent_id' => 9305, 'name' => 'franchise-violations', 'title' => '违规记录', 'icon' => 'audit', 'jump' => '/iframe/link/ban_Record', 'sort' => 10],
-                ['id' => 9352, 'parent_id' => 9305, 'name' => 'franchise-black-users', 'title' => '拉黑用户', 'icon' => 'user', 'jump' => '/iframe/link/black_user_gmt', 'sort' => 20],
-                ['id' => 9353, 'parent_id' => 9305, 'name' => 'franchise-feedback', 'title' => '反馈信息', 'icon' => 'ops', 'jump' => '/iframe/link/feedback_mgt', 'sort' => 30],
-                ['id' => 9354, 'parent_id' => 9305, 'name' => 'franchise-reporthand', 'title' => '投诉处理', 'icon' => 'audit', 'jump' => '/iframe/link/reporthand', 'sort' => 40],
-            ],
-        ],
-        [
-            'id' => 9390,
-            'parent_id' => 0,
-            'name' => 'franchise-tools',
-            'title' => '系统工具',
-            'icon' => 'tools',
-            'children' => [
-                [
-                    'id' => 9391,
-                    'parent_id' => 9390,
-                    'name' => 'franchise-system-profile',
-                    'title' => '基本资料',
-                    'icon' => 'user',
-                    'jump' => '/iframe/link/system_profile',
-                    'sort' => 10,
-                ],
-            ],
-        ],
+        'id' => $id,
+        'parent_id' => $parentId,
+        'name' => $name,
+        'title' => $title,
+        'icon' => $icon,
+        'jump' => $jump,
+        'sort' => $sort,
     ];
 }
 
-function menu_compact_tree(array $menus, int $roleId): array
+function menu_group(int $id, string $name, string $title, string $icon, array $children, int $sort = 0): array
+{
+    return [
+        'id' => $id,
+        'parent_id' => 0,
+        'name' => $name,
+        'title' => $title,
+        'icon' => $icon,
+        'sort' => $sort,
+        'children' => $children,
+    ];
+}
+
+/**
+ * 管理员菜单：role_id = 1 / 2 使用。
+ * 后续临时改菜单，只改这里的数组即可。
+ */
+function menu_admin_tree(): array
+{
+    $baseMenu = [
+        menu_leaf(9000, 0, 'dashboard', '工作台', '', 'home', 0),
+    ];
+
+    $baseMenu[] = menu_group(9001, 'device', '设备管理', 'device', [
+        menu_leaf(25, 9001, 'device-list', '设备管理', '/iframe/link/deviceMgt', '', 1),
+        menu_leaf(38, 9001, 'img-mgmt', '图传管理', '/iframe/link/ImgNumberMgmt', '', 3),
+        menu_leaf(27, 9001, 'Faultapproval', '故障审批', '/iframe/link/Faultapproval', '', 4),
+        menu_leaf(72, 9001, 'device_information', '摄像管理', '/iframe/link/device_information', 'layui-icon-circle-dot', 5),
+    ], 1);
+
+    $baseMenu[] = menu_group(9002, 'venue', '场地管理', 'venue', [
+        menu_leaf(28, 9002, 'venue-mgmt', '场地管理', '/iframe/link/VenuesManagement', '', 1),
+        menu_leaf(60, 9002, 'pricing_options', '场地套餐', '/iframe/link/pricing_options', '', 1),
+        menu_leaf(29, 9002, 'zonemgt', '专区管理', '/iframe/link/zonemgt', '', 2),
+    ], 2);
+
+    $baseMenu[] = menu_group(9003, 'order', '订单管理', 'order', [
+        menu_leaf(63, 9003, 'order_report', '订单申诉', '/iframe/link/order_report', '', 1),
+        menu_leaf(65, 9003, 'AdminDrivingOrders', '订单查询', '/iframe/link/AdminDrivingOrders', 'layui-icon-search', 3),
+        menu_leaf(73, 9003, 'recharge_orders_api', '最新支付记录', '/iframe/link/recharge_orders_api', '', 4),
+    ], 3);
+
+    $baseMenu[] = menu_group(9004, 'user', '用户管理', 'user', [
+        menu_leaf(18, 9004, 'recharge', '用户管理', '/iframe/link/Balancerecharge', '', 0),
+        menu_leaf(12, 9004, 'franchise-management', '加盟管理', '/iframe/link/FranchiseManagement', '', 1),
+        menu_leaf(70, 9004, 'InvitationRank.html', '邀请排行', '/iframe/link/InvitationRank', '', 1),
+        menu_leaf(71, 9004, 'finance_demo', '用户金额核对', '/iframe/link/finance_demo', '', 4),
+        menu_leaf(9201, 9004, 'user-blacklist', '用户拉黑管理', '/iframe/link/black_user_gmt', 'user', 9201),
+    ], 4);
+
+    $baseMenu[] = menu_group(9005, 'finance', '财务管理', 'finance', [
+        menu_leaf(87, 9005, 'venue_funds', '账户管理', '/iframe/link/venue_funds', '', 1),
+        menu_leaf(61, 9005, 'CommodityTariff', '充值套餐', '/iframe/link/CommodityTariff', '', 2),
+        menu_leaf(77, 9005, 'payment_global_config_manage', '支付管理', '/iframe/link/payment_global_config_manage', '', 3),
+        menu_leaf(59, 9005, 'withdraw', '提现审批', '/iframe/link/paylist', '', 6),
+        menu_leaf(21, 9005, 'recharge-query', '充值查询', '/iframe/link/Rechargeinquiry', '', 8),
+        menu_leaf(24, 9005, 'money-query', '金额查询', '/iframe/link/amountSearch', '', 11),
+    ], 5);
+
+    $baseMenu[] = menu_group(9006, 'ops', '运营配置', 'ops', [
+        menu_leaf(31, 9006, 'ranking', '业绩排行', '/iframe/link/top', '', 1),
+        menu_leaf(67, 9006, 'MessageMgmt', '公告通知', '/iframe/link/MessageMgmt', '', 1),
+        menu_leaf(68, 9006, 'redis_notification', '飘瓶消息', '/iframe/link/redis_notification', '', 2),
+        menu_leaf(49, 9006, 'global_config_api', '全局配置', '/iframe/link/global_config_api', 'layui-icon-set-fill', 3),
+        menu_leaf(79, 9006, 'send_notify', '手机通知', '/iframe/link/send_notify', '', 3),
+        menu_leaf(57, 9006, 'app_images_admin', '轮播图管理', '/iframe/link/app_images_admin', '', 5),
+    ], 6);
+
+    $baseMenu[] = menu_group(9007, 'audit', '巡查审核', 'audit', [
+        menu_leaf(40, 9007, 'pidtext', '图文审核', '/iframe/link/pidtrueAndtextPedding', '', 2),
+        menu_leaf(64, 9007, 'reporthand', '订单投诉', '/iframe/link/reporthand', '', 2),
+        // 临时隐藏违规词管理，需要恢复时取消下面这一行注释即可。
+        // menu_leaf(81, 9007, 'barrage_words_mgt', '违规词管理', '/iframe/link/barrage_words_mgt', '', 2),
+        menu_leaf(41, 9007, 'ai_pratol', 'AI 巡查面板', '/iframe/link/ai_pratol', '', 3),
+        menu_leaf(42, 9007, 'pop_back', '人工巡查面板', '/iframe/link/pop_back', '', 4),
+        menu_leaf(43, 9007, 'ban-record', '违规记录查询', '/iframe/link/ban_Record', '', 5),
+    ], 7);
+
+    $baseMenu[] = menu_group(9008, 'tools', '系统工具', 'tools', [
+        menu_leaf(36, 9008, 'oss-list', '图床管理', '/iframe/link/ossImgGetlist', '', 1),
+        menu_leaf(9101, 9008, 'system-profile', '基本资料', '/iframe/link/system_profile', 'user', 9101),
+    ], 8);
+
+    return $baseMenu;
+}
+
+/**
+ * 加盟商菜单：role_id = 3 使用。
+ */
+function menu_franchise_tree(): array
+{
+    $baseMenu = [
+        menu_leaf(9000, 0, 'dashboard', '首页', '', 'home', 0),
+    ];
+
+    $baseMenu[] = menu_group(9301, 'franchise-order', '订单管理', 'order', [
+        menu_leaf(9311, 9301, 'franchise-orders', '订单管理', '/iframe/link/franchise_driving_orders', 'order', 10),
+        menu_leaf(9312, 9301, 'franchise-refunds', '退款记录', '/iframe/link/refund_records_fi', 'finance', 20),
+    ], 1);
+
+    $baseMenu[] = menu_group(9302, 'franchise-device', '设备管理', 'device', [
+        menu_leaf(9321, 9302, 'franchise-devices', '设备管理', '/iframe/link/vehicleslite', 'device', 10),
+        menu_leaf(9322, 9302, 'franchise-device-lock', '挂车占有', '/iframe/link/fill_energy', 'tools', 20),
+    ], 2);
+
+    $baseMenu[] = menu_group(9303, 'franchise-venue', '场地管理', 'venue', [
+        menu_leaf(9331, 9303, 'franchise-venues', '场地管理', '/iframe/link/venue', 'venue', 10),
+    ], 3);
+
+    $baseMenu[] = menu_group(9304, 'franchise-finance', '财务管理', 'finance', [
+        menu_leaf(9341, 9304, 'franchise-income', '收入明细', '/iframe/link/incomedetails', 'finance', 10),
+        menu_leaf(9342, 9304, 'franchise-withdraw', '提现申请', '/iframe/link/PaymentDisbursement_optimized', 'finance', 20),
+    ], 4);
+
+    $baseMenu[] = menu_group(9305, 'franchise-ops', '运营管理', 'ops', [
+        menu_leaf(9351, 9305, 'franchise-violations', '违规记录', '/iframe/link/ban_Record', 'audit', 10),
+        menu_leaf(9352, 9305, 'franchise-black-users', '拉黑用户', '/iframe/link/black_user_gmt', 'user', 20),
+        menu_leaf(9353, 9305, 'franchise-feedback', '反馈信息', '/iframe/link/feedback_mgt', 'ops', 30),
+        menu_leaf(9354, 9305, 'franchise-reporthand', '投诉处理', '/iframe/link/reporthand', 'audit', 40),
+    ], 5);
+
+    $baseMenu[] = menu_group(9390, 'franchise-tools', '系统工具', 'tools', [
+        menu_leaf(9391, 9390, 'franchise-system-profile', '基本资料', '/iframe/link/system_profile', 'user', 10),
+    ], 90);
+
+    return $baseMenu;
+}
+
+/**
+ * 参考旧项目 getMenuByRoleId 的入口函数。
+ */
+function getMenuByRoleId(int $roleId): array
 {
     if ($roleId === 3) {
         return menu_franchise_tree();
     }
 
-    $groups = [
-        'device' => ['id' => 9001, 'name' => 'device', 'title' => '设备管理', 'icon' => 'device', 'children' => []],
-        'venue' => ['id' => 9002, 'name' => 'venue', 'title' => '场地管理', 'icon' => 'venue', 'children' => []],
-        'order' => ['id' => 9003, 'name' => 'order', 'title' => '订单管理', 'icon' => 'order', 'children' => []],
-        'user' => ['id' => 9004, 'name' => 'user', 'title' => '用户管理', 'icon' => 'user', 'children' => []],
-        'finance' => ['id' => 9005, 'name' => 'finance', 'title' => '财务管理', 'icon' => 'finance', 'children' => []],
-        'ops' => ['id' => 9006, 'name' => 'ops', 'title' => '运营配置', 'icon' => 'ops', 'children' => []],
-        'audit' => ['id' => 9007, 'name' => 'audit', 'title' => '巡查审核', 'icon' => 'audit', 'children' => []],
-        'tools' => ['id' => 9008, 'name' => 'tools', 'title' => '系统工具', 'icon' => 'tools', 'children' => []],
-    ];
-
-    $hiddenMenuIds = menu_hidden_ids($menus);
-    $seen = [];
-    foreach ($menus as $menu) {
-        if (isset($hiddenMenuIds[(int)$menu['id']])) {
-            continue;
-        }
-
-        if (!menu_visible_for_role($menu, $roleId)) {
-            continue;
-        }
-
-        $jump = menu_normalize_jump($menu['jump'] ?? '');
-        if ($jump === '') {
-            continue;
-        }
-
-        if (menu_contains(menu_text($menu), ['user-list', 'user/user/list', '网站用户'])) {
-            $menu['name'] = 'franchise-management';
-            $menu['title'] = '加盟管理';
-            $jump = '/iframe/link/FranchiseManagement';
-        }
-
-        $featureKey = menu_feature_key($menu);
-        $dedupeKey = $featureKey !== '' ? $featureKey : ($jump !== '' ? $jump : (string)$menu['name']);
-        if (isset($seen[$dedupeKey])) {
-            continue;
-        }
-        $seen[$dedupeKey] = true;
-
-        $groupKey = menu_group_key($menu);
-        $groups[$groupKey]['children'][] = [
-            'id' => (int)$menu['id'],
-            'parent_id' => $groups[$groupKey]['id'],
-            'name' => (string)$menu['name'],
-            'title' => (string)$menu['title'],
-            'icon' => (string)($menu['icon'] ?? ''),
-            'jump' => $jump,
-            'sort' => (int)($menu['sort'] ?? 0),
-        ];
-    }
-
-    menu_append_user_blacklist_menu($groups, $roleId);
-    menu_append_system_tools($groups, $roleId);
-
-    $tree = [[
-        'id' => 9000,
-        'parent_id' => 0,
-        'name' => 'dashboard',
-        'title' => $roleId === 3 ? '首页' : '工作台',
-        'icon' => 'home',
-        'jump' => '',
-        'sort' => 0,
-    ]];
-
-    foreach ($groups as $group) {
-        if (!empty($group['children'])) {
-            $tree[] = $group;
-        }
-    }
-
-    return $tree;
+    // role_id = 1 / 2，以及其它后台角色，暂时都走管理员菜单。
+    return menu_admin_tree();
 }
 
 $token = (string)($_COOKIE[AUTH_COOKIE] ?? '');
@@ -375,10 +189,10 @@ if (!$user) {
     auth_out(1001, '未登录或会话已过期');
 }
 
-$menus = $db->query('SELECT id, parent_id, name, title, icon, jump, role_ids, sort FROM admin_menus ORDER BY sort ASC, id ASC');
+$roleId = (int)($user['role_id'] ?? 0);
 $db->close();
 
 auth_out(0, 'ok', [
-    'menus' => menu_compact_tree($menus ?: [], (int)$user['role_id']),
+    'menus' => getMenuByRoleId($roleId),
     'user' => auth_user_payload($user),
 ]);

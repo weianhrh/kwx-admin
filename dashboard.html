@@ -3168,15 +3168,6 @@
         padding: 0 8px;
       }
     }
-/* 手机端快捷入口：最后一个落单时占满整行，并让内容居中 */
-@media (max-width: 760px) {
-  .admin-workbench .quick-grid > .quick-card:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    justify-content: center;
-    text-align: center;
-  }
-}
-  
 /* 手机端快捷入口：最后一个落单时占满整行，图标和文字整体居中 */
 @media (max-width: 760px) {
   .admin-workbench .quick-grid > .quick-card:last-child:nth-child(odd) {
@@ -3327,7 +3318,6 @@
     const homeContent = pageContent.innerHTML;
     let menuTree = [];
     let currentUser = null;
-    let deviceFilters = { keyword: '', venueId: '' };
     let noticePollTimer = null;
     let currentNotice = null;
     let lastUnreadNotice = null;
@@ -3446,17 +3436,14 @@
       });
     }
 
-    const deferredMenuKeywords = [
-      '图传管理','金额查询',
-      '图床管理',
-       // 隐藏：违规词管理
+    // 临时隐藏项：菜单已经在 menu.php 硬编码，这里只兜底过滤首页快捷入口/旧接口残留。
+    const HIDDEN_ENTRY_KEYWORDS = [
       '违规词管理',
       '语音房', 'voice_room', 'voiceroom', 'voice-room', 'voice room',
       '礼物', 'gift',
       '金币', 'gold', 'gold_package', 'coin', 'coins',
       '娃娃机', '娃娃', 'doll', 'claw', '抓中', '发货',
       '开播时长', '场地开关播记录', '开关播记录', '开关播',
-      'live_duration', 'live_record', 'live_log', 'live_logs',
       '主播认证管理', '主播认证', 'anchor_auth', 'anchorauth',
       '移动工作台', 'mobile_workbench', 'mobileworkbench', 'mobile_workspace',
       'rc后台管理', 'rc 后台管理', 'rc后台', 'rc_admin', 'rc admin', 'adminbackstage'
@@ -3474,7 +3461,7 @@
 
     function isDeferredEntry(value) {
       const text = deferredText(value);
-      return deferredMenuKeywords.some(function(keyword) {
+      return HIDDEN_ENTRY_KEYWORDS.some(function(keyword) {
         return text.includes(keyword.toLowerCase());
       });
     }
@@ -3607,10 +3594,6 @@
         renderLegacyModule(item, { venueId: venueId });
         return;
       }
-      if (isDeviceChild(item)) {
-        renderDeviceSubpage(item);
-        return;
-      }
       renderModule(item);
     }
 
@@ -3625,16 +3608,6 @@
       if (isMobileSidebar()) {
         closeSidebar();
       }
-    }
-
-    function isDeviceChild(item) {
-      const deviceGroup = menuTree.find(function(group) {
-        return group.name === 'device';
-      });
-      if (!deviceGroup || !Array.isArray(deviceGroup.children)) return false;
-      return deviceGroup.children.some(function(child) {
-        return String(child.id) === String(item.id);
-      });
     }
 
     function renderModule(item) {
@@ -3931,16 +3904,6 @@
       };
       return escapeHtml(descriptions[name] || '');
     }
-
-    // function categoryCard(item) {
-    //   return '<article class="category-card" data-menu-id="' + item.id + '" onclick="openCategoryChild(this)">' +
-    //     '<div class="category-card-head">' +
-    //     '<div><h3>' + escapeHtml(item.title) + '</h3><p>' + moduleDescription(item) + '</p></div>' +
-    //     '<span class="category-card-icon">' + menuIcon(categoryIconName(item)) + '</span>' +
-    //     '</div>' +
-    //     '<code>' + escapeHtml(item.jump || '-') + '</code>' +
-    //     '</article>';
-    // }
     function categoryCard(item) {
       const desc = moduleDescription(item);
     
@@ -4092,284 +4055,6 @@
       const item = findMenu(el.dataset.menuId);
       if (!item) return;
       navigateToMenu(item.id);
-    }
-
-    function renderDeviceSubpage(item) {
-      if (isDeviceListPage(item)) {
-        renderDeviceListPage(item);
-        return;
-      }
-      const type = deviceSubpageType(item);
-      if (type === 'add') return renderDeviceAddPage(item);
-      if (type === 'fault') return renderDeviceDataPage(item, 'faults', './api/device/faults.php');
-      if (type === 'camera') return renderDeviceDataPage(item, 'cameras', './api/device/cameras.php');
-      if (type === 'photo') return renderDeviceDataPage(item, 'photos', './api/device/photos.php');
-      if (type === 'binding') return renderDeviceDataPage(item, 'bindings', './api/device/bindings.php');
-      const detail = devicePageDetail(item);
-      document.querySelector('.crumb span').textContent = '设备管理 / ' + item.name;
-      document.querySelector('.crumb strong').textContent = item.title;
-      pageContent.innerHTML = '<section class="subpage">' +
-        '<div class="subpage-head">' +
-        '<div class="subpage-title-row">' +
-        '<div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(detail.description) + '</p></div>' +
-        '<div class="subpage-status"></div>' +
-        '</div>' +
-        '<div class="subpage-meta">' +
-        '<span>menu_id: ' + escapeHtml(String(item.id)) + '</span>' +
-        '<span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span>' +
-        '<span>module: device</span>' +
-        '</div>' +
-        '</div>' +
-        '<div class="subpage-layout">' +
-        '<section class="subpage-section"><h3>页面结构</h3><ul class="subpage-list">' +
-        detail.sections.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
-        '</ul></section>' +
-        '<aside class="subpage-section"><h3></h3><ul class="subpage-list">' +
-        detail.apis.map(function(text) { return '<li>' + escapeHtml(text) + '</li>'; }).join('') +
-        '</ul></aside>' +
-        '</div>' +
-        '</section>';
-    }
-
-    function deviceSubpageType(item) {
-      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
-      if (text.includes('adddev') || text.includes('添加')) return 'add';
-      if (text.includes('fault') || text.includes('故障')) return 'fault';
-      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) return 'camera';
-      if (text.includes('photo') || text.includes('img') || text.includes('图片')) return 'photo';
-      if (text.includes('bind') || text.includes('vehicles_manage')) return 'binding';
-      return 'other';
-    }
-
-    async function renderDeviceAddPage(item) {
-      document.querySelector('.crumb span').textContent = '设备管理 / add';
-      document.querySelector('.crumb strong').textContent = item.title;
-      pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载场地数据...</div></section>';
-      try {
-        const response = await fetch('./api/device/form-data.php', { credentials: 'same-origin', cache: 'no-store' });
-        const result = await response.json();
-        if (result.code !== 0) throw new Error(result.msg || 'form data failed');
-        const venues = (result.data && result.data.venues) || [];
-        pageContent.innerHTML = '<section class="subpage">' +
-          '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>新增设备页面</p></div><div class="subpage-status">表单预览</div></div></div>' +
-          '<section class="subpage-section"><h3>设备基础信息</h3><div class="form-grid">' +
-          formField('设备编号', '<input type="text" placeholder="请输入 serial_number">') +
-          formField('设备名称', '<input type="text" placeholder="请输入设备名称">') +
-          formField('所属场地', '<select><option>请选择场地</option>' + venues.map(function(v){ return '<option>' + escapeHtml(v.venue_name || ('场地 ' + v.id)) + '</option>'; }).join('') + '</select>') +
-          formField('摄像设备 ID', '<input type="text" placeholder="image_device_serial">') +
-          '</div><div class="device-pager"><span></span><button class="primary-btn" type="button" disabled>保存设备</button></div></section>' +
-          '</section>';
-      } catch (error) {
-        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">新增设备表单加载失败。</div></section>';
-      }
-    }
-
-    function formField(label, control) {
-      return '<div class="form-field"><label>' + escapeHtml(label) + '</label>' + control + '</div>';
-    }
-
-    async function renderDeviceDataPage(item, type, url) {
-      document.querySelector('.crumb span').textContent = '设备管理 / ' + type;
-      document.querySelector('.crumb strong').textContent = item.title;
-      pageContent.innerHTML = '<section class="subpage"><div class="empty-state">正在加载' + escapeHtml(item.title) + '数据...</div></section>';
-      try {
-        const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
-        const result = await response.json();
-        if (result.code !== 0) throw new Error(result.msg || 'device subpage failed');
-        const rows = (result.data && result.data.rows) || [];
-        pageContent.innerHTML = buildDeviceDataHtml(item, type, rows);
-      } catch (error) {
-        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">' + escapeHtml(item.title) + '数据加载失败。</div></section>';
-      }
-    }
-
-    function buildDeviceDataHtml(item, type, rows) {
-      const columns = deviceColumns(type);
-      return '<section class="subpage">' +
-        '<div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(deviceDataDescription(type)) + '</p></div><div class="subpage-status">真实数据</div></div><div class="subpage-meta"><span>记录数：' + rows.length + '</span><span>legacy_jump: ' + escapeHtml(item.jump || '-') + '</span></div></div>' +
-        '<section class="subpage-section">' +
-        (rows.length ? genericTable(columns, rows) + genericCards(columns, rows) : '<div class="empty-state">暂无数据</div>') +
-        '</section></section>';
-    }
-
-    function deviceDataDescription(type) {
-      return {
-        faults: '展示设备故障记录和处理状态',
-        cameras: '展示摄像设备、房间号、推流 ID 和关联设备信息',
-        photos: '展示设备图片、摄像设备编号和更新时间',
-        bindings: '展示设备 UID、绑定场地和共享状态'
-      }[type] || '设备子功能数据列表';
-    }
-
-    function deviceColumns(type) {
-      const maps = {
-        faults: [['serial_number','设备编号'], ['name','设备名称'], ['venue_name','场地'], ['fault_reason','故障原因'], ['resolved_status','状态'], ['created_at','时间']],
-        cameras: [['id','ID'], ['device_id','设备ID'], ['room_id','房间号'], ['rtc_user_id','RTC用户'], ['serial_number','关联设备'], ['venue_name','场地']],
-        photos: [['serial_number','设备编号'], ['name','设备名称'], ['venue_name','场地'], ['photo_url','图片'], ['image_device_serial','摄像ID'], ['updated_at','更新']],
-        bindings: [['serial_number','设备编号'], ['name','设备名称'], ['uid','UID'], ['venue_name','场地'], ['status','状态'], ['sharing_status','共享']]
-      };
-      return maps[type] || [];
-    }
-
-    function genericTable(columns, rows) {
-      return '<div class="device-table"><table><thead><tr>' + columns.map(function(c){ return '<th>' + escapeHtml(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-        rows.map(function(row){ return '<tr>' + columns.map(function(c){ return '<td>' + escapeHtml(row[c[0]] == null ? '-' : row[c[0]]) + '</td>'; }).join('') + '</tr>'; }).join('') +
-        '</tbody></table></div>';
-    }
-
-    function genericCards(columns, rows) {
-      return '<div class="device-cards">' + rows.map(function(row) {
-        const titleKey = columns[0] ? columns[0][0] : '';
-        return '<article class="device-card"><div class="device-card-head"><div><h3>' + escapeHtml(row[titleKey] || '-') + '</h3><p>' + escapeHtml(columns[0] ? columns[0][1] : '') + '</p></div></div><div class="device-card-grid">' +
-          columns.slice(1).map(function(c){ return '<div><span>' + escapeHtml(c[1]) + '</span><b>' + escapeHtml(row[c[0]] == null ? '-' : row[c[0]]) + '</b></div>'; }).join('') +
-          '</div></article>';
-      }).join('') + '</div>';
-    }
-
-    function isDeviceListPage(item) {
-      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
-      return text.includes('devicemgt') || text.includes('devicemgtv2') || text.includes('device-list') || text.includes('设备管理');
-    }
-
-    async function renderDeviceListPage(item) {
-      document.querySelector('.crumb span').textContent = '设备管理 / list';
-      document.querySelector('.crumb strong').textContent = item.title;
-      pageContent.innerHTML = '<section class="subpage"><div class="subpage-head"><div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>设备列表</p></div><div class="subpage-status"></div></div></div><div class="empty-state">正在加载设备数据...</div></section>';
-      await loadDeviceList(1);
-    }
-
-    async function loadDeviceList(page) {
-      const keyword = document.getElementById('deviceKeyword') ? document.getElementById('deviceKeyword').value.trim() : '';
-      const venueId = document.getElementById('deviceVenue') ? document.getElementById('deviceVenue').value : '';
-      deviceFilters = { keyword, venueId };
-      const params = new URLSearchParams({ page: String(page || 1), limit: '20' });
-      if (keyword) params.set('keyword', keyword);
-      if (venueId) params.set('venue_id', venueId);
-
-      try {
-        const response = await fetch('./api/device/list.php?' + params.toString(), {
-          credentials: 'same-origin',
-          cache: 'no-store'
-        });
-        const result = await response.json();
-        if (result.code !== 0) {
-          throw new Error(result.msg || 'device list failed');
-        }
-        renderDeviceList(result.data || {});
-      } catch (error) {
-        pageContent.innerHTML = '<section class="subpage"><div class="empty-state">设备数据加载失败，请稍后重试。</div></section>';
-      }
-    }
-
-    function renderDeviceList(data) {
-      const devices = data.devices || [];
-      const stats = data.stats || {};
-      const page = Number(data.page || 1);
-      const limit = Number(data.limit || 20);
-      const total = Number(data.total || 0);
-      const pages = Math.max(1, Math.ceil(total / limit));
-
-      pageContent.innerHTML = '<section class="subpage">' +
-        '<div class="subpage-head">' +
-        '<div class="subpage-title-row"><div class="subpage-title"><h2>设备管理</h2><p>查看设备运行状态、绑定场地、摄像房间号和封禁状态。</p></div><div class="subpage-status">真实数据</div></div>' +
-        '<div class="subpage-meta"><span>总设备：' + formatInt(stats.total) + '</span><span>在线：' + formatInt(stats.online) + '</span><span>离线：' + formatInt(stats.offline) + '</span><span>封禁：' + formatInt(stats.banned) + '</span></div>' +
-        '</div>' +
-        '<section class="subpage-section">' +
-        '<div class="device-toolbar">' +
-        '<div class="device-filters">' +
-        '<input class="device-input" id="deviceKeyword" type="search" placeholder="搜索设备编号、名称、场地" value="' + escapeHtml(deviceFilters.keyword || '') + '">' +
-        venueSelect(data.venues || []) +
-        '<button class="primary-btn" type="button" onclick="loadDeviceList(1)">查询</button>' +
-        '</div>' +
-        '<button class="ghost-btn" type="button" onclick="loadDeviceList(' + page + ')">刷新</button>' +
-        '</div>' +
-        (devices.length ? deviceTable(devices) + deviceCards(devices) : '<div class="empty-state">暂无设备数据</div>') +
-        '<div class="device-pager"><button class="ghost-btn" type="button" ' + (page <= 1 ? 'disabled' : '') + ' onclick="loadDeviceList(' + (page - 1) + ')">上一页</button><span>第 ' + page + ' / ' + pages + ' 页，共 ' + total + ' 条</span><button class="ghost-btn" type="button" ' + (page >= pages ? 'disabled' : '') + ' onclick="loadDeviceList(' + (page + 1) + ')">下一页</button></div>' +
-        '</section>' +
-        '</section>';
-    }
-
-    function venueSelect(venues) {
-      if (!venues.length) return '';
-      return '<select class="device-select" id="deviceVenue"><option value="">全部场地</option>' + venues.map(function(venue) {
-        const selected = String(deviceFilters.venueId || '') === String(venue.id) ? ' selected' : '';
-        return '<option value="' + escapeHtml(String(venue.id)) + '"' + selected + '>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) + '</option>';
-      }).join('') + '</select>';
-    }
-
-    function deviceTable(devices) {
-      return '<div class="device-table"><table><thead><tr><th>设备</th><th>场地</th><th>状态</th><th>摄像</th><th>电量</th><th>更新时间</th></tr></thead><tbody>' +
-        devices.map(function(device) {
-          return '<tr><td><div class="device"><span class="device-icon">' + menuIcon('device') + '</span><div><b>' + escapeHtml(device.name || device.serial_number || '-') + '</b><span>' + escapeHtml(device.serial_number || '-') + '</span></div></div></td>' +
-          '<td>' + escapeHtml(device.venue_name || device.bind_site || '-') + '</td>' +
-          '<td>' + deviceStatus(device) + '</td>' +
-          '<td>' + escapeHtml(device.image_device_room_id || device.image_device_serial || '-') + '</td>' +
-          '<td>' + escapeHtml(device.battery_level || '-') + '</td>' +
-          '<td>' + escapeHtml(device.updated_at || '-') + '</td></tr>';
-        }).join('') +
-        '</tbody></table></div>';
-    }
-
-    function deviceCards(devices) {
-      return '<div class="device-cards">' + devices.map(function(device) {
-        return '<article class="device-card"><div class="device-card-head"><div><h3>' + escapeHtml(device.name || device.serial_number || '-') + '</h3><p>' + escapeHtml(device.serial_number || '-') + '</p></div>' + deviceStatus(device) + '</div>' +
-          '<div class="device-card-grid">' +
-          '<div><span>场地</span><b>' + escapeHtml(device.venue_name || device.bind_site || '-') + '</b></div>' +
-          '<div><span>摄像</span><b>' + escapeHtml(device.image_device_room_id || device.image_device_serial || '-') + '</b></div>' +
-          '<div><span>电量</span><b>' + escapeHtml(device.battery_level || '-') + '</b></div>' +
-          '<div><span>更新</span><b>' + escapeHtml(device.updated_at || '-') + '</b></div>' +
-          '</div></article>';
-      }).join('') + '</div>';
-    }
-
-    function deviceStatus(device) {
-      if (Number(device.is_banned || 0) === 1) return '<span class="tag off">封禁</span>';
-      if (String(device.status || '') === '在线') return '<span class="tag ok">在线</span>';
-      return '<span class="tag warn">' + escapeHtml(device.status || '离线') + '</span>';
-    }
-
-    function devicePageDetail(item) {
-      const text = ((item.name || '') + ' ' + (item.title || '') + ' ' + (item.jump || '')).toLowerCase();
-      if (text.includes('adddev') || text.includes('添加')) {
-        return {
-          description: '用于新增设备资料、绑定场地和录入基础参数。',
-          sections: ['基础信息：设备编号、设备类型、所属场地', '连接信息：推流地址、控制协议、在线状态', '提交区：保存、重置和返回设备列表'],
-          apis: ['/api/devMgr/addDev.php', '/api/devMgr/devMgtV2.php?get_venues']
-        };
-      }
-      if (text.includes('fault') || text.includes('故障')) {
-        return {
-          description: '用于查看设备故障、审批处理结果和维护记录。',
-          sections: ['故障概览：待处理、处理中、已完成', '故障列表：设备、场地、原因、上报时间', '处理动作：通过、驳回、备注'],
-          apis: ['/api/devMgr/getFaultDevices.php', '/api/devMgr/updateFaultStatus.php', '/api/devMgr/get_fault_summary.php']
-        };
-      }
-      if (text.includes('camera') || text.includes('摄像') || text.includes('device_information')) {
-        return {
-          description: '用于管理设备摄像头、画面状态和直播相关信息。',
-          sections: ['摄像设备列表：场地、设备、在线状态', '画面状态：最近心跳、异常提示', '维护动作：刷新、查看、重新绑定'],
-          apis: ['/api/devMgr/device_information.php', '/api/devMgr/check_stream_set_sn_status.php']
-        };
-      }
-      if (text.includes('photo') || text.includes('img') || text.includes('图片')) {
-        return {
-          description: '用于维护设备图片、编号图片和展示素材。',
-          sections: ['图片列表：设备编号、当前图片、更新时间', '上传区：单图上传、批量替换', '校验区：图片缺失、格式异常'],
-          apis: ['/api/devMgr/UploadImgNumber.php', '/api/devMgr/QueryImgNumber.php', '/api/operat/update_vehicle_photos.php']
-        };
-      }
-      if (text.includes('bind') || text.includes('vehicles_manage')) {
-        return {
-          description: '用于管理设备绑定关系、车辆资料和场地关联。',
-          sections: ['绑定列表：设备、车辆、场地、状态', '筛选工具：场地、设备类型、关键词', '维护动作：绑定、解绑、同步'],
-          apis: ['/api/devMgr/vehicles_manage.php', '/api/devMgr/syncSingleVehicleToDr.php']
-        };
-      }
-      return {
-        description: '用于查看设备列表、运行状态、所属场地和基础维护操作，是设备管理模块的主页面。',
-        sections: ['指标区：在线设备、离线设备、异常设备', '设备表格：编号、场地、类型、状态、最后心跳', '操作区：详情、编辑、同步、维护记录'],
-        apis: ['/api/devMgr/devMgtV2.php', '/api/operat/online_devices.php', '/api/operat/latest_device_run.php']
-      };
     }
 
     async function renderWorkbench() {
@@ -4772,43 +4457,6 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         '</div>' +
         '</div>';
     }
-
-    // function buildFranchiseWorkbenchHtml(data, metrics) {
-    //   const franchise = data.franchise || {};
-    //   const notices = Array.isArray(franchise.notices) ? franchise.notices : [];
-    //   return '' +
-    //     '<div class="workbench-head">' +
-    //     '<div class="workbench-title"><h2>首页</h2><p>' + escapeHtml(franchise.venue_name || data.venue_name || '酷玩星加盟商工作台') + ' · 场地运营数据实时概览</p></div>' +
-    //     '<button class="ghost-btn" type="button" onclick="renderWorkbench()">刷新数据</button>' +
-    //     '</div>' +
-    //     '<div class="stats">' +
-    //     statCard('场地', formatInt(metrics.franchiseVenueCount || 0) + ' 个', franchise.venue_name || '当前账号绑定场地', 'venue') +
-    //     statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
-    //     statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
-    //     statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
-    //     '</div>' +
-    //     '<div class="workbench-grid">' +
-    //     '<section class="panel dashboard-notice-panel">' +
-    //       '<div class="panel-head">' +
-    //         '<div class="panel-title">' +
-    //           '<strong>官方通知</strong>' +
-    //           '<span>平台公告、结算提醒与运营通知</span>' +
-    //         '</div>' +
-    //         '<button class="ghost-btn" type="button" onclick="loadDashboardMessages()">刷新通知</button>' +
-    //       '</div>' +
-    //       '<div class="dashboard-notice-list" id="dashboardNoticeList">' +
-    //         '<div class="empty-state">官方通知加载中...</div>' +
-    //       '</div>' +
-    //     '</section>' +
-    //     '<aside class="side-stack">' +
-    //     '<section class="panel"><div class="panel-head"><div class="panel-title"><strong>场地概况</strong><span>加盟商账号绑定信息</span></div></div><div class="todo-list">' +
-    //     infoItem('场地名称', franchise.venue_name || data.venue_name || '-') +
-    //     infoItem('场地编号', franchise.venue_id ? '#' + franchise.venue_id : '-') +
-    //     infoItem('设备状态', formatInt(metrics.franchiseOnlineDevices || 0) + ' 台在线') +
-    //     '</div></section>' +
-    //     '</aside>' +
-    //     '</div>';
-    // }
     function buildFranchiseWorkbenchHtml(data, metrics) {
   const franchise = data.franchise || {};
   const venues = Array.isArray(franchise.venues) ? franchise.venues : [];
