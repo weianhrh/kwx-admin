@@ -3461,6 +3461,8 @@
 
     function isDeferredEntry(value) {
       const text = deferredText(value);
+      // “赠送能量”页面名称包含 gift，但它不是当前暂缓开放的礼物功能。
+      if (text.includes('energygift') || text.includes('赠送能量')) return false;
       return HIDDEN_ENTRY_KEYWORDS.some(function(keyword) {
         return text.includes(keyword.toLowerCase());
       });
