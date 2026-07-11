@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>违规复查</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+    .page {
+      max-width: 1880px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    .header {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+      margin-bottom: 16px;
+    }
+    .title {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: 0.9fr 1.3fr auto;
+      gap: 8px;
+    }
+    .filters .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filters label {
+      font-size: 12px;
+      color: #666;
+    }
+    .filters input,
+    .filters select,
+    .filters button {
+      height: 34px;
+      border-radius: 7px;
+      border: 1px solid #d9dfeb;
+      padding: 0 9px;
+      font-size: 12px;
+    }
+    .filters button {
+      cursor: pointer;
+      background: #1677ff;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+    }
+    .filters button.secondary {
+      background: #eef3ff;
+      color: #1677ff;
+      border: 1px solid #cddcff;
+    }
+
+    .summary {
+      margin: 12px 0 0;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .card .img-wrap {
+      position: relative;
+      background: #000;
+      aspect-ratio: 5 / 6;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .card .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .tag-row {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(2px);
+    }
+    .tag.pending { background: #fa8c16; }
+    .tag.banned { background: #cf1322; }
+    .tag.cleared { background: #389e0d; }
+
+    .time-bar {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      color: #fff;
+      font-size: 10px;
+      line-height: 1.35;
+      background: rgba(0,0,0,.42);
+      border-radius: 7px;
+      padding: 5px 7px;
+    }
+
+    .card-body {
+      padding: 8px 10px 10px;
+    }
+    .meta-line {
+      margin-bottom: 5px;
+      font-size: 12px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .meta-label {
+      color: #666;
+    }
+    .risk-high { color: #cf1322; font-weight: 700; }
+    .risk-medium { color: #d46b08; font-weight: 700; }
+    .risk-low { color: #1677ff; font-weight: 700; }
+    .risk-safe { color: #389e0d; font-weight: 700; }
+
+    .reason-box {
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 7px 8px;
+      background: #f7f8fc;
+      border-radius: 7px;
+      margin-bottom: 8px;
+      color: #444;
+      min-height: 46px;
+    }
+
+    .append-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .append-btn {
+      flex: 1;
+      height: 30px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      background: #cf1322;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .append-btn[disabled] {
+      background: #d9d9d9;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+
+    .batch-bar {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .batch-bar button {
+      height: 30px;
+      border-radius: 7px;
+      border: none;
+      padding: 0 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      background: #1677ff;
+      color: #fff;
+    }
+
+    .batch-bar button.danger {
+      background: #cf1322;
+    }
+
+    .batch-bar button.gray {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #d9dfeb;
+    }
+
+    .batch-bar button:disabled {
+      background: #d9d9d9;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .checked-info {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .review-select-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+      padding: 6px 7px;
+      background: #fff7e6;
+      border: 1px solid #ffd591;
+      border-radius: 7px;
+      font-size: 12px;
+    }
+
+    .review-select-line label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #ad4e00;
+    }
+
+    .review-select-line input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .review-select-line .keep-text {
+      color: #888;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .card.not-selected {
+      opacity: .78;
+      outline: 2px dashed #faad14;
+    }
+
+    .empty {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 16px;
+      text-align: center;
+      color: #888;
+      box-shadow: 0 4px 16px rgba(0,0,0,.05);
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 12px 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .pagination button,
+    .pagination select {
+      height: 30px;
+      border-radius: 7px;
+      border: 1px solid #d9dfeb;
+      padding: 0 9px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .pagination button:disabled {
+      color: #aaa;
+      background: #f5f5f5;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .modal-mask.show { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    .modal h3 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+    .modal .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .modal input,
+    .modal select,
+    .modal textarea,
+    .modal button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #d9dfeb;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    .modal textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+    .modal .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .modal .actions button {
+      height: 42px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-primary { background: #cf1322; color: #fff; }
+    .btn-gray { background: #f0f0f0; color: #333; }
+
+    .img-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 16px;
+    }
+    .img-modal.show { display: flex; }
+    .img-modal img {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #000;
+    }
+
+    @media (max-width: 1100px) {
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .filters {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1 class="title">违规复查</h1>
+
+      <div class="filters">
+        <div class="field">
+          <label>状态</label>
+          <select id="status">
+            <option value="all">全部</option>
+            <option value="pending">消失未处理</option>
+            <option value="banned">已追封</option>
+            <option value="cleared">已清理</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>关键词</label>
+          <input type="text" id="keyword" placeholder="场地 / 设备 / 原因" />
+        </div>
+        <div class="field" style="justify-content:end;">
+          <label style="visibility:hidden;">操作</label>
+          <div style="display:flex; gap:6px;">
+            <button onclick="searchList()">查询</button>
+            <button class="secondary" onclick="resetDefault()">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary" id="summaryText">加载中...</div>
+
+      <div class="batch-bar">
+        <button type="button" onclick="selectCurrentPage(true)">全选本页</button>
+        <button type="button" class="gray" onclick="selectCurrentPage(false)">全不选本页</button>
+        <button type="button" class="danger" id="batchIgnoreBtn" onclick="batchIgnoreChecked()">忽略已勾选</button>
+        <span class="checked-info" id="checkedInfo">已选 0 条</span>
+      </div>
+    </div>
+
+    <div class="grid" id="listBox"></div>
+
+    <div class="pagination" id="paginationBox" style="display:none;">
+      <button onclick="goPage(1)" id="firstPageBtn">首页</button>
+      <button onclick="goPage(currentPage - 1)" id="prevPageBtn">上一页</button>
+      <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+      <button onclick="goPage(currentPage + 1)" id="nextPageBtn">下一页</button>
+      <button onclick="goPage(totalPages)" id="lastPageBtn">末页</button>
+      <select id="pageSize" onchange="changePageSize()">
+        <option value="10">每页10条</option>
+        <option value="20" selected>每页20条</option>
+        <option value="30">每页30条</option>
+        <option value="50">每页50条</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 追封弹窗 -->
+  <div class="modal-mask" id="appendBanMask">
+    <div class="modal">
+      <h3>追封</h3>
+      <div class="field">
+        <label>归档键</label>
+        <input type="text" id="appendArchiveKey" readonly />
+      </div>
+      <div class="field">
+        <label>封禁时长</label>
+        <select id="appendBanDuration">
+          <option value="10">10分钟</option>
+          <option value="20">20分钟</option>
+          <option value="30">30分钟</option>
+          <option value="60">1小时</option>
+          <option value="360">6小时</option>
+          <option value="720">12小时</option>
+          <option value="1440">1天</option>
+          <option value="4320">3天</option>
+          <option value="10080">7天</option>
+          <option value="43200">1月</option>
+          <option value="525600">1年</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>实际标记</label>
+        <select id="appendManualRisk">
+          <option value="">不修改</option>
+          <option value="safe">安全</option>
+          <option value="low">低风险</option>
+          <option value="medium">中风险</option>
+          <option value="high">高风险</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>封禁原因</label>
+        <textarea id="appendBanReason" placeholder="请输入追封原因"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="submitAppendBan()">确认追封</button>
+        <button class="btn-gray" onclick="closeAppendBan()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 放大图 -->
+  <div class="img-modal" id="imgModal" onclick="closeImgModal()">
+    <img id="imgModalInner" src="" alt="预览图" />
+  </div>
+
+  <script>
+    let currentList = [];
+    let currentAppendItem = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalCount = 0;
+
+    function resetDefault() {
+      document.getElementById('status').value = 'all';
+      document.getElementById('keyword').value = '';
+      currentPage = 1;
+      loadList();
+    }
+
+    function searchList() {
+      currentPage = 1;
+      loadList();
+    }
+
+    function changePageSize() {
+      currentPage = 1;
+      loadList();
+    }
+
+    function goPage(page) {
+      if (page < 1 || page > totalPages || page === currentPage) return;
+      currentPage = page;
+      loadList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updatePagination(data) {
+      totalCount = Number(data.total || 0);
+      currentPage = Number(data.page || 1);
+      totalPages = Number(data.total_pages || 1);
+      if (totalPages < 1) totalPages = 1;
+
+      const paginationBox = document.getElementById('paginationBox');
+      paginationBox.style.display = totalCount > 0 ? 'flex' : 'none';
+
+      document.getElementById('pageInfo').innerText =
+        `第 ${currentPage} / ${totalPages} 页，共 ${totalCount} 条`;
+
+      document.getElementById('firstPageBtn').disabled = currentPage <= 1;
+      document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+      document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+      document.getElementById('lastPageBtn').disabled = currentPage >= totalPages;
+    }
+
+    function riskClass(level) {
+      switch (level) {
+        case 'high': return 'risk-high';
+        case 'medium': return 'risk-medium';
+        case 'low': return 'risk-low';
+        case 'safe': return 'risk-safe';
+        default: return '';
+      }
+    }
+
+    function tagClass(status) {
+      if (status === '已追封') return 'banned';
+      if (status === '已清理') return 'cleared';
+      return 'pending';
+    }
+
+    function openImgModal(url) {
+      const modal = document.getElementById('imgModal');
+      const img = document.getElementById('imgModalInner');
+      img.src = url;
+      modal.classList.add('show');
+    }
+
+    function closeImgModal() {
+      document.getElementById('imgModal').classList.remove('show');
+    }
+
+    function escapeAttr(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function updateCheckedInfo() {
+      const checks = Array.from(document.querySelectorAll('.review-ignore-check'));
+      const checked = checks.filter(item => item.checked).length;
+      const kept = checks.length - checked;
+      const info = document.getElementById('checkedInfo');
+      if (info) {
+        info.innerText = `本页已勾选 ${checked} 条，将保留 ${kept} 条`;
+      }
+
+      const btn = document.getElementById('batchIgnoreBtn');
+      if (btn) {
+        btn.disabled = checked <= 0;
+      }
+    }
+
+    function onReviewCheckChange(checkbox) {
+      const card = checkbox.closest('.card');
+      if (card) {
+        card.classList.toggle('not-selected', !checkbox.checked);
+      }
+      updateCheckedInfo();
+    }
+
+    function selectCurrentPage(checked) {
+      document.querySelectorAll('.review-ignore-check').forEach(item => {
+        item.checked = checked;
+        const card = item.closest('.card');
+        if (card) {
+          card.classList.toggle('not-selected', !checked);
+        }
+      });
+      updateCheckedInfo();
+    }
+
+    function getCheckedArchiveKeys() {
+      return Array.from(document.querySelectorAll('.review-ignore-check:checked'))
+        .map(item => item.dataset.archiveKey || '')
+        .filter(Boolean);
+    }
+
+    async function batchIgnoreChecked() {
+      const archiveKeys = getCheckedArchiveKeys();
+      const pageSize = document.getElementById('pageSize').value;
+      const kept = document.querySelectorAll('.review-ignore-check:not(:checked)').length;
+
+      if (!archiveKeys.length) {
+        alert('本页没有勾选要忽略的卡片');
+        return;
+      }
+
+      if (!confirm(`确定忽略本页已勾选的 ${archiveKeys.length} 条吗？\n取消勾选的 ${kept} 条会继续保留在复审列表里。`)) {
+        return;
+      }
+
+      const btn = document.getElementById('batchIgnoreBtn');
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = '忽略中...';
+
+      const fd = new URLSearchParams();
+      fd.append('archive_keys', JSON.stringify(archiveKeys));
+      fd.append('page', currentPage);
+      fd.append('page_size', pageSize);
+
+      try {
+        const res = await fetch('/api/pop/clear_device_violation_review_ignore.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: fd.toString()
+        });
+
+        const json = await res.json();
+        alert(json.message || (json.success ? '忽略成功' : '忽略失败'));
+
+        if (json.success) {
+          // 重新拉当前分页。后端会在当前页超出总页数时自动回到最后一页。
+          await loadList();
+        }
+      } catch (e) {
+        alert('请求异常：' + e);
+      } finally {
+        btn.innerText = oldText;
+        updateCheckedInfo();
+      }
+    }
+
+    function buildCard(item) {
+      const disabled = item.review_status === 'banned' ? 'disabled' : '';
+      const btnText = item.review_status === 'banned' ? '已追封' : '追封';
+
+      return `
+        <div class="card" data-archive-key="${escapeAttr(item.archive_key || '')}">
+          <div class="img-wrap" onclick="openImgModal('${item.display_image_url || ''}')">
+            <img src="${item.display_image_url || ''}" alt="违规图" loading="lazy" onerror="this.src='${item.image_url || ''}'">
+            <div class="tag-row">
+              <span class="tag ${tagClass(item.display_status)}">${item.display_status}</span>
+              ${item.is_append_processed == 1 ? `<span class="tag banned">已追加处理</span>` : ``}
+            </div>
+            <div class="time-bar">
+              <div>抓取时间：${item.grab_time || '-'}</div>
+              <div>展示时间：${item.display_time || '-'}</div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="review-select-line">
+              <label>
+                <input type="checkbox" class="review-ignore-check" checked
+                  data-archive-key="${escapeAttr(item.archive_key || '')}"
+                  onchange="onReviewCheckChange(this)">
+                勾选忽略
+              </label>
+              <span class="keep-text">取消=保留</span>
+            </div>
+            <div class="meta-line"><span class="meta-label">场地：</span>${item.venue_name || '-'}</div>
+            <div class="meta-line"><span class="meta-label">设备：</span>${item.device_name || item.image_device_serial || '-'}</div>
+            <div class="meta-line">
+              <span class="meta-label">风险等级：</span>
+              <span class="${riskClass(item.risk_level)}">${item.risk_level_text || '-'}</span>
+            </div>
+
+            <div class="reason-box">
+              <div><strong>原因：</strong>${item.reason || '-'}</div>
+              ${item.ban_reason ? `<div style="margin-top:6px;"><strong>封禁原因：</strong>${item.ban_reason}</div>` : ``}
+            </div>
+
+            <div class="append-bar">
+              <button class="append-btn" ${disabled}
+                onclick='openAppendBan(${JSON.stringify(item)})'>${btnText}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadList() {
+      const status = document.getElementById('status').value;
+      const keyword = document.getElementById('keyword').value.trim();
+      const pageSize = document.getElementById('pageSize').value;
+
+      const params = new URLSearchParams();
+      params.append('status', status);
+      params.append('keyword', keyword);
+      params.append('page', currentPage);
+      params.append('page_size', pageSize);
+
+      const box = document.getElementById('listBox');
+      box.innerHTML = '<div class="empty">加载中...</div>';
+
+      try {
+        const res = await fetch('/api/pop/get_device_violation_review_list.php?' + params.toString());
+        const json = await res.json();
+
+        if (!json.success) {
+          box.innerHTML = `<div class="empty">${json.message || '加载失败'}</div>`;
+          document.getElementById('summaryText').innerText = '加载失败';
+          document.getElementById('paginationBox').style.display = 'none';
+          updateCheckedInfo();
+          return;
+        }
+
+        currentList = json.data.list || [];
+        updatePagination(json.data);
+
+        document.getElementById('summaryText').innerText =
+          `高风险共 ${json.data.total || 0} 条 ｜ 当前页 ${currentList.length} 条 ｜ 时间范围：${json.data.start_time} ～ ${json.data.end_time}`;
+
+        if (!currentList.length) {
+          box.innerHTML = '<div class="empty">当前没有数据</div>';
+          updateCheckedInfo();
+          return;
+        }
+
+        box.innerHTML = currentList.map(buildCard).join('');
+        updateCheckedInfo();
+      } catch (e) {
+        box.innerHTML = `<div class="empty">请求异常：${e}</div>`;
+        document.getElementById('summaryText').innerText = '请求异常';
+        document.getElementById('paginationBox').style.display = 'none';
+      }
+    }
+
+    function openAppendBan(item) {
+      currentAppendItem = item;
+      document.getElementById('appendArchiveKey').value = item.archive_key || '';
+      document.getElementById('appendBanDuration').value = '10';
+      document.getElementById('appendManualRisk').value = item.manual_risk || '';
+      document.getElementById('appendBanReason').value = item.reason || '';
+      document.getElementById('appendBanMask').classList.add('show');
+    }
+
+    function closeAppendBan() {
+      currentAppendItem = null;
+      document.getElementById('appendBanMask').classList.remove('show');
+    }
+
+    async function submitAppendBan() {
+      if (!currentAppendItem || !currentAppendItem.archive_key) {
+        alert('缺少 archive_key');
+        return;
+      }
+
+      const fd = new URLSearchParams();
+      fd.append('archive_key', currentAppendItem.archive_key);
+      fd.append('ban_duration', document.getElementById('appendBanDuration').value);
+      fd.append('manual_risk', document.getElementById('appendManualRisk').value);
+      fd.append('ban_reason', document.getElementById('appendBanReason').value.trim());
+
+      try {
+        const res = await fetch('/api/pop/append_device_ban.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: fd.toString()
+        });
+
+        const json = await res.json();
+        alert(json.message || (json.success ? '追封成功' : '追封失败'));
+
+        if (json.success) {
+          closeAppendBan();
+          loadList();
+        }
+      } catch (e) {
+        alert('请求异常：' + e);
+      }
+    }
+
+    loadList();
+  </script>
+</body>
+</html>

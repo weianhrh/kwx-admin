@@ -142,7 +142,7 @@ function is_user_capture_report_reason($reason) {
  * /www/wwwroot/open.kwxapp.cn/single/api/pop/review_backup/2026-04-29/xxx.jpeg
  *
  * 转成：
- * http://open.kwxapp.cn/api/pop/review_backup/2026-04-29/xxx.jpeg
+ * /api/pop/review_backup/2026-04-29/xxx.jpeg
  */
 function convert_local_review_image_path_to_url($localPath) {
     $localPath = trim((string)$localPath);
@@ -158,7 +158,8 @@ function convert_local_review_image_path_to_url($localPath) {
     }
 
     $localRoot = '/www/wwwroot/open.kwxapp.cn/single';
-    $publicHost = 'http://open.kwxapp.cn';
+    // 返回相对地址：在 KWX 主站和 audit-kwx 代理域下都能同源加载，且不会产生 HTTPS 混合内容。
+    $publicHost = '';
 
     if (strpos($localPath, $localRoot) === 0) {
         $relativePath = substr($localPath, strlen($localRoot));

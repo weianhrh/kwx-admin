@@ -1259,8 +1259,7 @@ button.venue-pill:hover {
     min-height: 36px;
   }
 }
-
-  </style>
+</style>
 </head>
 
 <body>
@@ -1272,13 +1271,7 @@ button.venue-pill:hover {
             <input list="venue_options" id="venue_search" placeholder="输入场地名称搜索" autocomplete="off"
                 style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
             <datalist id="venue_options"></datalist>
-<select id="venue_level_filter" class="venue-level-filter">
-    <option value="">全部评级</option>
-    <option value="A">评级 A</option>
-    <option value="B">评级 B</option>
-    <option value="C">评级 C</option>
-    <option value="D">评级 D</option>
-</select>
+
             <form class="add-venue-form" id="add-venue-form">
                 <input type="text" name="venue_name" placeholder="场地名称">
                 <input type="text" name="image_url" value="https://ruoche.oss-cn-beijing.aliyuncs.com/app/img/wj.jpg" placeholder="场地图片链接">
@@ -1295,14 +1288,7 @@ button.venue-pill:hover {
                     <option value="2">竞速</option>
                     <option value="3">工程车</option>
                 </select>
-<div style="margin-bottom: 6px; color: #333; font-size: 10px;">场地评级</div>
-<select name="venue_level">
-    <option value="S">S（预留）</option>
-    <option value="A" selected>A（80%）</option>
-    <option value="B">B（预留）</option>
-    <option value="C">C（60%）</option>
-    <option value="D">D（预留）</option>
-</select>
+<input type="hidden" name="venue_level" value="A">
 
 <div style="margin-bottom: 6px; color: #333; font-size: 10px;">是否娃娃机场地</div>
 <select name="is_claw_machine_venue" id="is_claw_machine_venue">
@@ -1413,7 +1399,7 @@ function openBanModal(venueId) {
                 addVenueForm.style.display = isHidden ? 'block' : 'none';
 
                 document.getElementById('venue_search').style.display = isHidden ? 'none' : 'block';
-                document.getElementById('venue_level_filter').style.display = isHidden ? 'none' : 'block';
+                if (venueLevelFilter) venueLevelFilter.style.display = 'none';
                 document.querySelector('.venue-toolbar').style.display = isHidden ? 'none' : 'block';
             });
 
@@ -1544,12 +1530,6 @@ function renderVenues(list) {
         title="点击切换场地状态">
     ${escapeHtml(status || '未知')}
 </button>
-<label class="venue-level-control venue-level-control-meta">
-    <span>评级</span>
-    <select class="venue-level-select" onchange="setVenueLevel(${venue.id}, this.value)">
-        ${renderVenueLevelOptions(venueLevel)}
-    </select>
-</label>
     ${isLive ? `<span class="venue-live-badge">直播中</span>` : ''}
     ${isPriorityReview ? `<span class="venue-review-badge">优先检测</span>` : ''}
 </div>
@@ -1618,7 +1598,7 @@ ${isLive ? `
 
 function applyFilters() {
     const keyword = venueSearch.value.trim().toLowerCase();
-    const selectedLevel = venueLevelFilter.value.trim().toUpperCase();
+    const selectedLevel = ''; // 评级筛选已停用
     let filtered = [...allVenues];
 
     filtered = filtered.filter(v => getVenueStatusGroup(v) === currentStatus);
@@ -1812,7 +1792,7 @@ allVenues = venues.sort((a, b) => {
             });
 
             venueSearch.addEventListener('input', applyFilters);
-            venueLevelFilter.addEventListener('change', applyFilters);
+            if (venueLevelFilter) venueLevelFilter.addEventListener('change', applyFilters);
 
             loadVenues();
             // 新增：封禁描述模板点击事件

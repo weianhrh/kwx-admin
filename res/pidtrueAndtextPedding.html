@@ -535,25 +535,9 @@
   </script>
 <script>
 
-         let ossConfig = null;
-
-                // 页面加载时获取场地列表和OSS配置
-        window.onload = async function() {
-            try {
-                // 获取 OSS 配置
-                const configResponse = await fetch('/api/operat/upload.php?get_config=1');
-                const configData = await configResponse.json();
-                if (configData.code === 0) {
-                    ossConfig = configData.data;
-                }
-
-                // 加载待审核图片
-                loadPendingImages();
-
-            } catch (e) {
-                console.error('初始化失败:', e);
-            }
-        }
+        // 原页面会先请求项目中不存在的 upload.php，失败后图片列表不会加载。
+        // 当前上传流程并不使用该 OSS 配置，因此直接加载待审核图片。
+        window.addEventListener('load', loadPendingImages);
 
 function loadPendingImages() {
     fetch('/api/venue/getPendingImages.php')
@@ -698,14 +682,26 @@ async function approveImage(venueId) {
         formData.append('action', 'update_venue_pictrue');
         formData.append('venue_id', venueId);
 
-        const uploadRes = await fetch('https://app.kwxapp.cn/app/img/userimg/upload_profile.php', {
+        const uploadRes = await fetch('/__kwx_app/app/img/userimg/upload_profile.php', {
             method: 'POST',
             body: formData
         });
 
         const uploadData = await uploadRes.json();
         if (uploadData.code === 0) {
-            alert("上传成功，头像已更新");
+            // 同步把审核记录改为 approved。若上传接口不返回URL，后端会读取 venues.image_url。
+            const uploadedUrl = uploadData.image_url || uploadData.url ||
+                (uploadData.data && (uploadData.data.image_url || uploadData.data.url)) || '';
+            const reviewRes = await fetch('/api/venue/reviewImage.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ venue_id: venueId, oss_uploaded_url: uploadedUrl })
+            });
+            const reviewData = await reviewRes.json();
+            if (reviewData.code !== 0) {
+                throw new Error(reviewData.msg || '审核状态更新失败');
+            }
+            alert("审核通过，头像已更新");
 
             // 删除待审核图片
             const filename = imgUrl.split('/pending_images/')[1]; // 取文件名

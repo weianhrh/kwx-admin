@@ -118,7 +118,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>Rc物联-AI违规巡查系统</h1>
+            <h1>酷玩星-KWX AI违规巡查系统</h1>
             <!-- 今日统计文字 -->
 <div id="todayCounters" class="today-counters" aria-live="polite">识别统计加载中…</div>
 <div id="todayVendorCounters" class="today-counters" aria-live="polite" style="margin-top:10px;">厂商抓图统计加载中…</div>
@@ -614,7 +614,7 @@ function filterPredictedCards() {
     defaultReason = reasonElem ? reasonElem.textContent.replace('描述：', '') : '';
 
     document.getElementById('banDeviceKey').textContent = key;
-    document.getElementById('banDuration').value = '360';
+    document.getElementById('banDuration').value = '30';
     document.getElementById('banReason').value = defaultReason;
 
     document.getElementById('banModal').classList.add('show');
@@ -698,6 +698,9 @@ function checkPendingImages() {
                     alertShown = true;
 
                     if (confirmed) {
+                        if (window.parent !== window) {
+                            window.parent.postMessage({ type: 'review-module-change', system: 'kwx', module: 'image' }, 'https://open.rcwulian.cn');
+                        }
                         window.location.href = "/res/pidtrueAndtextPedding.html";
                     } else {
                         console.log("用户取消提醒");
@@ -762,6 +765,9 @@ function checkReportCount() {
 
 
 function goToReportReview() {
+    if (window.parent !== window) {
+        window.parent.postMessage({ type: 'review-module-change', system: 'kwx', module: 'reports' }, 'https://open.rcwulian.cn');
+    }
     window.location.href = "/res/reporthand.html";
 }
 
@@ -903,7 +909,11 @@ setTimeout(() => {
             hasShownLoginError = true;
             alert(j.msg || '登录状态已失效，请重新登录');
             // 根据你的实际登录页地址改
-            window.location.href = '/login.html';
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'review-auth-expired', system: 'kwx' }, 'https://open.rcwulian.cn');
+            } else {
+              window.location.href = 'https://open.rcwulian.cn/review/login.php';
+            }
           }
         }
       }).catch(e=>{

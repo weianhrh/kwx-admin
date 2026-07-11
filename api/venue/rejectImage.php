@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
 require_once '../Database.php';
 $database = new Database();
 if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
@@ -19,8 +20,7 @@ if (!$user || !in_array((int)$user[0]['role_id'], [1, 2], true)) {
 $venue_id = $_POST['venue_id'] ?? null;
 $reason = $_POST['reason'] ?? '无原因';
 $reviewer_uid =  $user[0]['uid'];
-echo "$reviewer_uid";
-$reviewed_at = date('y-m-d H:i:s'); 
+$reviewed_at = date('Y-m-d H:i:s'); 
 if (!$venue_id) {
     echo json_encode(['code' => 1003, 'msg' => '缺少场地ID']);
     exit;

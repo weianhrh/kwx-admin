@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
 // /api/venue/reviewImage.php
 require_once './_venue_locks.php';
 $locks = new VenueLocks();
@@ -44,9 +45,14 @@ if (!$venue_id || !is_numeric($venue_id)) {
 }
 
 if (!$oss_uploaded_url) {
-    logMessage("❌ 审核失败，oss_uploaded_url 缺失: " . json_encode($_POST));
-    echo json_encode(['code' => 1005, 'msg' => '缺少 OSS 图片地址']);
-    exit;
+    // 部分旧上传接口只返回成功状态，不返回URL；此时读取刚更新到 venues 的图片地址。
+    $venueRows = $database->query('SELECT image_url FROM venues WHERE id = ? LIMIT 1', [$venue_id]);
+    $oss_uploaded_url = trim((string)($venueRows[0]['image_url'] ?? ''));
+    if ($oss_uploaded_url === '') {
+        logMessage("❌ 审核失败，上传接口和 venues 均未返回图片地址: venue_id=$venue_id");
+        echo json_encode(['code' => 1005, 'msg' => '图片已上传，但未取得新图片地址，待审核记录已保留']);
+        exit;
+    }
 }
 
 $reviewed_at = date('Y-m-d H:i:s'); 
