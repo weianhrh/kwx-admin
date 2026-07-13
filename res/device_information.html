@@ -1696,12 +1696,16 @@ function setStatus(rowId, text, type = 'loading') {
         const zc = Number(json.zego_code);
         const desc = ZEGO_CODE_DESC[zc] || `未知返回码：${zc}`;
         const onlineText = json.active ? "在线" : "离线";
+        const appText = json.active && json.app_id
+          ? `，${json.app_name || 'ZEGO'} AppID：${json.app_id}`
+          : '';
 
         setStatus(
           rowId,
-          `${onlineText}（${desc}）`,
+          `${onlineText}（${desc}${appText}）`,
           json.active ? "online" : "offline"
         );
+           console.log(appText);
       } catch (e) {
         setStatus(rowId, "网络错误/解析失败", "loading");
       }
