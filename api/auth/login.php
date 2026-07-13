@@ -57,15 +57,50 @@ if ($user && $valid) {
         $redis->delete($failKeyIPOnly);
     }
 
-    $token = bin2hex(random_bytes(32));
+    // 同一账号的多个浏览器共用一个有效 Token，避免后登录挤掉先登录。
+    // 使用数据库原子更新，避免两个浏览器首次同时登录时互相覆盖 Token。
+    $candidateToken = bin2hex(random_bytes(32));
     if (auth_has_column($db, 'admin_users', 'session_expires')) {
         $db->query(
-            'UPDATE admin_users SET session_token = ?, session_expires = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?',
-            [$token, (string)$user['id']],
+            "UPDATE admin_users
+             SET session_token = CASE
+                    WHEN session_token IS NULL
+                      OR session_token = ''
+                      OR session_expires IS NULL
+                      OR session_expires <= NOW()
+                    THEN ?
+                    ELSE session_token
+                 END,
+                 session_expires = DATE_ADD(NOW(), INTERVAL 30 DAY)
+             WHERE id = ?",
+            [$candidateToken, (string)$user['id']],
             true
         );
     } else {
-        $db->query('UPDATE admin_users SET session_token = ? WHERE id = ?', [$token, (string)$user['id']], true);
+        $db->query(
+            "UPDATE admin_users
+             SET session_token = CASE
+                    WHEN session_token IS NULL OR session_token = '' THEN ?
+                    ELSE session_token
+                 END
+             WHERE id = ?",
+            [$candidateToken, (string)$user['id']],
+            true
+        );
+    }
+
+    // 必须重新读取数据库中的最终 Token；并发登录时可能使用的是另一请求先写入的 Token。
+    $tokenRows = $db->query(
+        'SELECT session_token FROM admin_users WHERE id = ? LIMIT 1',
+        [(string)$user['id']]
+    );
+    $token = trim((string)($tokenRows[0]['session_token'] ?? ''));
+    if ($token === '') {
+        $db->close();
+        if ($redis) {
+            $redis->close();
+        }
+        auth_out(1, '登录会话创建失败，请稍后重试');
     }
 
     auth_set_cookie($token);
@@ -96,4 +131,3 @@ if ($redis) {
 error_log(sprintf('[kwx-auth] login failed user=%s ip=%s ua=%s', $username, $ip, $userAgent));
 $db->close();
 auth_out(1, '用户名或密码错误');
-
