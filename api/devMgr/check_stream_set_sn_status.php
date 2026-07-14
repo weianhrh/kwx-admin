@@ -26,12 +26,20 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../RedisHelper.php';
 
 /**
- * 即构配置
+ * 即构配置（按顺序检测：酷玩星优先，未在线时再检测 RC 物联）
  */
-$ZEGO_APP_ID = 141962251;
-
-// 建议正式环境用环境变量；临时用可以把下面这行改成你原来那串 ServerSecret
-$ZEGO_SERVER_SECRET = getenv('ZEGO_SERVER_SECRET') ?: '5bfaa3399946c98cc6792dd19f9a08ec';
+$ZEGO_APPS = [
+    [
+        'name'          => '酷玩星',
+        'app_id'        => 1847604878,
+        'server_secret' => '70e538efe46bc3450b9ba7759b47f936',
+    ],
+    [
+        'name'          => 'RC物联',
+        'app_id'        => 141962251,
+        'server_secret' => getenv('ZEGO_SERVER_SECRET') ?: '5bfaa3399946c98cc6792dd19f9a08ec',
+    ],
+];
 
 $ZEGO_IS_TEST = false;
 
@@ -80,14 +88,17 @@ function getRequestValue(array $keys): string
 /**
  * 构建即构查询流状态 URL
  */
-function buildZegoStreamStateUrl(string $streamId): string
+function buildZegoStreamStateUrl(string $streamId, array $app): string
 {
-    global $ZEGO_APP_ID, $ZEGO_SERVER_SECRET, $ZEGO_IS_TEST;
+    global $ZEGO_IS_TEST;
+
+    $appId = (int)$app['app_id'];
+    $serverSecret = (string)$app['server_secret'];
 
     $streamId = trim($streamId);
 
     if ($ZEGO_IS_TEST) {
-        $prefix = "zegotest-{$ZEGO_APP_ID}-";
+        $prefix = "zegotest-{$appId}-";
         if (strpos($streamId, $prefix) !== 0) {
             $streamId = $prefix . $streamId;
         }
@@ -101,11 +112,11 @@ function buildZegoStreamStateUrl(string $streamId): string
      * 即构签名：
      * md5(AppId + SignatureNonce + ServerSecret + Timestamp)
      */
-    $signature = md5($ZEGO_APP_ID . $signatureNonce . $ZEGO_SERVER_SECRET . $timestamp);
+    $signature = md5($appId . $signatureNonce . $serverSecret . $timestamp);
 
     $params = [
         'Action'           => 'DescribeRTCStreamState',
-        'AppId'            => $ZEGO_APP_ID,
+        'AppId'            => $appId,
         'SignatureNonce'   => $signatureNonce,
         'Timestamp'        => $timestamp,
         'Signature'        => $signature,
@@ -134,7 +145,7 @@ function buildZegoStreamStateUrl(string $streamId): string
  *   'raw' => []
  * ]
  */
-function queryZegoStreamOnline(string $streamId): array
+function queryZegoStreamOnline(string $streamId, array $app): array
 {
     if (!function_exists('curl_init')) {
         return [
@@ -144,10 +155,12 @@ function queryZegoStreamOnline(string $streamId): array
             'message'   => '服务器未安装或未启用 cURL',
             'http'      => 0,
             'raw'       => null,
+            'app_name'  => $app['name'],
+            'app_id'    => (int)$app['app_id'],
         ];
     }
 
-    $url = buildZegoStreamStateUrl($streamId);
+    $url = buildZegoStreamStateUrl($streamId, $app);
 
     $ch = curl_init();
 
@@ -175,6 +188,8 @@ function queryZegoStreamOnline(string $streamId): array
             'message'   => 'curl error: ' . $err,
             'http'      => $http,
             'raw'       => null,
+            'app_name'  => $app['name'],
+            'app_id'    => (int)$app['app_id'],
         ];
     }
 
@@ -186,6 +201,8 @@ function queryZegoStreamOnline(string $streamId): array
             'message'   => 'empty zego response',
             'http'      => $http,
             'raw'       => null,
+            'app_name'  => $app['name'],
+            'app_id'    => (int)$app['app_id'],
         ];
     }
 
@@ -199,6 +216,8 @@ function queryZegoStreamOnline(string $streamId): array
             'message'   => 'invalid zego response',
             'http'      => $http,
             'raw'       => $resp,
+            'app_name'  => $app['name'],
+            'app_id'    => (int)$app['app_id'],
         ];
     }
 
@@ -218,7 +237,41 @@ function queryZegoStreamOnline(string $streamId): array
         'message'   => $active ? 'stream active' : $zegoMsg,
         'http'      => $http,
         'raw'       => $zego,
+        'app_name'  => $app['name'],
+        'app_id'    => (int)$app['app_id'],
     ];
+}
+
+/**
+ * 酷玩星优先；只有酷玩星未在线（离线、未找到或查询异常）才检测 RC 物联。
+ */
+function queryZegoStreamOnlineByPriority(string $streamId): array
+{
+    global $ZEGO_APPS;
+
+    $checkedApps = [];
+    $lastState = null;
+
+    foreach ($ZEGO_APPS as $app) {
+        $state = queryZegoStreamOnline($streamId, $app);
+        $checkedApps[] = [
+            'app_name'  => $state['app_name'],
+            'app_id'    => $state['app_id'],
+            'ok'        => $state['ok'],
+            'active'    => $state['active'],
+            'zego_code' => $state['zego_code'],
+            'message'   => $state['message'],
+        ];
+        $lastState = $state;
+
+        if ($state['active']) {
+            $state['checked_apps'] = $checkedApps;
+            return $state;
+        }
+    }
+
+    $lastState['checked_apps'] = $checkedApps;
+    return $lastState;
 }
 
 /**
@@ -307,7 +360,7 @@ try {
     /**
      * 查询即构流状态
      */
-    $state = queryZegoStreamOnline($playingStreamId);
+    $state = queryZegoStreamOnlineByPriority($playingStreamId);
 
     /**
      * 查询失败：不写 Redis，不改数据库
@@ -329,6 +382,9 @@ try {
             'zego_code'         => $state['zego_code'],
             'zego_message'      => $state['message'],
             'http'              => $state['http'],
+            'app_name'          => $state['app_name'],
+            'app_id'            => $state['app_id'],
+            'checked_apps'      => $state['checked_apps'],
             'time'              => date('Y-m-d H:i:s'),
         ]);
     }
@@ -352,7 +408,7 @@ try {
 
         jsonOut([
             'code'              => 200,
-            'msg'               => '流在线，bind_site=60，已设置 Redis DB4 永久在线',
+            'msg'               => '流在线（' . $state['app_name'] . ' AppID：' . $state['app_id'] . '），bind_site=60，已设置 Redis DB4 永久在线',
             'sn'                => $sn,
             'playing_stream_id' => $playingStreamId,
             'bind_site'         => $bindSite,
@@ -368,6 +424,9 @@ try {
             'zego_code'         => $state['zego_code'],
             'zego_message'      => $state['message'],
             'http'              => $state['http'],
+            'app_name'          => $state['app_name'],
+            'app_id'            => $state['app_id'],
+            'checked_apps'      => $state['checked_apps'],
             'time'              => date('Y-m-d H:i:s'),
         ]);
     }
@@ -386,9 +445,9 @@ try {
     $msg = '';
 
     if ($state['active']) {
-        $msg = '流在线';
+        $msg = '流在线（' . $state['app_name'] . ' AppID：' . $state['app_id'] . '）';
     } else {
-        $msg = '流离线';
+        $msg = '流离线（已依次检测酷玩星和 RC物联）';
     }
 
     jsonOut([
@@ -408,6 +467,9 @@ try {
         'zego_code'         => $state['zego_code'],
         'zego_message'      => $state['message'],
         'http'              => $state['http'],
+        'app_name'          => $state['app_name'],
+        'app_id'            => $state['app_id'],
+        'checked_apps'      => $state['checked_apps'],
         'time'              => date('Y-m-d H:i:s'),
     ]);
 

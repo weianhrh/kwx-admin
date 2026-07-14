@@ -7,10 +7,10 @@ date_default_timezone_set('Asia/Shanghai');
 // ==========================
 // ZEGO 配置
 // ==========================
-define('ZEGO_APP_ID', '141962251');
+define('ZEGO_APP_ID', '1847604878');
 
 // 建议放环境变量；这里填你自己 ZEGO ServerSecret
-define('ZEGO_SERVER_SECRET', getenv('ZEGO_SERVER_SECRET') ?: '5bfaa3399946c98cc6792dd19f9a08ec');
+define('ZEGO_SERVER_SECRET', getenv('ZEGO_SERVER_SECRET') ?: '70e538efe46bc3450b9ba7759b47f936');
 
 define('ZEGO_RTC_API_URL', 'https://rtc-api.zego.im/');
 define('DEFAULT_FROM_USER_ID', 'server_bot_1');

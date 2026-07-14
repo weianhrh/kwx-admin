@@ -1244,10 +1244,13 @@ voltage_reset: '电压回传地址恢复默认指令已发送'
 };
 
     const failUsers = json.data?.fail_users || [];
+    const senderText = json.data?.app_name
+      ? `（${json.data.app_name} AppID：${json.data.app_id}）`
+      : '';
     if (Array.isArray(failUsers) && failUsers.length > 0) {
-      showToast(`${successTextMap[type] || '发送成功'}，但有 ${failUsers.length} 个用户未收到`);
+      showToast(`${successTextMap[type] || '发送成功'}${senderText}，但有 ${failUsers.length} 个用户未收到`);
     } else {
-      showToast(successTextMap[type] || '发送成功');
+      showToast(`${successTextMap[type] || '发送成功'}${senderText}`);
     }
   } catch (e) {
     showToast('网络错误：发送失败');
