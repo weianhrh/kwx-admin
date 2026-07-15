@@ -1828,6 +1828,8 @@ body.role-3 .venue-cover-card {
 
             applyDrVenueIdPermission();
 
+            applyZegoConfigPermission();
+
             syncRole3TopCardHeight();
 
             setTimeout(syncRole3TopCardHeight, 80);
@@ -2193,6 +2195,22 @@ function applyDrVenueIdPermission() {
     wrap.style.display = 'none';
 
   }
+
+}
+
+function applyZegoConfigPermission() {
+
+  const wrap = document.getElementById('zego-config-wrap');
+
+  const select = document.getElementById('zego-appid-select');
+
+  if (!wrap || !select) return;
+
+  const canManage = ROLE_ID === 1 || ROLE_ID === 2;
+
+  wrap.style.display = canManage ? 'block' : 'none';
+
+  select.disabled = !canManage || !IS_EDITING;
 
 }
 
@@ -2738,6 +2756,26 @@ function renderLocksUI() {
 
                   </div>
 
+                  <div class="field full" id="zego-config-wrap" style="display:none;">
+
+                    <div class="label">ZEGO配置</div>
+
+                    <div class="value inline-action">
+
+                      <select class="edit-select edit-control" id="zego-appid-select" disabled>
+
+                        <option value="">未配置</option>
+
+                        <option value="1847604878">酷玩星（1847604878）</option>
+
+                        <option value="141962251">RC物联（141962251）</option>
+
+                      </select>
+
+                    </div>
+
+                  </div>
+
                 </div>
 
               </div>
@@ -2906,6 +2944,16 @@ function renderLocksUI() {
 
       document.getElementById('status-select').value = venue.venue_status || '休息中';
 
+      const zegoAppIdSelect = document.getElementById('zego-appid-select');
+
+      if (zegoAppIdSelect) {
+
+        const appId = String(venue.zego_appid || '');
+
+        zegoAppIdSelect.value = ['1847604878', '141962251'].includes(appId) ? appId : '';
+
+      }
+
       const showSel = document.getElementById('show-live-stream-select');
 
       if (showSel) showSel.value = String(venue.show_live_stream === 1 ? 1 : 0);
@@ -2913,6 +2961,8 @@ function renderLocksUI() {
       applyShowLiveVisibility();  // ← 新增
 
       applyDrVenueIdPermission();
+
+      applyZegoConfigPermission();
 
       const st = document.getElementById('start-time');
 
@@ -3247,6 +3297,8 @@ function clearVenueLock(type) {
 
         applyDrVenueIdPermission();
 
+        applyZegoConfigPermission();
+
     }
 
 
@@ -3266,6 +3318,22 @@ function saveChanges() {
   };
 
 if (ROLE_ID === 1 || ROLE_ID === 2) {
+
+  const zegoAppIdSelect = document.getElementById('zego-appid-select');
+
+  if (zegoAppIdSelect) {
+
+    if (!['1847604878', '141962251'].includes(zegoAppIdSelect.value)) {
+
+      alert('请选择有效的 ZEGO 配置');
+
+      return;
+
+    }
+
+    payload.zego_appid = zegoAppIdSelect.value;
+
+  }
 
   // 海外DR场地ID暂时从页面去掉：没有 dr-venue-id-input 时不提交该字段，避免覆盖数据库原值
 

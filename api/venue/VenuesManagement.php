@@ -57,6 +57,19 @@ function normalizeVenueLevel($level)
     return in_array($level, $allowed, true) ? $level : 'A';
 }
 
+function getZegoVenueConfig($appId)
+{
+    $configs = [
+        '1847604878' => '酷玩星',
+        '141962251' => 'RC物联',
+    ];
+
+    $appId = trim((string)$appId);
+    return isset($configs[$appId])
+        ? ['appid' => $appId, 'name' => $configs[$appId]]
+        : null;
+}
+
 function syncVenueToDr($payload)
 {
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE);
@@ -230,6 +243,12 @@ if ($method === 'POST') {
         $show_live_stream = $_POST['show_live_stream'] ?? 0; 
         $is_claw_machine_venue = isset($_POST['is_claw_machine_venue']) ? intval($_POST['is_claw_machine_venue']) : 0;
         $venue_level = normalizeVenueLevel($_POST['venue_level'] ?? 'A');
+        $zego_config = getZegoVenueConfig($_POST['zego_appid'] ?? '1847604878');
+
+        if ($zego_config === null) {
+            echo json_encode(['code' => 2, 'msg' => 'ZEGO配置选择无效', 'data' => []], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
         
         
         $sync_overseas = isset($_POST['sync_overseas']) && strval($_POST['sync_overseas']) === '1';
@@ -270,8 +289,9 @@ if ($method === 'POST') {
             live_stream_url,
             show_live_stream,
             is_claw_machine_venue,
-            venue_level
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            venue_level,
+            zego_appid
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             $id,
@@ -288,7 +308,8 @@ if ($method === 'POST') {
             $live_stream_url,
             $show_live_stream,
             $is_claw_machine_venue,
-            $venue_level
+            $venue_level,
+            $zego_config['appid']
         ];
    if ($database->query($insertSql, $params, true)) {
 
@@ -385,6 +406,8 @@ if ($method === 'POST') {
         'venue_room_id' => $venue_room_id,
         'invite_code' => $invite_code,
         'venue_level' => $venue_level,
+        'zego_appid' => $zego_config['appid'],
+        'zego_app_name' => $zego_config['name'],
         'dr_venue_id' => $drVenueIdForReturn,
         'sync_overseas' => $syncResult
     ], JSON_UNESCAPED_UNICODE);

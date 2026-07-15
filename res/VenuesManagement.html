@@ -1303,10 +1303,16 @@ button.venue-pill:hover {
                     <!--<option value="建设中">建设中</option>-->
                 </select>
 
+                <div style="margin-bottom:6px;color:#333;font-size:10px;">ZEGO配置</div>
+                <select name="zego_appid" id="add-zego-appid">
+                    <option value="1847604878" selected>酷玩星（1847604878）</option>
+                    <option value="141962251">RC物联（141962251）</option>
+                </select>
+
                 <input type="text" name="live_stream_url" value="snssdk1128://user/profile/" placeholder="直播链接">
                 <input type="number" name="show_live_stream" value="0" placeholder="是否显示直播（0或1）">
-                <label style="
-                    display:flex;
+                <label id="sync-overseas-wrap" style="
+                    display:none;
                     align-items:center;
                     gap:8px;
                     margin:8px 0 12px;
@@ -1317,7 +1323,7 @@ button.venue-pill:hover {
                     color:#333;
                     font-size:14px;
                 ">
-                    <input type="checkbox" name="sync_overseas" value="1" style="width:auto; margin:0;">
+                    <input type="checkbox" name="sync_overseas" value="1" disabled style="width:auto; margin:0;">
                     同步创建到海外 DR
                 </label>
                 <button type="submit">提交</button>

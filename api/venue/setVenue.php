@@ -24,6 +24,11 @@ function containsSensitiveWords($text, $words) {
     }
     return ['pass' => true];
 }
+function getZegoVenueConfig($appId) {
+    $configs = ['1847604878', '141962251'];
+    $appId = trim((string)$appId);
+    return in_array($appId, $configs, true) ? $appId : null;
+}
 // ================== 直播封禁（Redis TTL）==================
 // key: live:ban:venue:{venue_id}
 function liveBanKey($venue_id) {
@@ -327,6 +332,31 @@ if (array_key_exists('show_live_stream', $data)) {
     $show_live_stream = (int)$data['show_live_stream'] === 1 ? 1 : 0;
     $updates[] = 'show_live_stream = ?';
     $params[]  = $show_live_stream;
+}
+
+// ZEGO AppID：仅 role_id=1/2 可修改，并通过后端白名单校验。
+if (array_key_exists('zego_appid', $data)) {
+    if (!in_array($role_id, [1, 2], true)) {
+        echo json_encode([
+            'code' => 1021,
+            'msg' => '仅 role_id=1 或 2 可修改 ZEGO 配置',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $zegoConfig = getZegoVenueConfig($data['zego_appid']);
+    if ($zegoConfig === null) {
+        echo json_encode([
+            'code' => 1022,
+            'msg' => 'ZEGO配置选择无效',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $updates[] = 'zego_appid = ?';
+    $params[] = $zegoConfig;
 }
 
 // venue_room_id：仅管理员可修改
