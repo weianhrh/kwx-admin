@@ -83,6 +83,7 @@ function menu_admin_tree(): array
         menu_leaf(87, 9005, 'venue_funds', '账户管理', '/iframe/link/venue_funds', '', 1),
         menu_leaf(61, 9005, 'CommodityTariff', '充值套餐', '/iframe/link/CommodityTariff', '', 2),
         menu_leaf(77, 9005, 'payment_global_config_manage', '支付管理', '/iframe/link/payment_global_config_manage', '', 3),
+        menu_leaf(90051, 9005, 'venue-withdraw-config', '提现配置', '/iframe/link/venue_withdraw_config', '', 5),
         menu_leaf(59, 9005, 'withdraw', '提现审批', '/iframe/link/paylist', '', 6),
         menu_leaf(21, 9005, 'recharge-query', '充值查询', '/iframe/link/Rechargeinquiry', '', 8),
         menu_leaf(24, 9005, 'money-query', '金额查询', '/iframe/link/amountSearch', '', 11),

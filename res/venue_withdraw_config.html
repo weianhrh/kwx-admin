@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>场地提现配置</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}.head{margin-bottom:18px}.head h1{font-size:22px;margin:0 0 7px}.head p{margin:0;color:#6b7280;font-size:14px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 18px rgba(31,41,55,.05);padding:20px;margin-bottom:18px}
+    .form{display:grid;grid-template-columns:minmax(260px,2fr) 1fr 1fr auto;gap:14px;align-items:end}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}.field input{width:100%;height:42px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px;font-size:14px;outline:none}.field input:focus{border-color:#2f7df6;box-shadow:0 0 0 3px rgba(47,125,246,.12)}
+    button{height:42px;border:0;border-radius:8px;padding:0 20px;background:#2f7df6;color:#fff;font-size:14px;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.search{display:flex;gap:10px;margin-bottom:14px}.search input{flex:1;height:40px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px}.search button{height:40px;background:#374151}
+    table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:13px 12px;text-align:left;border-bottom:1px solid #eef0f3}th{background:#f8fafc;color:#4b5563;font-weight:600}.tag{display:inline-block;border-radius:999px;padding:3px 9px;background:#eaf2ff;color:#2563eb;font-size:12px}.tag.default{background:#f3f4f6;color:#6b7280}.edit{height:32px;padding:0 12px}.empty{text-align:center!important;color:#9ca3af;padding:36px!important}.notice{padding:10px 12px;margin-bottom:14px;border-radius:8px;background:#fff7ed;color:#9a5215;font-size:13px}.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:8px;background:#111827;color:#fff;display:none;z-index:99}
+    @media(max-width:760px){.wrap{padding:14px}.form{grid-template-columns:1fr 1fr}.venue-field{grid-column:1/-1}.save{grid-column:1/-1}table th:nth-child(5),table td:nth-child(5){display:none}.card{padding:14px}th,td{padding:11px 7px;font-size:13px}}
+  </style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<main class="wrap">
+  <div class="head"><h1>场地提现配置</h1><p>按场地设置加盟商实际提现比例和提现手续费。</p></div>
+  <section class="card">
+    <div class="notice">未单独配置的场地默认：提现比例 20%，提现手续费 0%。技术服务费率自动按“100% - 提现比例”计算。</div>
+    <div class="form">
+      <div class="field venue-field"><label>选择场地（支持输入名称或ID模糊搜索）</label><input id="venueInput" list="venueList" placeholder="输入场地名称或ID"><datalist id="venueList"></datalist></div>
+      <div class="field"><label>提现比例（%）</label><input id="ratio" type="number" min="0" max="100" step="0.01" value="20"></div>
+      <div class="field"><label>提现手续费（%）</label><input id="fee" type="number" min="0" max="100" step="0.01" value="0"></div>
+      <button class="save" id="saveBtn" onclick="saveConfig()">保存配置</button>
+    </div>
+  </section>
+  <section class="card">
+    <div class="search"><input id="keyword" placeholder="搜索场地名称或ID" onkeydown="if(event.key==='Enter')loadRows()"><button onclick="loadRows()">搜索</button></div>
+    <div style="overflow:auto"><table><thead><tr><th>场地ID</th><th>场地名称</th><th>提现比例</th><th>手续费</th><th>状态</th><th>操作</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table></div>
+  </section>
+</main>
+<script>
+const API='/api/pay/VenueWithdrawalConfig.php';
+let venues=[];
+let rowsCache=[];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(el.t);el.t=setTimeout(()=>el.style.display='none',2200)}
+function venueLabel(v){return `${v.venue_name}（ID:${v.id||v.venue_id}）`}
+async function request(url,opts){const r=await fetch(url,opts);const d=await r.json();if(d.code===1001){top.location.href='/';throw new Error(d.msg)}if(d.code!==0)throw new Error(d.msg||'请求失败');return d.data}
+async function loadVenues(){venues=await request(API+'?action=venues');document.getElementById('venueList').innerHTML=venues.map(v=>`<option value="${esc(venueLabel(v))}"></option>`).join('')}
+function resolveVenue(){const val=document.getElementById('venueInput').value.trim();return venues.find(v=>venueLabel(v)===val)||venues.find(v=>String(v.id)===val)||null}
+async function loadRows(){const key=document.getElementById('keyword').value.trim();try{rowsCache=await request(API+'?action=list&keyword='+encodeURIComponent(key));document.getElementById('tbody').innerHTML=rowsCache.length?rowsCache.map(r=>`<tr><td>${r.venue_id}</td><td>${esc(r.venue_name)}</td><td>${Number(r.withdraw_ratio).toFixed(2)}%</td><td>${Number(r.withdrawal_fee_rate).toFixed(2)}%</td><td><span class="tag ${Number(r.configured)?'':'default'}">${Number(r.configured)?'已配置':'默认值'}</span></td><td><button class="edit" onclick="editRow(${Number(r.venue_id)})">编辑</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">没有匹配的场地</td></tr>'}catch(e){toast(e.message)}}
+function editRow(id){const r=rowsCache.find(x=>Number(x.venue_id)===Number(id));if(!r)return;const v=venues.find(x=>Number(x.id)===Number(r.venue_id));document.getElementById('venueInput').value=v?venueLabel(v):r.venue_name;document.getElementById('ratio').value=Number(r.withdraw_ratio);document.getElementById('fee').value=Number(r.withdrawal_fee_rate);scrollTo({top:0,behavior:'smooth'})}
+async function saveConfig(){const v=resolveVenue(),ratio=Number(document.getElementById('ratio').value),fee=Number(document.getElementById('fee').value);if(!v)return toast('请从下拉列表中选择场地');if(ratio<0||ratio>100||fee<0||fee>100)return toast('比例必须在0%到100%之间');if(ratio+fee>100)return toast('提现比例与手续费合计不能超过100%');const btn=document.getElementById('saveBtn');btn.disabled=true;try{await request(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'save',venue_id:v.id,withdraw_ratio:ratio,withdrawal_fee_rate:fee})});toast('保存成功');await loadRows()}catch(e){toast(e.message)}finally{btn.disabled=false}}
+Promise.all([loadVenues(),loadRows()]).catch(e=>toast(e.message));
+</script>
+</body>
+</html>
