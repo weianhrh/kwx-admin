@@ -531,8 +531,8 @@ textarea {
     }
     
     function isRateValidForCurrentUser(rate) {
-        // role_id = 1 管理员不限制
-        if (currentUserRole === 1) {
+        // role_id = 1 管理员、role_id = 3 加盟商不限制费率
+        if (currentUserRole === 1 || currentUserRole === 3) {
             return true;
         }
     
@@ -559,7 +559,7 @@ textarea {
       .then(res => res.json())
       .then(data => {
         if (data.code === 0) {
-          currentUserRole = data.data.role_id;
+          currentUserRole = Number(data.data.role_id);
 
          if (currentUserRole === 1 || currentUserRole === 2){
             document.getElementById('venue-select-wrapper').style.display = 'block';

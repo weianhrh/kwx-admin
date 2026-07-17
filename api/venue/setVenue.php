@@ -84,7 +84,7 @@ if (!venue_scope_can_access($database, $user[0], (int)$venue_id)) {
 
 // ========== 获取原始信息 ==========
 $venueInfo = $database->query("
-    SELECT id, is_banned, venue_name, venue_description, start_time, venue_status, live_stream_url, show_live_stream, income_30d_lock
+    SELECT id, is_banned, venue_name, venue_subtitle, venue_description, start_time, venue_status, live_stream_url, show_live_stream, income_30d_lock
     FROM venues WHERE id = ?
 ", [$venue_id]);
 
@@ -273,6 +273,31 @@ $allowed_status = ['营业中','休息中','建设中'];
 // 只在前端真的传了这些键时才更新
 $updates = [];
 $params  = [];
+
+// 场地副标题：仅 role_id=1/2 可修改
+if (array_key_exists('venue_subtitle', $data)) {
+    if (!in_array($role_id, [1, 2], true)) {
+        echo json_encode([
+            'code' => 1003,
+            'msg'  => '权限不足，仅 role_id=1/2 可修改场地副标题',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $venue_subtitle = trim((string)$data['venue_subtitle']);
+    if (mb_strlen($venue_subtitle, 'UTF-8') > 100) {
+        echo json_encode([
+            'code' => 1006,
+            'msg'  => '场地副标题不能超过100个字符',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $updates[] = 'venue_subtitle = ?';
+    $params[]  = $venue_subtitle;
+}
 
 // start_time
 if (array_key_exists('start_time', $data)) {

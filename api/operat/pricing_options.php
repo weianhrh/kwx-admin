@@ -161,7 +161,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             $rate = calcPricingRate($battery, $minutes);
             
-            if ($role_id != 1 && ($rate < $RATE_MIN || $rate > $RATE_MAX)) {
+            // role_id=1 管理员、role_id=3 加盟商不限制套餐费率
+            if (!in_array((int)$role_id, [1, 3], true) && ($rate < $RATE_MIN || $rate > $RATE_MAX)) {
                 echo json_encode([
                     'code' => 5,
                     'msg' => "费率不在允许范围 ({$RATE_MIN}~{$RATE_MAX} 元/分钟)，当前费率 {$rate}，提交无效",
@@ -284,7 +285,8 @@ if ($battery < 1) {
 // ✅ 编辑套餐也走统一费率变量
 $rate = calcPricingRate($battery, $minutes);
 
-if ($role_id != 1 && ($rate < $RATE_MIN || $rate > $RATE_MAX)) {
+// role_id=1 管理员、role_id=3 加盟商不限制套餐费率
+if (!in_array((int)$role_id, [1, 3], true) && ($rate < $RATE_MIN || $rate > $RATE_MAX)) {
     echo json_encode([
         'code' => 5,
         'msg' => "费率不在允许范围 ({$RATE_MIN}~{$RATE_MAX} 元/分钟)，当前费率 {$rate}，提交无效",

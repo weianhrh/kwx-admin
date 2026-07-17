@@ -356,6 +356,14 @@ textarea {
   word-break: break-word;
 }
 
+.venue-subtitle {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 .venue-meta-row {
   display: flex;
   flex-wrap: wrap;
@@ -1268,12 +1276,13 @@ button.venue-pill:hover {
             <div class="card-title">场地管理</div>
             <button class="add-btn" id="add-venue-btn">添加场地</button>
 
-            <input list="venue_options" id="venue_search" placeholder="输入场地名称搜索" autocomplete="off"
+            <input list="venue_options" id="venue_search" placeholder="输入场地名称、副标题或ID搜索" autocomplete="off"
                 style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
             <datalist id="venue_options"></datalist>
 
             <form class="add-venue-form" id="add-venue-form">
                 <input type="text" name="venue_name" placeholder="场地名称">
+                <input type="text" name="venue_subtitle" maxlength="100" placeholder="场地副标题（选填）">
                 <input type="text" name="image_url" value="https://app.kwxapp.cn/app/imgv2/img/vneue_default_image.png" placeholder="场地图片链接">
                 <input type="text" name="venue_description" value="新开场地，敬请期待" placeholder="场地描述">
 
@@ -1528,6 +1537,7 @@ function renderVenues(list) {
 
                     <div class="venue-info">
                         <span class="venue-name">ID:${venue.id}-${escapeHtml(venue.venue_name)}</span>
+                        ${venue.venue_subtitle ? `<span class="venue-subtitle">${escapeHtml(venue.venue_subtitle)}</span>` : ''}
 
 <div class="venue-meta-row">
     <button type="button"
@@ -1613,8 +1623,12 @@ function applyFilters() {
         filtered = filtered.filter(v => {
             const idText = String(v.id || '');
             const nameText = String(v.venue_name || '').toLowerCase();
-            const mixText = `${v.id} - ${v.venue_name}`.toLowerCase();
-            return idText.includes(keyword) || nameText.includes(keyword) || mixText.includes(keyword);
+            const subtitleText = String(v.venue_subtitle || '').toLowerCase();
+            const mixText = `${v.id} - ${v.venue_name} - ${v.venue_subtitle || ''}`.toLowerCase();
+            return idText.includes(keyword)
+                || nameText.includes(keyword)
+                || subtitleText.includes(keyword)
+                || mixText.includes(keyword);
         });
     }
 
@@ -1723,7 +1737,7 @@ window.setVenueLevel = function (venueId, venueLevel) {
 
                         venues.forEach(venue => {
                             const option = document.createElement('option');
-                            option.value = `${venue.id} - ${venue.venue_name}`;
+                            option.value = `${venue.id} - ${venue.venue_name}${venue.venue_subtitle ? ` - ${venue.venue_subtitle}` : ''}`;
                             venueOptions.appendChild(option);
                             venueMap.set(venue.id, venue.venue_name);
                         });

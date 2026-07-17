@@ -1808,6 +1808,11 @@ body.role-3 .venue-cover-card {
 
             document.body.classList.toggle('role-admin', ROLE_ID === 1 || ROLE_ID === 2);
 
+            const subtitleField = document.getElementById('venue-subtitle-field');
+            if (subtitleField) {
+              subtitleField.style.display = (ROLE_ID === 1 || ROLE_ID === 2) ? '' : 'none';
+            }
+
 
 
             LOCKS.name  = res.data.name_lock  || null;
@@ -2690,6 +2695,18 @@ function renderLocksUI() {
 
                   </div>
 
+                  <div class="field full" id="venue-subtitle-field" style="display:none;">
+
+                    <div class="label">场地副标题</div>
+
+                    <div class="value">
+
+                      <input id="venue-subtitle-input" class="edit-input edit-control" maxlength="100" placeholder="请输入场地副标题" disabled>
+
+                    </div>
+
+                  </div>
+
 
 
                   <div class="field full">
@@ -2917,6 +2934,10 @@ function renderLocksUI() {
       }
 
       document.getElementById('venue-name-input').value = venue.venue_name || '';
+
+      const venueSubtitleInput = document.getElementById('venue-subtitle-input');
+
+      if (venueSubtitleInput) venueSubtitleInput.value = venue.venue_subtitle || '';
 
       document.getElementById('venue-description-text').textContent = venue.venue_description || '';
 
@@ -3318,6 +3339,14 @@ function saveChanges() {
   };
 
 if (ROLE_ID === 1 || ROLE_ID === 2) {
+
+  const venueSubtitleInput = document.getElementById('venue-subtitle-input');
+
+  if (venueSubtitleInput) {
+
+    payload.venue_subtitle = venueSubtitleInput.value.trim();
+
+  }
 
   const zegoAppIdSelect = document.getElementById('zego-appid-select');
 

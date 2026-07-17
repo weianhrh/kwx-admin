@@ -49,7 +49,7 @@ logMessage("用户角色: $role_id, 用户绑定场地: $bind_venue_id, 请求 i
 
 // 构造 SQL 和参数
 $params = [];
-$venueFields = "id, venue_name, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock, zego_appid";
+$venueFields = "id, venue_name, venue_subtitle, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock, zego_appid";
 $where = [];
 
 if ($role_id == 1 || $role_id == 2 ||  $role_id == 3) {

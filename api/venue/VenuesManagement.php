@@ -231,6 +231,7 @@ if ($method === 'POST') {
     if ($action === 'addvenues') { 
         // 获取请求参数 
         $venue_name = $_POST['venue_name'] ?? ''; 
+        $venue_subtitle = trim($_POST['venue_subtitle'] ?? '');
         $image_url = $_POST['image_url'] ?? ''; 
         $venue_description = $_POST['venue_description'] ?? null; 
         $venue_tags = $_POST['venue_tags'] ?? null; 
@@ -277,6 +278,7 @@ if ($method === 'POST') {
         $insertSql = "INSERT INTO venues (
             id,
             venue_name,
+            venue_subtitle,
             image_url,
             venue_description,
             venue_tags,
@@ -291,11 +293,12 @@ if ($method === 'POST') {
             is_claw_machine_venue,
             venue_level,
             zego_appid
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             $id,
             $venue_name,
+            $venue_subtitle,
             $image_url,
             $venue_description,
             $venue_tags,
@@ -951,7 +954,8 @@ elseif ($action === 'loadingdata') {
             $query = "SELECT 
                         v.id, 
                         v.dr_venue_id,
-                        v.venue_name,  
+                        v.venue_name,
+                        v.venue_subtitle,
                         COALESCE(NULLIF(TRIM(v.venue_level), ''), 'A') AS venue_level,
                         v.is_disabled_sound,
                         v.is_user_mic_enabled,
