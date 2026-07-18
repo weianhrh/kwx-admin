@@ -543,6 +543,10 @@ textarea {
         const currentRateText = Number.isFinite(rate) ? rate.toFixed(2) : '无效';
         return `费率必须在 ${RATE_MIN} 元/分钟到 ${RATE_MAX} 元/分钟之间（当前费率：${currentRateText}），请重新输入。`;
     }
+
+    function minimumPricingMinutes() {
+        return (currentUserRole === 3 || currentUserRole === 4) ? 1 : 2;
+    }
     const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
     function selectedPricingVenueId() {
@@ -801,6 +805,12 @@ function setupVenueSelectAndLoad() {
                 return;
             }
 
+            const minMinutes = minimumPricingMinutes();
+            if (minutesValue < minMinutes) {
+                alert(`最低可驾驶时长不得低于 ${minMinutes} 分钟`);
+                return;
+            }
+
             const rate = calcPricingRate(batteryValue, minutesValue);
             
             if (!isRateValidForCurrentUser(rate)) {
@@ -915,6 +925,12 @@ function setupVenueSelectAndLoad() {
                 return;
             }
 
+            const minMinutes = minimumPricingMinutes();
+            if (minutes < minMinutes) {
+                alert(`最低可驾驶时长不得低于 ${minMinutes} 分钟`);
+                return;
+            }
+
             const rate = calcPricingRate(battery, minutes);
             
             if (!isRateValidForCurrentUser(rate)) {
@@ -942,7 +958,7 @@ function setupVenueSelectAndLoad() {
                     closeAddModal();
                     loadPricingData();
                 } else if (data.code === 4) {
-                    alert('添加失败：套餐数量已达上限（4个），不能继续添加');
+                    alert('添加失败：' + (data.msg || '套餐数量已达上限，不能继续添加'));
                 } else {
                     alert('添加失败，请重试：' + data.msg);
                 }

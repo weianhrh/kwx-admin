@@ -7,21 +7,19 @@ if (!in_array($period, ['day', 'week', 'month'], true)) {
     $period = 'day';
 }
 
-// 平台收益：只保留驾驶订单收入，剔除礼物、金币、娃娃机和能量订单。
-$driveOrderWhere = "
-    FROM orders
-    WHERE end_time IS NOT NULL
-      AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
-      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
+// 平台收益：统计 RechargeOrders 中支付成功的实际充值金额。
+$rechargeOrderWhere = "
+    FROM RechargeOrders
+    WHERE status = '支付成功'
 ";
 
 switch ($period) {
     case 'week':
         $sql = "
             SELECT 
-                YEARWEEK(end_time, 3) AS label,
-                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
-            {$driveOrderWhere}
+                YEARWEEK(created_at, 3) AS label,
+                ROUND(SUM(COALESCE(payer_total, 0)), 2) AS total
+            {$rechargeOrderWhere}
             GROUP BY label
             ORDER BY label DESC
             LIMIT 12
@@ -31,9 +29,9 @@ switch ($period) {
     case 'month':
         $sql = "
             SELECT 
-                DATE_FORMAT(end_time, '%Y-%m') AS label,
-                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
-            {$driveOrderWhere}
+                DATE_FORMAT(created_at, '%Y-%m') AS label,
+                ROUND(SUM(COALESCE(payer_total, 0)), 2) AS total
+            {$rechargeOrderWhere}
             GROUP BY label
             ORDER BY label DESC
             LIMIT 12
@@ -44,9 +42,9 @@ switch ($period) {
     default:
         $sql = "
             SELECT 
-                DATE(end_time) AS label,
-                ROUND(SUM(COALESCE(payment_amount, 0)), 2) AS total
-            {$driveOrderWhere}
+                DATE(created_at) AS label,
+                ROUND(SUM(COALESCE(payer_total, 0)), 2) AS total
+            {$rechargeOrderWhere}
             GROUP BY label
             ORDER BY label DESC
             LIMIT 30
@@ -62,7 +60,7 @@ $database->close();
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>平台驾驶订单收益统计</title>
+    <title>平台充值收益统计</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -153,8 +151,8 @@ $database->close();
     </style>
 </head>
 <body>
-    <h2>平台驾驶订单收益统计</h2>
-    <div class="desc">当前只统计驾驶订单收入，已剔除礼物、金币、娃娃机和能量订单。点击日期卡片可查看对应周期的场地业绩排行。</div>
+    <h2>平台充值收益统计</h2>
+    <div class="desc">统计 RechargeOrders 中支付成功的充值金额，按支付订单创建时间汇总。</div>
 
     <div class="toolbar">
         <button onclick="changePeriod('day')" class="<?= $period == 'day' ? 'active' : '' ?>">按天</button>
@@ -164,12 +162,10 @@ $database->close();
 
     <div class="card-container">
 <?php if (empty($data)): ?>
-        <div class="empty">暂无驾驶订单收益数据</div>
+        <div class="empty">暂无充值收益数据</div>
 <?php endif; ?>
 <?php foreach ($data as $row): ?>
 <?php
-    $topPageUrl = '/res/top.html';
-
     $label = '';
     $startDate = '';
     $endDate = '';
@@ -220,15 +216,8 @@ $database->close();
         $label = htmlspecialchars((string)$row['label'], ENT_QUOTES, 'UTF-8');
     }
 
+    // 充值订单不归属于具体驾驶场地，不再跳转场地业绩排行。
     $cardHref = '';
-    if ($startDate && $endDate) {
-        $cardHref = $topPageUrl . '?' . http_build_query([
-            'period' => $period,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'rank_type' => 'total'
-        ]);
-    }
 ?>
         
         <?php if ($cardHref): ?>

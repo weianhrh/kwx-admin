@@ -28,6 +28,8 @@ if ($venue_id <= 0) {
 // ✅ 统一资费费率配置，后面只改这里
 $RATE_MIN = 0.8;
 $RATE_MAX = 3.0;
+$MIN_MINUTES = in_array((int)$role_id, [3, 4], true) ? 1 : 2;
+$MAX_PACKAGE_COUNT = in_array((int)$role_id, [3, 4], true) ? 6 : 4;
 
 function calcPricingRate($battery, $minutes) {
     $minutes = intval($minutes);
@@ -112,11 +114,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
             
-            if ($row['count'] >= 4) {
+            if ($row['count'] >= $MAX_PACKAGE_COUNT) {
                 echo json_encode([
                     'venue_id' => $venue_id,
                     'code' => 4,
-                    'msg' => '套餐数量已达上限（4个），不能继续添加',
+                    'msg' => "套餐数量已达上限（{$MAX_PACKAGE_COUNT}个），不能继续添加",
                     'data' => []
                 ]);
                 $database->close();
@@ -170,8 +172,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ]);
                 exit;
             }
-             if ($minutes < 2) {
-                echo json_encode(['code' => 7, 'msg' => '最低可驾驶时长不得低于2分钟']);
+             if ($minutes < $MIN_MINUTES) {
+                echo json_encode(['code' => 7, 'msg' => "最低可驾驶时长不得低于{$MIN_MINUTES}分钟"]);
                 exit;
             }
             $insertSql = "
@@ -249,8 +251,8 @@ if (!preg_match('/^\d+$/', (string)$minutesRaw)) {
 
 $minutes = intval($minutesRaw);
 
-if ($minutes < 2) {
-    echo json_encode(['code' => 7, 'msg' => '最低可驾驶时长不得低于2分钟']);
+if ($minutes < $MIN_MINUTES) {
+    echo json_encode(['code' => 7, 'msg' => "最低可驾驶时长不得低于{$MIN_MINUTES}分钟"]);
     exit;
 }
 

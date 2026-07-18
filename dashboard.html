@@ -4437,9 +4437,9 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
           url: './api/index/user_active_detail.php',
           title: '活跃用户统计'
         }) +
-        statCard('平台收益', formatMoney(metrics.totalRecharge), '今日驾驶订单收入', 'finance', {
+        statCard('平台收益', formatMoney(metrics.totalRecharge), '今日充值支付收入', 'finance', {
           url: './api/index/recharge_detail.php?period=day',
-          title: '平台驾驶订单收益统计'
+          title: '平台充值收益统计'
         }) +
         statCard('实际消费', formatMoney(metrics.totalUserConsumption), '订单消费汇总', 'order') +
         '</div>' +
