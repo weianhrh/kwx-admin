@@ -146,6 +146,82 @@
       font-weight:600;
       word-break:break-all;
     }
+
+    /* 设备名称审核拒绝原因弹窗 */
+    .app-modal-mask {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.48);
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-modal-mask.show { display: flex; }
+    .app-modal-card {
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.24);
+      overflow: hidden;
+    }
+    .app-modal-head {
+      padding: 18px 20px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-modal-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 15px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .app-modal-icon.warning { background: #f59e0b; }
+    .app-modal-title { font-size: 17px; font-weight: 700; color: #172033; }
+    .app-modal-body {
+      padding: 8px 20px 18px;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+    .app-modal-actions {
+      padding: 14px 20px 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid #eef2ff;
+    }
+    .app-modal-btn {
+      min-width: 82px;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .app-modal-btn.cancel { background: #f3f4f6; color: #374151; }
+    .app-modal-btn.confirm { background: var(--primary); color: #fff; }
+    .app-reject-item {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+    .app-reject-item strong { color: #9a3412; }
+    @media (max-width: 520px) {
+      .app-modal-actions { flex-direction: column-reverse; }
+      .app-modal-btn { width: 100%; }
+    }
   </style>
 </head>
 
@@ -332,6 +408,20 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
   </div>
   </div>
 
+  <div class="app-modal-mask" id="app-modal-mask" aria-hidden="true">
+    <div class="app-modal-card" role="dialog" aria-modal="true" aria-labelledby="app-modal-title">
+      <div class="app-modal-head">
+        <div class="app-modal-icon" id="app-modal-icon">!</div>
+        <div class="app-modal-title" id="app-modal-title">提示</div>
+      </div>
+      <div class="app-modal-body" id="app-modal-body"></div>
+      <div class="app-modal-actions">
+        <button type="button" class="app-modal-btn cancel" id="app-modal-cancel">取消</button>
+        <button type="button" class="app-modal-btn confirm" id="app-modal-confirm">确定</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const CAR_TYPE_TO_PHOTO = {
   1: "https://app.kwxapp.cn/img/m1282.jpg",        // 汽车
@@ -356,7 +446,90 @@ const CLAW_SN_SET = new Set([
 let userCanEditImage = false;
 let userCanEditPhoto = false;
 let userCanEditStatus = false;
+let userCanDirectEditName = false;
 let initialPhotoValue = '';
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function showAppModal(options = {}) {
+  const mask = document.getElementById('app-modal-mask');
+  const icon = document.getElementById('app-modal-icon');
+  const titleEl = document.getElementById('app-modal-title');
+  const bodyEl = document.getElementById('app-modal-body');
+  const confirmBtn = document.getElementById('app-modal-confirm');
+  const cancelBtn = document.getElementById('app-modal-cancel');
+  if (!mask || !titleEl || !bodyEl || !confirmBtn || !cancelBtn) return Promise.resolve(true);
+
+  const type = options.type || 'warning';
+  titleEl.textContent = options.title || '提示';
+  bodyEl.innerHTML = options.message || '';
+  icon.className = 'app-modal-icon ' + type;
+  icon.textContent = type === 'warning' ? '!' : 'i';
+  confirmBtn.textContent = options.confirmText || '确定';
+  cancelBtn.textContent = options.cancelText || '取消';
+  cancelBtn.style.display = options.showCancel ? '' : 'none';
+
+  return new Promise(resolve => {
+    const close = value => {
+      mask.classList.remove('show');
+      mask.setAttribute('aria-hidden', 'true');
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(value);
+    };
+    confirmBtn.onclick = () => close(true);
+    cancelBtn.onclick = () => close(false);
+    mask.classList.add('show');
+    mask.setAttribute('aria-hidden', 'false');
+  });
+}
+
+async function checkRejectedVehicleName(deviceId) {
+  deviceId = String(deviceId || '').trim();
+  if (!deviceId) return;
+
+  try {
+    const res = await fetch(`/api/venue/get_rejected_vehicle_name.php?device_id=${encodeURIComponent(deviceId)}`, {
+      credentials: 'include'
+    });
+    const result = await res.json();
+    const list = Array.isArray(result?.data) ? result.data : [];
+    if (!list.length) return;
+
+    const labelMap = { name: '设备名称', share_name: '设备分享名称' };
+    const itemsHtml = list.map(item => {
+      const field = labelMap[item.field] || item.field || '名称';
+      const reason = item.reason || '未填写拒绝原因';
+      return `<div class="app-reject-item"><strong>${escapeHtml(field)}未通过：</strong><br>${escapeHtml(reason)}</div>`;
+    }).join('');
+
+    await showAppModal({
+      title: '设备名称审核未通过',
+      type: 'warning',
+      message: `<div>以下审核结果已返回，请根据原因重新修改后再提交。</div>${itemsHtml}`,
+      confirmText: '我知道了'
+    });
+
+    const keys = list.map(item => item.redis_key).filter(Boolean);
+    if (keys.length) {
+      await fetch('/api/venue/acknowledge_vehicle_reject.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys })
+      });
+    }
+  } catch (err) {
+    console.warn('获取设备名称审核拒绝原因失败:', err);
+  }
+}
 
 function getTextLen(str) {
   return Array.from((str || '').trim()).length;
@@ -518,6 +691,7 @@ async function fetchCurrentUserRole() {
     userCanEditImage = (roleId === 1);
     userCanEditPhoto = (roleId === 1 || roleId === 2);
     userCanEditStatus = (roleId === 1 || roleId === 2);
+    userCanDirectEditName = (roleId === 1 || roleId === 2);
   } catch (err) {
     console.warn('获取用户角色失败:', err);
   }
@@ -745,6 +919,11 @@ bindMaxLen('share_name', '设备分享名称', 10);
     // 只有娃娃机才展示娃娃机信息
     if (isClaw) {
       await initClawSection(device.serial_number);
+    }
+
+    // 加盟商/场地方进入修改页时，主动显示审核拒绝原因；确认后清除本次提醒。
+    if (!userCanDirectEditName) {
+      await checkRejectedVehicleName(device.serial_number || device.device_id || '');
     }
 
   } else {

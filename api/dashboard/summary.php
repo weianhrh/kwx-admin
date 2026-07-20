@@ -21,25 +21,31 @@ function dashboard_count_pending_images(Database $db): int
 {
     // 图文审核数量 = 待审核场地图片 + Redis 里的场地名称/描述/设备名称/分享名称审核。
     // 这里要和 res/pidtrueAndtextPedding.html 使用的接口保持一致：
-    // - api/venue/getPendingImages.php 统计 pending_images 目录下的场地图片
+    // - api/venue/getPendingImages.php 读取 venue_image_reviews 表
     // - api/venue/get_audit_list.php 读取 venue_name_audit_pool / venue_description_audit_pool
     // - api/venue/getPendingVehicleNameAudits.php 读取 vehicle_name_audit_pool
-    $count = 0;
-
-    $dir = __DIR__ . '/../venue/pending_images/';
-    if (is_dir($dir)) {
-        foreach (scandir($dir) ?: [] as $file) {
-            if (preg_match('/venue_\d+_\d{14}\.(jpg|jpeg|png|gif|webp)$/i', $file)) {
-                $count++;
-            }
-        }
-    }
+    // 不再扫描 pending_images 目录：目录里可能残留已处理或未入库文件，
+    // 会造成工作台显示有待审核数量，但进入审核页却没有内容。
+    $count = (int)dashboard_scalar($db, "
+        SELECT COUNT(*) AS total
+        FROM venue_image_reviews
+        WHERE status = 'pending'
+    ", [], 'total', 0);
 
     try {
         $redis = new RedisHelper();
         $redis->connect();
         $redis->selectDb(3);
         $nativeRedis = method_exists($redis, 'getNative') ? $redis->getNative() : null;
+
+        // 兼容当前 RedisHelper 尚未提供 getNative() 的版本；审核列表接口也是
+        // 通过该内部连接读取集合，保证工作台统计与列表使用相同的数据源。
+        if (!$nativeRedis) {
+            $reflection = new ReflectionClass($redis);
+            $property = $reflection->getProperty('redis');
+            $property->setAccessible(true);
+            $nativeRedis = $property->getValue($redis);
+        }
 
         if ($nativeRedis) {
             foreach (['venue_name_audit_pool', 'venue_description_audit_pool', 'vehicle_name_audit_pool'] as $poolKey) {
@@ -60,7 +66,7 @@ function dashboard_count_pending_images(Database $db): int
 
         $redis->close();
     } catch (Throwable $e) {
-        // Redis 统计失败时，不影响工作台主数据展示；至少返回图片目录数量。
+        // Redis 统计失败时，不影响工作台主数据展示；仍返回数据库图片数量。
     }
 
     return $count;

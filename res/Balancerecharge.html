@@ -846,8 +846,9 @@ function getVenueName(id) {
 }
 
 async function toggleUserStreamer(uid, type) {
-  const name = Number(type) === 2 ? '管理员' : '主播';
-  const tip = Number(type) === 0 ? '确认取消该用户身份吗？' : `确认将该用户设为${name}吗？`;
+  const tip = Number(type) === 0
+    ? '确认要隐藏该用户APP后台选项吗？'
+    : '确认要显示该用户APP后台选项吗？';
   if (!confirm(tip)) return;
 
   try {
@@ -864,7 +865,7 @@ async function toggleUserStreamer(uid, type) {
     }
   } catch (e) {
     console.error(e);
-    alert('主播身份切换失败，请稍后再试');
+    alert('APP后台选项设置失败，请稍后再试');
   }
 }
 
@@ -978,7 +979,7 @@ async function loadTableData(params = {}) {
                     <span class="user-name">
                         ${
                           Number(item.is_streamer) === 1
-                            ? '<span class="badge-streamer">主播</span>'
+                            ? '<span class="badge-streamer">APP后台已显示</span>'
                             : (Number(item.is_streamer) === 2 ? '<span class="badge-streamer">管理员</span>' : '')
                         }
                       ${item.username || '-'}
@@ -1000,7 +1001,7 @@ async function loadTableData(params = {}) {
       ? `
       <div class="action-row">
         <button class="action-btn btn-streamer" onclick="toggleUserStreamer(${item.id}, 0)">
-          <i class="fas fa-user-minus"></i> 取消身份
+          <i class="fas fa-eye-slash"></i> 隐藏APP后台选项
         </button>
 
         <button class="action-btn btn-assign" onclick="saveStreamerVenue(${item.id})">
@@ -1013,7 +1014,11 @@ async function loadTableData(params = {}) {
       </select>
       `
       : `
-      <div class="action-row action-row-full">
+      <div class="action-row">
+        <button class="action-btn btn-streamer" onclick="toggleUserStreamer(${item.id}, 1)">
+          <i class="fas fa-eye"></i> 显示APP后台选项
+        </button>
+
         <button class="action-btn btn-nickname" onclick="changeNicknameByAdmin(${item.id}, '${safeUsername}')">
           <i class="fas fa-user-edit"></i> 改昵称
         </button>

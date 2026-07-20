@@ -17,7 +17,7 @@ if (!$session_token) {
 }
 
 $user = $database->getUserBySessionToken($session_token);
-if (!$user || !$user['role_id']) {
+if (!$user || !in_array((int)($user['role_id'] ?? 0), [1, 2], true)) {
     jsonOut(1001, '用户未登录或无权访问');
 }
 
@@ -40,8 +40,16 @@ if (!$userInfo) {
     jsonOut(1005, '用户不存在');
 }
 
-if (!in_array(intval($userInfo[0]['is_streamer']), [1, 2], true)) {
-    jsonOut(1006, '该用户还不是主播或管理员，请先设置身份');
+if (intval($userInfo[0]['is_streamer']) !== 1) {
+    jsonOut(1006, '请先为该用户显示APP后台选项');
+}
+
+$venueInfo = $database->query(
+    "SELECT id FROM venues WHERE id = ? LIMIT 1",
+    [$streamer_venue]
+);
+if (!$venueInfo) {
+    jsonOut(1008, '所选场地不存在');
 }
 
 $affected = $database->query(
@@ -51,7 +59,7 @@ $affected = $database->query(
 );
 
 if ($affected === false) {
-    jsonOut(1007, '分配主播场地失败');
+    jsonOut(1007, '分配APP后台场地失败');
 }
 
 jsonOut(0, '场地分配成功', [

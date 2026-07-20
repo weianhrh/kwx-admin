@@ -17,12 +17,12 @@ if (!$session_token) {
 }
 
 $user = $database->getUserBySessionToken($session_token);
-if (!$user || !$user['role_id']) {
+if (!$user || !in_array((int)($user['role_id'] ?? 0), [1, 2], true)) {
     jsonOut(1001, '用户未登录或无权访问');
 }
 
 $uid = intval($_GET['uid'] ?? 0);
-$type = intval($_GET['type'] ?? -1); // 0普通用户，1主播，2管理员
+$type = intval($_GET['type'] ?? -1); // 0隐藏APP后台选项，1显示APP后台选项，2保留旧管理员类型
 if ($uid <= 0) {
     jsonOut(1003, '缺少有效的 uid');
 }
@@ -50,7 +50,7 @@ if ($type === 0) {
         jsonOut(1006, '取消身份失败');
     }
 
-    jsonOut(0, '已取消身份', [
+    jsonOut(0, '已隐藏该用户APP后台选项', [
         'uid' => $uid,
         'is_streamer' => 0,
         'streamer_venue' => null
@@ -67,7 +67,7 @@ if ($affected === false) {
     jsonOut(1007, '设置身份失败');
 }
 
-jsonOut(0, $type === 1 ? '已设为主播' : '已设为管理员', [
+jsonOut(0, $type === 1 ? '已显示该用户APP后台选项' : '已设为管理员', [
     'uid' => $uid,
     'is_streamer' => $type
 ]);
