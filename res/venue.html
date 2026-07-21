@@ -2701,7 +2701,9 @@ function renderLocksUI() {
 
                     <div class="value">
 
-                      <input id="venue-subtitle-input" class="edit-input edit-control" maxlength="100" placeholder="请输入场地副标题" disabled>
+                      <input id="venue-subtitle-input" class="edit-input edit-control" maxlength="100"
+                        pattern="[A-Za-z0-9]*" title="副标题仅允许填写英文字母和数字，不支持中文或符号"
+                        placeholder="仅限英文字母和数字" disabled>
 
                     </div>
 
@@ -3343,8 +3345,15 @@ if (ROLE_ID === 1 || ROLE_ID === 2) {
   const venueSubtitleInput = document.getElementById('venue-subtitle-input');
 
   if (venueSubtitleInput) {
+    const venueSubtitle = venueSubtitleInput.value.trim();
 
-    payload.venue_subtitle = venueSubtitleInput.value.trim();
+    if (venueSubtitle && !/^[A-Za-z0-9]+$/.test(venueSubtitle)) {
+      alert('场地副标题仅允许填写英文字母和数字，不支持中文或符号');
+      venueSubtitleInput.focus();
+      return;
+    }
+
+    payload.venue_subtitle = venueSubtitle;
 
   }
 

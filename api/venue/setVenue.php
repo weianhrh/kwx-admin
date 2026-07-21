@@ -286,6 +286,15 @@ if (array_key_exists('venue_subtitle', $data)) {
     }
 
     $venue_subtitle = trim((string)$data['venue_subtitle']);
+    if ($venue_subtitle !== '' && !preg_match('/^[A-Za-z0-9]+$/', $venue_subtitle)) {
+        echo json_encode([
+            'code' => 1007,
+            'msg'  => '场地副标题仅允许填写英文字母和数字，不支持中文或符号',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     if (mb_strlen($venue_subtitle, 'UTF-8') > 100) {
         echo json_encode([
             'code' => 1006,
