@@ -535,6 +535,115 @@
   </script>
 <script>
 
+// 同一份页面同时运行在 KWX 原后台和 RC 聚合审核代理中。
+// /__kwx_app/ 只存在于 audit-kwx.rcwulian.cn，KWX 原后台必须使用真实上传域名。
+const IS_RC_REVIEW_PROXY = window.location.hostname === 'audit-kwx.rcwulian.cn';
+const PROFILE_UPLOAD_URL = IS_RC_REVIEW_PROXY
+    ? '/__kwx_app/app/img/userimg/upload_profile.php'
+    : 'https://app.kwxapp.cn/app/img/userimg/upload_profile.php';
+
+function resolvePendingImageUrl(value) {
+    const url = String(value || '').trim();
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url) || url.startsWith('/')) return url;
+    return '/api/venue/' + url.replace(/^\.\//, '');
+}
+
+function escapeHtmlAttribute(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+async function readJsonResponse(response, actionName) {
+    const responseText = (await response.text()).replace(/^\uFEFF/, '').trim();
+    let data;
+
+    try {
+        data = JSON.parse(responseText);
+    } catch (error) {
+        // 兼容少量旧 PHP 接口把 Warning/Notice 输出在 JSON 前面的情况。
+        // 只接受 application/json，且前缀必须完全由标准 PHP 非致命警告组成；
+        // Fatal error、404 HTML 和 JSON 后带杂质仍会按异常处理。
+        const contentType = response.headers.get('content-type') || '';
+        const warningLinePattern = /^(?:PHP\s+)?(?:Warning|Notice|Deprecated|Strict Standards)\s*:\s*[\s\S]+\bin\s*[\s\S]+\bon line\s+\d+\s*$/i;
+
+        if (/application\/(?:[\w.+-]+\+)?json\b/i.test(contentType)) {
+            for (let index = responseText.lastIndexOf('{'); index > 0; index = responseText.lastIndexOf('{', index - 1)) {
+                const prefix = responseText.slice(0, index)
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<\/?b>/gi, '')
+                    .trim();
+                const candidate = responseText.slice(index).trim();
+                const warningLines = prefix.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+
+                if (!prefix || /<[^>]+>/.test(prefix) ||
+                    !warningLines.length || !warningLines.every(line => warningLinePattern.test(line))) {
+                    continue;
+                }
+
+                try {
+                    const recovered = JSON.parse(candidate);
+                    if (recovered && typeof recovered === 'object' && !Array.isArray(recovered)) {
+                        console.warn(`${actionName}接口输出了 PHP 警告，已恢复 JSON；请检查服务器日志权限`);
+                        data = recovered;
+                        break;
+                    }
+                } catch (ignored) {
+                    // 继续寻找下一个可能的 JSON 起点。
+                }
+            }
+        }
+
+        if (!data) {
+            throw new Error(`${actionName}返回格式异常（HTTP ${response.status}）`);
+        }
+    }
+
+    if (!response.ok) {
+        throw new Error(data.msg || `${actionName}请求失败（HTTP ${response.status}）`);
+    }
+
+    return data;
+}
+
+function getPendingImageFilePath(imageUrl) {
+    try {
+        const pathname = new URL(imageUrl, window.location.origin).pathname;
+        const marker = '/pending_images/';
+        const markerIndex = pathname.indexOf(marker);
+        if (markerIndex < 0) return '';
+
+        const fileName = decodeURIComponent(pathname.slice(markerIndex + marker.length))
+            .split('/')
+            .filter(Boolean)
+            .pop();
+        return fileName ? `pending_images/${fileName}` : '';
+    } catch (error) {
+        return '';
+    }
+}
+
+async function deletePendingReviewImage(venueId, imageUrl) {
+    const filePath = getPendingImageFilePath(imageUrl);
+    if (!filePath) {
+        return { ok: false, msg: '未识别待审核图片文件名' };
+    }
+
+    const response = await fetch('/api/venue/deletePendingImage.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venue_id: venueId, filename: filePath })
+    });
+    const data = await readJsonResponse(response, '清理待审核图片');
+    return {
+        ok: Number(data.code) === 0,
+        msg: data.msg || '清理失败'
+    };
+}
+
         // 原页面会先请求项目中不存在的 upload.php，失败后图片列表不会加载。
         // 当前上传流程并不使用该 OSS 配置，因此直接加载待审核图片。
         window.addEventListener('load', loadPendingImages);
@@ -553,9 +662,9 @@ function loadPendingImages() {
                 data.data.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'venue-card';
-                    const imageUrl = "/api/venue/"+item.image_url;
+                    const imageUrl = resolvePendingImageUrl(item.image_url);
                     card.innerHTML = `
-                    <img src="/api/venue/${item.image_url}"class="venue-img" alt="待审核图片"  onclick="showModal('${imageUrl}')">
+                    <img src="${escapeHtmlAttribute(imageUrl)}" class="venue-img" alt="待审核图片">
                         <div class="venue-info">
                             <span class="venue-name">${item.venue_name}</span>
                             <span>场地ID: ${item.id}</span>
@@ -567,6 +676,8 @@ function loadPendingImages() {
                             <button class="edit-btn" style="background-color:#f44336" onclick="rejectImage(${item.id})">拒绝</button>
                         </div>
                     `;
+
+                    card.querySelector('.venue-img').addEventListener('click', () => showModal(imageUrl));
 
                     container.appendChild(card);
                 });
@@ -665,11 +776,23 @@ function loadPendingImages() {
 async function approveImage(venueId) {
     if (!confirm("确认通过该图片审核，并设为场地头像？")) return;
 
-    const card = document.querySelector(`.venue-card button[onclick="approveImage(${venueId})"]`).closest('.venue-card');
-    const imgUrl = card.querySelector('img').getAttribute('src');
+    const approveButton = document.querySelector(`.venue-card button[onclick="approveImage(${venueId})"]`);
+    const card = approveButton && approveButton.closest('.venue-card');
+    const image = card && card.querySelector('img');
+    if (!approveButton || !card || !image) {
+        alert('未找到待审核图片，请刷新页面后重试');
+        return;
+    }
+
+    const imgUrl = image.currentSrc || image.getAttribute('src');
+    approveButton.disabled = true;
+    approveButton.textContent = '处理中...';
 
     try {
         const response = await fetch(imgUrl);
+        if (!response.ok) {
+            throw new Error(`读取待审核图片失败（HTTP ${response.status}）`);
+        }
         const blob = await response.blob();
 
         if (blob.size < 100) {
@@ -681,93 +804,105 @@ async function approveImage(venueId) {
         formData.append('file', blob, `venue_${venueId}.jpg`);
         formData.append('action', 'update_venue_pictrue');
         formData.append('venue_id', venueId);
+        // 新审核流程由 reviewImage.php 统一写审核员、审核时间和图片锁。
+        // 旧 upload_profile.php 不认识此参数时会自动忽略，部署顺序不受限制。
+        formData.append('defer_review_status', '1');
 
-        const uploadRes = await fetch('/__kwx_app/app/img/userimg/upload_profile.php', {
+        const uploadRes = await fetch(PROFILE_UPLOAD_URL, {
             method: 'POST',
             body: formData
         });
 
-        const uploadData = await uploadRes.json();
-        if (uploadData.code === 0) {
+        const uploadData = await readJsonResponse(uploadRes, '场地头像上传');
+        // 兼容上传接口的两种历史响应：{code:0,url:...} 或仅 {url:...}。
+        const uploadedUrl = uploadData.image_url || uploadData.url ||
+            (uploadData.data && (uploadData.data.image_url || uploadData.data.url)) || '';
+        const uploadHasCode = Object.prototype.hasOwnProperty.call(uploadData, 'code');
+        const uploadSucceeded = uploadHasCode ? Number(uploadData.code) === 0 : Boolean(uploadedUrl);
+
+        if (uploadSucceeded) {
             // 同步把审核记录改为 approved。若上传接口不返回URL，后端会读取 venues.image_url。
-            const uploadedUrl = uploadData.image_url || uploadData.url ||
-                (uploadData.data && (uploadData.data.image_url || uploadData.data.url)) || '';
             const reviewRes = await fetch('/api/venue/reviewImage.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ venue_id: venueId, oss_uploaded_url: uploadedUrl })
             });
-            const reviewData = await reviewRes.json();
-            if (reviewData.code !== 0) {
+            const reviewData = await readJsonResponse(reviewRes, '更新审核状态');
+            if (Number(reviewData.code) !== 0) {
                 throw new Error(reviewData.msg || '审核状态更新失败');
             }
-            alert("审核通过，头像已更新");
 
-            // 删除待审核图片
-            const filename = imgUrl.split('/pending_images/')[1]; // 取文件名
-            const deleteRes = await fetch('/api/venue/deletePendingImage.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    venue_id: venueId,
-                    filename: `pending_images/${filename}`
-                })
-            });
-            const deleteText = await deleteRes.text();
-            console.log("🧹 删除图片响应文本：", deleteText);
+            // 审核状态已经成功后再清理待审核文件；清理失败不再误报“审核失败”。
+            let cleanupMessage = '';
+            try {
+                const cleanup = await deletePendingReviewImage(venueId, imgUrl);
+                if (!cleanup.ok) cleanupMessage = `\n但待审核文件清理失败：${cleanup.msg}`;
+            } catch (cleanupError) {
+                cleanupMessage = `\n但待审核文件清理失败：${cleanupError.message}`;
+                console.error('待审核图片清理异常：', cleanupError);
+            }
+
+            alert(`审核通过，头像已更新${cleanupMessage}`);
 
             location.reload();
         } else {
-            alert("上传失败：" + uploadData.msg);
+            throw new Error(uploadData.msg || '场地头像上传失败');
         }
 
     } catch (e) {
         console.error("上传异常：", e);
-        alert("图片审核处理失败，请检查网络或服务器");
+        alert("图片审核处理失败：" + (e.message || '请检查网络或服务器'));
+    } finally {
+        approveButton.disabled = false;
+        approveButton.textContent = '审核通过';
     }
 }
 
 async function rejectImage(venueId) {
-
-
-
-    // 缓存驳回理由到 localStorage
-    // localStorage.setItem(`rejected_reason_${venueId}`, reason);
-
-    // 找到图片 URL 并提取 filename
     const reason = prompt("请输入拒绝原因：", "内容不适宜");
     if (!reason) return;
-    const rejectRes = await fetch('/api/venue/rejectImage.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            venue_id: venueId,
-            reason: reason
-        })
-    });
 
-    const card = document.querySelector(`.venue-card button[onclick="rejectImage(${venueId})"]`).closest('.venue-card');
-    const imgUrl = card.querySelector('img').getAttribute('src');
-    const filename = imgUrl.split('/pending_images/')[1];
+    const rejectButton = document.querySelector(`.venue-card button[onclick="rejectImage(${venueId})"]`);
+    const card = rejectButton && rejectButton.closest('.venue-card');
+    const image = card && card.querySelector('img');
+    if (!rejectButton || !card || !image) {
+        alert('未找到待审核图片，请刷新页面后重试');
+        return;
+    }
 
-    // 删除图片 + 还原 image_status
-    const deleteRes = await fetch('/api/venue/deletePendingImage.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            venue_id: venueId,
-            filename: `pending_images/${filename}`
-        })
-    });
+    const imgUrl = image.currentSrc || image.getAttribute('src');
+    rejectButton.disabled = true;
+    rejectButton.textContent = '处理中...';
 
-    const deleteData = await deleteRes.json();
-    console.log("🧹 删除图片响应：", deleteData);
+    try {
+        const rejectRes = await fetch('/api/venue/rejectImage.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ venue_id: venueId, reason: reason })
+        });
+        const rejectData = await readJsonResponse(rejectRes, '拒绝图片审核');
+        if (Number(rejectData.code) !== 0) {
+            throw new Error(rejectData.msg || '拒绝审核失败');
+        }
 
-    if (deleteData.code === 0) {
-        alert('图片已驳回并清理');
+        // 只有数据库成功标记 rejected 后才允许删除待审核文件。
+        let cleanupMessage = '';
+        try {
+            const cleanup = await deletePendingReviewImage(venueId, imgUrl);
+            if (!cleanup.ok) cleanupMessage = `\n但待审核文件清理失败：${cleanup.msg}`;
+        } catch (cleanupError) {
+            cleanupMessage = `\n但待审核文件清理失败：${cleanupError.message}`;
+            console.error('待审核图片清理异常：', cleanupError);
+        }
+
+        alert(`图片已驳回${cleanupMessage}`);
         location.reload();
-    } else {
-        alert('删除失败：' + deleteData.msg);
+    } catch (error) {
+        console.error('拒绝图片审核失败：', error);
+        alert('拒绝失败：' + (error.message || '请检查网络或服务器'));
+    } finally {
+        rejectButton.disabled = false;
+        rejectButton.textContent = '拒绝';
     }
 }
 

@@ -687,6 +687,13 @@ function filterPredictedCards() {
     </script>
 <script>
 let alertShown = false; // 是否已弹出提示，避免重复弹窗
+const IS_RC_REVIEW_PROXY = window.location.hostname === 'audit-kwx.rcwulian.cn';
+
+function notifyRcReviewWorkbench(message) {
+    if (!IS_RC_REVIEW_PROXY || window.parent === window) return false;
+    window.parent.postMessage(message, 'https://open.rcwulian.cn');
+    return true;
+}
 
 function checkPendingImages() {
     fetch('/api/venue/getPendingImages.php')
@@ -698,9 +705,7 @@ function checkPendingImages() {
                     alertShown = true;
 
                     if (confirmed) {
-                        if (window.parent !== window) {
-                            window.parent.postMessage({ type: 'review-module-change', system: 'kwx', module: 'image' }, 'https://open.rcwulian.cn');
-                        }
+                        notifyRcReviewWorkbench({ type: 'review-module-change', system: 'kwx', module: 'image' });
                         window.location.href = "/res/pidtrueAndtextPedding.html";
                     } else {
                         console.log("用户取消提醒");
@@ -765,9 +770,7 @@ function checkReportCount() {
 
 
 function goToReportReview() {
-    if (window.parent !== window) {
-        window.parent.postMessage({ type: 'review-module-change', system: 'kwx', module: 'reports' }, 'https://open.rcwulian.cn');
-    }
+    notifyRcReviewWorkbench({ type: 'review-module-change', system: 'kwx', module: 'reports' });
     window.location.href = "/res/reporthand.html";
 }
 
@@ -909,10 +912,14 @@ setTimeout(() => {
             hasShownLoginError = true;
             alert(j.msg || '登录状态已失效，请重新登录');
             // 根据你的实际登录页地址改
-            if (window.parent !== window) {
-              window.parent.postMessage({ type: 'review-auth-expired', system: 'kwx' }, 'https://open.rcwulian.cn');
+            if (IS_RC_REVIEW_PROXY) {
+              if (window.parent !== window) {
+                notifyRcReviewWorkbench({ type: 'review-auth-expired', system: 'kwx' });
+              } else {
+                window.location.replace('https://open.rcwulian.cn/review/login.php');
+              }
             } else {
-              window.location.href = 'https://open.rcwulian.cn/review/login.php';
+              window.top.location.replace('/index.html');
             }
           }
         }
