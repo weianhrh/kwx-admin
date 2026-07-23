@@ -1244,7 +1244,7 @@ const feeHelp = `
         </div>
 <div class="amount-item is-primary">
   <div class="amount-icon">❄</div>
-  <div class="amount-content"><div class="amount-label">可提现:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
+  <div class="amount-content"><div class="amount-label">可提现${data.actual_payout_rate_text ? `（${esc(data.actual_payout_rate_text)}）` : ''}:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
 </div>
 <div class="amount-item is-warning">
   <div class="amount-icon">↔</div>
@@ -1323,8 +1323,18 @@ const feeHelp = `
       statusMessage.style.display = 'block';
       withdrawButton.disabled = true;
 
+      // 输入框展示的是加盟商实际可到账金额；接口仍以参与结算金额记账。
+      const payoutRate = parseFloat(accountCache.actual_payout_rate || 0);
+      if (!(payoutRate > 0)) {
+        showCustomModal('提现提示', '当前场地实际到账比例为0%，无法提现。');
+        withdrawButton.disabled = false;
+        statusMessage.style.display = 'none';
+        return;
+      }
+      const settlementAmount = Math.round((withdrawAmount / payoutRate) * 100) / 100;
+
       const data = {
-        amount: withdrawAmount,
+        amount: settlementAmount,
         unsettled_image_transmission_fee: document.getElementById('unsettled-image-fee-total').value || 0,
         unsettled_image_ids: document.getElementById('unsettled-image-ids').value || '[]'
       };

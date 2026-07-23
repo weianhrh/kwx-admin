@@ -68,12 +68,12 @@ if (!empty($_POST['unsettled_image_ids'])) {
 }
 */
 
-// 按场地读取提现配置；未配置时：提现比例20%，手续费0%。
-// 提现比例是加盟商实际可到账的比例，剩余部分作为技术服务费。
+// 按场地读取提现配置；未配置时：平台扣除20%，手续费0%。
+// withdraw_ratio 字段沿用旧名，实际含义是平台技术服务费扣除比例。
 $venue_level = '动态配置';
 $withdraw_ratio = 0.20;
 $withdrawal_fee_rate = 0.00;
-$technical_service_rate = 0.80;
+$technical_service_rate = 0.20;
 
 // 兼容先从加盟商提现页进入、尚未打开管理配置页的情况。
 $database->query("CREATE TABLE IF NOT EXISTS venue_withdrawal_configs (
@@ -94,8 +94,9 @@ $configResult = $database->query(
 if (!empty($configResult)) {
     $withdraw_ratio = max(0, min(1, (float)$configResult[0]['withdraw_ratio'] / 100));
     $withdrawal_fee_rate = max(0, min(1, (float)$configResult[0]['withdrawal_fee_rate'] / 100));
-    $technical_service_rate = 1 - $withdraw_ratio;
+    $technical_service_rate = $withdraw_ratio;
 }
+$actual_payout_rate = max(0, 1 - $technical_service_rate - $withdrawal_fee_rate);
 
 // 资金账号
 $fundsSql = "SELECT withdrawal_account, account_type, account_balance, account_name FROM venue_funds WHERE venue_id = ?";
@@ -317,7 +318,7 @@ if ($amount > $available_balance) {
             'frozen_amount'     => $frozen_amount,
             'total_refund'      => $totalRefundToDeduct,
             'lock_amount'       => $totalLockAmount,
-            'available_balance' => $available_balance
+            'available_balance' => round($available_balance * $actual_payout_rate, 2)
         ]
     ]);
     exit;
@@ -329,7 +330,7 @@ if ($amount > $available_balance) {
 // $actual_amount         = round($amount - ($technical_service_fee + $withdrawal_fee), 2);
 
 // 计算各种费用
-// 技术服务费 = 申请金额 × (100% - 提现比例)
+// 技术服务费 = 参与结算金额 × 平台扣除比例
 $technical_service_fee = round($amount * $technical_service_rate, 2);
 
 // 提现手续费按场地动态配置，默认0%
@@ -422,7 +423,7 @@ try {
                 'frozen_amount'     => round($frozen_amount, 2),
                 'total_refund'      => round($totalRefundToDeduct, 2),
                 'lock_amount'       => round($totalLockAmount, 2),
-                'available_balance' => round($available_balance, 2)
+                'available_balance' => round($available_balance * $actual_payout_rate, 2)
             ]
         ], JSON_UNESCAPED_UNICODE);
         exit;
@@ -544,7 +545,7 @@ if ($unsettled_image_fee_total > 0 && !empty($unsettled_image_ids)) {
                 'total_refund'      => round($totalRefundToDeduct, 2),
                 'lock_amount'       => round($totalLockAmount, 2),
                 'image_fee'         => round($actualImageFeeToDeduct, 2),
-                'available_balance' => round($realAvailableBalance, 2)
+                'available_balance' => round($realAvailableBalance * $actual_payout_rate, 2)
             ]
         ], JSON_UNESCAPED_UNICODE);
         exit;

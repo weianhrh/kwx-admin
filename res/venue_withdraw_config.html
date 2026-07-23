@@ -17,19 +17,19 @@
 <body>
 <div class="toast" id="toast"></div>
 <main class="wrap">
-  <div class="head"><h1>场地提现配置</h1><p>按场地设置加盟商实际提现比例和提现手续费。</p></div>
+  <div class="head"><h1>场地提现配置</h1><p>按场地设置平台扣除比例和提现手续费。</p></div>
   <section class="card">
-    <div class="notice">未单独配置的场地默认：提现比例 20%，提现手续费 0%。技术服务费率自动按“100% - 提现比例”计算。</div>
+    <div class="notice">未单独配置的场地默认：平台扣除比例 20%，提现手续费 0%，加盟商实际到账比例为 80%。</div>
     <div class="form">
       <div class="field venue-field"><label>选择场地（支持输入名称或ID模糊搜索）</label><input id="venueInput" list="venueList" placeholder="输入场地名称或ID"><datalist id="venueList"></datalist></div>
-      <div class="field"><label>提现比例（%）</label><input id="ratio" type="number" min="0" max="100" step="0.01" value="20"></div>
+      <div class="field"><label>平台扣除比例（%）</label><input id="ratio" type="number" min="0" max="100" step="0.01" value="20"></div>
       <div class="field"><label>提现手续费（%）</label><input id="fee" type="number" min="0" max="100" step="0.01" value="0"></div>
       <button class="save" id="saveBtn" onclick="saveConfig()">保存配置</button>
     </div>
   </section>
   <section class="card">
     <div class="search"><input id="keyword" placeholder="搜索场地名称或ID" onkeydown="if(event.key==='Enter')loadRows()"><button onclick="loadRows()">搜索</button></div>
-    <div style="overflow:auto"><table><thead><tr><th>场地ID</th><th>场地名称</th><th>提现比例</th><th>手续费</th><th>状态</th><th>操作</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table></div>
+    <div style="overflow:auto"><table><thead><tr><th>场地ID</th><th>场地名称</th><th>平台扣除比例</th><th>手续费</th><th>状态</th><th>操作</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table></div>
   </section>
 </main>
 <script>

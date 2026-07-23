@@ -298,6 +298,20 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
         'venue_id'
     );
 
+    // withdraw_ratio 沿用历史字段名，实际含义为平台扣除比例。
+    // 未配置场地默认平台扣除20%、提现手续费0%，加盟商实际到账80%。
+    $withdrawConfigRows = [];
+    if (venue_scope_has_table($db, 'venue_withdrawal_configs')) {
+        $withdrawConfigRows = fvo_fetch_map(
+            $db,
+            "SELECT venue_id, withdraw_ratio, withdrawal_fee_rate
+             FROM venue_withdrawal_configs
+             WHERE venue_id IN ({$ph})",
+            $params,
+            'venue_id'
+        );
+    }
+
     $refundAmounts = fvo_fetch_sum_map(
         $db,
         'refund_records',
@@ -338,10 +352,20 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
         $lockAmount = (float)($lockAmounts[$venueId] ?? 0);
         $imageFeeAmount = (float)($imageFeeAmounts[$venueId] ?? 0);
 
-        $availableBalance = max(
+        $settlementBalance = max(
             0.0,
             $accountBalance - $frozenAmount - $refundAmount - $lockAmount - $imageFeeAmount
         );
+        $platformDeductionRate = max(
+            0.0,
+            min(1.0, (float)($withdrawConfigRows[$venueId]['withdraw_ratio'] ?? 20.00) / 100)
+        );
+        $withdrawalFeeRate = max(
+            0.0,
+            min(1.0, (float)($withdrawConfigRows[$venueId]['withdrawal_fee_rate'] ?? 0.00) / 100)
+        );
+        $actualPayoutRate = max(0.0, 1.0 - $platformDeductionRate - $withdrawalFeeRate);
+        $availableBalance = round($settlementBalance * $actualPayoutRate, 2);
 
         $summaryTotalBalance += $accountBalance;
         $summaryAvailable += $availableBalance;
@@ -354,14 +378,18 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
                 'value_text' => fvo_money($accountBalance),
             ],
             [
-                'label' => '可提现金额',
+                'label' => '可提现金额（' . number_format($actualPayoutRate * 100, 2, '.', '') . '%）',
                 'value' => round($availableBalance, 2),
                 'value_text' => fvo_money($availableBalance),
             ],
         ];
         $row['finance_detail'] = [
             'account_balance' => round($accountBalance, 2),
+            'settlement_balance' => round($settlementBalance, 2),
             'available_balance' => round($availableBalance, 2),
+            'platform_deduction_rate' => $platformDeductionRate,
+            'withdrawal_fee_rate' => $withdrawalFeeRate,
+            'actual_payout_rate' => $actualPayoutRate,
             'frozen_amount' => round($frozenAmount, 2),
             'refund_amount' => round($refundAmount, 2),
             'lock_amount' => round($lockAmount, 2),

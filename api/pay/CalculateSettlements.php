@@ -62,6 +62,23 @@ if (empty($funds)) {
 }
 $account_balance = (float)$funds[0]['account_balance'];
 
+// withdraw_ratio 表示平台扣除比例，不是加盟商到账比例。
+// 未配置时默认平台扣除20%，提现手续费0%，加盟商实际到账80%。
+$platformDeductionRate = 0.20;
+$withdrawalFeeRate = 0.00;
+$configRows = $database->query(
+    "SELECT withdraw_ratio, withdrawal_fee_rate
+     FROM venue_withdrawal_configs
+     WHERE venue_id = ?
+     LIMIT 1",
+    [$venue_id]
+);
+if (!empty($configRows)) {
+    $platformDeductionRate = max(0, min(1, (float)$configRows[0]['withdraw_ratio'] / 100));
+    $withdrawalFeeRate = max(0, min(1, (float)$configRows[0]['withdrawal_fee_rate'] / 100));
+}
+$actualPayoutRate = max(0, 1 - $platformDeductionRate - $withdrawalFeeRate);
+
 // 账号掩码，普通提现和礼物提现都要显示收款账号
 $withdrawal_account = $funds[0]['withdrawal_account'];
 $masked_account = str_repeat('*', max(0, strlen($withdrawal_account) - 4)) . substr($withdrawal_account, -4);
@@ -176,10 +193,11 @@ $lockAmount = (float)($lockRow[0]['total_lock_amount'] ?? 0);
 $lockOrderCount = (int)($lockRow[0]['lock_order_count'] ?? 0);
 
 // $available_balance = max(0.0, $account_balance - $frozen_amount - $totalRefund - $lockAmount);
-$available_balance = max(
+$settlement_balance = max(
     0.0,
     $account_balance - $frozen_amount - $totalRefund - $lockAmount - $unsettledImageTransmissionFee
 );
+$available_balance = round($settlement_balance * $actualPayoutRate, 2);
 
 // 账号掩码
 $withdrawal_account = $funds[0]['withdrawal_account'];
@@ -197,10 +215,16 @@ echo json_encode([
   'checkedNotSettledAmount' => $checkedNotSettledAmount,
   'notSettledAmount' => $notSettledAmount,
   'account_balance' => $account_balance,     // 原始余额
+  'settlement_balance' => round($settlement_balance, 2), // 扣除冻结/退款等后的结算基数
+  'platform_deduction_rate' => $platformDeductionRate,
+  'platform_deduction_rate_text' => ($platformDeductionRate * 100) . '%',
+  'withdrawal_fee_rate' => $withdrawalFeeRate,
+  'actual_payout_rate' => $actualPayoutRate,
+  'actual_payout_rate_text' => ($actualPayoutRate * 100) . '%',
   'frozen_amount' => $frozen_amount,         // ★ 新增
   'lock_amount' => $lockAmount,
   'lock_order_count' => $lockOrderCount,
-  'available_balance' => $available_balance, // ★ 新增
+  'available_balance' => $available_balance, // 扣除平台比例和手续费后的实际可提现金额
   'total_refund' => $totalRefund,           // 新增退款金额
   'account_name' => $funds[0]['account_name']
 ]);
