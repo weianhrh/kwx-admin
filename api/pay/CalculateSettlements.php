@@ -197,6 +197,8 @@ $settlement_balance = max(
     0.0,
     $account_balance - $frozen_amount - $totalRefund - $lockAmount - $unsettledImageTransmissionFee
 );
+$platform_deduction_amount = round($settlement_balance * $platformDeductionRate, 2);
+$withdrawal_fee_amount = round($settlement_balance * $withdrawalFeeRate, 2);
 $available_balance = round($settlement_balance * $actualPayoutRate, 2);
 
 // 账号掩码
@@ -218,7 +220,9 @@ echo json_encode([
   'settlement_balance' => round($settlement_balance, 2), // 扣除冻结/退款等后的结算基数
   'platform_deduction_rate' => $platformDeductionRate,
   'platform_deduction_rate_text' => ($platformDeductionRate * 100) . '%',
+  'platform_deduction_amount' => $platform_deduction_amount,
   'withdrawal_fee_rate' => $withdrawalFeeRate,
+  'withdrawal_fee_amount' => $withdrawal_fee_amount,
   'actual_payout_rate' => $actualPayoutRate,
   'actual_payout_rate_text' => ($actualPayoutRate * 100) . '%',
   'frozen_amount' => $frozen_amount,         // ★ 新增

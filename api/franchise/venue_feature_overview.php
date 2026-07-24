@@ -343,6 +343,7 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
 
     $summaryTotalBalance = 0.0;
     $summaryAvailable = 0.0;
+    $summaryPlatformDeduction = 0.0;
 
     foreach ($rows as &$row) {
         $venueId = (int)($row['id'] ?? 0);
@@ -365,12 +366,15 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
             min(1.0, (float)($withdrawConfigRows[$venueId]['withdrawal_fee_rate'] ?? 0.00) / 100)
         );
         $actualPayoutRate = max(0.0, 1.0 - $platformDeductionRate - $withdrawalFeeRate);
+        $platformDeductionAmount = round($settlementBalance * $platformDeductionRate, 2);
+        $withdrawalFeeAmount = round($settlementBalance * $withdrawalFeeRate, 2);
         $availableBalance = round($settlementBalance * $actualPayoutRate, 2);
 
         $summaryTotalBalance += $accountBalance;
         $summaryAvailable += $availableBalance;
+        $summaryPlatformDeduction += $platformDeductionAmount;
 
-        $row['overview_layout'] = 'layout-2';
+        $row['overview_layout'] = 'layout-3';
         $row['overview_stats'] = [
             [
                 'label' => '总余额',
@@ -382,13 +386,20 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
                 'value' => round($availableBalance, 2),
                 'value_text' => fvo_money($availableBalance),
             ],
+            [
+                'label' => '平台扣除（' . number_format($platformDeductionRate * 100, 2, '.', '') . '%）',
+                'value' => $platformDeductionAmount,
+                'value_text' => fvo_money($platformDeductionAmount),
+            ],
         ];
         $row['finance_detail'] = [
             'account_balance' => round($accountBalance, 2),
             'settlement_balance' => round($settlementBalance, 2),
             'available_balance' => round($availableBalance, 2),
             'platform_deduction_rate' => $platformDeductionRate,
+            'platform_deduction_amount' => $platformDeductionAmount,
             'withdrawal_fee_rate' => $withdrawalFeeRate,
+            'withdrawal_fee_amount' => $withdrawalFeeAmount,
             'actual_payout_rate' => $actualPayoutRate,
             'frozen_amount' => round($frozenAmount, 2),
             'refund_amount' => round($refundAmount, 2),
@@ -403,11 +414,13 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
         'summary_finance' => [
             'total_balance' => round($summaryTotalBalance, 2),
             'available_balance' => round($summaryAvailable, 2),
+            'platform_deduction_amount' => round($summaryPlatformDeduction, 2),
         ],
         'summary_items' => [
             ['label' => '场地', 'value_text' => count($rows) . ' 个'],
             ['label' => '总余额', 'value_text' => fvo_money($summaryTotalBalance)],
             ['label' => '可提现金额', 'value_text' => fvo_money($summaryAvailable)],
+            ['label' => '平台扣除', 'value_text' => fvo_money($summaryPlatformDeduction)],
         ],
     ];
 }

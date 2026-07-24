@@ -1246,6 +1246,14 @@ const feeHelp = `
   <div class="amount-icon">❄</div>
   <div class="amount-content"><div class="amount-label">可提现${data.actual_payout_rate_text ? `（${esc(data.actual_payout_rate_text)}）` : ''}:</div><div class="amount-value">${formatAmount(data.available_balance)}</div></div>
 </div>
+<div class="amount-item is-muted">
+  <div class="amount-icon">%</div>
+  <div class="amount-content"><div class="amount-label">平台扣除${data.platform_deduction_rate_text ? `（${esc(data.platform_deduction_rate_text)}）` : ''}:</div><div class="amount-value">${formatAmount(data.platform_deduction_amount)}</div></div>
+</div>
+<div class="amount-item is-muted">
+  <div class="amount-icon">≈</div>
+  <div class="amount-content"><div class="amount-label">参与结算:</div><div class="amount-value">${formatAmount(data.settlement_balance)}</div></div>
+</div>
 <div class="amount-item is-warning">
   <div class="amount-icon">↔</div>
   <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
