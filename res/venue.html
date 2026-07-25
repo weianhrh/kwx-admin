@@ -2701,9 +2701,9 @@ function renderLocksUI() {
 
                     <div class="value">
 
-                      <input id="venue-subtitle-input" class="edit-input edit-control" maxlength="100"
-                        pattern="[A-Za-z0-9]*" title="副标题仅允许填写英文字母和数字，不支持中文或符号"
-                        placeholder="仅限英文字母和数字" disabled>
+                      <input id="venue-subtitle-input" class="edit-input edit-control" maxlength="4"
+                        inputmode="numeric" pattern="\d{4}" title="请输入唯一的4位纯数字"
+                        placeholder="请输入4位纯数字" disabled>
 
                     </div>
 
@@ -3347,8 +3347,8 @@ if (ROLE_ID === 1 || ROLE_ID === 2) {
   if (venueSubtitleInput) {
     const venueSubtitle = venueSubtitleInput.value.trim();
 
-    if (venueSubtitle && !/^[A-Za-z0-9]+$/.test(venueSubtitle)) {
-      alert('场地副标题仅允许填写英文字母和数字，不支持中文或符号');
+    if (!/^\d{4}$/.test(venueSubtitle)) {
+      alert('场地副标题必须是4位纯数字');
       venueSubtitleInput.focus();
       return;
     }
@@ -3356,7 +3356,9 @@ if (ROLE_ID === 1 || ROLE_ID === 2) {
     payload.venue_subtitle = venueSubtitle;
 
   }
+}
 
+if (ROLE_ID === 1 || ROLE_ID === 2) {
   const zegoAppIdSelect = document.getElementById('zego-appid-select');
 
   if (zegoAppIdSelect) {

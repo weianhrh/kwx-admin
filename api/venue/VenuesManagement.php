@@ -28,6 +28,41 @@ if (!$user || !$user['role_id']) {
     return substr(strval($n), -4);        // >=1000 取后4位
 }
 
+/**
+ * 为新场地生成一个尚未使用的四位纯数字副标题。
+ * 范围限定为 1000-9999，避免生成带前导 0 的“伪四位数”。
+ */
+function generateUniqueVenueSubtitle($database)
+{
+    // 随机尝试足够多次；通常第一次即可命中未使用号码。
+    for ($i = 0; $i < 100; $i++) {
+        $subtitle = (string)random_int(1000, 9999);
+        $exists = $database->query(
+            "SELECT id FROM venues WHERE venue_subtitle = ? LIMIT 1",
+            [$subtitle]
+        );
+
+        if (!$exists) {
+            return $subtitle;
+        }
+    }
+
+    // 极端情况下随机连续碰撞，顺序扫描剩余可用号码。
+    for ($number = 1000; $number <= 9999; $number++) {
+        $subtitle = (string)$number;
+        $exists = $database->query(
+            "SELECT id FROM venues WHERE venue_subtitle = ? LIMIT 1",
+            [$subtitle]
+        );
+
+        if (!$exists) {
+            return $subtitle;
+        }
+    }
+
+    return null;
+}
+
 // ================================
 // 同步 DR 海外场地配置
 // ================================
@@ -231,12 +266,12 @@ if ($method === 'POST') {
     if ($action === 'addvenues') { 
         // 获取请求参数 
         $venue_name = $_POST['venue_name'] ?? ''; 
-        $venue_subtitle = trim($_POST['venue_subtitle'] ?? '');
-
-        if ($venue_subtitle !== '' && !preg_match('/^[A-Za-z0-9]+$/', $venue_subtitle)) {
+        // 添加场地时由后端自动分配唯一的四位纯数字副标题，不采用前端传值。
+        $venue_subtitle = generateUniqueVenueSubtitle($database);
+        if ($venue_subtitle === null) {
             echo json_encode([
                 'code' => 3,
-                'msg' => '场地副标题仅允许填写英文字母和数字，不支持中文或符号',
+                'msg' => '四位数字场地副标题已用完，无法添加场地',
                 'data' => []
             ], JSON_UNESCAPED_UNICODE);
             exit;

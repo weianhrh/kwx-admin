@@ -1282,9 +1282,7 @@ button.venue-pill:hover {
 
             <form class="add-venue-form" id="add-venue-form">
                 <input type="text" name="venue_name" placeholder="场地名称">
-                <input type="text" name="venue_subtitle" maxlength="100" pattern="[A-Za-z0-9]*"
-                    title="副标题仅允许填写英文字母和数字，不支持中文或符号"
-                    placeholder="场地副标题（仅限字母和数字，选填）">
+                <input type="text" value="添加后自动分配唯一的4位数字副标题" disabled>
                 <input type="text" name="image_url" value="https://app.kwxapp.cn/app/imgv2/img/vneue_default_image.png" placeholder="场地图片链接">
                 <input type="text" name="venue_description" value="新开场地，敬请期待" placeholder="场地描述">
 
@@ -1777,6 +1775,7 @@ allVenues = venues.sort((a, b) => {
                 e.preventDefault();
                 const formData = new FormData(this);
                 formData.append('action', 'addvenues');
+                const addedVenueStatus = String(formData.get('venue_status') || '营业中').trim();
 
                 fetch('/api/venue/VenuesManagement.php', {
                     method: 'POST',
@@ -1800,9 +1799,21 @@ allVenues = venues.sort((a, b) => {
                     
                         addVenueForm.reset();
                         addVenueForm.style.display = 'none';
-                        document.getElementById('venue_search').style.display = 'block';
-                        document.getElementById('venue_level_filter').style.display = 'block';
-                        document.querySelector('.venue-toolbar').style.display = 'block';
+
+                        // 恢复筛选区域。评级筛选已停用，元素不存在时不能直接访问 style，
+                        // 否则会中断后续 loadVenues()，导致必须手动刷新页面。
+                        venueSearch.value = '';
+                        venueSearch.style.display = 'block';
+                        if (venueLevelFilter) venueLevelFilter.style.display = 'block';
+
+                        const venueToolbar = document.querySelector('.venue-toolbar');
+                        if (venueToolbar) venueToolbar.style.display = 'block';
+
+                        // 自动切换到新场地所属状态，确保重新加载后立即可见。
+                        currentStatus = addedVenueStatus === '休息中' || addedVenueStatus === '建设中'
+                            ? '休息中'
+                            : '营业中';
+                        updateStatCardActive();
                         loadVenues();
                     } else {
                         alert(data.msg);
