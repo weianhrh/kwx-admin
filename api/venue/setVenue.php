@@ -274,7 +274,7 @@ $allowed_status = ['营业中','休息中','建设中'];
 $updates = [];
 $params  = [];
 
-// 场地副标题：仅 role_id=1/2 可修改；必须是唯一的四位纯数字
+// 场地副标题：仅 role_id=1/2 可修改；必须是四位纯数字，允许与其他场地重复
 if (array_key_exists('venue_subtitle', $data)) {
     if (!in_array($role_id, [1, 2], true)) {
         echo json_encode([
@@ -290,19 +290,6 @@ if (array_key_exists('venue_subtitle', $data)) {
         echo json_encode([
             'code' => 1007,
             'msg'  => '场地副标题必须是4位纯数字',
-            'data' => []
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    $subtitleExists = $database->query(
-        "SELECT id FROM venues WHERE venue_subtitle = ? AND id <> ? LIMIT 1",
-        [$venue_subtitle, $venue_id]
-    );
-    if ($subtitleExists) {
-        echo json_encode([
-            'code' => 1008,
-            'msg'  => '该场地副标题已被其他场地使用，请更换一个4位数字',
             'data' => []
         ], JSON_UNESCAPED_UNICODE);
         exit;

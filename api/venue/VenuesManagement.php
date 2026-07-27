@@ -29,38 +29,12 @@ if (!$user || !$user['role_id']) {
 }
 
 /**
- * 为新场地生成一个尚未使用的四位纯数字副标题。
- * 范围限定为 1000-9999，避免生成带前导 0 的“伪四位数”。
+ * 为新场地随机生成四位纯数字副标题。
+ * 业务允许不同场地使用相同副标题，因此不做数据库查重。
  */
-function generateUniqueVenueSubtitle($database)
+function generateVenueSubtitle()
 {
-    // 随机尝试足够多次；通常第一次即可命中未使用号码。
-    for ($i = 0; $i < 100; $i++) {
-        $subtitle = (string)random_int(1000, 9999);
-        $exists = $database->query(
-            "SELECT id FROM venues WHERE venue_subtitle = ? LIMIT 1",
-            [$subtitle]
-        );
-
-        if (!$exists) {
-            return $subtitle;
-        }
-    }
-
-    // 极端情况下随机连续碰撞，顺序扫描剩余可用号码。
-    for ($number = 1000; $number <= 9999; $number++) {
-        $subtitle = (string)$number;
-        $exists = $database->query(
-            "SELECT id FROM venues WHERE venue_subtitle = ? LIMIT 1",
-            [$subtitle]
-        );
-
-        if (!$exists) {
-            return $subtitle;
-        }
-    }
-
-    return null;
+    return (string)random_int(1000, 9999);
 }
 
 // ================================
@@ -266,16 +240,8 @@ if ($method === 'POST') {
     if ($action === 'addvenues') { 
         // 获取请求参数 
         $venue_name = $_POST['venue_name'] ?? ''; 
-        // 添加场地时由后端自动分配唯一的四位纯数字副标题，不采用前端传值。
-        $venue_subtitle = generateUniqueVenueSubtitle($database);
-        if ($venue_subtitle === null) {
-            echo json_encode([
-                'code' => 3,
-                'msg' => '四位数字场地副标题已用完，无法添加场地',
-                'data' => []
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
+        // 添加场地时由后端随机分配四位纯数字副标题，允许重复，不采用前端传值。
+        $venue_subtitle = generateVenueSubtitle();
 
         $image_url = $_POST['image_url'] ?? ''; 
         $venue_description = $_POST['venue_description'] ?? null; 
