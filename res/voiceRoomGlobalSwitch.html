@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>语音房全局开关</title>
+  <title>语音房全局配置</title>
   <style>
     :root {
       --primary: #5b8cff;
@@ -131,6 +131,105 @@
       transform: translateX(26px);
     }
 
+    .section-title {
+      margin-top: 28px;
+      margin-bottom: 14px;
+      padding-left: 10px;
+      border-left: 4px solid var(--primary);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field-group {
+      min-width: 0;
+    }
+
+    .field-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .field-desc {
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--secondary);
+    }
+
+    .form-control {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      color: var(--text-color);
+      background: #fff;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.08);
+    }
+
+    .input-upload-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-upload-row .form-control {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-btn {
+      height: 42px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .upload-btn:hover:not(:disabled) {
+      background: #4a77e4;
+    }
+
+    .upload-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .guardian-switch-row {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: 1px solid #edf0f7;
+      border-radius: 10px;
+      background: #fafbff;
+    }
+
     .textarea-group {
       margin-top: 18px;
     }
@@ -222,14 +321,30 @@
         flex-direction: column;
         align-items: flex-start;
       }
+
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field-group.full-width {
+        grid-column: auto;
+      }
+
+      .input-upload-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .upload-btn {
+        width: 100%;
+      }
     }
   </style>
-  <link rel="stylesheet" href="/res/common/kwx-legacy-page.css?v=1.0.0">
 </head>
-<body class="kwx-legacy-page">
+<body>
   <div class="container">
     <div class="card">
-      <div class="card-title">语音房全局开关</div>
+      <div class="card-title">语音房全局配置</div>
 
       <div id="loadingBox" class="loading">加载中...</div>
 
@@ -269,6 +384,65 @@
           <textarea id="msg2_text" placeholder="请输入提示文案"></textarea>
         </div>
 
+        <div class="section-title">场地守护配置</div>
+
+        <div class="config-grid">
+          <div class="field-group">
+            <label class="field-label" for="guardian_price_gold">开通/续费金币</label>
+            <input class="form-control" type="number" id="guardian_price_gold" min="0" step="1" placeholder="999">
+            <div class="field-desc">每次开通或续费守护固定扣除的金币数量。</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="guardian_duration_days">每次增加天数</label>
+            <input class="form-control" type="number" id="guardian_duration_days" min="1" step="1" placeholder="90">
+            <div class="field-desc">每次开通或续费后增加的有效天数。</div>
+          </div>
+
+          <div class="field-group full-width">
+            <label class="field-label" for="guardian_icon_url">守护图标 URL</label>
+            <div class="input-upload-row">
+              <input class="form-control" type="url" id="guardian_icon_url" maxlength="500" placeholder="https://example.com/guardian.png">
+              <button type="button" class="upload-btn" id="guardianIconUploadBtn">上传图标</button>
+            </div>
+            <input type="file" id="guardianIconFile" accept="image/*,.png,.jpg,.jpeg,.webp,.gif" hidden>
+            <div class="field-desc">选择本地图标上传后，返回链接会自动填入输入框；也可以手动填写 URL。</div>
+          </div>
+
+          <div class="field-group full-width">
+            <label class="field-label" for="welcome_animation_url">进场欢迎动效 URL</label>
+            <div class="input-upload-row">
+              <input class="form-control" type="url" id="welcome_animation_url" maxlength="500" placeholder="https://example.com/welcome.svga">
+              <button type="button" class="upload-btn" id="welcomeAnimationUploadBtn">上传动效</button>
+            </div>
+            <input type="file" id="welcomeAnimationFile" accept="image/*,.gif,.svga,video/*,.mp4,.webm,.mov" hidden>
+            <div class="field-desc">支持上传图片、GIF、SVGA 或视频文件，成功后自动填入链接并识别动效类型。</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="welcome_animation_type">动效类型</label>
+            <input class="form-control" type="text" id="welcome_animation_type" maxlength="20" placeholder="svga">
+            <div class="field-desc">例如 svga、gif，需与 App 端支持的格式一致。</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="entry_cooldown_seconds">重复进场冷却（秒）</label>
+            <input class="form-control" type="number" id="entry_cooldown_seconds" min="0" step="1" placeholder="300">
+            <div class="field-desc">同一用户重复进场时，欢迎动效再次播放的冷却时间。</div>
+          </div>
+        </div>
+
+        <div class="form-row guardian-switch-row">
+          <div class="label-wrap">
+            <div class="label-title">启用场地守护系统</div>
+            <div class="label-desc">关闭后，全局停用守护开通、续费及进场欢迎效果。</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="guardian_is_active">
+            <span class="slider"></span>
+          </label>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-default" id="reloadBtn">重新加载</button>
           <button class="btn btn-primary" id="saveBtn">保存配置</button>
@@ -281,6 +455,7 @@
 
   <script>
     const API_URL = '/api/voiceRoom/voiceRoomGlobalSwitch.php'; // 按你的实际路径改
+    const UPLOAD_API = 'https://rcwulian.cn/app/img/userimg/upload_profile.php';
 
     const loadingBox = document.getElementById('loadingBox');
     const mainBox = document.getElementById('mainBox');
@@ -294,6 +469,19 @@
     const msg1TextEl = document.getElementById('msg1_text');
     const msg2TextEl = document.getElementById('msg2_text');
 
+    const guardianPriceGoldEl = document.getElementById('guardian_price_gold');
+    const guardianDurationDaysEl = document.getElementById('guardian_duration_days');
+    const guardianIconUrlEl = document.getElementById('guardian_icon_url');
+    const welcomeAnimationUrlEl = document.getElementById('welcome_animation_url');
+    const welcomeAnimationTypeEl = document.getElementById('welcome_animation_type');
+    const entryCooldownSecondsEl = document.getElementById('entry_cooldown_seconds');
+    const guardianIsActiveEl = document.getElementById('guardian_is_active');
+
+    const guardianIconUploadBtn = document.getElementById('guardianIconUploadBtn');
+    const guardianIconFileEl = document.getElementById('guardianIconFile');
+    const welcomeAnimationUploadBtn = document.getElementById('welcomeAnimationUploadBtn');
+    const welcomeAnimationFileEl = document.getElementById('welcomeAnimationFile');
+
     const reloadBtn = document.getElementById('reloadBtn');
     const saveBtn = document.getElementById('saveBtn');
 
@@ -302,6 +490,90 @@
       if (type) statusBar.classList.add(type);
       statusBar.textContent = msg || '';
     }
+
+    function detectAnimationType(fileNameOrUrl) {
+      const cleanValue = String(fileNameOrUrl || '').split('?')[0].split('#')[0].toLowerCase();
+      const ext = cleanValue.includes('.') ? cleanValue.substring(cleanValue.lastIndexOf('.') + 1) : '';
+
+      if (ext === 'svga') return 'svga';
+      if (ext === 'gif') return 'gif';
+      if (['mp4', 'webm', 'mov', 'm4v', 'ogg'].includes(ext)) return ext;
+      if (['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) return ext;
+      return '';
+    }
+
+    async function uploadFileAndFillInput(file, targetInput, uploadBtn, options = {}) {
+      if (!file) return;
+
+      const originalText = uploadBtn.textContent;
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '上传中...';
+      setStatus('文件上传中...');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch(UPLOAD_API, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`上传接口错误：HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        const success = result && (result.code === 0 || result.code === '0') && result.url;
+
+        if (!success) {
+          throw new Error(result && result.msg ? result.msg : '上传接口未返回文件链接');
+        }
+
+        targetInput.value = result.url;
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        if (options.fillAnimationType) {
+          const detectedType = detectAnimationType(file.name || result.url) || detectAnimationType(result.url);
+          if (detectedType) {
+            welcomeAnimationTypeEl.value = detectedType;
+          }
+        }
+
+        setStatus('上传成功，链接已自动填入输入框。请点击“保存配置”完成保存。', 'success');
+      } catch (err) {
+        console.error('上传失败：', err);
+        setStatus(err.message || '上传失败，请稍后重试', 'error');
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+      }
+    }
+
+    guardianIconUploadBtn.addEventListener('click', () => {
+      guardianIconFileEl.value = '';
+      guardianIconFileEl.click();
+    });
+
+    guardianIconFileEl.addEventListener('change', async () => {
+      const file = guardianIconFileEl.files && guardianIconFileEl.files[0];
+      await uploadFileAndFillInput(file, guardianIconUrlEl, guardianIconUploadBtn);
+      guardianIconFileEl.value = '';
+    });
+
+    welcomeAnimationUploadBtn.addEventListener('click', () => {
+      welcomeAnimationFileEl.value = '';
+      welcomeAnimationFileEl.click();
+    });
+
+    welcomeAnimationFileEl.addEventListener('change', async () => {
+      const file = welcomeAnimationFileEl.files && welcomeAnimationFileEl.files[0];
+      await uploadFileAndFillInput(file, welcomeAnimationUrlEl, welcomeAnimationUploadBtn, {
+        fillAnimationType: true
+      });
+      welcomeAnimationFileEl.value = '';
+    });
 
     async function loadConfig() {
       loadingBox.style.display = 'block';
@@ -329,6 +601,15 @@
         msg1TextEl.value = data.msg1_text || '';
         msg2TextEl.value = data.msg2_text || '';
 
+        const guardian = data.guardian_config || {};
+        guardianPriceGoldEl.value = guardian.price_gold ?? 999;
+        guardianDurationDaysEl.value = guardian.duration_days ?? 90;
+        guardianIconUrlEl.value = guardian.guardian_icon_url || '';
+        welcomeAnimationUrlEl.value = guardian.welcome_animation_url || '';
+        welcomeAnimationTypeEl.value = guardian.welcome_animation_type || 'svga';
+        entryCooldownSecondsEl.value = guardian.entry_cooldown_seconds ?? 300;
+        guardianIsActiveEl.checked = Number(guardian.is_active ?? 1) === 1;
+
         loadingBox.style.display = 'none';
         mainBox.style.display = 'block';
       } catch (err) {
@@ -349,6 +630,13 @@
       formData.append('is_show_gift', isShowGiftEl.checked ? '1' : '0');
       formData.append('msg1_text', msg1TextEl.value.trim());
       formData.append('msg2_text', msg2TextEl.value.trim());
+      formData.append('guardian_price_gold', guardianPriceGoldEl.value.trim());
+      formData.append('guardian_duration_days', guardianDurationDaysEl.value.trim());
+      formData.append('guardian_icon_url', guardianIconUrlEl.value.trim());
+      formData.append('welcome_animation_url', welcomeAnimationUrlEl.value.trim());
+      formData.append('welcome_animation_type', welcomeAnimationTypeEl.value.trim());
+      formData.append('entry_cooldown_seconds', entryCooldownSecondsEl.value.trim());
+      formData.append('guardian_is_active', guardianIsActiveEl.checked ? '1' : '0');
 
       try {
         const res = await fetch(API_URL, {
@@ -375,4 +663,3 @@
   </script>
 </body>
 </html>
-

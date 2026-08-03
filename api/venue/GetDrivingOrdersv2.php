@@ -211,9 +211,11 @@ $sql = "SELECT
             o.*,
             COALESCE(u.nickname, '') AS nickname,
             o.payment_amount AS venue_income,
+            COALESCE(v.name, '') AS device_name,
             'device' AS order_type
         FROM orders o
         LEFT JOIN users u ON o.uid = u.uid
+        LEFT JOIN vehicles v ON v.serial_number = o.serial_number
         $whereSql
         ORDER BY o.start_time DESC
         LIMIT ?, ?";

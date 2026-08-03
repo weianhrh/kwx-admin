@@ -18,6 +18,10 @@ if (!$user || !$user['role_id']) {
     echo json_encode(['code' => 1001, 'msg' => '用户未登录或无权访问', 'data' => []]);
     exit;
 }
+if (!in_array((int)$user['role_id'], [1, 2], true)) {
+    echo json_encode(['code' => 1003, 'msg' => '无权处理提现申请', 'data' => []], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 $username = $user['username'];
 // 获取前端传来的参数
 $id = $_POST['id'] ?? null;

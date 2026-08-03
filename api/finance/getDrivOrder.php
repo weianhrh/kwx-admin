@@ -162,10 +162,12 @@ $sql = "SELECT
             o.end_time,
             o.start_time AS sort_time,
             u.nickname,
-            COALESCE(v.venue_name, '未知场地') AS venue_name
+            COALESCE(v.venue_name, '未知场地') AS venue_name,
+            COALESCE(veh.name, '') AS device_name
         FROM orders o 
         LEFT JOIN users u ON o.uid = u.uid
         LEFT JOIN venues v ON v.id = o.reservation_id
+        LEFT JOIN vehicles veh ON veh.serial_number = o.serial_number
         {$whereSql}
         ORDER BY o.start_time DESC, o.order_id DESC
         LIMIT {$queryLimit} OFFSET {$offset}";

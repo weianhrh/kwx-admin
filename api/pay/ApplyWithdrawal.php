@@ -567,9 +567,12 @@ if ($unsettled_image_fee_total > 0 && !empty($unsettled_image_ids)) {
 $settlementAmount = round($amount, 2); // 参与提现结算金额，例如 27.55
 $displayWithdrawalAmount = round($amount + $actualImageFeeToDeduct, 2); // 展示提现金额，例如 100.00
 $totalDebit = round($amount + $totalRefundToDeduct + $actualImageFeeToDeduct, 2); // 实际扣余额，例如 100.00
+$refundIds = array_values(array_filter(array_map(function ($row) {
+    return (int)($row['id'] ?? 0);
+}, $refundRecords)));
 
 $withdrawal_remark = sprintf(
-    '提现配置快照：配置来源=%s，提现比例=%s%%，技术服务费率=%s%%，提现手续费率=%s%%，提现金额=%.2f，图传费用扣减=%.2f，参与提现结算金额=%.2f，退款扣减=%.2f，账户余额扣减=%.2f，技术服务费=%.2f，提现手续费=%.2f，实际到账=%.2f，图传IDs=%s',
+    '提现配置快照：配置来源=%s，提现比例=%s%%，技术服务费率=%s%%，提现手续费率=%s%%，提现金额=%.2f，图传费用扣减=%.2f，参与提现结算金额=%.2f，退款扣减=%.2f，账户余额扣减=%.2f，技术服务费=%.2f，提现手续费=%.2f，实际到账=%.2f，图传IDs=%s，退款IDs=%s',
     $venue_level,
     $withdraw_ratio * 100,
     $technical_service_rate * 100,
@@ -582,7 +585,8 @@ $withdrawal_remark = sprintf(
     $technical_service_fee,
     $withdrawal_fee,
     $actual_amount,
-    implode(',', $unsettled_image_ids)
+    implode(',', $unsettled_image_ids),
+    implode(',', $refundIds)
 );
 
 if ($withdrawalRequestId > 0) {
@@ -663,12 +667,24 @@ if ($actualImageFeeToDeduct > 0 && !empty($unsettled_image_ids)) {
 $newBalanceResult = $database->query("SELECT account_balance FROM venue_funds WHERE venue_id = ?", [$venue_id]);
 $newBalance = (float)$newBalanceResult[0]['account_balance'];
 
-// 资金变动台账
+// 资金变动台账：记录本次账户实际扣减总额，确保与 venue_funds.account_balance 一致
 $insertChangeQuery = "INSERT INTO fund_changes (
     venue_id, change_type, change_amount, balance_after_change, change_reason, operator_id, remarks
-) VALUES (?, 'withdrawal', ?, ?, '提现申请出账', ?, NULL)";
+) VALUES (?, 'withdrawal', ?, ?, '提现申请出账', ?, ?)";
 $operator_id = $uid;
-$ok = $database->query($insertChangeQuery, [$venue_id, $amount, $newBalance, $operator_id], true);
+$changeRemarks = sprintf(
+    '提现申请ID=%d，提现金额=%.2f，图传费用=%.2f，退款扣减=%.2f，账户实际扣减=%.2f',
+    $withdrawalRequestId,
+    $displayWithdrawalAmount,
+    $actualImageFeeToDeduct,
+    $totalRefundToDeduct,
+    $totalDebit
+);
+$ok = $database->query(
+    $insertChangeQuery,
+    [$venue_id, $totalDebit, $newBalance, $operator_id, $changeRemarks],
+    true
+);
 if ($ok === false) {
     $database->rollBack();
     logMessage_frozen(

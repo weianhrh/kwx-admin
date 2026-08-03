@@ -512,7 +512,7 @@ textarea {
                     <h4 style="margin-bottom: 10px; color: #333;">实际打款：<span style="color: #5b8cff;">${record.actual_amount} 元</span></h4>
                     <p style="margin: 5px 0;"><strong>申请时间：</strong>${record.application_time}</p>
                     <p style="margin: 5px 0;"><strong>打款状态：</strong>${record.payout_status === 0 ? '未打款' : '已打款'}</p>
-                    <p style="margin: 5px 0;"><strong>申请状态：</strong>${record.application_status === 0 ? '待处理' : (record.application_status === 1 ? '已处理' : '拒绝')}</p>
+                    <p style="margin: 5px 0;"><strong>申请状态：</strong>${Number(record.application_status) === 0 ? '待处理' : (Number(record.application_status) === 1 ? '已处理' : (Number(record.application_status) === 2 ? '已打款' : (record.reversal_action === 'cancelled' ? '已取消' : '已驳回')))}</p>
                 `;
                 container.appendChild(item);
             });

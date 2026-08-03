@@ -609,6 +609,32 @@
       text-decoration: underline;
     }
 
+    .record-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cancel-link {
+      border: none;
+      background: transparent;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 4px 0;
+    }
+
+    .cancel-link:hover {
+      text-decoration: underline;
+    }
+
+    .cancel-link:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
     .empty-state {
       margin: 0 20px 20px;
       padding: 26px 18px;
@@ -1120,6 +1146,7 @@
     const API_ACCOUNT = '/api/pay/CalculateSettlements.php';
     const API_APPLY = '/api/pay/ApplyWithdrawal.php';
     const API_RECORDS = '/api/pay/getWithdrawalRecords.php';
+    const API_REVERSE = '/api/pay/handleWithdrawalReversal.php';
     const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
 
     function withVenueParam(url) {
@@ -1328,6 +1355,10 @@ const feeHelp = `
         return;
       }
 
+      if (!confirm(`确认提交实际到账 ${money(withdrawAmount)} 元的提现申请吗？\n提交后，在平台处理前可以从提现记录中取消。`)) {
+        return;
+      }
+
       statusMessage.style.display = 'block';
       withdrawButton.disabled = true;
 
@@ -1382,12 +1413,15 @@ const feeHelp = `
         });
     }
 
-    function applicationStatusText(status) {
-      const s = Number(status);
+    function applicationStatusText(recordOrStatus) {
+      const record = typeof recordOrStatus === 'object' ? recordOrStatus : null;
+      const s = Number(record ? record.application_status : recordOrStatus);
       if (s === 0) return '待处理';
       if (s === 1) return '已处理';
       if (s === 2) return '已打款';
-      return '拒绝';
+      if (record && record.reversal_action === 'cancelled') return '已取消';
+      if (record && record.reversal_action === 'rejected') return '已驳回';
+      return '已驳回';
     }
 
     function payoutStatusText(status) {
@@ -1402,16 +1436,20 @@ const feeHelp = `
     }
 
 function listStatusText(record) {
-  // 列表只看是否已打款
+  if (record.reversal_action === 'cancelled') return '已取消';
+  if (record.reversal_action === 'rejected') return '已驳回';
   if (Number(record.payout_status) === 1 || Number(record.application_status) === 2) {
     return '已打款';
   }
-
-  return '未处理';
+  if (Number(record.application_status) === 1) return '已处理';
+  return '待处理';
 }
 
 function listStatusBadgeClass(record) {
-  return listStatusText(record) === '已打款' ? 'success' : 'pending';
+  const text = listStatusText(record);
+  if (text === '已打款' || text === '已处理') return 'success';
+  if (text === '已取消' || text === '已驳回') return 'danger';
+  return 'pending';
 }
     function getRecordNo(record) {
       return record.withdrawal_no || record.withdrawal_number || record.order_number || record.id || '-';
@@ -1473,12 +1511,57 @@ function listStatusBadgeClass(record) {
             <td class="amount-cell">${money(displayWithdrawalAmount)} 元</td>
             <td class="amount-cell">${money(imageFeeAmount)} 元</td>
             <td class="amount-cell">${money(receivedAmount)} 元</td>
-            <td><button class="detail-link" type="button" onclick="showWithdrawalDetail(${globalIndex})">查看详情</button></td>
+            <td>
+              <div class="record-actions">
+                <button class="detail-link" type="button" onclick="showWithdrawalDetail(${globalIndex})">查看详情</button>
+                ${Number(record.can_cancel) === 1 ? `<button class="cancel-link" type="button" onclick="cancelWithdrawal(${globalIndex}, this)">取消申请</button>` : ''}
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
 
       renderPager(totalPages);
+    }
+
+    function cancelWithdrawal(index, button) {
+      const record = withdrawalRecords[index];
+      if (!record || Number(record.can_cancel) !== 1) {
+        showCustomModal('无法取消', '该提现申请当前状态不允许取消。');
+        return;
+      }
+
+      const amount = money(getDisplayWithdrawalAmount(record));
+      if (!confirm(`确认取消这笔 ${amount} 元的提现申请吗？\n取消后系统会自动退回对应款项。`)) {
+        return;
+      }
+
+      button.disabled = true;
+      fetch(API_REVERSE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: new URLSearchParams({
+          action: 'cancel',
+          id: record.id,
+          reason: '加盟商误操作，主动取消提现申请'
+        }).toString()
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.code === 0) {
+            showCustomModal('取消成功', data.msg || '提现申请已取消，款项已退回。');
+            loadAccountInfo();
+            loadWithdrawalRecords();
+          } else {
+            showCustomModal('取消失败', data.msg || '提现申请取消失败，请稍后重试。');
+            button.disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('取消提现申请失败:', error);
+          showCustomModal('取消失败', '网络异常，请稍后重试。');
+          button.disabled = false;
+        });
     }
 
     function renderPager(totalPages) {
@@ -1517,6 +1600,10 @@ function listStatusBadgeClass(record) {
       const settlementAmount = getSettlementAmount(record);
       const totalDebitAmount = getTotalDebitAmount(record);
       const refundDeductAmount = record.refund_deduct_amount ?? 0;
+      const reversalReason = record.reversal_reason || '';
+      const reversalRow = reversalReason
+        ? `<div class="detail-row"><div class="detail-label">处理原因:</div><div class="detail-value">${esc(reversalReason)}</div></div>`
+        : '';
 
       const imageFeeRow = parseFloat(imageFeeAmount) > 0
         ? `<div class="detail-row"><div class="detail-label">图传费用扣减:</div><div class="detail-value">${money(imageFeeAmount)} 元</div></div>`
@@ -1542,8 +1629,9 @@ function listStatusBadgeClass(record) {
           ${refundRow}
           <div class="detail-row"><div class="detail-label">账户扣减:</div><div class="detail-value">${money(totalDebitAmount)} 元</div></div>
 
-          <div class="detail-row"><div class="detail-label">申请状态:</div><div class="detail-value">${applicationStatusText(record.application_status)}</div></div>
+          <div class="detail-row"><div class="detail-label">申请状态:</div><div class="detail-value">${applicationStatusText(record)}</div></div>
           <div class="detail-row"><div class="detail-label">打款状态:</div><div class="detail-value">${payoutStatusText(record.payout_status)}</div></div>
+          ${reversalRow}
         </div>
         <div class="detail-note">
           说明：提现金额为本次从场地余额发起的提现总额；图传费用会先从提现金额中扣减，剩余结算金额再计算技术服务费和提现手续费。

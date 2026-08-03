@@ -283,11 +283,14 @@ if (in_array($roleId, [1, 2], true)) {
 }
 $reportCount = dashboard_scalar($db, $reportSql, $reportParams, 'total', 0);
 
+// 提现待办数量必须与提现审批列表保持一致：
+// 仅统计未打款且仍处于待处理/已处理状态的申请，排除已取消、已驳回记录。
 if (in_array($roleId, [1, 2], true)) {
     $withdrawCount = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM withdrawal_requests
         WHERE payout_status = 0
+          AND application_status IN (0, 1)
     ", [], 'total', 0);
 } else {
     if ($roleId === 3 && $franchiseVenueIds) {
@@ -297,13 +300,16 @@ if (in_array($roleId, [1, 2], true)) {
             SELECT COUNT(*) AS total
             FROM withdrawal_requests
             WHERE payout_status = 0
+              AND application_status IN (0, 1)
               {$withdrawWhere}
         ", $withdrawParams, 'total', 0);
     } else {
         $withdrawCount = dashboard_scalar($db, "
         SELECT COUNT(*) AS total
         FROM withdrawal_requests
-        WHERE payout_status = 0 AND venue_id = ?
+        WHERE payout_status = 0
+          AND application_status IN (0, 1)
+          AND venue_id = ?
         ", [$venueId], 'total', 0);
     }
 }

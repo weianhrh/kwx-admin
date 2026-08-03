@@ -41,6 +41,13 @@ function extractRemarkAmount($remarks, $labels) {
     return 0.00;
 }
 
+
+function extractRemarkText($remarks, $label) {
+    $remarks = (string)$remarks;
+    $pattern = '/' . preg_quote($label, '/') . '\s*[:：=]\s*([^，,\n\r]+)/u';
+    return preg_match($pattern, $remarks, $m) ? trim($m[1]) : '';
+}
+
 $withdraw_type = $_GET['withdraw_type'] ?? $_POST['withdraw_type'] ?? 'account';
 $withdraw_type = ($withdraw_type === 'gift') ? 'gift' : 'account';
 // 获取请求参数
@@ -105,6 +112,11 @@ $sql .= " ORDER BY created_at DESC";
 
 // 执行查询，绑定参数
 $results = $database->query($sql, $params);
+if ($results === false) {
+    echo json_encode(['code' => 500, 'msg' => '获取提现记录失败', 'data' => []], JSON_UNESCAPED_UNICODE);
+    $database->close();
+    exit;
+}
 
 foreach ($results as &$row) {
     $remarks = $row['remarks'] ?? '';
@@ -154,14 +166,21 @@ foreach ($results as &$row) {
     $row['display_withdrawal_amount'] = round($displayWithdrawalAmount, 2);
     $row['refund_deduct_amount'] = round($refundDeductAmount, 2);
     $row['total_debit_amount'] = round($totalDebitAmount, 2);
+
+    $reversalAction = '';
+    if ((int)($row['application_status'] ?? 0) === 3) {
+        $handleType = extractRemarkText($remarks, '处理类型');
+        $reversalAction = strpos($handleType, '取消') !== false ? 'cancelled' : 'rejected';
+    }
+    $row['reversal_action'] = $reversalAction;
+    $row['reversal_reason'] = extractRemarkText($remarks, '处理原因');
+    $row['can_cancel'] = (
+        (int)($user['role_id'] ?? 0) === 3
+        && (int)($row['application_status'] ?? 0) === 0
+        && (int)($row['payout_status'] ?? 0) === 0
+    ) ? 1 : 0;
 }
 unset($row);
-
-if ($results === false) {
-    echo json_encode(['code' => 500, 'msg' => '获取提现记录失败', 'data' => []]);
-    $database->close();
-    exit;
-}
 
 echo json_encode([
     'code' => 0,

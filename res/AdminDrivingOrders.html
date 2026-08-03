@@ -1134,7 +1134,9 @@ card.innerHTML = `
 
     <div class="order-field">
       <span class="field-label">设备ID</span>
-      <span class="field-value mono">${order.serial_number || '-'}</span>
+      <span class="field-value mono">
+          ${order.serial_number || '-'}${order.device_name ? `（${order.device_name}）` : ''}
+      </span>
     </div>
 
     <div class="order-field">
