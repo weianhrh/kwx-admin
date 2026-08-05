@@ -4415,7 +4415,7 @@ window.closeDashboardNoticeModal = closeDashboardNoticeModal;
 window.markDashboardNoticeRead = markDashboardNoticeRead;
 window.changeDashboardNoticePage = changeDashboardNoticePage;
     function buildWorkbenchHtml(data, metrics, todos, actions) {
-      if (Number(data.role_id || 0) === 3) {
+      if ([3, 4].includes(Number(data.role_id || 0))) {
         return buildFranchiseWorkbenchHtml(data, metrics);
       }
       const adminOnlyStyle = Number(data.role_id || 0) === 2 ? ' style="display:none"' : '';

@@ -104,7 +104,7 @@ $franchiseTotalDevices = 0;
 $franchiseVenueRows = [];
 $franchiseVenueIds = [];
 
-if ($roleId === 3) {
+if (in_array($roleId, [3, 4], true)) {
     $franchiseVenueRows = venue_scope_visible_venues($db, $user);
     $franchiseVenueIds = venue_scope_ints(array_column($franchiseVenueRows, 'id'));
 
@@ -115,7 +115,7 @@ if ($roleId === 3) {
     }
 }
 
-if ($roleId === 3 && $franchiseVenueIds) {
+if (in_array($roleId, [3, 4], true) && $franchiseVenueIds) {
     $orderRevenueParams = [$todayStart, $tomorrowStart];
     $orderRevenueWhere = venue_scope_filter_sql('reservation_id', $franchiseVenueIds, $orderRevenueParams);
     $franchiseTodayRevenue = dashboard_scalar($db, "
@@ -152,6 +152,11 @@ if ($roleId === 3 && $franchiseVenueIds) {
         WHERE 1=1
           {$deviceWhere}
     ", $deviceParams, 'total', 0);
+}
+
+// 主播后台仅展示订单原金额的 20%，不修改数据库中的订单金额。
+if ($roleId === 4) {
+    $franchiseTodayRevenue = round((float)$franchiseTodayRevenue * 0.8, 2);
 }
 
 $registerCount = dashboard_scalar($db, "

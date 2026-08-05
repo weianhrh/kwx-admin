@@ -118,9 +118,10 @@ function menu_admin_tree(): array
 }
 
 /**
- * 加盟商菜单：role_id = 3 使用。
+ * 加盟商/主播菜单：role_id = 3 / 4 使用。
+ * role_id = 4 不返回“提现申请”。
  */
-function menu_franchise_tree(): array
+function menu_franchise_tree(int $roleId): array
 {
     $baseMenu = [
         menu_leaf(9000, 0, 'dashboard', '首页', '', 'home', 0),
@@ -140,10 +141,13 @@ function menu_franchise_tree(): array
         menu_leaf(9331, 9303, 'franchise-venues', '场地管理', '/iframe/link/venue', 'venue', 10),
     ], 3);
 
-    $baseMenu[] = menu_group(9304, 'franchise-finance', '财务管理', 'finance', [
+    $financeMenus = [
         menu_leaf(9341, 9304, 'franchise-income', '收入明细', '/iframe/link/incomedetails', 'finance', 10),
-        menu_leaf(9342, 9304, 'franchise-withdraw', '提现申请', '/iframe/link/PaymentDisbursement_optimized', 'finance', 20),
-    ], 4);
+    ];
+    if ($roleId === 3) {
+        $financeMenus[] = menu_leaf(9342, 9304, 'franchise-withdraw', '提现申请', '/iframe/link/PaymentDisbursement_optimized', 'finance', 20);
+    }
+    $baseMenu[] = menu_group(9304, 'franchise-finance', '财务管理', 'finance', $financeMenus, 4);
 
     $baseMenu[] = menu_group(9305, 'franchise-ops', '运营管理', 'ops', [
         menu_leaf(9351, 9305, 'franchise-violations', '违规记录', '/iframe/link/ban_Record', 'audit', 10),
@@ -164,8 +168,8 @@ function menu_franchise_tree(): array
  */
 function getMenuByRoleId(int $roleId): array
 {
-    if ($roleId === 3) {
-        return menu_franchise_tree();
+    if (in_array($roleId, [3, 4], true)) {
+        return menu_franchise_tree($roleId);
     }
 
     // role_id = 1 / 2，以及其它后台角色，暂时都走管理员菜单。

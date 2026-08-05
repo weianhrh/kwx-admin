@@ -104,6 +104,19 @@ $paramsForData[] = (int)$limit;
 
 $data = $database->query($sql, $paramsForData);
 
+// 主播后台仅展示订单原金额的 20%，不修改数据库中的订单金额。
+if ((int)$role_id === 4 && is_array($data)) {
+    foreach ($data as &$order) {
+        $order['payment_amount'] = number_format(
+            (float)($order['payment_amount'] ?? 0) * 0.8,
+            2,
+            '.',
+            ''
+        );
+    }
+    unset($order);
+}
+
 // 查询总数
 $countSql = "SELECT COUNT(*) AS count FROM orders o $whereSql";
 $countResult = $database->query($countSql, $params);
@@ -118,6 +131,10 @@ $totalIncome = 0.00;
 
 if (is_array($sumResult) && isset($sumResult[0]['total_income'])) {
     $totalIncome = round(floatval($sumResult[0]['total_income']), 2);
+}
+
+if ((int)$role_id === 4) {
+    $totalIncome = round($totalIncome * 0.8, 2);
 }
 
 // 返回结果
