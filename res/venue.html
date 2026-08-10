@@ -1810,7 +1810,7 @@ body.role-3 .venue-cover-card {
 
             const subtitleField = document.getElementById('venue-subtitle-field');
             if (subtitleField) {
-              subtitleField.style.display = (ROLE_ID === 1 || ROLE_ID === 2) ? '' : 'none';
+              subtitleField.style.display = (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) ? '' : 'none';
             }
 
 
@@ -3340,7 +3340,7 @@ function saveChanges() {
 
   };
 
-if (ROLE_ID === 1 || ROLE_ID === 2) {
+if (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) {
 
   const venueSubtitleInput = document.getElementById('venue-subtitle-input');
 

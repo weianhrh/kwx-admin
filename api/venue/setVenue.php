@@ -274,12 +274,12 @@ $allowed_status = ['营业中','休息中','建设中'];
 $updates = [];
 $params  = [];
 
-// 场地副标题：仅 role_id=1/2 可修改；必须是四位纯数字，允许与其他场地重复
+// 场地副标题：role_id=1/2/3 可修改；必须是四位纯数字，允许与其他场地重复
 if (array_key_exists('venue_subtitle', $data)) {
-    if (!in_array($role_id, [1, 2], true)) {
+    if (!in_array($role_id, [1, 2, 3], true)) {
         echo json_encode([
             'code' => 1003,
-            'msg'  => '权限不足，仅 role_id=1/2 可修改场地副标题',
+            'msg'  => '权限不足，仅 role_id=1/2/3 可修改场地副标题',
             'data' => []
         ], JSON_UNESCAPED_UNICODE);
         exit;

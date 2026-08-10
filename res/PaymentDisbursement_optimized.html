@@ -1370,7 +1370,15 @@ const feeHelp = `
         statusMessage.style.display = 'none';
         return;
       }
-      const settlementAmount = Math.round((withdrawAmount / payoutRate) * 100) / 100;
+      // 全部提现时直接使用后端计算出的参与结算金额。
+      // available_balance 已按到账比例四舍五入，若再除以比例反算，部分金额会多出 0.01，
+      // 导致后端实际扣款大于账户余额，从而出现“更新账户余额失败”。
+      const maxWithdrawAmount = parseFloat(accountCache.available_balance || 0);
+      const fullSettlementAmount = parseFloat(accountCache.settlement_balance || 0);
+      const isFullWithdrawal = Math.abs(withdrawAmount - maxWithdrawAmount) < 0.01;
+      const settlementAmount = isFullWithdrawal && fullSettlementAmount > 0
+        ? Math.round(fullSettlementAmount * 100) / 100
+        : Math.round((withdrawAmount / payoutRate) * 100) / 100;
 
       const data = {
         amount: settlementAmount,
