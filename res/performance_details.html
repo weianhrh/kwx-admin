@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>业绩明细</title>
+</head>
+<body>
+  <script>
+    (function () {
+      const source = new URLSearchParams(window.location.search);
+      const target = new URLSearchParams();
+      const venueId = source.get('venue_id');
+      const period = source.get('period');
+
+      if (venueId && /^\d+$/.test(venueId)) target.set('venue_id', venueId);
+      if (['day', 'week', 'month'].includes(period)) target.set('period', period);
+
+      const query = target.toString();
+      window.location.replace('/api/venue/venue_detail.php' + (query ? '?' + query : ''));
+    })();
+  </script>
+</body>
+</html>

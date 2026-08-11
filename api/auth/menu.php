@@ -145,6 +145,7 @@ function menu_franchise_tree(int $roleId): array
         menu_leaf(9341, 9304, 'franchise-income', '收入明细', '/iframe/link/incomedetails', 'finance', 10),
     ];
     if ($roleId === 3) {
+        $financeMenus[] = menu_leaf(9343, 9304, 'performance-details', '业绩明细', '/iframe/link/performance_details', 'finance', 15);
         $financeMenus[] = menu_leaf(9342, 9304, 'franchise-withdraw', '提现申请', '/iframe/link/PaymentDisbursement_optimized', 'finance', 20);
     }
     $baseMenu[] = menu_group(9304, 'franchise-finance', '财务管理', 'finance', $financeMenus, 4);

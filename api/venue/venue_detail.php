@@ -1,11 +1,95 @@
 <?php
 require_once '../Database.php';
+require_once '../lib/venue_scope.php';
+
 $database = new Database();
 
-$venue_id = $_GET['venue_id'] ?? 0;
+$session_token = $_COOKIE['session_token'] ?? null;
+if (!$session_token) {
+    http_response_code(401);
+    exit('用户未登录或会话已过期');
+}
+
+$user = $database->getUserBySessionToken($session_token);
+if (!$user || empty($user['role_id'])) {
+    http_response_code(401);
+    $database->close();
+    exit('用户未登录或无权访问');
+}
+
+$role_id = (int)$user['role_id'];
+if (!in_array($role_id, [1, 2, 3], true)) {
+    http_response_code(403);
+    $database->close();
+    exit('无权查看场地业绩');
+}
+
+$is_platform_admin = venue_scope_is_platform_admin($user);
+$visible_venues = venue_scope_visible_venues($database, $user);
+$venue_id = venue_scope_requested_id($_GET);
 $period = $_GET['period'] ?? 'day'; // day, week, month
-if (!$venue_id) {
-    exit("缺少参数");
+if (!in_array($period, ['day', 'week', 'month'], true)) {
+    $period = 'day';
+}
+
+if (!$is_platform_admin) {
+    $has_primary_venue = false;
+    foreach ($visible_venues as &$visible_venue) {
+        $visible_venue['is_primary'] = (int)($visible_venue['is_primary'] ?? 0) === 1 ? 1 : 0;
+        if ($visible_venue['is_primary'] === 1) {
+            $has_primary_venue = true;
+        }
+    }
+    unset($visible_venue);
+
+    // 兼容旧账号：关系表没有主场地标记时，使用 admin_users.venue_id。
+    if (!$has_primary_venue) {
+        $legacy_primary_id = (int)($user['venue_id'] ?? 0);
+        foreach ($visible_venues as &$visible_venue) {
+            if ((int)($visible_venue['id'] ?? 0) === $legacy_primary_id) {
+                $visible_venue['is_primary'] = 1;
+                $has_primary_venue = true;
+                break;
+            }
+        }
+        unset($visible_venue);
+    }
+
+    // 极旧数据没有任何主场地信息时，将权限范围内第一个场地作为默认主场地。
+    if (!$has_primary_venue && $visible_venues) {
+        $visible_venues[0]['is_primary'] = 1;
+    }
+
+    usort($visible_venues, static function (array $a, array $b): int {
+        $primary_compare = (int)($b['is_primary'] ?? 0) <=> (int)($a['is_primary'] ?? 0);
+        return $primary_compare !== 0
+            ? $primary_compare
+            : ((int)($a['id'] ?? 0) <=> (int)($b['id'] ?? 0));
+    });
+
+    if ($venue_id > 0 && !venue_scope_can_access($database, $user, $venue_id)) {
+        http_response_code(403);
+        $database->close();
+        exit('无权查看该场地业绩');
+    }
+
+    // 加盟商首次进入时优先展示 admin_user_venues 中标记的主场地。
+    if ($venue_id <= 0) {
+        foreach ($visible_venues as $venue) {
+            if ((int)($venue['is_primary'] ?? 0) === 1) {
+                $venue_id = (int)$venue['id'];
+                break;
+            }
+        }
+        if ($venue_id <= 0 && $visible_venues) {
+            $venue_id = (int)$visible_venues[0]['id'];
+        }
+    }
+}
+
+if ($venue_id <= 0) {
+    $database->close();
+    exit('当前账号未绑定可查看的场地');
 }
 
 // 获取场地名称
@@ -23,7 +107,8 @@ switch ($period) {
                 SUM(payment_amount) AS total
             FROM orders
             WHERE reservation_id = ?
-              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+              AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
               AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
@@ -37,7 +122,8 @@ switch ($period) {
                 SUM(payment_amount) AS total
             FROM orders
             WHERE reservation_id = ?
-              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+              AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
               AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
@@ -52,7 +138,8 @@ switch ($period) {
                 SUM(payment_amount) AS total
             FROM orders
             WHERE reservation_id = ?
-              AND TRIM(IFNULL(pays_type, '')) <> '能量'
+              AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
+              AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
               AND (end_time IS NOT NULL OR start_time IS NOT NULL)
             GROUP BY label
             ORDER BY label DESC
@@ -149,6 +236,24 @@ $database->close();
       background:#fbfdfd;
     }
 
+    .venue-filter{
+      min-width:260px;
+      height:40px;
+      padding:0 12px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      color:var(--text);
+      background:#fff;
+      font-size:14px;
+      font-weight:700;
+      outline:none;
+    }
+
+    .venue-filter:focus{
+      border-color:rgba(15,143,140,.55);
+      box-shadow:0 0 0 3px rgba(15,143,140,.10);
+    }
+
     .toolbar button{
       min-width: 90px;
       border:1px solid rgba(15,143,140,.24);
@@ -215,6 +320,7 @@ $database->close();
       h2::before{ left:16px; top:21px; }
       .sub-title{ padding:0 16px 16px 32px; }
       .toolbar{ padding:14px 16px; }
+      .venue-filter{ width:100%; min-width:0; }
       .toolbar button{ flex:1; }
       .card-container{ grid-template-columns: 1fr; padding:14px 16px 16px; }
     }
@@ -224,9 +330,21 @@ $database->close();
 <body>
   <div class="wrap">
     <h2><?= htmlspecialchars($venue_name) ?> 业绩趋势</h2>
-    <p class="sub-title">仅统计驾驶订单收入，不包含礼物收入。</p>
+   
 
     <div class="toolbar">
+      <?php if (!$is_platform_admin): ?>
+      <select id="venueFilter" class="venue-filter" aria-label="选择场地">
+        <?php foreach ($visible_venues as $venue): ?>
+          <?php
+            $option_id = (int)($venue['id'] ?? 0);
+            $is_primary = (int)($venue['is_primary'] ?? 0) === 1;
+            $option_label = ($is_primary ? '主场地' : '子场地') . '｜' . (string)($venue['venue_name'] ?? '') . '（ID：' . $option_id . '）';
+          ?>
+          <option value="<?= $option_id ?>" <?= $option_id === $venue_id ? 'selected' : '' ?>><?= htmlspecialchars($option_label, ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+      </select>
+      <?php endif; ?>
       <button onclick="changePeriod('day')" class="<?= $period == 'day' ? 'active' : '' ?>">按天</button>
       <button onclick="changePeriod('week')" class="<?= $period == 'week' ? 'active' : '' ?>">按周</button>
       <button onclick="changePeriod('month')" class="<?= $period == 'month' ? 'active' : '' ?>">按月</button>
@@ -259,8 +377,19 @@ $database->close();
     </div>
 
     <script>
+        const venueFilter = document.getElementById('venueFilter');
+        if (venueFilter) {
+            venueFilter.addEventListener('change', function () {
+                const venueId = String(this.value || '');
+                if (!/^\d+$/.test(venueId)) return;
+                window.location.href = `venue_detail.php?venue_id=${encodeURIComponent(venueId)}&period=<?= htmlspecialchars($period, ENT_QUOTES, 'UTF-8') ?>`;
+            });
+        }
+
         function changePeriod(period) {
-            window.location.href = `venue_detail.php?venue_id=<?= $venue_id ?>&period=${period}`;
+            const allowed = ['day', 'week', 'month'];
+            if (!allowed.includes(period)) return;
+            window.location.href = `venue_detail.php?venue_id=<?= (int)$venue_id ?>&period=${encodeURIComponent(period)}`;
         }
     </script>
     </div>
