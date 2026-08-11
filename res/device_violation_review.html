@@ -677,7 +677,22 @@
       return `
         <div class="card" data-archive-key="${escapeAttr(item.archive_key || '')}">
           <div class="img-wrap" onclick="openImgModal('${item.display_image_url || ''}')">
-            <img src="${item.display_image_url || ''}" alt="违规图" loading="lazy" onerror="this.src='${item.image_url || ''}'">
+<img
+  src="${item.display_image_url || ''}"
+  alt="违规图"
+  loading="lazy"
+  onerror="
+    if (!this.dataset.backupTried) {
+      this.dataset.backupTried = '1';
+      this.src = '${item.backup_image_url || item.image_url || ''}';
+    } else if (!this.dataset.originalTried) {
+      this.dataset.originalTried = '1';
+      this.src = '${item.image_url || ''}';
+    } else {
+      this.onerror = null;
+    }
+  "
+>
             <div class="tag-row">
               <span class="tag ${tagClass(item.display_status)}">${item.display_status}</span>
               ${item.is_append_processed == 1 ? `<span class="tag banned">已追加处理</span>` : ``}

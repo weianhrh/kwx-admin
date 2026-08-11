@@ -29,16 +29,37 @@ function build_local_image_url($grabTime, $localImageName, $fallbackUrl = '')
 {
     if (!empty($localImageName) && !empty($grabTime)) {
         $dateDir = date('Y-m-d', strtotime($grabTime));
-        return '/api/pop/review_backup/' . $dateDir . '/' . $localImageName;
+
+        return '/api/pop/review_backup/'
+            . $dateDir . '/'
+            . rawurlencode($localImageName);
     }
+
     return $fallbackUrl;
 }
+function build_risk_image_url($grabTime, $imageUrl)
+{
+    if (empty($grabTime) || empty($imageUrl)) {
+        return '';
+    }
 
+    $dateDir = date('Y-m-d', strtotime($grabTime));
+    $path = parse_url($imageUrl, PHP_URL_PATH);
+    $fileName = basename($path ?: '');
+
+    if ($fileName === '') {
+        return '';
+    }
+
+    return 'https://app.kwxapp.cn/app/uploadimage/imageReview_risk/'
+        . $dateDir . '/'
+        . rawurlencode($fileName);
+}
 $db = new Database();
 
 try {
-// 固定口径：当天 04:00:00 到当天 09:00:00，只看高风险
-$defaultStart = date('Y-m-d 04:00:00');
+// 固定口径：前天22:00:00 到当天 09:00:00，只看高风险
+$defaultStart = date('Y-m-d 22:00:00', strtotime('-1 day'));
 $defaultEnd   = date('Y-m-d 09:00:00');
 
     // 前端已经去掉时间筛选，这里保留 GET 参数只是为了你临时调试接口方便
@@ -164,12 +185,21 @@ $defaultEnd   = date('Y-m-d 09:00:00');
         $row['risk_level_text'] = risk_text($row['risk_level'] ?? '');
         $row['display_status'] = $displayStatus;
         $row['display_time'] = $displayTime;
-        $row['display_image_url'] = build_local_image_url(
-            $row['grab_time'] ?? '',
-            $row['local_image_name'] ?? '',
-            $row['image_url'] ?? ''
-        );
+        // $row['display_image_url'] = build_local_image_url(
+        //     $row['grab_time'] ?? '',
+        //     $row['local_image_name'] ?? '',
+        //     $row['image_url'] ?? ''
+        // );
+$row['display_image_url'] = build_risk_image_url(
+    $row['grab_time'] ?? '',
+    $row['image_url'] ?? ''
+);
 
+$row['backup_image_url'] = build_local_image_url(
+    $row['grab_time'] ?? '',
+    $row['local_image_name'] ?? '',
+    $row['image_url'] ?? ''
+);
         $list[] = $row;
     }
 
