@@ -63,6 +63,7 @@ function menu_admin_tree(): array
         menu_leaf(28, 9002, 'venue-mgmt', '场地管理', '/iframe/link/VenuesManagement', '', 1),
         menu_leaf(60, 9002, 'pricing_options', '场地套餐', '/iframe/link/pricing_options', '', 1),
         menu_leaf(29, 9002, 'zonemgt', '专区管理', '/iframe/link/zonemgt', '', 2),
+        menu_leaf(90021, 9002, 'venue-subtitle-search-records', '场地搜索记录', '/iframe/link/venue_subtitle_search_records', '', 3),
     ], 2);
 
     $baseMenu[] = menu_group(9003, 'order', '订单管理', 'order', [

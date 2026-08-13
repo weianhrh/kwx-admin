@@ -1,0 +1,22 @@
+KWX 场地搜索记录 V4（2026-08-12）
+
+版本标记：KWX-VENUE-SEARCH-V4-20260812-DATE-FILTER
+
+ZIP 必须上传到包含 dashboard.html 的后台项目根目录，再执行：
+
+unzip -o venue-search-records-date-filter-V4-20260812.zip -d .
+
+覆盖后验证：
+
+grep -n "KWX-VENUE-SEARCH-V4-20260812-DATE-FILTER" res/venue_subtitle_search_records.html api/venue/venue_subtitle_search_records.php
+grep -n "时间筛选" res/venue_subtitle_search_records.html
+grep -n "empty_venues" res/venue_subtitle_search_records.html api/venue/venue_subtitle_search_records.php
+
+正确结果：
+- 第一个命令两个文件都有 V4 标记。
+- 第二个命令有“时间筛选”。
+- 第三个命令没有任何输出。
+
+文件路径：
+- res/venue_subtitle_search_records.html
+- api/venue/venue_subtitle_search_records.php
