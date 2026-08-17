@@ -219,6 +219,161 @@
       color: var(--primary-dark);
     }
 
+    .modify-btn.wifi-btn {
+      background: #fff8e8;
+      border-color: #d99a24;
+      color: #9a6500;
+    }
+
+    .modify-btn.wifi-btn:hover {
+      background: #fff0c7;
+      border-color: #c4830e;
+      color: #7a5000;
+      box-shadow: 0 8px 16px rgba(217, 154, 36, 0.16);
+    }
+
+    .wifi-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 35, 35, 0.46);
+    }
+
+    .wifi-modal.open {
+      display: flex;
+    }
+
+    .wifi-dialog {
+      width: min(520px, 100%);
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(15, 35, 35, 0.24);
+    }
+
+    .wifi-dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .wifi-dialog-title {
+      color: #102a2a;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .wifi-close {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 32px;
+    }
+
+    .wifi-dialog-body {
+      display: grid;
+      gap: 13px;
+      padding: 18px;
+    }
+
+    .wifi-target {
+      padding: 12px;
+      border: 1px solid #cce4e2;
+      border-radius: 9px;
+      background: var(--primary-soft);
+      color: #285252;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .wifi-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .wifi-field label {
+      color: #344054;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .wifi-field input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      outline: none;
+      color: var(--text-color);
+      font-size: 14px;
+    }
+
+    .wifi-field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 143, 140, 0.1);
+    }
+
+    .wifi-result {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .wifi-result.success {
+      display: block;
+      background: #e8f7ef;
+      color: var(--success);
+    }
+
+    .wifi-result.error {
+      display: block;
+      background: #feecec;
+      color: var(--danger);
+    }
+
+    .wifi-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 18px 18px;
+    }
+
+    .wifi-action-btn {
+      min-width: 96px;
+      height: 38px;
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .wifi-action-btn.secondary {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .wifi-action-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
     .loading {
       margin-top: 14px;
       padding: 14px;
@@ -372,10 +527,37 @@
     </div>
   </div>
 
+  <div class="wifi-modal" id="wifiModal" aria-hidden="true">
+    <div class="wifi-dialog" role="dialog" aria-modal="true" aria-labelledby="wifiModalTitle">
+      <div class="wifi-dialog-header">
+        <div class="wifi-dialog-title" id="wifiModalTitle">设备改网</div>
+        <button class="wifi-close" type="button" id="wifiCloseBtn" aria-label="关闭">×</button>
+      </div>
+      <div class="wifi-dialog-body">
+        <div class="wifi-target" id="wifiTargetText">请选择设备</div>
+        <div class="wifi-field">
+          <label for="wifiEssid">WIFI 名称（ESSID）</label>
+          <input id="wifiEssid" maxlength="32" value="srr1" autocomplete="off">
+        </div>
+        <div class="wifi-field">
+          <label for="wifiPasswd">WIFI 密码</label>
+          <input id="wifiPasswd" type="password" maxlength="64" value="88888888" autocomplete="new-password">
+        </div>
+        <div class="wifi-result" id="wifiResult"></div>
+      </div>
+      <div class="wifi-dialog-actions">
+        <button class="wifi-action-btn secondary" type="button" id="wifiCancelBtn">取消</button>
+        <button class="wifi-action-btn" type="button" id="wifiSendBtn">发送 WIFI 设置</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentPage = 1;
     const limit = 10;
     const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
+    const WIFI_COMMAND_API = '/api/devMgr/device_command.php';
+    let wifiTargetDevice = null;
 
     function vehicleListUrl(page) {
       const params = new URLSearchParams({
@@ -441,6 +623,9 @@ function getDeviceStatusTag(device) {
       const deviceList = document.getElementById('device-list');
       devices.forEach(device  => {
           const statusTag = getDeviceStatusTag(device);
+          const wifiButton = device.can_change_wifi
+            ? '<button class="modify-btn wifi-btn" onclick="openWifiModal(this)">设备改网</button>'
+            : '';
         // 将设备对象转为 JSON 字符串，并存入 data-device 属性中
         const card = document.createElement('div');
         card.classList.add('device-card');
@@ -464,6 +649,7 @@ function getDeviceStatusTag(device) {
 <div class="device-actions">
   <button class="modify-btn" onclick="modifyDevice(this)">修改信息</button>
   <button class="modify-btn" onclick="modifyDeviceCfg(this)">修改配置</button>
+  ${wifiButton}
 </div>
 `;
 
@@ -487,6 +673,129 @@ function getDeviceStatusTag(device) {
       const queryString = Object.keys(device).map(key  => `${encodeURIComponent(key)}=${encodeURIComponent(device[key])}`).join('&');
       window.location.href  = `modify-deviceCfgTest_safe_submit.html?${queryString}`;
     }
+
+    function setWifiResult(message, type = '') {
+      const result = document.getElementById('wifiResult');
+      result.textContent = message || '';
+      result.className = `wifi-result${type ? ` ${type}` : ''}`;
+    }
+
+    function openWifiModal(button) {
+      const card = button.closest('.device-card');
+      const device = JSON.parse(card.getAttribute('data-device') || '{}');
+
+      if (!device.can_change_wifi) {
+        alert('当前账号或场地无设备改网权限');
+        return;
+      }
+
+      const roomId = String(device.image_device_room_id || '').trim();
+      if (!roomId) {
+        alert('该设备没有对应的前图传房间号，无法发送 WIFI 设置');
+        return;
+      }
+
+      wifiTargetDevice = device;
+      document.getElementById('wifiTargetText').textContent =
+        `设备：${device.name || '-'}　序列号：${device.serial_number || '-'}　前图传房间号：${roomId}`;
+      document.getElementById('wifiEssid').value = 'srr1';
+      document.getElementById('wifiPasswd').value = '88888888';
+      setWifiResult('');
+
+      const modal = document.getElementById('wifiModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('wifiEssid').focus();
+    }
+
+    function closeWifiModal() {
+      const modal = document.getElementById('wifiModal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      wifiTargetDevice = null;
+      setWifiResult('');
+    }
+
+    async function sendWifiSetting() {
+      if (!wifiTargetDevice) return;
+
+      const essid = document.getElementById('wifiEssid').value.trim();
+      const passwd = document.getElementById('wifiPasswd').value.trim();
+      const roomId = String(wifiTargetDevice.image_device_room_id || '').trim();
+
+      if (!essid) {
+        setWifiResult('WIFI 名称不能为空', 'error');
+        return;
+      }
+      if (!passwd) {
+        setWifiResult('WIFI 密码不能为空', 'error');
+        return;
+      }
+
+      if (!confirm(`确认给设备 ${wifiTargetDevice.name || wifiTargetDevice.serial_number} 发送新的 WIFI 设置吗？`)) {
+        return;
+      }
+
+      const sendBtn = document.getElementById('wifiSendBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = '发送中...';
+      setWifiResult('');
+
+      try {
+        const form = new URLSearchParams();
+        form.set('room_id', roomId);
+        form.set('from_user_id', 'server_bot_1');
+        form.set('message', JSON.stringify({
+          type: 'cfg_wifi',
+          data: { essid, passwd }
+        }));
+        form.set('source', 'vehicleslite_wifi');
+        form.set('serial_number', String(wifiTargetDevice.serial_number || ''));
+
+        const response = await fetch(WIFI_COMMAND_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          body: form.toString(),
+          credentials: 'include'
+        });
+        const json = await response.json();
+
+        if (json.code !== 200) {
+          const errorMessage = String(json.msg || 'WIFI 设置发送失败');
+          const isDeviceOffline = Number(json.data?.zego_code) === 104
+            || /Code\s*=\s*104|room\s+not\s+exist/i.test(errorMessage);
+          setWifiResult(
+            isDeviceOffline ? '设备不在线，请先上线设备' : errorMessage,
+            'error'
+          );
+          return;
+        }
+
+        const appText = json.data?.app_name ? `（${json.data.app_name}）` : '';
+        const logText = json.data?.log_saved === false ? '，但日志保存失败' : '，发送日志已留存';
+        setWifiResult(`WIFI 设置已发送${appText}${logText}`, json.data?.log_saved === false ? 'error' : 'success');
+      } catch (error) {
+        console.error('发送 WIFI 设置失败:', error);
+        setWifiResult('网络错误：WIFI 设置发送失败', 'error');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '发送 WIFI 设置';
+      }
+    }
+
+    document.getElementById('wifiCloseBtn').addEventListener('click', closeWifiModal);
+    document.getElementById('wifiCancelBtn').addEventListener('click', closeWifiModal);
+    document.getElementById('wifiSendBtn').addEventListener('click', sendWifiSetting);
+    document.getElementById('wifiModal').addEventListener('click', (event) => {
+      if (event.target.id === 'wifiModal') closeWifiModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && document.getElementById('wifiModal').classList.contains('open')) {
+        closeWifiModal();
+      }
+    });
  function refreshDeviceList() {
   const btn = document.querySelector('.float-refresh-btn');
   const deviceList = document.getElementById('device-list');

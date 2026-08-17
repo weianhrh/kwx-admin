@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>改网白名单</title>
+  <style>
+    :root {
+      --primary: #0f8f8c;
+      --primary-dark: #08706e;
+      --primary-soft: #e6f6f5;
+      --page-bg: #f4f7f7;
+      --border: #dbe5e4;
+      --text: #1f2933;
+      --muted: #667085;
+      --danger: #dc2626;
+      --success: #15803d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 18px;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    .page {
+      width: min(960px, 100%);
+      margin: 0 auto;
+    }
+
+    .card {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(15, 143, 140, 0.08);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .title-wrap {
+      min-width: 0;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      color: #102a2a;
+      font-size: 20px;
+    }
+
+    .title::before {
+      content: "";
+      width: 4px;
+      height: 19px;
+      border-radius: 99px;
+      background: var(--primary);
+    }
+
+    .subtitle {
+      margin: 7px 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .refresh-btn,
+    .add-btn,
+    .remove-btn {
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .refresh-btn {
+      height: 36px;
+      padding: 0 15px;
+      border: 1px solid var(--primary);
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .content {
+      display: grid;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .tip {
+      padding: 13px 14px;
+      border: 1px solid #bfe1df;
+      border-radius: 9px;
+      background: var(--primary-soft);
+      color: #285252;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .add-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 130px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label,
+    .section-title {
+      color: #344054;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    select {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid #c8d8d6;
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 143, 140, 0.1);
+    }
+
+    .add-btn {
+      height: 42px;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fbfdfd;
+    }
+
+    .item-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-name {
+      margin-bottom: 5px;
+      color: #102a2a;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .item-id {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .enabled-tag {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #e8f7ef;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .remove-btn {
+      height: 34px;
+      padding: 0 13px;
+      border: 1px solid #efb1b1;
+      background: #fff5f5;
+      color: var(--danger);
+    }
+
+    .empty {
+      padding: 28px 15px;
+      border: 1px dashed #c8d8d6;
+      border-radius: 9px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .message {
+      display: none;
+      padding: 11px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .message.success {
+      display: block;
+      background: #e8f7ef;
+      color: var(--success);
+    }
+
+    .message.error {
+      display: block;
+      background: #feecec;
+      color: var(--danger);
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      .header,
+      .content {
+        padding: 15px;
+      }
+
+      .add-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .remove-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <header class="header">
+        <div class="title-wrap">
+          <h1 class="title">改网白名单</h1>
+          <p class="subtitle">管理允许加盟商使用“设备改网”的场地</p>
+        </div>
+        <button class="refresh-btn" type="button" id="refreshBtn">刷新</button>
+      </header>
+
+      <div class="content">
+        <div class="tip">
+          从场地下拉框选择并添加。只有白名单场地下的 role_id 3/4 账号会显示“设备改网”；配置保存在
+          <b>api/config/device_wifi_whitelist.txt</b>，每行一个 venue_id。
+        </div>
+
+        <div class="add-panel">
+          <div class="field">
+            <label for="venueSelect">选择要开放的场地</label>
+            <select id="venueSelect">
+              <option value="">正在读取场地...</option>
+            </select>
+          </div>
+          <button class="add-btn" type="button" id="addBtn">添加白名单</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div>
+          <div class="section-title" style="margin-bottom: 10px;">当前白名单</div>
+          <div class="list" id="whitelist">
+            <div class="empty">正在读取...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = '/api/config/device_wifi_whitelist.php';
+    let venues = [];
+    let whitelistIds = [];
+
+    function setMessage(text, type = '') {
+      const element = document.getElementById('message');
+      element.textContent = text || '';
+      element.className = `message${type ? ` ${type}` : ''}`;
+    }
+
+    function venueName(venueId) {
+      const row = venues.find(item => Number(item.venue_id) === Number(venueId));
+      return row?.venue_name || '未命名场地';
+    }
+
+    function render() {
+      const select = document.getElementById('venueSelect');
+      const list = document.getElementById('whitelist');
+      const whitelistSet = new Set(whitelistIds.map(Number));
+      const availableVenues = venues.filter(item => !whitelistSet.has(Number(item.venue_id)));
+
+      select.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = availableVenues.length ? '请选择场地' : '没有可添加的场地';
+      select.appendChild(placeholder);
+
+      availableVenues.forEach(item => {
+        const option = document.createElement('option');
+        option.value = String(item.venue_id);
+        option.textContent = `${item.venue_name || '未命名场地'}（venue_id=${item.venue_id}）`;
+        select.appendChild(option);
+      });
+
+      list.innerHTML = '';
+      if (whitelistIds.length === 0) {
+        list.innerHTML = '<div class="empty">当前没有开放任何场地</div>';
+        return;
+      }
+
+      whitelistIds.forEach(venueId => {
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const info = document.createElement('div');
+        info.className = 'item-info';
+        const name = document.createElement('div');
+        name.className = 'item-name';
+        name.textContent = venueName(venueId);
+        const id = document.createElement('div');
+        id.className = 'item-id';
+        id.textContent = `venue_id：${venueId}`;
+        info.appendChild(name);
+        info.appendChild(id);
+
+        const tag = document.createElement('span');
+        tag.className = 'enabled-tag';
+        tag.textContent = '已开放';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = '移出白名单';
+        removeBtn.addEventListener('click', () => updateWhitelist('remove', venueId, removeBtn));
+
+        item.appendChild(info);
+        item.appendChild(tag);
+        item.appendChild(removeBtn);
+        list.appendChild(item);
+      });
+    }
+
+    async function loadData() {
+      setMessage('');
+      document.getElementById('whitelist').innerHTML = '<div class="empty">正在读取...</div>';
+
+      try {
+        const response = await fetch(API, { credentials: 'include' });
+        const json = await response.json();
+        if (json.code !== 0) {
+          setMessage(json.msg || '读取白名单失败', 'error');
+          return;
+        }
+
+        venues = Array.isArray(json.data?.venues) ? json.data.venues : [];
+        whitelistIds = Array.isArray(json.data?.whitelist_venue_ids)
+          ? json.data.whitelist_venue_ids.map(Number)
+          : [];
+        render();
+      } catch (error) {
+        console.error('读取改网白名单失败:', error);
+        setMessage('网络错误：读取白名单失败', 'error');
+      }
+    }
+
+    async function updateWhitelist(action, venueId, triggerBtn) {
+      const id = Number(venueId);
+      if (!Number.isInteger(id) || id <= 0) {
+        setMessage('请选择正确的场地', 'error');
+        return;
+      }
+
+      if (action === 'remove' && !confirm(`确认将 ${venueName(id)}（venue_id=${id}）移出改网白名单吗？`)) {
+        return;
+      }
+
+      const oldText = triggerBtn.textContent;
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = '保存中...';
+      setMessage('');
+
+      try {
+        const form = new URLSearchParams();
+        form.set('action', action);
+        form.set('venue_id', String(id));
+        const response = await fetch(API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          credentials: 'include',
+          body: form.toString()
+        });
+        const json = await response.json();
+        if (json.code !== 0) {
+          setMessage(json.msg || '保存白名单失败', 'error');
+          return;
+        }
+
+        venues = Array.isArray(json.data?.venues) ? json.data.venues : venues;
+        whitelistIds = Array.isArray(json.data?.whitelist_venue_ids)
+          ? json.data.whitelist_venue_ids.map(Number)
+          : [];
+        render();
+        setMessage(json.msg || '保存成功', 'success');
+      } catch (error) {
+        console.error('保存改网白名单失败:', error);
+        setMessage('网络错误：保存白名单失败', 'error');
+      } finally {
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = oldText;
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
+    document.getElementById('addBtn').addEventListener('click', event => {
+      updateWhitelist('add', document.getElementById('venueSelect').value, event.currentTarget);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>

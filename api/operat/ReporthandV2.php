@@ -227,6 +227,7 @@ try {
             r.insert_time,
             CAST(v.name AS CHAR) AS vehicle_name,
             v.bind_site,
+            COALESCE(bv.venue_name, '') AS venue_name,
             r.report_type,
             r.status,
             r.notes,
@@ -237,6 +238,7 @@ try {
             '' AS reporter_name
         FROM Reports r
         JOIN vehicles v ON r.device_id = v.serial_number
+        LEFT JOIN venues bv ON bv.id = v.bind_site
         WHERE (r.status = '未处理' OR r.status = '处理中')
     ";
 

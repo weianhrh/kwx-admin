@@ -833,6 +833,17 @@
             `;
         }
 
+        function formatBoundVenue(complaint) {
+            const venueId = String(complaint.bind_site ?? '').trim();
+            const venueName = String(complaint.venue_name ?? '').trim();
+
+            if (venueId && venueName) {
+                return `${venueId}(${venueName})`;
+            }
+
+            return venueId || venueName || '-';
+        }
+
         function renderScreenshotBlock(complaint, altText = '举报截图') {
             if (!complaint.image_url || complaint.image_url.trim() === '') return '';
             return `
@@ -886,7 +897,7 @@ function renderDeviceComplaint(complaint) {
             </div>
             <div class="complaint-highlight">
                 ${compactField('举报人 UID', complaint.reporter_uid)}
-                ${compactField('绑定场地', complaint.bind_site)}
+                ${compactField('绑定场地', formatBoundVenue(complaint))}
             </div>
             ${renderComplaintSide(complaint)}
         </div>

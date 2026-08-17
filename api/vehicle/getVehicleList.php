@@ -26,41 +26,52 @@ $role_id = $user['role_id'];
 $requestedVenueId = venue_scope_requested_id($_GET);
 
 // 构建查询语句，根据用户角色和站点进行数据过滤
-$sql = "SELECT 
-            id, 
-            serial_number, 
-            photo_url, 
-            name, 
-            status, 
-            battery_level, 
-            voltage, 
-            vehicle_status, 
-            created_at, 
-            updated_at, 
-            uid, 
-            bind_site, 
-            bind_city, 
-            sharing_status, 
-            driver, 
-            start_status, 
-            billing_rules, 
-            share_password, 
-            Reservation_lock, 
-            ReservationCode, 
-            share_name, 
-            image_device_serial, 
-            bk_image_device_serial
-        FROM vehicles
+$sql = "SELECT
+            v.id,
+            v.serial_number,
+            v.photo_url,
+            v.name,
+            v.status,
+            v.battery_level,
+            v.voltage,
+            v.vehicle_status,
+            v.created_at,
+            v.updated_at,
+            v.uid,
+            v.bind_site,
+            v.bind_city,
+            v.sharing_status,
+            v.driver,
+            v.start_status,
+            v.billing_rules,
+            v.share_password,
+            v.Reservation_lock,
+            v.ReservationCode,
+            v.share_name,
+            v.image_device_serial,
+            di.room_id AS image_device_room_id,
+            v.bk_image_device_serial
+        FROM vehicles v
+        LEFT JOIN device_information di
+            ON CAST(di.id AS CHAR) = v.image_device_serial
         WHERE 1=1";
 
 $params = [];
-$sql .= venue_scope_apply_filter($database, $user, 'bind_site', $params, $requestedVenueId);
-$sql .= " ORDER BY updated_at DESC, id DESC";
+$sql .= venue_scope_apply_filter($database, $user, 'v.bind_site', $params, $requestedVenueId);
+$sql .= " ORDER BY v.updated_at DESC, v.id DESC";
 
 // 执行查询
 $result = $database->query($sql, $params);
 
 if ($result !== false) {
+    // 仅 role_id 3/4 且设备属于 18 号场地时，允许在设备管理页显示“设备改网”。
+    $canChangeWifiRole = in_array((int)$role_id, [3, 4], true);
+    foreach ($result as &$device) {
+        $device['can_change_wifi'] = $canChangeWifiRole
+            && (int)($device['bind_site'] ?? 0) === 18;
+    }
+    unset($device);
+
     // 获取数据总数
     $count = count($result);
 

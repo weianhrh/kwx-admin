@@ -57,6 +57,7 @@ function menu_admin_tree(): array
         menu_leaf(38, 9001, 'img-mgmt', '图传管理', '/iframe/link/ImgNumberMgmt', '', 3),
         menu_leaf(27, 9001, 'Faultapproval', '故障审批', '/iframe/link/Faultapproval', '', 4),
         menu_leaf(72, 9001, 'device_information', '摄像管理', '/iframe/link/device_information', 'layui-icon-circle-dot', 5),
+        menu_leaf(90011, 9001, 'device-wifi-whitelist', '改网白名单', '/iframe/link/device_wifi_whitelist', 'tools', 6),
     ], 1);
 
     $baseMenu[] = menu_group(9002, 'venue', '场地管理', 'venue', [
