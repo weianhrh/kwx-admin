@@ -228,7 +228,7 @@ button {
         </div>
         <div class="field">
           <label>提现卡号</label>
-          <input type="text" id="withdrawal_account" name="withdrawal_account" required>
+          <input type="text" id="withdrawal_account" name="withdrawal_account" inputmode="numeric" autocomplete="off" required>
         </div>
         <div class="field">
           <label>银行名称</label>
@@ -252,6 +252,11 @@ button {
   <script>
     const form = document.getElementById('bindForm');
     const submitBtn = document.getElementById('submitBtn');
+    const withdrawalAccountInput = document.getElementById('withdrawal_account');
+
+    withdrawalAccountInput.addEventListener('input', function () {
+      this.value = this.value.replace(/\s+/g, '');
+    });
 
     // 页面加载时检查是否已绑定
     fetch('/api/pay/BindPaymentAccount.php')
@@ -277,6 +282,7 @@ button {
     // 首次提交绑定
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      withdrawalAccountInput.value = withdrawalAccountInput.value.replace(/\s+/g, '');
       const formData = new FormData(form);
       fetch('/api/pay/BindPaymentAccount.php', {
         method: 'POST',

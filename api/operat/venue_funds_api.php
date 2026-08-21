@@ -9,6 +9,12 @@ function json_out($code, $msg, $data = []) {
     exit;
 }
 
+function reject_whitespace($value, $label) {
+    if (preg_match('/\s/u', (string)$value)) {
+        json_out(422, $label . '不能包含空格', []);
+    }
+}
+
 function get_json_body() {
     $raw = file_get_contents('php://input');
     if (!$raw) return [];
@@ -143,11 +149,15 @@ if ($action === 'create') {
     }
 
     $account_balance = (string)($body['account_balance'] ?? '0.00');
-    $withdrawal_account = trim((string)($body['withdrawal_account'] ?? ''));
+    $withdrawal_account_raw = (string)($body['withdrawal_account'] ?? '');
+    reject_whitespace($withdrawal_account_raw, '提现账号');
+    $withdrawal_account = trim($withdrawal_account_raw);
     $account_type = trim((string)($body['account_type'] ?? ''));
     $account_name = trim((string)($body['account_name'] ?? ''));
     $remarks = (string)($body['remarks'] ?? '');
-    $bank_number = trim((string)($body['bank_number'] ?? ''));
+    $bank_number_raw = (string)($body['bank_number'] ?? '');
+    reject_whitespace($bank_number_raw, '银行卡号');
+    $bank_number = trim($bank_number_raw);
     $bank_name = trim((string)($body['bank_name'] ?? ''));
 
     if ($withdrawal_account === '' || $account_type === '' || $account_name === '') {
@@ -201,6 +211,13 @@ if ($action === 'update') {
 
     $set = [];
     $params = [];
+
+    if (array_key_exists('withdrawal_account', $body)) {
+        reject_whitespace((string)$body['withdrawal_account'], '提现账号');
+    }
+    if (array_key_exists('bank_number', $body)) {
+        reject_whitespace((string)$body['bank_number'], '银行卡号');
+    }
 
     $fields = ['account_balance','withdrawal_account','account_type','account_name','remarks','bank_number','bank_name'];
     foreach ($fields as $f) {

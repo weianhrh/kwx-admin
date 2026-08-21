@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php'; // 确保正确的路径
 require_once '../lib/venue_scope.php';
+require_once '../lib/device_wifi_whitelist.php';
 // /api/vehicle/getVehicleList.php
 // 创建数据库连接
 $database = new Database();
@@ -24,6 +25,7 @@ if (!$user || !$user['role_id']) {
 
 $role_id = $user['role_id'];
 $requestedVenueId = venue_scope_requested_id($_GET);
+$wifiAllowedVenueIds = device_wifi_whitelist_ids();
 
 // 构建查询语句，根据用户角色和站点进行数据过滤
 $sql = "SELECT
@@ -64,11 +66,11 @@ $sql .= " ORDER BY v.updated_at DESC, v.id DESC";
 $result = $database->query($sql, $params);
 
 if ($result !== false) {
-    // 仅 role_id 3/4 且设备属于 18 号场地时，允许在设备管理页显示“设备改网”。
+    // role_id 3/4 且设备所属场地已被老板开放时，允许显示“设备改网”。
     $canChangeWifiRole = in_array((int)$role_id, [3, 4], true);
     foreach ($result as &$device) {
         $device['can_change_wifi'] = $canChangeWifiRole
-            && (int)($device['bind_site'] ?? 0) === 18;
+            && in_array((int)($device['bind_site'] ?? 0), $wifiAllowedVenueIds, true);
     }
     unset($device);
 

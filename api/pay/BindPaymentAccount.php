@@ -1,6 +1,13 @@
 <?php
 require_once '../Database.php';
 
+function rejectWhitespace($value, $label) {
+    if (preg_match('/\s/u', (string)$value)) {
+        echo json_encode(['code' => 1004, 'msg' => $label . '不能包含空格', 'data' => []], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
 $database = new Database();
 $session_token = $_COOKIE['session_token'] ?? null;
 
@@ -47,12 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($checkResult->num_rows > 0) {
         echo json_encode(['code' => 1002, 'msg' => '账号已绑定，不能重复绑定']);
     } else {
-        $account_name = $_POST['account_name'] ?? '';
-        $withdrawal_account = $_POST['withdrawal_account'] ?? '';
+        $account_name = trim((string)($_POST['account_name'] ?? ''));
+        $withdrawal_account_raw = (string)($_POST['withdrawal_account'] ?? '');
+        rejectWhitespace($withdrawal_account_raw, '提现卡号');
+        $withdrawal_account = trim($withdrawal_account_raw);
         $remarks = $_POST['remarks'] ?? '';
-        $account_type = $_POST['account_type'] ?? '银行卡';
-        $bank_name = $_POST['bank_name'] ?? '';
-        $bank_number = $_POST['bank_number'] ?? '';
+        $account_type = trim((string)($_POST['account_type'] ?? '银行卡'));
+        $bank_name = trim((string)($_POST['bank_name'] ?? ''));
+        $bank_number_raw = (string)($_POST['bank_number'] ?? '');
+        rejectWhitespace($bank_number_raw, '银行行号');
+        $bank_number = trim($bank_number_raw);
+
+        if ($account_name === '' || $withdrawal_account === '' || $bank_name === '') {
+            echo json_encode(['code' => 1004, 'msg' => '账户姓名、提现卡号和银行名称不能为空', 'data' => []], JSON_UNESCAPED_UNICODE);
+            $checkStmt->close();
+            $database->close();
+            exit;
+        }
 
         $insertSql = "INSERT INTO venue_funds (venue_id, account_name, withdrawal_account, remarks, account_type, bank_name, bank_number) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $insertStmt = $database->getConnection()->prepare($insertSql);

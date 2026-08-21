@@ -478,6 +478,17 @@ textarea {
         //         container.appendChild(item); 
         //     });
         // }
+function formatWithdrawalAccount(account, accountType) {
+    const value = String(account || '').trim();
+    if (!value || !String(accountType || '').includes('银行卡')) {
+        return value;
+    }
+
+    return value
+        .replace(/\s+/g, '')
+        .replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
 // 显示提现记录列表
 function displayWithdrawalRecords(records) {
     // 按账户姓名排序（升序）
@@ -498,7 +509,7 @@ function displayWithdrawalRecords(records) {
             <span>场地名称：${record.venue_name}(ID:${record.venue_id})</span> 
             <span>账户类型：${record.account_type}</span> 
             <span style="color: #007BFF; font-weight: 700; text-shadow: 0 0 2px rgba(0,123,255,0.3);">实际打款：${record.actual_amount} 元</span>
-            <span>提现账号 ：${record.withdrawal_account}</span> 
+            <span>提现账号 ：${formatWithdrawalAccount(record.withdrawal_account, record.account_type)}</span> 
             <span>提现金额：${record.withdrawal_amount} 元</span>
             <span>技术服务费：${record.technical_service_fee} 元</span>
             <span>提现手续费：${record.withdrawal_fee} 元</span>

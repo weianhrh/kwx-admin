@@ -599,7 +599,7 @@ select:disabled {
       <input id="bank_name" placeholder="例如：招商银行" />
 
       <label>银行卡号（可与提现账号不同，用于识别分行等）</label>
-      <input id="bank_number" placeholder="例如：6222..." />
+      <input id="bank_number" inputmode="numeric" autocomplete="off" placeholder="例如：6222..." />
 
       <!--<label>账户余额</label>-->
       <!--<input id="account_balance" placeholder="默认 0.00" />-->
@@ -633,6 +633,12 @@ document.addEventListener('DOMContentLoaded', function () {
   let editingId = null;        // 当前编辑记录 id
 
   const $ = (id) => document.getElementById(id);
+
+  ['withdrawal_account', 'bank_number'].forEach((id) => {
+    $(id).addEventListener('input', function () {
+      this.value = this.value.replace(/\s+/g, '');
+    });
+  });
 
   function showLoading(show) {
     $('loading').style.display = show ? 'block' : 'none';
