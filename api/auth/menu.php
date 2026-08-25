@@ -99,6 +99,7 @@ function menu_admin_tree(): array
         menu_leaf(49, 9006, 'global_config_api', '全局配置', '/iframe/link/global_config_api', 'layui-icon-set-fill', 3),
         menu_leaf(79, 9006, 'send_notify', '手机通知', '/iframe/link/send_notify', '', 3),
         menu_leaf(57, 9006, 'app_images_admin', '轮播图管理', '/iframe/link/app_images_admin', '', 5),
+        menu_leaf(90061, 9006, 'driving_gift_admin', '驾驶礼物管理', '/iframe/link/driving_gift_admin', '', 6),
     ], 6);
 
     $baseMenu[] = menu_group(9007, 'audit', '巡查审核', 'audit', [

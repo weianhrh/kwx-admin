@@ -180,92 +180,6 @@ textarea {
   margin: 16px 18px 0;
 }
 
-.summary-section {
-  margin: 18px 18px 0;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel-soft);
-}
-
-.summary-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.summary-heading h2 {
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.summary-heading span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.summary-card {
-  min-width: 0;
-  padding: 15px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
-}
-
-.summary-card-label {
-  margin-bottom: 9px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.summary-card-value {
-  overflow: hidden;
-  color: var(--primary-dark);
-  font-size: clamp(18px, 2vw, 25px);
-  font-weight: 900;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.summary-card-note {
-  margin-top: 8px;
-  color: var(--subtle);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.summary-card.is-loading .summary-card-value {
-  color: var(--subtle);
-}
-
-.summary-card.is-primary {
-  border-color: rgba(15, 143, 140, .25);
-  background: #f2fbfa;
-}
-
-.summary-card.is-warning {
-  border-color: rgba(255, 184, 77, .42);
-  background: #fffaf1;
-}
-
-.summary-card.is-danger {
-  border-color: rgba(223, 91, 87, .28);
-  background: #fff7f7;
-}
-
 .record-list {
   display: flex;
   flex-direction: column;
@@ -445,10 +359,6 @@ textarea {
   .record-item {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 640px) {
@@ -494,20 +404,6 @@ textarea {
     padding: 14px;
   }
 
-  .summary-section {
-    margin: 14px 14px 0;
-    padding: 14px;
-  }
-
-  .summary-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-
   .record-item {
     grid-template-columns: 1fr;
     padding: 14px;
@@ -529,65 +425,6 @@ textarea {
                 <!-- 添加查询按钮 -->
                 <button class="action-button" onclick="window.location.href='query_withdrawal.html'" style="margin-left: 20px;">查询提现记录</button>
             </div>
-
-            <section class="summary-section" aria-labelledby="withdrawal-summary-title">
-                <div class="summary-heading">
-                    <h2 id="withdrawal-summary-title">全部加盟商资金汇总</h2>
-                    <span id="summary-scope">全部加盟商实时汇总，不受下方待审批列表影响</span>
-                </div>
-                <div class="summary-grid" id="withdrawal-summary">
-                    <div class="summary-card is-loading" data-summary-key="total_balance">
-                        <div class="summary-card-label">总余额</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">全部加盟商账户余额</div>
-                    </div>
-                    <div class="summary-card is-primary is-loading" data-summary-key="available_balance">
-                        <div class="summary-card-label">可提现</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">按各加盟商提现比例分别计算</div>
-                    </div>
-                    <div class="summary-card is-loading" data-summary-key="platform_deduction_amount">
-                        <div class="summary-card-label">平台扣除</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">按各加盟商平台比例分别计算</div>
-                    </div>
-                    <div class="summary-card is-loading" data-summary-key="settlement_balance">
-                        <div class="summary-card-label">参与结算</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">扣除冻结、退款、锁定及图传后</div>
-                    </div>
-                    <div class="summary-card is-warning is-loading" data-summary-key="frozen_amount">
-                        <div class="summary-card-label">冻结中</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">当前仍在冻结期内的金额</div>
-                    </div>
-                    <div class="summary-card is-loading" data-summary-key="lock_order_count" data-summary-format="count">
-                        <div class="summary-card-label">锁定订单</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">当前锁定中的订单数量</div>
-                    </div>
-                    <div class="summary-card is-warning is-loading" data-summary-key="lock_amount" data-summary-format="battery">
-                        <div class="summary-card-label">待复核订单</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">当前待复核的锁定金额</div>
-                    </div>
-                    <div class="summary-card is-warning is-loading" data-summary-key="not_checked_amount">
-                        <div class="summary-card-label">未核对余额</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">尚未核对的场地收入</div>
-                    </div>
-                    <div class="summary-card is-danger is-loading" data-summary-key="refund_amount">
-                        <div class="summary-card-label">退款金额</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">待从加盟商余额扣减的退款</div>
-                    </div>
-                    <div class="summary-card is-warning is-loading" data-summary-key="unsettled_image_amount">
-                        <div class="summary-card-label">未结算图传</div>
-                        <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">尚未结算的图传费用</div>
-                    </div>
-                </div>
-            </section>
             
             <!-- 导出按钮 -->
             <button class="action-button" onclick="exportToExcel()">导出到 Excel</button>
@@ -598,57 +435,12 @@ textarea {
 
     <script src="/res/assets/js/xlsx.full.min.js"></script> 
     <script>
-        function formatSummaryMoney(value) {
-            const amount = Number(value);
-            if (!Number.isFinite(amount)) return '--';
-            return '¥' + amount.toLocaleString('zh-CN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-
-        function formatSummaryValue(value, format) {
-            const amount = Number(value);
-            if (!Number.isFinite(amount)) return '--';
-            if (format === 'count') return amount.toLocaleString('zh-CN') + ' 笔';
-            if (format === 'battery') return amount.toLocaleString('zh-CN', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            }) + ' 电池';
-            return formatSummaryMoney(amount);
-        }
-
-        function displayWithdrawalSummary(summary) {
-            const values = summary || {};
-            const scopeElement = document.getElementById('summary-scope');
-            if (Number.isFinite(Number(values.venue_count))) {
-                scopeElement.textContent = `全部 ${Number(values.venue_count).toLocaleString('zh-CN')} 个场地的加盟商实时汇总`;
-            }
-            document.querySelectorAll('[data-summary-key]').forEach(card => {
-                const key = card.dataset.summaryKey;
-                const format = card.dataset.summaryFormat || 'money';
-                const valueElement = card.querySelector('.summary-card-value');
-                const dependsOnFrozen = ['available_balance', 'platform_deduction_amount', 'settlement_balance', 'frozen_amount'].includes(key);
-                const unavailable = (dependsOnFrozen && values.frozen_amount_available === false) || values[key] === null;
-                valueElement.textContent = unavailable ? '--' : formatSummaryValue(values[key], format);
-                if (unavailable) {
-                    valueElement.title = '冻结金额服务暂时不可用，请稍后刷新';
-                } else {
-                    valueElement.removeAttribute('title');
-                }
-                card.classList.remove('is-loading');
-            });
-        }
-
         // 获取提现记录
         function loadWithdrawalRecords() {
             const url = '/api/pay/getpaylist.php'; 
             fetch(url)
                .then(response => response.json()) 
                .then(data => {
-                    if (data.code === 0) {
-                        displayWithdrawalSummary(data.summary);
-                    }
                     if (data.code  === 0 && data.data  && data.data.length  > 0) {
                         displayWithdrawalRecords(data.data); 
                     } else {
@@ -657,7 +449,6 @@ textarea {
                 })
                .catch(error => {
                     console.error('   提现记录加载失败:', error);
-                    displayWithdrawalSummary({ frozen_amount_available: false });
                 });
         }
 

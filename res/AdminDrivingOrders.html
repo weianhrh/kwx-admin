@@ -168,7 +168,7 @@ textarea {
 
 .form-container {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 12px;
   align-items: end;
   padding: 18px;
@@ -528,6 +528,39 @@ select.form-input,
   font-weight: 800;
 }
 
+.empty-orders {
+  padding: 48px 18px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+.gift-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gift-order-thumb {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  object-fit: cover;
+  background: #f1f5f6;
+}
+
+.gift-resource-link {
+  color: var(--primary-dark);
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.gift-resource-link:hover {
+  text-decoration: underline;
+}
+
 #pageInfo,
 .page-info {
   color: var(--muted);
@@ -805,6 +838,13 @@ select.form-input,
         
         <div class="form-container">
             <div class="form-item">
+                <label class="form-label">订单类型</label>
+                <select id="orderType" class="form-input">
+                    <option value="drive" selected>设备订单</option>
+                    <option value="gift">礼物订单</option>
+                </select>
+            </div>
+            <div class="form-item">
                 <label class="form-label">用户ID</label>
                 <input type="text" id="uid" class="form-input" placeholder="请输入用户ID">
             </div>
@@ -892,7 +932,8 @@ function searchOrders(resetPage = true) {
 
     const uid = document.getElementById('uid').value.trim();
     const orderNumber = document.getElementById('orderNumber').value.trim();
-    const orderType = 'drive';
+    const orderTypeEl = document.getElementById('orderType');
+    const orderType = orderTypeEl ? orderTypeEl.value : 'drive';
     const venueSelectEl = document.getElementById('venue_id');
     const venueId = isPlatformAdmin() && venueSelectEl
     ? (venueSelectEl.value || pageVenueId)
@@ -1043,6 +1084,112 @@ function searchOrders(resetPage = true) {
         //         container.appendChild(card);
         //     });
         // }
+    function escapeOrderHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[char]));
+    }
+
+    function renderOrderFields(order) {
+        if (order.order_type === 'gift') {
+            const giftImage = order.gift_image_url
+                ? `<img class="gift-order-thumb" src="${escapeOrderHtml(order.gift_image_url)}" alt="" onerror="this.style.display='none'">`
+                : '';
+            const animationLink = order.gift_gif_url
+                ? `<a class="gift-resource-link" href="${escapeOrderHtml(order.gift_gif_url)}" target="_blank" rel="noopener">查看动画 / SVGA</a>`
+                : '—';
+            return `
+              <div class="order-field">
+                <span class="field-label">礼物名称</span>
+                <span class="field-value gift-value">${giftImage}${escapeOrderHtml(order.gift_name || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">礼物ID</span>
+                <span class="field-value">${escapeOrderHtml(order.gift_id || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">用户ID</span>
+                <span class="field-value">${escapeOrderHtml(order.uid || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">用户昵称</span>
+                <span class="field-value">${escapeOrderHtml(order.nickname || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">设备ID</span>
+                <span class="field-value mono">${escapeOrderHtml(order.serial_number || '-')}${order.device_name ? `（${escapeOrderHtml(order.device_name)}）` : ''}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">赠送场地</span>
+                <span class="field-value">${escapeOrderHtml(order.venue_name || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">支付类型</span>
+                <span class="field-value">${escapeOrderHtml(order.pays_type || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">赠送时间</span>
+                <span class="field-value mono">${escapeOrderHtml(order.send_time || order.start_time || '-')}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">动画资源</span>
+                <span class="field-value">${animationLink}</span>
+              </div>
+              <div class="order-field">
+                <span class="field-label">订单备注</span>
+                <span class="field-value">${escapeOrderHtml(order.note || '场地礼物')}</span>
+              </div>`;
+        }
+
+        return `
+          <div class="order-field">
+            <span class="field-label">用户ID</span>
+            <span class="field-value">${order.uid || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">用户昵称</span>
+            <span class="field-value">${order.nickname || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">设备ID</span>
+            <span class="field-value mono">${order.serial_number || '-'}${order.device_name ? `（${order.device_name}）` : ''}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">驾驶场地</span>
+            <span class="field-value">${order.venue_name || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">可驾驶时长</span>
+            <span class="field-value">${order.billing_rules || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">支付类型</span>
+            <span class="field-value">${order.pays_type || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">驾驶开始时间</span>
+            <span class="field-value mono">${order.start_time || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">驾驶结束时间</span>
+            <span class="field-value mono">${order.end_time || '-'}</span>
+          </div>
+          <div class="order-field">
+            <span class="field-label">退款状态</span>
+            <span class="field-value refund-status-text ${(order.refund_status === 'applied' || order.refund_status === 'approved') ? '' : 'empty'}">
+              ${(order.refund_status === 'applied' || order.refund_status === 'approved') ? '已记录退款' : '—'}
+            </span>
+          </div>
+          <div class="order-item">
+            <span class="item-label">锁定状态</span>
+            <span class="item-value">
+              ${Number(order.lock_status) === 1
+                ? '<span class="lock-status-badge lock-status-text locked">已锁定</span>'
+                : '<span class="lock-status-badge lock-status-text normal">未锁定</span>'}
+            </span>
+          </div>`;
+    }
+
     function displayOrders() {
         const container = document.getElementById('orderCardsContainer');
         container.innerHTML = '';
@@ -1055,6 +1202,11 @@ document.getElementById('pageInfo').textContent =
 document.getElementById('prevPage').disabled = currentPage === 1;
 document.getElementById('nextPage').disabled = !hasMorePage;
     
+        if (!currentPageOrders.length) {
+            container.innerHTML = '<div class="empty-orders">当前条件下暂无订单</div>';
+            return;
+        }
+
         currentPageOrders.forEach(order => {
                 const card = document.createElement('div');
                 card.className = 'order-card';
@@ -1074,7 +1226,7 @@ document.getElementById('nextPage').disabled = !hasMorePage;
                 // if (order.refund_status === 'applied' || order.refund_status === 'approved') {
                 //   refundBtnHtml = `<button class="form-button" disabled>已退款</button>`;
                 // }
-const canManageOrder = isPlatformAdmin();
+const canManageOrder = isPlatformAdmin() && order.order_type !== 'gift';
 const hasRefundRecord = order.refund_status === 'applied' || order.refund_status === 'approved';
 const isLocked = Number(order.lock_status) === 1;
 
@@ -1121,71 +1273,7 @@ card.innerHTML = `
     </div>
   </div>
 
-  <div class="order-body">
-    <div class="order-field">
-      <span class="field-label">用户ID</span>
-      <span class="field-value">${order.uid || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">用户昵称</span>
-      <span class="field-value">${order.nickname || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">设备ID</span>
-      <span class="field-value mono">
-          ${order.serial_number || '-'}${order.device_name ? `（${order.device_name}）` : ''}
-      </span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">驾驶场地</span>
-      <span class="field-value">${order.venue_name || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">可驾驶时长</span>
-      <span class="field-value">${order.billing_rules || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">支付类型</span>
-      <span class="field-value">${order.pays_type || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">驾驶开始时间</span>
-      <span class="field-value mono">${order.start_time || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">驾驶结束时间</span>
-      <span class="field-value mono">${order.end_time || '-'}</span>
-    </div>
-
-    <div class="order-field">
-      <span class="field-label">退款状态</span>
-<span class="field-value refund-status-text ${
-  (order.refund_status === 'applied' || order.refund_status === 'approved') ? '' : 'empty'
-}">
-        ${
-          (order.refund_status === 'applied' || order.refund_status === 'approved') ? '已记录退款' : '—'
-        }
-      </span>
-    </div>
-
-<div class="order-item">
-  <span class="item-label">锁定状态</span>
-  <span class="item-value">
-    ${
-Number(order.lock_status) === 1
-  ? '<span class="lock-status-badge lock-status-text locked">已锁定</span>'
-  : '<span class="lock-status-badge lock-status-text normal">未锁定</span>'
-    }
-  </span>
-</div>
-  </div>
+  <div class="order-body">${renderOrderFields(order)}</div>
 `;
                 container.appendChild(card);
             });
@@ -1554,6 +1642,19 @@ function loadVenues() {
 const venueSelect = document.getElementById('venue_id');
 if (venueSelect) {
     venueSelect.addEventListener('change', () => {
+        currentPage = 1;
+        searchOrders();
+    });
+}
+
+const orderTypeSelect = document.getElementById('orderType');
+if (orderTypeSelect) {
+    orderTypeSelect.addEventListener('change', () => {
+        const isGift = orderTypeSelect.value === 'gift';
+        const orderInput = document.getElementById('orderNumber');
+        orderInput.placeholder = isGift ? '请输入礼物订单编号' : '请输入设备订单编号';
+        orderInput.value = '';
+        document.getElementById('suggestions').style.display = 'none';
         currentPage = 1;
         searchOrders();
     });

@@ -36,83 +36,104 @@ $order_type = ($order_type === 'gift') ? 'gift' : 'drive';
  
  
  // ==========================
-// 礼物订单查询
+// 驾驶礼物订单查询：App 端 sendDrivingGift.php 写入 orders.driving_gift_id。
+// 这里不能再查旧 gift_orders，否则新驾驶礼物订单会漏掉。
 // ==========================
 if ($order_type === 'gift') {
-    $whereSql = " WHERE 1=1";
+    $page = max(1, intval($_GET['page'] ?? 1));
+    $pageSize = max(1, min(20, intval($_GET['page_size'] ?? $_GET['limit'] ?? 5)));
+    $offset = ($page - 1) * $pageSize;
+    $fast = isset($_GET['fast']) && $_GET['fast'] == '1';
+    // 始终多取一条，准确判断是否还有下一页。
+    $queryLimit = $pageSize + 1;
+
+    $whereSql = " WHERE o.driving_gift_id IS NOT NULL AND o.driving_gift_id > 0";
     $params = [];
 
-    // 礼物订单搜索：支持输入 425 或 GIFT425
+    // 礼物订单号就是 orders.order_id，支持完整或前缀搜索。
     if (!empty($order_number)) {
-        $whereSql .= " AND (
-            CAST(g.id AS CHAR) LIKE ?
-            OR CONCAT('GIFT', g.id) LIKE ?
-        )";
-        $params[] = "%$order_number%";
-        $params[] = "%$order_number%";
+        $whereSql .= " AND o.order_id LIKE ?";
+        $params[] = "$order_number%";
     }
 
     if (!empty($uid)) {
-        $whereSql .= " AND g.uid = ?";
+        $whereSql .= " AND o.uid = ?";
         $params[] = $uid;
     }
 
-    $whereSql .= venue_scope_apply_filter($database, $user, 'g.reservation_id', $params, $requestedVenueId);
+    $whereSql .= venue_scope_apply_filter($database, $user, 'o.reservation_id', $params, $requestedVenueId);
 
     $sql = "
         SELECT
-            CONCAT('GIFT', g.id) AS order_id,
-            g.id AS gift_order_id,
-            g.reservation_id,
-            g.gift_id,
-            g.uid,
+            o.order_id,
+            o.reservation_id,
+            o.driving_gift_id AS gift_id,
+            o.uid,
             u.nickname,
-            g.status,
-            g.payment_amount,
-            g.send_time,
-            g.send_time AS start_time,
-            g.send_time AS sort_time,
-            NULL AS end_time,
-            g.pays_type,
-            g.note,
-            v.venue_name,
-            COALESCE(vgd.gift_name, gd.gift_name, CONCAT('礼物#', g.gift_id)) AS gift_name,
+            o.status,
+            o.payment_amount,
+            o.start_time AS send_time,
+            o.start_time,
+            o.start_time AS sort_time,
+            o.end_time,
+            o.pays_type,
+            o.note,
+            o.serial_number,
+            COALESCE(v.venue_name, '未知场地') AS venue_name,
+            COALESCE(veh.name, '') AS device_name,
+            COALESCE(dg.gift_name, CONCAT('礼物#', o.driving_gift_id)) AS gift_name,
+            COALESCE(dg.image_url, '') AS gift_image_url,
+            COALESCE(dg.gif_url, '') AS gift_gif_url,
             'gift' AS order_type,
-
-            NULL AS serial_number,
             NULL AS billing_rules,
             NULL AS refund_status,
             NULL AS lock_status,
             0 AS lock_amount
-        FROM gift_orders g
-        LEFT JOIN users u ON g.uid = u.uid
-        LEFT JOIN venues v ON g.reservation_id = v.id
-        LEFT JOIN gift_detail gd ON gd.id = g.gift_id
-        LEFT JOIN venue_gift_detail vgd ON vgd.id = g.gift_id
+        FROM orders o
+        LEFT JOIN users u ON o.uid = u.uid
+        LEFT JOIN venues v ON o.reservation_id = v.id
+        LEFT JOIN vehicles veh ON veh.serial_number = o.serial_number
+        LEFT JOIN driving_gift_detail dg ON dg.id = o.driving_gift_id
         {$whereSql}
-        ORDER BY g.id DESC
+        ORDER BY o.start_time DESC, o.order_id DESC
+        LIMIT {$queryLimit} OFFSET {$offset}
     ";
 
     $data = $database->query($sql, $params);
+    if ($data === false || !is_array($data)) {
+        echo json_encode([
+            'code' => 500,
+            'msg' => '礼物订单查询失败',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        $database->close();
+        exit;
+    }
 
-    $countSql = "
-        SELECT COUNT(*) AS count
-        FROM gift_orders g
-        LEFT JOIN users u ON g.uid = u.uid
-        LEFT JOIN venues v ON g.reservation_id = v.id
-        {$whereSql}
-    ";
+    $hasMore = false;
+    if (count($data) > $pageSize) {
+        $hasMore = true;
+        $data = array_slice($data, 0, $pageSize);
+    }
 
-    $totalCountResult = $database->query($countSql, $params);
-    $totalCount = is_array($totalCountResult) && isset($totalCountResult[0]['count'])
-        ? intval($totalCountResult[0]['count'])
-        : 0;
+    if ($fast) {
+        $totalCount = $offset + count($data) + ($hasMore ? 1 : 0);
+    } else {
+        $countSql = "SELECT COUNT(*) AS count FROM orders o {$whereSql}";
+        $totalCountResult = $database->query($countSql, $params);
+        $totalCount = is_array($totalCountResult) && isset($totalCountResult[0]['count'])
+            ? intval($totalCountResult[0]['count'])
+            : count($data);
+    }
 
     echo json_encode([
         'code' => 0,
         'msg' => '',
         'order_type' => 'gift',
         'count' => $totalCount,
+        'has_more' => $hasMore,
+        'page' => $page,
+        'page_size' => $pageSize,
         'data' => $data ?: []
     ], JSON_UNESCAPED_UNICODE);
 
@@ -121,7 +142,7 @@ if ($order_type === 'gift') {
 }
  
 // 初始化 WHERE 条件和参数数组 
-$whereSql = " WHERE 1=1"; 
+$whereSql = " WHERE (o.driving_gift_id IS NULL OR o.driving_gift_id = 0)";
 $params = []; // 初始化参数数组 
  
 // 添加搜索条件 

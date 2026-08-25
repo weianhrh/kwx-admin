@@ -638,6 +638,112 @@ textarea {
   min-width: 128px;
 }
 
+#wifiHistoryModal {
+  z-index: 1100;
+}
+
+#wifiHistoryModal .wifi-history-content {
+  width: 900px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+#wifiHistoryModal .wifi-history-header {
+  flex: 0 0 auto;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+#wifiHistoryModal .wifi-history-body {
+  min-height: 220px;
+  padding: 16px 20px 20px;
+  overflow: auto;
+  background: #fbfcfd;
+}
+
+#wifiHistoryTarget {
+  margin-bottom: 12px;
+}
+
+.wifi-history-state {
+  padding: 30px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: #fff;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.wifi-history-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.wifi-history-table {
+  width: 100%;
+  min-width: 790px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.wifi-history-table th,
+.wifi-history-table td {
+  padding: 10px 11px;
+  border-bottom: 1px solid #edf2f2;
+  color: var(--text);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.wifi-history-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--primary-dark);
+  background: #f3f8f8;
+  white-space: nowrap;
+}
+
+.wifi-history-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.wifi-history-password {
+  color: #9a6500 !important;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.wifi-history-status {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 52px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.wifi-history-status.success {
+  color: #15803d;
+  background: #e8f7ef;
+}
+
+.wifi-history-status.failed,
+.wifi-history-status.rejected,
+.wifi-history-status.denied {
+  color: #dc2626;
+  background: #feecec;
+}
+
 @media (max-width: 1180px) {
   .venue-card {
     grid-template-columns: 54px minmax(0, 1fr);
@@ -938,6 +1044,7 @@ user023968912_80039"></textarea>
             </div>
           </div>
           <div class="actions">
+            <button class="edit-btn secondary" type="button" id="btnWifiHistory">查看发送记录</button>
             <button class="edit-btn" type="button" data-send="wifi">发送 WIFI 设置</button>
           </div>
         </div>
@@ -997,10 +1104,27 @@ user023968912_80039"></textarea>
     </div>
   </div>
 </div>
+
+<div class="modal" id="wifiHistoryModal">
+  <div class="modal-content wifi-history-content">
+    <div class="wifi-history-header">
+      <div class="modal-title">
+        <span>WIFI 发送记录</span>
+        <button class="edit-btn secondary" type="button" id="btnWifiHistoryClose">关闭</button>
+      </div>
+      <div class="modal-subtitle">当前摄像设备最近 100 条 WIFI 设置发送记录。</div>
+    </div>
+    <div class="wifi-history-body">
+      <div class="tip-box" id="wifiHistoryTarget">请选择设备</div>
+      <div class="wifi-history-state" id="wifiHistoryList">正在读取发送记录...</div>
+    </div>
+  </div>
+</div>
   <script>
     const API = '/api/devMgr/device_information.php';
     const STREAM_STATE_API = '/api/stream_state.php';
     const CONTROL_API = '/api/devMgr/device_command.php';
+    const WIFI_HISTORY_API = '/api/devMgr/device_wifi_history.php';
     // const HARDWARE_OTA_API = '/api/devMgr/send_hardware_ota_tcp.php';
 
     const ZEGO_CODE_DESC = {
@@ -1059,6 +1183,9 @@ user023968912_80039"></textarea>
     const cOtaForce = document.getElementById('cmd_ota_force');
     const cHardwareOtaUrl = document.getElementById('cmd_hardware_ota_url');
     const cVoltageUploadUrl = document.getElementById('cmd_voltage_upload_url');
+    const wifiHistoryModal = document.getElementById('wifiHistoryModal');
+    const wifiHistoryTarget = document.getElementById('wifiHistoryTarget');
+    const wifiHistoryList = document.getElementById('wifiHistoryList');
     let currentControlRow = null;
     
     const syncFields = [fDeviceId, fRoomId, fStreamId];
@@ -1178,6 +1305,103 @@ function closeControlModal() {
   controlModal.style.display = 'none';
   currentControlRow = null;
 }
+
+function wifiHistoryStatusText(status) {
+  const map = {
+    success: '成功',
+    failed: '失败',
+    rejected: '已拒绝',
+    denied: '无权限'
+  };
+  return map[status] || status || '未知';
+}
+
+function wifiHistoryFormatTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || '-';
+  return date.toLocaleString('zh-CN', { hour12: false });
+}
+
+function renderWifiHistory(records) {
+  if (!Array.isArray(records) || records.length === 0) {
+    wifiHistoryList.className = 'wifi-history-state';
+    wifiHistoryList.textContent = '该设备暂无 WIFI 发送记录';
+    return;
+  }
+
+  const body = records.map(record => {
+    const status = String(record.status || '');
+    const operator = record.operator_username
+      || (record.operator_uid ? `UID ${record.operator_uid}` : '-');
+    const resultText = record.reason
+      || record.zego_message
+      || (record.zego_code === 0 ? '发送成功' : '-');
+
+    return `
+      <tr>
+        <td>${esc(wifiHistoryFormatTime(record.logged_at))}</td>
+        <td><span class="wifi-history-status ${esc(status)}">${esc(wifiHistoryStatusText(status))}</span></td>
+        <td>${esc(record.wifi_essid || '-')}</td>
+        <td class="wifi-history-password">${esc(record.wifi_password || '-')}</td>
+        <td>${esc(operator)}${record.operator_role_id ? `<br>role_id=${esc(record.operator_role_id)}` : ''}</td>
+        <td>${esc(record.app_name || '-')}${record.zego_code !== null ? `<br>Code=${esc(record.zego_code)}` : ''}</td>
+        <td>${esc(resultText)}</td>
+      </tr>`;
+  }).join('');
+
+  wifiHistoryList.className = 'wifi-history-table-wrap';
+  wifiHistoryList.innerHTML = `
+    <table class="wifi-history-table">
+      <thead>
+        <tr>
+          <th>发送时间</th>
+          <th>结果</th>
+          <th>WIFI 名称</th>
+          <th>WIFI 密码</th>
+          <th>操作账号</th>
+          <th>发送平台</th>
+          <th>返回信息</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+async function openWifiHistoryModal() {
+  const roomId = String(currentControlRow?.room_id || cRoomId.value || '').trim();
+  if (!roomId) {
+    showToast('room_id 不能为空，无法读取发送记录');
+    return;
+  }
+
+  wifiHistoryTarget.textContent =
+    `设备：${currentControlRow?.device_id || '-'}　room_id：${roomId}`;
+  wifiHistoryList.className = 'wifi-history-state';
+  wifiHistoryList.textContent = '正在读取发送记录...';
+  wifiHistoryModal.style.display = 'flex';
+
+  try {
+    const params = new URLSearchParams({ room_id: roomId, limit: '100' });
+    const response = await fetch(`${WIFI_HISTORY_API}?${params.toString()}`, {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' }
+    });
+    const json = await response.json();
+    if (json.code !== 0) {
+      throw new Error(json.msg || '读取发送记录失败');
+    }
+    renderWifiHistory(json.data?.records || []);
+  } catch (error) {
+    console.error('读取 WIFI 发送记录失败:', error);
+    wifiHistoryList.className = 'wifi-history-state';
+    wifiHistoryList.textContent = error.message || '读取发送记录失败，请稍后重试';
+  }
+}
+
+function closeWifiHistoryModal() {
+  wifiHistoryModal.style.display = 'none';
+}
+
 async function sendDeviceCommandByType(type, triggerBtn = null) {
   const room_id = (cRoomId.value || '').trim();
   const from_user_id = (cFromUserId.value || '').trim() || 'server_bot_1';
@@ -1861,6 +2085,11 @@ const savedStatusClass = getStatusClass(savedStatus.type);
     }
 document.getElementById('btnControlClose').addEventListener('click', closeControlModal);
 document.getElementById('btnControlCancel').addEventListener('click', closeControlModal);
+document.getElementById('btnWifiHistory').addEventListener('click', openWifiHistoryModal);
+document.getElementById('btnWifiHistoryClose').addEventListener('click', closeWifiHistoryModal);
+wifiHistoryModal.addEventListener('click', (event) => {
+  if (event.target === wifiHistoryModal) closeWifiHistoryModal();
+});
 cCaptureFilename.addEventListener('input', refreshCaptureUploadUrl);
 
 document.querySelectorAll('[data-send]').forEach(btn => {
