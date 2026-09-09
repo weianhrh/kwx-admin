@@ -206,7 +206,7 @@
     .modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px; }
     .field.full { grid-column: 1 / -1; }
     .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 900; }
-    .field input[type="text"], .field input[type="number"] {
+    .field input[type="text"], .field input[type="number"], .field select {
       width: 100%;
       height: 40px;
       padding: 0 11px;
@@ -214,7 +214,7 @@
       border-radius: 8px;
       outline: 0;
     }
-    .field input:focus { border-color: rgba(15,143,140,.52); box-shadow: 0 0 0 4px rgba(15,143,140,.10); }
+    .field input:focus, .field select:focus { border-color: rgba(15,143,140,.52); box-shadow: 0 0 0 4px rgba(15,143,140,.10); }
 
     .upload-row { display: flex; gap: 8px; }
     .upload-row input { min-width: 0; flex: 1 1 auto; }
@@ -309,9 +309,12 @@
         <option value="1">显示中</option>
         <option value="0">已隐藏</option>
       </select>
+      <select class="select" id="venueFilter">
+        <option value="">全部场地</option>
+      </select>
       <button class="btn btn-ghost" id="searchButton" type="button">查询</button>
       <div class="spacer"></div>
-      <button class="btn btn-primary" id="createButton" type="button">+ 添加驾驶礼物</button>
+      <button class="btn btn-primary" id="createButton" type="button" disabled>+ 添加驾驶礼物</button>
     </div>
 
     <div class="table-wrap">
@@ -319,6 +322,7 @@
         <thead>
           <tr>
             <th>礼物</th>
+            <th>所属场地</th>
             <th>价格（电池）</th>
             <th>动画资源</th>
             <th>展示配置</th>
@@ -326,7 +330,7 @@
             <th style="text-align:right">操作</th>
           </tr>
         </thead>
-        <tbody id="giftRows"><tr><td colspan="6" class="loading">正在加载…</td></tr></tbody>
+        <tbody id="giftRows"><tr><td colspan="7" class="loading">正在加载…</td></tr></tbody>
       </table>
     </div>
 
@@ -350,6 +354,13 @@
       </div>
       <div class="modal-body">
         <input id="giftId" type="hidden">
+
+        <div class="field full">
+          <label for="venueId">所属场地</label>
+          <select id="venueId">
+            <option value="">请选择场地</option>
+          </select>
+        </div>
 
         <div class="field">
           <label for="giftName">礼物名称</label>
@@ -417,7 +428,7 @@
     const API_URL = '/api/operat/driving_gift_detail.php';
     const UPLOAD_URL = 'https://app.kwxapp.cn/app/img/userimg/upload_profile.php';
     const SVGA_PROXY_URL = '/api/operat/svga_proxy.php';
-    const state = { page: 1, pageSize: 20, total: 0, list: [], loading: false };
+    const state = { page: 1, pageSize: 20, total: 0, list: [], venues: [], loading: false };
     const byId = id => document.getElementById(id);
     let toastTimer = null;
     let svgaPreviewPlayer = null;
@@ -464,7 +475,7 @@
     function renderRows() {
       const body = byId('giftRows');
       if (!state.list.length) {
-        body.innerHTML = '<tr><td colspan="6" class="empty">暂无驾驶礼物</td></tr>';
+        body.innerHTML = '<tr><td colspan="7" class="empty">暂无驾驶礼物</td></tr>';
       } else {
         body.innerHTML = state.list.map(row => {
           const displayOn = Number(row.is_display) === 1;
@@ -472,6 +483,7 @@
           const svgaOn = Number(row.is_play_svga) === 1;
           return `<tr>
             <td>${imageCell(row)}</td>
+            <td><div class="gift-name">${escapeHtml(row.venue_name || '未知场地')}</div><div class="gift-id">场地 ID：${Number(row.venue_id || 0)}</div></td>
             <td><span class="price">${Number(row.gift_price || 0)}</span></td>
             <td>${row.gif_url ? `<button class="preview-link" data-preview-url="${escapeHtml(row.gif_url)}" data-preview-name="${escapeHtml(row.gift_name || '动图预览')}" type="button">点击播放</button>` : '<span class="gift-id">未配置</span>'}</td>
             <td><div class="switch-summary"><span>顶部浮条：<strong>${bannerOn ? '显示' : '隐藏'}</strong></span><span>SVGA：<strong>${svgaOn ? '播放' : '关闭'}</strong></span></div></td>
@@ -629,11 +641,12 @@
     async function loadList() {
       if (state.loading) return;
       state.loading = true;
-      byId('giftRows').innerHTML = '<tr><td colspan="6" class="loading">正在加载…</td></tr>';
+      byId('giftRows').innerHTML = '<tr><td colspan="7" class="loading">正在加载…</td></tr>';
       try {
         const query = queryString({
           act: 'list', page: state.page, page_size: state.pageSize,
-          q: byId('keyword').value.trim(), is_display: byId('displayFilter').value
+          q: byId('keyword').value.trim(), is_display: byId('displayFilter').value,
+          venue_id: byId('venueFilter').value
         });
         const result = await requestJson(`${API_URL}?${query}`);
         state.list = Array.isArray(result.data.list) ? result.data.list : [];
@@ -644,13 +657,38 @@
       } catch (error) {
         state.list = [];
         state.total = 0;
-        byId('giftRows').innerHTML = `<tr><td colspan="6" class="empty">加载失败：${escapeHtml(error.message)}</td></tr>`;
+        byId('giftRows').innerHTML = `<tr><td colspan="7" class="empty">加载失败：${escapeHtml(error.message)}</td></tr>`;
       } finally { state.loading = false; }
+    }
+
+    async function loadVenues() {
+      try {
+        const result = await requestJson(`${API_URL}?act=venues`);
+        state.venues = Array.isArray(result.data.list) ? result.data.list : [];
+        const options = state.venues.map(venue =>
+          `<option value="${Number(venue.id)}">${Number(venue.id)} - ${escapeHtml(venue.venue_name || '')}</option>`
+        ).join('');
+        byId('venueFilter').innerHTML = '<option value="">全部场地</option>' + options;
+        byId('venueId').innerHTML = '<option value="">请选择场地</option>' + options;
+        byId('createButton').disabled = state.venues.length === 0;
+        if (state.venues.length === 1) {
+          byId('venueId').value = String(state.venues[0].id);
+        }
+        if (state.venues.length === 0) {
+          showToast('当前账号没有可管理的场地', 'error');
+        }
+      } catch (error) {
+        byId('createButton').disabled = true;
+        showToast(error.message || '场地加载失败', 'error');
+      }
     }
 
     function openModal(row = null) {
       byId('modalTitle').textContent = row ? '编辑驾驶礼物' : '添加驾驶礼物';
       byId('giftId').value = row ? row.id : '';
+      byId('venueId').value = row
+        ? String(row.venue_id || '')
+        : (state.venues.length === 1 ? String(state.venues[0].id) : '');
       byId('giftName').value = row ? row.gift_name || '' : '';
       byId('giftPrice').value = row ? row.gift_price ?? '' : '';
       byId('imageUrl').value = row ? row.image_url || '' : '';
@@ -676,6 +714,7 @@
       const id = Number(byId('giftId').value || 0);
       const priceValue = byId('giftPrice').value.trim();
       const payload = {
+        venue_id: Number(byId('venueId').value || 0),
         gift_name: byId('giftName').value.trim(),
         gift_price: priceValue,
         image_url: byId('imageUrl').value.trim(),
@@ -685,6 +724,7 @@
         is_play_svga: byId('playSvga').checked ? 1 : 0
       };
 
+      if (payload.venue_id <= 0) return showToast('请选择场地', 'error');
       if (!payload.gift_name) return showToast('请输入礼物名称', 'error');
       if (priceValue === '' || !/^\d+$/.test(priceValue)) return showToast('礼物价格必须是整数', 'error');
       if (!payload.image_url) return showToast('请上传或填写礼物图片', 'error');
@@ -726,6 +766,7 @@
     byId('searchButton').onclick = () => { state.page = 1; loadList(); };
     byId('keyword').onkeydown = event => { if (event.key === 'Enter') { state.page = 1; loadList(); } };
     byId('displayFilter').onchange = () => { state.page = 1; loadList(); };
+    byId('venueFilter').onchange = () => { state.page = 1; loadList(); };
     byId('createButton').onclick = () => openModal();
     byId('closeButton').onclick = closeModal;
     byId('cancelButton').onclick = closeModal;
@@ -749,6 +790,7 @@
     byId('uploadAnimationButton').onclick = () => { byId('animationFile').value = ''; byId('animationFile').click(); };
     byId('animationFile').onchange = event => uploadAndFill(event.target.files[0], 'gifUrl', byId('uploadAnimationButton'));
 
+    loadVenues();
     loadList();
   </script>
 </body>

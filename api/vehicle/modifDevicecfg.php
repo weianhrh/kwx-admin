@@ -107,6 +107,9 @@ function fetchVehicleControlSettings($database, $device_id) {
             is_display,
             cooldown,
             bullet_channel,
+            excavator_bucket,
+            excavator_boom,
+            excavator_arm,
             ch1,
             ch2,
             ch3,
@@ -285,7 +288,7 @@ if (!$data) {
 $device_id = $data['device_id']; 
 //  var_dump($data);
 // 查询默认的挡位,方向和油门值 
-$query = "SELECT audio_source_type,is_show_achievements,is_display,cooldown,bullet_channel,ch1,ch2,ch3,ch4,ch5,ch6, car_type, direction_mid,throttle_mid, driver_type, throttle_max,  throttle_min, direction, throttle
+$query = "SELECT audio_source_type,is_show_achievements,is_display,cooldown,bullet_channel,excavator_bucket,excavator_boom,excavator_arm,ch1,ch2,ch3,ch4,ch5,ch6, car_type, direction_mid,throttle_mid, driver_type, throttle_max,  throttle_min, direction, throttle
           FROM vehicle_control_settings 
           WHERE serial_number = ?";
 $stmt = $database->getConnection()->prepare($query); 
@@ -326,6 +329,9 @@ $response = [
         'is_show_achievements' => $settings['is_show_achievements'] === null ? 0 : (int)$settings['is_show_achievements'],
         'cooldown' => $settings['cooldown'],
         'bullet_channel' => $settings['bullet_channel'],
+        'excavator_bucket' => $settings['excavator_bucket'] === null ? 0 : (int)$settings['excavator_bucket'],
+        'excavator_boom' => $settings['excavator_boom'] === null ? 0 : (int)$settings['excavator_boom'],
+        'excavator_arm' => $settings['excavator_arm'] === null ? 0 : (int)$settings['excavator_arm'],
         'audio_source_type' => $settings['audio_source_type'] === null ? 0 : (int)$settings['audio_source_type']
     ] 
 ]; 

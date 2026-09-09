@@ -386,6 +386,34 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
                   </div>
                 </div>
 
+                <div class="shoot-group" id="excavator-direction-group" style="display:none;">
+                    <div class="shoot-group-title">挖机方向换位（仅管理员）</div>
+
+                    <div class="form-field radio-group">
+                        <label>挖机铲斗</label>
+                        <input type="radio" id="excavator_bucket_normal" name="excavator_bucket" value="0">
+                        <label for="excavator_bucket_normal">不换位</label>
+                        <input type="radio" id="excavator_bucket_swap" name="excavator_bucket" value="1">
+                        <label for="excavator_bucket_swap">换位</label>
+                    </div>
+
+                    <div class="form-field radio-group">
+                        <label>挖机大臂</label>
+                        <input type="radio" id="excavator_boom_normal" name="excavator_boom" value="0">
+                        <label for="excavator_boom_normal">不换位</label>
+                        <input type="radio" id="excavator_boom_swap" name="excavator_boom" value="1">
+                        <label for="excavator_boom_swap">换位</label>
+                    </div>
+
+                    <div class="form-field radio-group">
+                        <label>挖机小臂</label>
+                        <input type="radio" id="excavator_arm_normal" name="excavator_arm" value="0">
+                        <label for="excavator_arm_normal">不换位</label>
+                        <input type="radio" id="excavator_arm_swap" name="excavator_arm" value="1">
+                        <label for="excavator_arm_swap">换位</label>
+                    </div>
+                </div>
+
 
                 <div class="form-field">
                     <label for="car_type">车辆类型</label>
@@ -513,9 +541,11 @@ function refreshChannelVisibility() {
   const box = document.getElementById('channel-switches');
   if (!box) return;
 
-  const carType = Number(DEVICE_DATA?.car_type);
+  const carTypeSelect = document.getElementById('car_type');
+  const carType = Number(carTypeSelect?.value || DEVICE_DATA?.car_type);
   const admin = isPlatformAdmin();
   const role3  = isSiteRole();
+  const isExcavator = carType === 3 || carType === 9;
 
   // ✅ 通道容器显示规则：保留你原本逻辑
   const canSeeChannels = admin || (role3 && (carType === 7 || carType === 9));
@@ -551,6 +581,13 @@ if (dt) {
   const admin = isPlatformAdmin();
   dt.style.display = admin ? 'flex' : 'none';
   dt.querySelectorAll('select,input').forEach(x => x.disabled = !admin);
+}
+
+const excavatorDirectionGroup = document.getElementById('excavator-direction-group');
+if (excavatorDirectionGroup) {
+  const canEditExcavatorDirection = admin && isExcavator;
+  excavatorDirectionGroup.style.display = canEditExcavatorDirection ? 'block' : 'none';
+  excavatorDirectionGroup.querySelectorAll('input').forEach(x => x.disabled = !canEditExcavatorDirection);
 }
 
 }
@@ -670,6 +707,10 @@ modifyFormEl.addEventListener('change', (e) => {
   if (el.name && !el.name.startsWith('ch')) {
     markDirty(el.name);
   }
+
+  if (el.name === 'car_type') {
+    refreshChannelVisibility();
+  }
 });
 
 /** 页面加载：先取用户，再拉设备，再按规则显示 */
@@ -753,6 +794,12 @@ window.addEventListener('DOMContentLoaded',  async function () {
 document.getElementById('is_display_true').checked  = Number(DEVICE_DATA.is_display) === 1;
 document.getElementById('is_display_false').checked = Number(DEVICE_DATA.is_display) === 0;
 
+    ['excavator_bucket', 'excavator_boom', 'excavator_arm'].forEach(field => {
+      const value = Number(DEVICE_DATA[field]) === 1 ? '1' : '0';
+      const radio = document.querySelector(`input[name="${field}"][value="${value}"]`);
+      if (radio) radio.checked = true;
+    });
+
     // 4) 按角色 + 车种 刷新可见性
     refreshChannelVisibility();
     IS_FILLING = false;
@@ -828,6 +875,13 @@ document.getElementById('modify-form').addEventListener('submit', async function
           addChanged(data, 'driver_type',          document.getElementById('driver_type').value,          DEVICE_DATA.driver_type);
           addChanged(data, 'audio_source_type',    document.getElementById('audio_source_type').value,    DEVICE_DATA.audio_source_type);
           addChanged(data, 'is_show_achievements', getCheckedValue('is_show_achievements'),              DEVICE_DATA.is_show_achievements);
+
+          const selectedCarType = Number(document.getElementById('car_type').value);
+          if (selectedCarType === 3 || selectedCarType === 9) {
+            addChanged(data, 'excavator_bucket', getCheckedValue('excavator_bucket'), DEVICE_DATA.excavator_bucket);
+            addChanged(data, 'excavator_boom',   getCheckedValue('excavator_boom'),   DEVICE_DATA.excavator_boom);
+            addChanged(data, 'excavator_arm',    getCheckedValue('excavator_arm'),    DEVICE_DATA.excavator_arm);
+          }
         }
 
         // ✅ 发射配置：管理员 / role=3/4 才提交

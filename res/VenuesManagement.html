@@ -551,6 +551,7 @@ button.venue-pill:hover {
 .unban-btn,
 .ban-btn,
 .live-btn,
+.gift-command-btn,
 .ban-submit-btn,
 .form-group button,
 #unbanForm button[type="submit"] {
@@ -1075,7 +1076,8 @@ button.venue-pill:hover {
 .edit-btn,
 .unban-btn,
 .ban-btn,
-.live-btn {
+.live-btn,
+.gift-command-btn {
   width: 100%;
   min-height: 36px;
   padding: 0 10px;
@@ -1090,6 +1092,41 @@ button.venue-pill:hover {
 
 .ban-btn::before {
   content: "⚠";
+  font-size: 12px;
+  line-height: 1;
+}
+
+.gift-command-btn {
+  color: var(--success);
+  border-color: rgba(32, 168, 118, .28);
+  background: var(--success-soft);
+}
+
+.gift-command-btn:hover {
+  color: #fff;
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.gift-command-btn.is-off {
+  color: #667985;
+  border-color: var(--line-strong);
+  background: #f3f7f8;
+}
+
+.gift-command-btn.is-off:hover {
+  color: #fff;
+  border-color: #667985;
+  background: #667985;
+}
+
+.gift-command-btn:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.gift-command-btn::before {
+  content: "✦";
   font-size: 12px;
   line-height: 1;
 }
@@ -1527,6 +1564,7 @@ function renderVenues(list) {
         const isPriorityReview = needPriorityReview(venue);
 
         const isSpendingAlert = Number(venue.is_spending_alert || 0) === 1;
+        const isGiftCommandPanelDisplay = Number(venue.is_gift_command_panel_display || 0) === 1;
         const venueLevel = normalizeVenueLevel(venue.venue_level);
         // const isDrSynced = String(venue.dr_venue_id || '').trim() !== '';
 
@@ -1595,6 +1633,14 @@ ${isLive ? `
             ? `<button class="unban-btn" onclick="openUnbanModal(${venue.id})">解封</button>`
             : `<button class="ban-btn" onclick="openBanModal(${venue.id})">封禁</button>`
         }
+        <button
+            type="button"
+            class="gift-command-btn ${isGiftCommandPanelDisplay ? '' : 'is-off'}"
+            data-gift-command-venue-id="${venue.id}"
+            onclick="setGiftCommandPanelDisplay(${venue.id}, ${isGiftCommandPanelDisplay ? 1 : 0})"
+            title="控制该场地驾驶页是否显示礼物命令列表">
+            礼物命令：${isGiftCommandPanelDisplay ? '显示' : '隐藏'}
+        </button>
 
     </div>
 </div>
@@ -1710,6 +1756,44 @@ window.setVenueLevel = function (venueId, venueLevel) {
         console.error('设置场地评级失败:', err);
         alert('请求异常');
         loadVenues();
+    });
+};
+
+window.setGiftCommandPanelDisplay = function (venueId, currentValue) {
+    const isDisplayed = Number(currentValue) === 1;
+    const nextValue = isDisplayed ? 0 : 1;
+    const nextText = nextValue === 1 ? '显示' : '隐藏';
+
+    if (!confirm(`确定把该场地驾驶页的礼物命令列表设置为【${nextText}】吗？`)) {
+        return;
+    }
+
+    const button = document.querySelector(`[data-gift-command-venue-id="${venueId}"]`);
+    if (button) button.disabled = true;
+
+    const formData = new FormData();
+    formData.append('action', 'set_gift_command_panel_display');
+    formData.append('venue_id', venueId);
+    formData.append('is_gift_command_panel_display', nextValue);
+
+    fetch('/api/venue/VenuesManagement.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 0 || data.code === 200) {
+            alert(data.msg || '礼物命令列表开关修改成功');
+            loadVenues();
+        } else {
+            alert(data.msg || '礼物命令列表开关修改失败');
+            if (button) button.disabled = false;
+        }
+    })
+    .catch(err => {
+        console.error('设置礼物命令列表开关失败:', err);
+        alert('请求异常');
+        if (button) button.disabled = false;
     });
 };
             function loadVenues() {

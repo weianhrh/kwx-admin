@@ -910,6 +910,20 @@ async function saveStreamerVenue(uid) {
     return (url.searchParams.get(name) || '').trim();
   }
 
+  // 从订单查询等页面跳转过来时，自动按用户 ID 查询
+  function applyUserIdFromUrl() {
+    const uid = getQueryParam('user_id') || getQueryParam('uid');
+    if (!uid) return false;
+
+    const idInput = document.querySelector('input[name="id"]');
+    if (idInput) idInput.value = uid;
+
+    currentPage = 1;
+    lastParams = { id: uid };
+    loadTableData(lastParams);
+    return true;
+  }
+
   // ✅ 自动把 URL 里的 invitation_code 填到输入框并搜索
   function applyInvitationFromUrl() {
     const inv = getQueryParam('invitation_code');
@@ -1173,8 +1187,8 @@ searchButton.addEventListener('click', function (event) {
     if (d.success) loadTableData(lastParams);
   }
 
-  // 初始化：优先读 URL invitation_code
-  const used = applyInvitationFromUrl();
+  // 初始化：优先读取从其他页面带来的用户 ID，其次读取邀请码
+  const used = applyUserIdFromUrl() || applyInvitationFromUrl();
   if (!used) loadTableData();
 </script>
 </body>

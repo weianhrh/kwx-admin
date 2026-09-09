@@ -539,6 +539,36 @@ textarea {
   font-weight: 700;
 }
 
+#controlModal .control-command-status {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: #f5f8f9;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+#controlModal .control-command-status.is-sending {
+  color: var(--primary-dark);
+  border-color: rgba(15, 143, 140, .28);
+  background: var(--primary-soft);
+}
+
+#controlModal .control-command-status.is-success {
+  color: #15803d;
+  border-color: rgba(21, 128, 61, .24);
+  background: #e8f7ef;
+}
+
+#controlModal .control-command-status.is-error {
+  color: #c93838;
+  border-color: rgba(201, 56, 56, .22);
+  background: #feecec;
+}
+
 #controlModal .control-body {
   overflow-y: auto;
   padding: 18px 20px;
@@ -963,7 +993,7 @@ user023968912_80039"></textarea>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="modal" id="controlModal">
   <div class="modal-content control-modal-content">
     <div class="control-header">
@@ -972,6 +1002,7 @@ user023968912_80039"></textarea>
         <button class="edit-btn secondary" id="btnControlClose">关闭</button>
       </div>
       <div class="control-subtitle">请选择要执行的功能，每个功能独立设置并发送。</div>
+      <div class="control-command-status" id="controlCommandStatus" role="status" aria-live="polite">尚未发送命令</div>
     </div>
 
     <div class="control-body">
@@ -1011,6 +1042,30 @@ user023968912_80039"></textarea>
   <div class="cmd-actions">
     <button class="edit-btn secondary" type="button" data-send="sub_on">推子码流</button>
     <button class="edit-btn secondary" type="button" data-send="sub_off">推主码流</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-full">
+  <div class="cmd-group-title">设备序列号查询</div>
+  <div class="tip-box">
+    给当前 room_id 发送查询命令：+SN-，设备收到后将返回序列号。
+  </div>
+  <div class="actions">
+    <button class="edit-btn" type="button" data-send="query_sn">查询设备序列号</button>
+  </div>
+</div>
+
+<div class="cmd-group cmd-group-full">
+  <div class="cmd-group-title">自定义命令</div>
+  <div class="tip-box">
+    输入设备支持的完整原始命令，系统不会自动添加 JSON、命令前缀或结束符。
+  </div>
+  <div class="row-1">
+    <label class="muted">命令内容</label>
+    <input id="cmd_custom_message" maxlength="1024" autocomplete="off" spellcheck="false" placeholder="例如：+SN-" />
+  </div>
+  <div class="actions">
+    <button class="edit-btn" type="button" data-send="custom">发送自定义命令</button>
   </div>
 </div>
 
@@ -1170,6 +1225,7 @@ user023968912_80039"></textarea>
     const toast = document.getElementById('toast');
     const controlModal = document.getElementById('controlModal');
     const controlModalTitle = document.getElementById('controlModalTitle');
+    const controlCommandStatus = document.getElementById('controlCommandStatus');
     
     const cRoomId = document.getElementById('cmd_room_id');
     const cFromUserId = document.getElementById('cmd_from_user_id');
@@ -1183,6 +1239,7 @@ user023968912_80039"></textarea>
     const cOtaForce = document.getElementById('cmd_ota_force');
     const cHardwareOtaUrl = document.getElementById('cmd_hardware_ota_url');
     const cVoltageUploadUrl = document.getElementById('cmd_voltage_upload_url');
+    const cCustomMessage = document.getElementById('cmd_custom_message');
     const wifiHistoryModal = document.getElementById('wifiHistoryModal');
     const wifiHistoryTarget = document.getElementById('wifiHistoryTarget');
     const wifiHistoryList = document.getElementById('wifiHistoryList');
@@ -1193,13 +1250,21 @@ user023968912_80039"></textarea>
     let syncLock = false;
     let syncEnabled = true;
 
-    function showToast(msg, ms = 2200) {
+    function showToast(msg, ms = 5000) {
       toast.textContent = msg;
       toast.style.display = 'block';
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => {
-        toast.style.display = 'none';
-      }, ms);
+      if (ms > 0) {
+        showToast._t = setTimeout(() => {
+          toast.style.display = 'none';
+        }, ms);
+      }
+    }
+
+    function setControlCommandStatus(message, state = '') {
+      controlCommandStatus.textContent = message;
+      controlCommandStatus.className = 'control-command-status';
+      if (state) controlCommandStatus.classList.add(`is-${state}`);
     }
 function buildCaptureUploadUrl() {
   const fileName = (cCaptureFilename.value || '').trim() || 'snap.jpg';
@@ -1229,6 +1294,12 @@ function buildCommandText(type) {
 
     case 'sub_off':
       return JSON.stringify({ type: 'cfg_sub', data: { enable: 0 } });
+
+    case 'query_sn':
+      return '+SN-';
+
+    case 'custom':
+      return (cCustomMessage.value || '').trim();
 
     case 'capture':
       return JSON.stringify({
@@ -1296,7 +1367,9 @@ function openControlModal(row) {
   cOtaForce.value = '0';
   cHardwareOtaUrl.value = 'https://app.kwxapp.cn/OTA/zxb.bin';
   cVoltageUploadUrl.value = 'http://app.kwxapp.cn/app/dump/dump_post.php';
+  cCustomMessage.value = '';
   refreshCaptureUploadUrl();
+  setControlCommandStatus('尚未发送命令');
 
   controlModalTitle.textContent = `设备控制 - ${row?.device_id ?? ''}`;
 }
@@ -1408,18 +1481,30 @@ async function sendDeviceCommandByType(type, triggerBtn = null) {
 
   if (!room_id) {
     showToast('room_id 不能为空');
+    setControlCommandStatus('发送失败：room_id 不能为空', 'error');
     return;
   }
 
   if (!from_user_id) {
     showToast('from_user_id 不能为空');
+    setControlCommandStatus('发送失败：from_user_id 不能为空', 'error');
     return;
   }
 
-  const message = buildCommandText(type);
+  let message = '';
+  try {
+    message = buildCommandText(type);
+  } catch (error) {
+    console.error('生成设备命令失败:', error);
+    showToast('指令生成失败');
+    setControlCommandStatus('发送失败：指令生成异常', 'error');
+    return;
+  }
 
   if (!message) {
-    showToast('指令生成失败');
+    const errorText = type === 'custom' ? '请输入自定义命令' : '指令生成失败';
+    showToast(errorText);
+    setControlCommandStatus(`发送失败：${errorText}`, 'error');
     return;
   }
 
@@ -1429,6 +1514,13 @@ async function sendDeviceCommandByType(type, triggerBtn = null) {
     triggerBtn.disabled = true;
     triggerBtn.textContent = '发送中...';
   }
+
+  const sendingText = type === 'custom' ? '正在发送自定义命令…' : '正在发送设备命令…';
+  showToast(sendingText, 0);
+  setControlCommandStatus(sendingText, 'sending');
+
+  const controller = new AbortController();
+  const requestTimeout = setTimeout(() => controller.abort(), 15000);
 
   try {
     const fd = new URLSearchParams();
@@ -1442,13 +1534,16 @@ async function sendDeviceCommandByType(type, triggerBtn = null) {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
       },
       body: fd.toString(),
-      credentials: 'include'
+      credentials: 'include',
+      signal: controller.signal
     });
 
     const json = await resp.json();
 
     if (json.code !== 200) {
-      showToast(json.msg || '发送失败');
+      const errorText = json.msg || '发送失败';
+      showToast(errorText, 5000);
+      setControlCommandStatus(`发送失败：${errorText}`, 'error');
       return;
     }
 
@@ -1459,6 +1554,8 @@ const successTextMap = {
   rotate_off: '横屏显示已发送',
   sub_on: '推子码流已发送',
   sub_off: '推主码流已发送',
+  query_sn: '序列号查询指令已发送，等待设备返回',
+  custom: '自定义命令已发送',
   capture: '抓图上传已发送',
   wifi: 'WIFI设置已发送',
   ota: '摄像头 OTA 升级已发送',
@@ -1471,14 +1568,23 @@ voltage_reset: '电压回传地址恢复默认指令已发送'
     const senderText = json.data?.app_name
       ? `（${json.data.app_name} AppID：${json.data.app_id}）`
       : '';
+    let resultText = '';
     if (Array.isArray(failUsers) && failUsers.length > 0) {
-      showToast(`${successTextMap[type] || '发送成功'}${senderText}，但有 ${failUsers.length} 个用户未收到`);
+      resultText = `${successTextMap[type] || '发送成功'}${senderText}，但有 ${failUsers.length} 个用户未收到`;
     } else {
-      showToast(`${successTextMap[type] || '发送成功'}${senderText}`);
+      resultText = `${successTextMap[type] || '发送成功'}${senderText}`;
     }
+    showToast(resultText, 5000);
+    setControlCommandStatus(resultText, 'success');
   } catch (e) {
-    showToast('网络错误：发送失败');
+    const errorText = e && e.name === 'AbortError'
+      ? '发送超时：15 秒内未收到服务器响应'
+      : '网络错误：发送失败';
+    console.error('发送设备命令失败:', e);
+    showToast(errorText, 5000);
+    setControlCommandStatus(errorText, 'error');
   } finally {
+    clearTimeout(requestTimeout);
     if (triggerBtn) {
       triggerBtn.disabled = false;
       triggerBtn.textContent = oldText;

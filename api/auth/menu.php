@@ -158,6 +158,7 @@ function menu_franchise_tree(int $roleId): array
         menu_leaf(9352, 9305, 'franchise-black-users', '拉黑用户', '/iframe/link/black_user_gmt', 'user', 20),
         menu_leaf(9353, 9305, 'franchise-feedback', '反馈信息', '/iframe/link/feedback_mgt', 'ops', 30),
         menu_leaf(9354, 9305, 'franchise-reporthand', '投诉处理', '/iframe/link/reporthand', 'audit', 40),
+        // menu_leaf(9355, 9305, 'franchise-driving-gift', '驾驶礼物管理', '/iframe/link/driving_gift_admin', 'ops', 50),
     ], 5);
 
     $baseMenu[] = menu_group(9390, 'franchise-tools', '系统工具', 'tools', [

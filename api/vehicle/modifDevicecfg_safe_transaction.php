@@ -106,6 +106,9 @@ function fetchVehicleControlSettings($database, $device_id) {
             is_display,
             cooldown,
             bullet_channel,
+            excavator_bucket,
+            excavator_boom,
+            excavator_arm,
             ch1,
             ch2,
             ch3,
@@ -288,7 +291,7 @@ if ($device_id === '') {
 } 
 //  var_dump($data);
 // 查询默认的挡位,方向和油门值 
-$query = "SELECT audio_source_type,is_show_achievements,is_display,cooldown,bullet_channel,ch1,ch2,ch3,ch4,ch5,ch6, car_type, direction_mid,throttle_mid, driver_type, throttle_max,  throttle_min, direction, throttle
+$query = "SELECT audio_source_type,is_show_achievements,is_display,cooldown,bullet_channel,excavator_bucket,excavator_boom,excavator_arm,ch1,ch2,ch3,ch4,ch5,ch6, car_type, direction_mid,throttle_mid, driver_type, throttle_max,  throttle_min, direction, throttle
           FROM vehicle_control_settings 
           WHERE serial_number = ?";
 $stmt = $database->getConnection()->prepare($query); 
@@ -329,6 +332,9 @@ $response = [
         'is_show_achievements' => $settings['is_show_achievements'] === null ? 0 : (int)$settings['is_show_achievements'],
         'cooldown' => $settings['cooldown'],
         'bullet_channel' => $settings['bullet_channel'],
+        'excavator_bucket' => $settings['excavator_bucket'] === null ? 0 : (int)$settings['excavator_bucket'],
+        'excavator_boom' => $settings['excavator_boom'] === null ? 0 : (int)$settings['excavator_boom'],
+        'excavator_arm' => $settings['excavator_arm'] === null ? 0 : (int)$settings['excavator_arm'],
         'audio_source_type' => $settings['audio_source_type'] === null ? 0 : (int)$settings['audio_source_type']
     ] 
 ]; 
@@ -358,6 +364,8 @@ $conn = $database->getConnection();
 $isAdmin = in_array((int)$role_id, [1, 2], true);
 $isSiteRole = in_array((int)$role_id, [3, 4], true);
 $oldCarType = (int)($settings['car_type'] ?? 0);
+$targetCarType = array_key_exists('car_type', $data) ? (int)$data['car_type'] : $oldCarType;
+$isExcavatorType = in_array($targetCarType, [3, 9], true);
 
 // ✅ 和前端保持一致：发射配置 role=1/2/3/4 可改；通道配置 role=1/2 可改，role=3/4 且旧车种 7/9 可改
 $canEditShoot = $isAdmin || $isSiteRole;
@@ -447,6 +455,19 @@ foreach ($adminIntFields as $field => $range) {
     $knownKeys[$field] = true;
     if (array_key_exists($field, $data)) {
         $addUpdate($field, $clampInt($data[$field], $range[0], $range[1]), 'i', $isAdmin, '仅平台管理员可修改该字段');
+    }
+}
+
+foreach (['excavator_bucket', 'excavator_boom', 'excavator_arm'] as $field) {
+    $knownKeys[$field] = true;
+    if (array_key_exists($field, $data)) {
+        $addUpdate(
+            $field,
+            $clampInt($data[$field], 0, 1),
+            'i',
+            $isAdmin && $isExcavatorType,
+            '仅平台管理员可修改挖机方向换位配置'
+        );
     }
 }
 

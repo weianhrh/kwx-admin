@@ -3571,6 +3571,7 @@
       const params = new URLSearchParams(location.hash.replace(/^#/, ''));
       const id = params.get('menu');
       const venueId = params.get('venue') || '';
+      const userId = params.get('user_id') || '';
       const item = id ? findMenu(id) : null;
       if (!item || item.jump === '' || item.jump === '/') {
         renderWorkbench();
@@ -3595,7 +3596,7 @@
         return;
       }
       if (legacyModuleUrl(item)) {
-        renderLegacyModule(item, { venueId: venueId });
+        renderLegacyModule(item, { venueId: venueId, userId: userId });
         return;
       }
       renderModule(item);
@@ -3613,6 +3614,40 @@
         closeSidebar();
       }
     }
+
+    // 允许 dashboard 内的旧模块请求切换到另一个菜单，并携带筛选参数。
+    window.addEventListener('message', function(event) {
+      if (event.origin !== window.location.origin) return;
+
+      const data = event.data || {};
+      if (data.type !== 'kwx-dashboard-open-module') return;
+
+      const jump = String(data.jump || '').trim();
+      if (!jump) return;
+
+      const item = flattenMenus(menuTree).find(function(menu) {
+        return String(menu.jump || '').trim() === jump;
+      });
+      if (!item) return;
+
+      const next = new URLSearchParams();
+      next.set('menu', String(item.id));
+
+      const extra = data.params && typeof data.params === 'object' ? data.params : {};
+      const userId = String(extra.user_id || extra.uid || '').trim();
+      if (userId) next.set('user_id', userId);
+
+      const nextHash = next.toString();
+      if (location.hash.replace(/^#/, '') === nextHash) {
+        routeFromHash();
+      } else {
+        location.hash = nextHash;
+      }
+
+      if (isMobileSidebar()) {
+        closeSidebar();
+      }
+    });
 
     function renderModule(item) {
       const desc = moduleDescription(item);
@@ -3653,6 +3688,9 @@
         if (isVenueDetailModule(item)) {
           query.set('id', String(options.venueId));
         }
+      }
+      if (options.userId) {
+        query.set('user_id', String(options.userId));
       }
 
       return './res/' + encodeURIComponent(pageName) + '.html?' + query.toString();

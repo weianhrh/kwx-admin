@@ -449,6 +449,30 @@ select.form-input,
   word-break: break-all;
 }
 
+.user-id-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.user-id-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.user-id-link:focus-visible {
+  outline: 2px solid rgba(15, 143, 140, .28);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .money {
   color: var(--primary-dark);
   font-weight: 900;
@@ -1090,6 +1114,30 @@ function searchOrders(resetPage = true) {
         }[char]));
     }
 
+    function openUserManagement(uid) {
+        const userId = String(uid ?? '').trim();
+        if (!userId || userId === '-') return false;
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'kwx-dashboard-open-module',
+                jump: '/iframe/link/Balancerecharge',
+                params: { user_id: userId }
+            }, window.location.origin);
+            return false;
+        }
+
+        window.location.href = `Balancerecharge.html?user_id=${encodeURIComponent(userId)}`;
+        return false;
+    }
+
+    function userIdLink(uid) {
+        const value = String(uid ?? '').trim();
+        if (!value) return '-';
+        const safeValue = escapeOrderHtml(value);
+        return `<button type="button" class="user-id-link" data-uid="${safeValue}" onclick="return openUserManagement(this.dataset.uid)" title="查看用户 ${safeValue}">${safeValue}</button>`;
+    }
+
     function renderOrderFields(order) {
         if (order.order_type === 'gift') {
             const giftImage = order.gift_image_url
@@ -1109,7 +1157,7 @@ function searchOrders(resetPage = true) {
               </div>
               <div class="order-field">
                 <span class="field-label">用户ID</span>
-                <span class="field-value">${escapeOrderHtml(order.uid || '-')}</span>
+                <span class="field-value">${userIdLink(order.uid)}</span>
               </div>
               <div class="order-field">
                 <span class="field-label">用户昵称</span>
@@ -1144,7 +1192,7 @@ function searchOrders(resetPage = true) {
         return `
           <div class="order-field">
             <span class="field-label">用户ID</span>
-            <span class="field-value">${order.uid || '-'}</span>
+            <span class="field-value">${userIdLink(order.uid)}</span>
           </div>
           <div class="order-field">
             <span class="field-label">用户昵称</span>

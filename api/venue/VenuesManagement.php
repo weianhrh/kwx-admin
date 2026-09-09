@@ -959,6 +959,43 @@ elseif ($action === 'set_venue_level') {
 
     exit;
 }
+elseif ($action === 'set_gift_command_panel_display') {
+
+    $venue_id = intval($_POST['venue_id'] ?? 0);
+    $display_value = isset($_POST['is_gift_command_panel_display'])
+        ? trim((string)$_POST['is_gift_command_panel_display'])
+        : '';
+
+    if ($venue_id <= 0) {
+        echo json_encode(['code' => 1, 'msg' => '场地ID无效'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($display_value !== '0' && $display_value !== '1') {
+        echo json_encode(['code' => 2, 'msg' => '礼物命令列表开关参数错误'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $is_gift_command_panel_display = intval($display_value);
+    $ok = $database->query(
+        "UPDATE venues SET is_gift_command_panel_display = ? WHERE id = ? LIMIT 1",
+        [$is_gift_command_panel_display, $venue_id],
+        true
+    );
+
+    if ($ok) {
+        echo json_encode([
+            'code' => 0,
+            'msg' => $is_gift_command_panel_display === 1
+                ? '驾驶页礼物命令列表已显示'
+                : '驾驶页礼物命令列表已隐藏'
+        ], JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode(['code' => 3, 'msg' => '礼物命令列表开关修改失败'], JSON_UNESCAPED_UNICODE);
+    }
+
+    exit;
+}
 elseif ($action === 'loadingdata') {
         try { 
             // 查询 venues 表中的数据 列出已有场地list 
@@ -982,6 +1019,7 @@ elseif ($action === 'loadingdata') {
                             LIMIT 1
                         ) AS voice_room_ban_end_time,
                         v.is_spending_alert,
+                        v.is_gift_command_panel_display,
                         v.image_url, 
                         v.venue_description, 
                         v.venue_tags, 
