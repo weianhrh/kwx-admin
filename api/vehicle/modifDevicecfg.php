@@ -365,10 +365,20 @@ $deniedPayload = [];
 
 if (isset($data['car_type'])) { 
     $car_type = (int) $data['car_type']; // 强制转换为整数
-    $query = "UPDATE vehicle_control_settings SET car_type = ? WHERE serial_number = ?"; 
-    $stmt = $database->getConnection()->prepare($query); 
-    $stmt->bind_param("is", $car_type, $device_id); 
-    $stmt->execute();
+    $allowedCarTypes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11];
+
+    if (in_array($car_type, $allowedCarTypes, true)) {
+        $query = "UPDATE vehicle_control_settings SET car_type = ? WHERE serial_number = ?"; 
+        $stmt = $database->getConnection()->prepare($query); 
+        $stmt->bind_param("is", $car_type, $device_id); 
+        $stmt->execute();
+    } else {
+        $deniedPayload['car_type'] = [
+            'value' => $data['car_type'],
+            'reason' => '车辆类型值非法'
+        ];
+        unset($allowedPayload['car_type']);
+    }
 } 
 
 if (isset($data['direction_mid'])) { 

@@ -365,7 +365,7 @@ $isAdmin = in_array((int)$role_id, [1, 2], true);
 $isSiteRole = in_array((int)$role_id, [3, 4], true);
 $oldCarType = (int)($settings['car_type'] ?? 0);
 $targetCarType = array_key_exists('car_type', $data) ? (int)$data['car_type'] : $oldCarType;
-$isExcavatorType = in_array($targetCarType, [3, 9], true);
+$isExcavatorType = in_array($targetCarType, [3, 9, 11], true);
 
 // ✅ 和前端保持一致：发射配置 role=1/2/3/4 可改；通道配置 role=1/2 可改，role=3/4 且旧车种 7/9 可改
 $canEditShoot = $isAdmin || $isSiteRole;
@@ -423,9 +423,18 @@ $knownKeys = [
     'device_id' => true,
 ];
 
+// car_type 10 当前未定义；合法车型为 1~9 和 11。
+$knownKeys['car_type'] = true;
+if (array_key_exists('car_type', $data)) {
+    $requestedCarType = (int)$data['car_type'];
+    if (in_array($requestedCarType, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11], true)) {
+        $addUpdate('car_type', $requestedCarType, 'i', true);
+    } else {
+        $denyField('car_type', '车辆类型值非法');
+    }
+}
+
 $commonIntFields = [
-    // 如果你不想让 role=3/4 改车辆类型，就把 car_type 从这里删掉，放到 $adminIntFields。
-    'car_type'      => [1, 9],
     'direction_mid' => [1000, 2000],
     'throttle_max'  => [1500, 2000],
     'throttle_min'  => [1000, 1500],

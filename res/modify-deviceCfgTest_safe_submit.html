@@ -427,6 +427,7 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
                         <option value="7">液压推土机</option>
                         <option value="8">液压自卸车</option>
                         <option value="9">液压挖掘机</option>
+                        <option value="11">简化版挖掘机</option>
                     </select>
                 </div>
                 <div class="form-field" id="audio-source-field" style="display:none;">
@@ -545,7 +546,7 @@ function refreshChannelVisibility() {
   const carType = Number(carTypeSelect?.value || DEVICE_DATA?.car_type);
   const admin = isPlatformAdmin();
   const role3  = isSiteRole();
-  const isExcavator = carType === 3 || carType === 9;
+  const isExcavator = carType === 3 || carType === 9 || carType === 11;
 
   // ✅ 通道容器显示规则：保留你原本逻辑
   const canSeeChannels = admin || (role3 && (carType === 7 || carType === 9));
@@ -877,7 +878,7 @@ document.getElementById('modify-form').addEventListener('submit', async function
           addChanged(data, 'is_show_achievements', getCheckedValue('is_show_achievements'),              DEVICE_DATA.is_show_achievements);
 
           const selectedCarType = Number(document.getElementById('car_type').value);
-          if (selectedCarType === 3 || selectedCarType === 9) {
+          if (selectedCarType === 3 || selectedCarType === 9 || selectedCarType === 11) {
             addChanged(data, 'excavator_bucket', getCheckedValue('excavator_bucket'), DEVICE_DATA.excavator_bucket);
             addChanged(data, 'excavator_boom',   getCheckedValue('excavator_boom'),   DEVICE_DATA.excavator_boom);
             addChanged(data, 'excavator_arm',    getCheckedValue('excavator_arm'),    DEVICE_DATA.excavator_arm);

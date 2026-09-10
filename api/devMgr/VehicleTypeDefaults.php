@@ -119,6 +119,16 @@ function hydraulicExcavatorControlDefaults(): array
 }
 
 /**
+ * 11 - 简化版挖掘机默认配置
+ *
+ * 控制参数沿用普通挖掘机（car_type=3），区别只在客户端驾驶界面。
+ */
+function simplifiedExcavatorControlDefaults(): array
+{
+    return excavatorControlDefaults();
+}
+
+/**
  * 车辆类型总配置
  */
 function getVehicleTypeMap(): array
@@ -176,6 +186,13 @@ function getVehicleTypeMap(): array
             'label' => '液压挖掘机',
             'photo_url' => 'https://app.kwxapp.cn/img/wj01.png',
             'control_settings' => hydraulicExcavatorControlDefaults(),
+        ],
+
+        11 => [
+            'label' => '简化版挖掘机',
+            // 与普通挖掘机共用图片
+            'photo_url' => 'https://app.kwxapp.cn/img/wj01.jpg',
+            'control_settings' => simplifiedExcavatorControlDefaults(),
         ],
     ];
 }

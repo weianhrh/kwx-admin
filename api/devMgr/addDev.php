@@ -283,6 +283,17 @@ if ($name === '' || $bind_site <= 0) {
     jsonOut(1002, '缺少必要参数', []);
 }
 
+// 车型白名单由 VehicleTypeDefaults 统一维护；car_type=11 为简化版挖掘机。
+$vehicleTypeMap = getVehicleTypeMap();
+if (!isset($vehicleTypeMap[$car_type])) {
+    jsonOut(1002, '不支持的车辆类型 car_type=' . $car_type, []);
+}
+
+// 如果前端没有传图片，则按车型取默认图片。car_type=11 会复用普通挖掘机图片。
+if (trim((string)$photo_url) === '') {
+    $photo_url = getVehiclePhotoUrlByType($car_type);
+}
+
 // 构建逐行数据
 $built = buildInputRows($serial_number_str, $image_device_serial_str, $rtc_user_id_str);
 $rows = $built['rows'];
