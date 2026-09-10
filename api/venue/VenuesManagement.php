@@ -1,6 +1,7 @@
 <?php 
 //  /api/venue/VenuesManagement.php
 require_once '../Database.php';  
+require_once '../lib/venue_scope.php';
  
 // 创建数据库连接 
 $database = new Database(); 
@@ -973,6 +974,13 @@ elseif ($action === 'set_gift_command_panel_display') {
 
     if ($display_value !== '0' && $display_value !== '1') {
         echo json_encode(['code' => 2, 'msg' => '礼物命令列表开关参数错误'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // role_id 1/2 可管理全部场地；role_id 3/4 只能操作自己绑定的场地。
+    if (!venue_scope_can_access($database, $user, $venue_id)) {
+        http_response_code(403);
+        echo json_encode(['code' => 403, 'msg' => '无权修改该场地的礼物命令开关'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

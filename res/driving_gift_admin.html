@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>驾驶礼物管理</title>
+  <title>驾驶礼物库</title>
   <style>
     :root {
       --bg: #f4f7f8;
@@ -18,13 +18,12 @@
       --danger-soft: #fff0ef;
       --success: #15936d;
       --success-soft: #e8f7f1;
+      --warning: #b97912;
+      --warning-soft: #fff6e5;
       --shadow: 0 10px 28px rgba(30, 55, 66, .07);
     }
-
     * { box-sizing: border-box; }
-
     html, body { min-height: 100%; }
-
     body {
       margin: 0;
       min-width: 320px;
@@ -33,9 +32,9 @@
       background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
-
     button, input, select { font: inherit; }
-
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
     .panel {
       overflow: hidden;
       border: 1px solid var(--line);
@@ -43,114 +42,131 @@
       background: var(--panel);
       box-shadow: var(--shadow);
     }
-
-    .panel-title {
+    .panel-head {
       min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-title-wrap { min-width: 0; }
+    .panel-title {
       display: flex;
       align-items: center;
       gap: 10px;
       margin: 0;
-      padding: 0 18px;
-      border-bottom: 1px solid var(--line);
       font-size: 20px;
+      line-height: 1.3;
       font-weight: 900;
     }
-
     .panel-title::before {
       content: "";
       width: 8px;
       height: 20px;
+      flex: 0 0 auto;
       border-radius: 999px;
       background: var(--primary);
     }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .panel-subtitle { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .panel-head-actions { margin-left: auto; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+    .limit-badge {
+      min-height: 34px;
+      display: inline-flex;
       align-items: center;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-      background: #fbfcfd;
-    }
-
-    .input, .select {
-      height: 38px;
+      padding: 0 11px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      outline: 0;
-      color: var(--text);
-      background: #fff;
-      font-size: 13px;
-    }
-
-    .input { min-width: 240px; padding: 0 12px; }
-    .select { min-width: 130px; padding: 0 32px 0 12px; }
-
-    .input:focus, .select:focus {
-      border-color: rgba(15, 143, 140, .52);
-      box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
-    }
-
-    .btn {
-      min-height: 38px;
-      padding: 0 14px;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .btn:disabled { opacity: .55; cursor: not-allowed; }
-    .btn-primary { color: #fff; background: var(--primary); }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-ghost { color: var(--text); border-color: var(--line); background: #fff; }
-    .btn-ghost:hover { color: var(--primary-dark); border-color: rgba(15,143,140,.35); background: var(--primary-soft); }
-    .btn-danger { color: var(--danger); border-color: #f0c7c5; background: #fff; }
-    .btn-danger:hover { background: var(--danger-soft); }
-    .btn-small { min-height: 32px; padding: 0 10px; }
-    .spacer { flex: 1 1 auto; }
-
-    .table-wrap { overflow-x: auto; padding: 0 18px; }
-
-    table { width: 100%; min-width: 980px; border-collapse: collapse; }
-    th, td { padding: 13px 10px; border-bottom: 1px solid #e8eff1; text-align: left; vertical-align: middle; }
-    th { color: var(--muted); background: #fff; font-size: 12px; font-weight: 900; white-space: nowrap; }
-    td { font-size: 13px; }
-
-    .gift-cell { display: flex; align-items: center; gap: 12px; min-width: 250px; }
-    .thumb {
-      width: 58px;
-      height: 58px;
-      flex: 0 0 58px;
-      object-fit: cover;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f1f5f6;
-    }
-    .thumb-empty { display: grid; place-items: center; color: #93a4aa; font-size: 11px; }
-    .gift-name { margin-bottom: 5px; font-weight: 900; }
-    .gift-id, .file-link { color: var(--muted); font-size: 12px; }
-    .file-link { display: inline-block; margin-top: 4px; color: var(--primary-dark); text-decoration: none; }
-    .preview-link {
-      padding: 0;
-      border: 0;
-      color: var(--primary-dark);
-      background: transparent;
-      cursor: pointer;
+      color: var(--muted);
+      background: #f8fbfb;
       font-size: 12px;
       font-weight: 800;
     }
-    .preview-link:hover { text-decoration: underline; }
-
+    .schema-warning {
+      display: none;
+      margin: 14px 18px 0;
+      padding: 11px 13px;
+      border: 1px solid #f0d59f;
+      border-radius: 8px;
+      color: #845817;
+      background: var(--warning-soft);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfc;
+    }
+    .spacer { flex: 1 1 auto; }
+    .input, .select {
+      height: 36px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: #fff;
+      outline: 0;
+    }
+    .input { width: 220px; }
+    .select { min-width: 112px; }
+    .input:focus, .select:focus, .field input:focus, .field select:focus {
+      border-color: rgba(15,143,140,.52);
+      box-shadow: 0 0 0 4px rgba(15,143,140,.10);
+    }
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .btn-primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .btn-ghost { color: var(--text); background: #fff; border-color: var(--line); }
+    .btn-ghost:hover { border-color: #bfd2d6; background: #f8fbfb; }
+    .btn-danger { color: var(--danger); background: #fff; border-color: #f2c4c1; }
+    .btn-danger:hover { background: var(--danger-soft); }
+    .btn-small { min-height: 30px; padding: 0 9px; font-size: 12px; }
+    .btn-panel-on { color: var(--success); border-color: #b7e5d5; background: var(--success-soft); }
+    .btn-panel-off { color: var(--muted); border-color: var(--line); background: #f3f6f7; }
+    .table-wrap { overflow-x: auto; padding: 0 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 850px; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    th { color: var(--muted); font-size: 12px; font-weight: 900; white-space: nowrap; }
+    td { font-size: 13px; }
+    .gift-cell { display: flex; align-items: center; gap: 10px; min-width: 230px; }
+    .thumb {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f4f7f8;
+      object-fit: cover;
+    }
+    .thumb-empty { display: grid; place-items: center; color: #8fa1a7; font-size: 10px; }
+    .gift-name { color: var(--text); font-weight: 900; }
+    .gift-id, .muted { color: var(--muted); font-size: 12px; }
+    .file-link, .preview-link { margin-top: 4px; color: var(--primary-dark); font-size: 12px; font-weight: 800; text-decoration: none; border: 0; background: none; padding: 0; }
+    .file-link:hover, .preview-link:hover { text-decoration: underline; }
     .price { color: var(--primary-dark); font-weight: 900; white-space: nowrap; }
     .tag {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-width: 68px;
-      padding: 4px 9px;
+      min-height: 28px;
+      padding: 0 9px;
       border: 1px solid var(--line);
       border-radius: 999px;
       font-size: 12px;
@@ -159,20 +175,12 @@
     }
     .tag-on { color: var(--success); border-color: #b7e5d5; background: var(--success-soft); }
     .tag-off { color: var(--muted); background: #f3f6f7; }
-    .switch-summary { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+    .switch-summary { display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
     .switch-summary strong { color: var(--text); }
-    .actions { display: flex; gap: 7px; justify-content: flex-end; }
-
-    .empty, .loading { padding: 46px 16px; color: var(--muted); text-align: center; }
-
-    .pager {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 18px 18px;
-    }
+    .actions { display: flex; gap: 7px; justify-content: flex-end; white-space: nowrap; }
+    .empty, .loading { padding: 44px 16px; color: var(--muted); text-align: center; }
+    .pager { display: flex; align-items: center; gap: 8px; padding: 14px 18px 18px; }
     .pager-info { margin-right: auto; color: var(--muted); font-size: 13px; }
-
     .modal {
       position: fixed;
       inset: 0;
@@ -183,39 +191,26 @@
       padding: 18px;
       background: rgba(12, 30, 35, .52);
     }
-
     .modal.show { display: flex; }
-
     .modal-card {
-      width: min(620px, 100%);
+      width: min(640px, 100%);
       max-height: calc(100vh - 36px);
       overflow-y: auto;
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 24px 70px rgba(9, 35, 42, .23);
     }
-
-    .modal-head {
-      display: flex;
-      align-items: center;
-      padding: 17px 20px;
-      border-bottom: 1px solid var(--line);
-    }
+    .modal-card.wide { width: min(920px, 100%); }
+    .modal-head { display: flex; align-items: center; gap: 10px; padding: 17px 20px; border-bottom: 1px solid var(--line); }
     .modal-title { margin: 0; font-size: 18px; font-weight: 900; }
-    .modal-close { margin-left: auto; padding: 0 4px; border: 0; color: var(--muted); background: none; cursor: pointer; font-size: 27px; }
+    .modal-subtitle { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .modal-close { padding: 0 4px; border: 0; color: var(--muted); background: none; cursor: pointer; font-size: 27px; }
     .modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px; }
     .field.full { grid-column: 1 / -1; }
     .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 900; }
     .field input[type="text"], .field input[type="number"], .field select {
-      width: 100%;
-      height: 40px;
-      padding: 0 11px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      outline: 0;
+      width: 100%; height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0;
     }
-    .field input:focus, .field select:focus { border-color: rgba(15,143,140,.52); box-shadow: 0 0 0 4px rgba(15,143,140,.10); }
-
     .upload-row { display: flex; gap: 8px; }
     .upload-row input { min-width: 0; flex: 1 1 auto; }
     .upload-row .btn { flex: 0 0 auto; }
@@ -224,10 +219,55 @@
     .check { display: inline-flex; align-items: center; gap: 7px; color: var(--text); font-size: 13px; font-weight: 700; }
     .check input { width: 17px; height: 17px; accent-color: var(--primary); }
     .modal-foot { display: flex; justify-content: flex-end; gap: 9px; padding: 14px 20px 18px; border-top: 1px solid var(--line); }
-
+    .batch-zone {
+      grid-column: 1 / -1;
+      padding: 14px;
+      border: 1px dashed #b9d5d4;
+      border-radius: 9px;
+      background: #f8fcfc;
+    }
+    .batch-zone h3 { margin: 0 0 7px; font-size: 14px; }
+    .batch-pick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .batch-pair-list { display: grid; gap: 8px; margin-top: 12px; }
+    .batch-pair {
+      display: grid; grid-template-columns: minmax(120px, .75fr) minmax(0, 1.25fr) minmax(0, 1.25fr);
+      gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff;
+    }
+    .batch-pair.invalid { border-color: #efc6c2; background: #fff8f7; }
+    .batch-pair-name { min-width: 0; color: var(--text); font-size: 12px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .batch-pair-file { min-width: 0; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .batch-pair-file strong { color: var(--text); }
+    .batch-pair-file.missing { color: #a83b38; font-weight: 800; }
+    .batch-summary { margin-top: 9px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .batch-progress { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .library-tools { display: flex; gap: 8px; padding: 14px 20px 0; }
+    .library-tools .input { width: 100%; }
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px 20px 20px;
+    }
+    .library-card {
+      position: relative;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      transition: .15s;
+    }
+    .library-card:hover { border-color: #b8d7d5; box-shadow: 0 8px 20px rgba(30,55,66,.07); }
+    .library-card.selected { opacity: .58; background: #f5f7f7; }
+    .library-card.checked { border-color: var(--primary); background: #f3fbfa; }
+    .library-card-main { display: flex; gap: 10px; align-items: center; }
+    .library-card .thumb { width: 54px; height: 54px; }
+    .library-card-text { min-width: 0; }
+    .library-card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 900; }
+    .library-card-meta { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .library-card-check { position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; accent-color: var(--primary); }
     .preview-card { width: min(620px, 100%); }
     .preview-stage {
-      position: relative;
       min-height: 420px;
       display: flex;
       align-items: center;
@@ -236,33 +276,11 @@
       margin: 18px 20px 20px;
       border: 1px solid var(--line);
       border-radius: 10px;
-      background:
-        linear-gradient(45deg, #edf3f4 25%, transparent 25%),
-        linear-gradient(-45deg, #edf3f4 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #edf3f4 75%),
-        linear-gradient(-45deg, transparent 75%, #edf3f4 75%);
-      background-color: #f9fbfb;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-      background-size: 16px 16px;
+      background: #f5f8f8;
     }
-    .preview-stage img {
-      display: none;
-      max-width: 100%;
-      max-height: 68vh;
-      object-fit: contain;
-    }
-    #svgaPreviewBox {
-      display: none;
-      width: 100%;
-      height: 420px;
-    }
-    .preview-message {
-      padding: 20px;
-      color: var(--muted);
-      text-align: center;
-      font-size: 13px;
-    }
-
+    .preview-stage img { display: none; max-width: 100%; max-height: 68vh; object-fit: contain; }
+    #svgaPreviewBox { display: none; width: 100%; height: 420px; }
+    .preview-message { padding: 20px; color: var(--muted); text-align: center; font-size: 13px; }
     .toast {
       position: fixed;
       z-index: 1200;
@@ -280,9 +298,10 @@
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
     .toast.error { background: #a83b38; }
-
-    @media (max-width: 760px) {
+    @media (max-width: 860px) {
       body { padding: 10px; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .panel-head-actions { width: 100%; margin-left: 0; justify-content: flex-start; }
       .toolbar { padding: 12px; }
       .toolbar .input, .toolbar .select { width: 100%; min-width: 0; }
       .spacer { display: none; }
@@ -291,8 +310,10 @@
       .pager { flex-wrap: wrap; padding: 12px; }
       .pager-info { width: 100%; margin: 0 0 3px; text-align: center; }
       .modal-body { grid-template-columns: 1fr; padding: 15px; }
-      .field.full { grid-column: auto; }
+      .field.full, .batch-zone { grid-column: auto; }
       .upload-row { align-items: stretch; flex-direction: column; }
+      .library-grid { grid-template-columns: 1fr; padding: 12px 15px 16px; }
+      .library-tools { padding: 12px 15px 0; }
       .preview-stage { min-height: 300px; margin: 12px; }
       #svgaPreviewBox { height: 300px; }
     }
@@ -300,7 +321,20 @@
 </head>
 <body>
   <section class="panel">
-    <h1 class="panel-title">驾驶礼物管理</h1>
+    <div class="panel-head">
+      <div class="panel-title-wrap">
+        <h1 class="panel-title" id="pageTitle">驾驶礼物库</h1>
+        <div class="panel-subtitle" id="pageSubtitle">正在读取账号权限…</div>
+      </div>
+      <div class="panel-head-actions">
+        <span class="limit-badge" id="limitBadge" style="display:none"></span>
+        <button class="btn btn-panel-off" id="panelToggleButton" type="button" style="display:none">礼物命令：隐藏</button>
+      </div>
+    </div>
+
+    <div class="schema-warning" id="schemaWarning">
+      数据库还没有升级公共礼物库结构。请先在 5grc 数据库执行 <strong>api/sql/driving_gift_public_library.sql</strong>，再使用加盟商“选择礼物”功能。
+    </div>
 
     <div class="toolbar">
       <input class="input" id="keyword" type="search" placeholder="搜索礼物名称或 ID">
@@ -309,12 +343,11 @@
         <option value="1">显示中</option>
         <option value="0">已隐藏</option>
       </select>
-      <select class="select" id="venueFilter">
-        <option value="">全部场地</option>
-      </select>
       <button class="btn btn-ghost" id="searchButton" type="button">查询</button>
       <div class="spacer"></div>
-      <button class="btn btn-primary" id="createButton" type="button" disabled>+ 添加驾驶礼物</button>
+      <button class="btn btn-ghost" id="chooseButton" type="button" style="display:none">+ 从公共库选择</button>
+      <button class="btn btn-ghost" id="batchButton" type="button" style="display:none">批量上传</button>
+      <button class="btn btn-primary" id="createButton" type="button" style="display:none">+ 添加公共礼物</button>
     </div>
 
     <div class="table-wrap">
@@ -322,15 +355,14 @@
         <thead>
           <tr>
             <th>礼物</th>
-            <th>所属场地</th>
-            <th>价格（电池）</th>
-            <th>动画资源</th>
+            <th id="priceHeader">价格（电池）</th>
+            <th>SVGA / 动画</th>
             <th>展示配置</th>
-            <th>App 展示</th>
+            <th id="displayHeader">展示状态</th>
             <th style="text-align:right">操作</th>
           </tr>
         </thead>
-        <tbody id="giftRows"><tr><td colspan="7" class="loading">正在加载…</td></tr></tbody>
+        <tbody id="giftRows"><tr><td colspan="6" class="loading">正在加载…</td></tr></tbody>
       </table>
     </div>
 
@@ -349,29 +381,20 @@
   <div class="modal" id="giftModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-card">
       <div class="modal-head">
-        <h2 class="modal-title" id="modalTitle">添加驾驶礼物</h2>
-        <button class="modal-close" id="closeButton" type="button" aria-label="关闭">×</button>
+        <h2 class="modal-title" id="modalTitle">编辑驾驶礼物</h2>
+        <button class="modal-close" data-close="giftModal" type="button" aria-label="关闭">×</button>
       </div>
       <div class="modal-body">
         <input id="giftId" type="hidden">
-
-        <div class="field full">
-          <label for="venueId">所属场地</label>
-          <select id="venueId">
-            <option value="">请选择场地</option>
-          </select>
-        </div>
-
         <div class="field">
           <label for="giftName">礼物名称</label>
           <input id="giftName" type="text" maxlength="50" placeholder="例如：跑车">
         </div>
-
         <div class="field">
-          <label for="giftPrice">礼物价格（电池）</label>
+          <label for="giftPrice" id="priceLabel">礼物价格（电池）</label>
           <input id="giftPrice" type="number" min="0" max="9999999999" step="1" placeholder="请输入整数">
+          <div class="hint" id="priceHint"></div>
         </div>
-
         <div class="field full">
           <label for="imageUrl">礼物图片 image_url</label>
           <div class="upload-row">
@@ -380,29 +403,82 @@
           </div>
           <input id="imageFile" type="file" accept="image/*" hidden>
         </div>
-
         <div class="field full">
-          <label for="gifUrl">礼物动画 gif_url</label>
+          <label for="gifUrl">SVGA / 动画 gif_url（可为空）</label>
           <div class="upload-row">
-            <input id="gifUrl" type="text" maxlength="255" placeholder="上传后自动填入，也可手动填写">
-            <button class="btn btn-primary" id="uploadAnimationButton" type="button">上传图片 / SVGA</button>
+            <input id="gifUrl" type="text" maxlength="255" placeholder="可不填；上传 SVGA 后自动填入">
+            <button class="btn btn-primary" id="uploadAnimationButton" type="button">上传 SVGA / 动图</button>
           </div>
-          <input id="animationFile" type="file" accept="image/*,.gif,.svga,application/octet-stream" hidden>
-          <div class="hint">上传请求使用 upload_profile.php；成功后读取 url 并自动填入当前输入框。</div>
+          <input id="animationFile" type="file" accept=".svga,.gif,image/gif,application/octet-stream" hidden>
+          <div class="hint">SVGA 可为空；为空时会自动关闭“播放 SVGA”。</div>
         </div>
-
         <div class="field full">
           <label>展示开关</label>
           <div class="checks">
-            <label class="check"><input id="isDisplay" type="checkbox">App 显示</label>
+            <label class="check"><input id="isDisplay" type="checkbox"><span id="displayCheckText">显示</span></label>
             <label class="check"><input id="topBanner" type="checkbox">顶部浮条显示</label>
             <label class="check"><input id="playSvga" type="checkbox">播放 SVGA</label>
           </div>
         </div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-ghost" id="cancelButton" type="button">取消</button>
+        <button class="btn btn-ghost" data-close="giftModal" type="button">取消</button>
         <button class="btn btn-primary" id="saveButton" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="batchModal" role="dialog" aria-modal="true" aria-labelledby="batchTitle">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2 class="modal-title" id="batchTitle">批量上传公共驾驶礼物</h2>
+        <button class="modal-close" data-close="batchModal" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="batch-zone">
+          <h3>1. 选择礼物文件</h3>
+          <div class="hint">每个礼物按“同名图片 + 同名 SVGA”组成一组，例如“跑车.png”会自动配对“跑车.svga”。SVGA 可不选；图片必选。单次最多 50 组。</div>
+          <div class="batch-pick-actions">
+            <button class="btn btn-primary" id="pickBatchImages" type="button">选择礼物图片</button>
+            <button class="btn btn-ghost" id="pickBatchSvga" type="button">选择对应 SVGA</button>
+          </div>
+          <input id="batchImageFiles" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" multiple hidden>
+          <input id="batchSvgaFiles" type="file" accept=".svga,application/octet-stream" multiple hidden>
+        </div>
+        <div class="batch-zone">
+          <h3>2. 礼物配对清单</h3>
+          <div class="hint">系统按文件名（去掉扩展名）自动配对。每一行就是一个完整礼物；没有 SVGA 的组会保存为 NULL。</div>
+          <div class="batch-pair-list" id="batchPairList"></div>
+          <div class="batch-summary" id="batchPairSummary">尚未选择文件。</div>
+        </div>
+        <div class="batch-zone">
+          <h3>3. 导入规则</h3>
+          <div class="hint">公共库默认价格为 0，加盟商选入自己的场地后可以自己修改 gift_name、image_url、SVGA 和 price。公共库默认上架。</div>
+          <div class="batch-progress" id="batchProgress">尚未开始上传。</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close="batchModal" type="button">取消</button>
+        <button class="btn btn-primary" id="batchUploadButton" type="button">开始批量上传</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="libraryModal" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2 class="modal-title" id="libraryTitle">从公共礼物库选择</h2>
+        <span class="modal-subtitle" id="libraryLimitText"></span>
+        <button class="modal-close" data-close="libraryModal" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="library-tools">
+        <input class="input" id="libraryKeyword" type="search" placeholder="搜索公共礼物名称或 ID">
+        <button class="btn btn-ghost" id="librarySearchButton" type="button">搜索</button>
+      </div>
+      <div class="library-grid" id="libraryGrid"><div class="loading">正在读取公共礼物库…</div></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close="libraryModal" type="button">取消</button>
+        <button class="btn btn-primary" id="confirmChooseButton" type="button">添加所选礼物</button>
       </div>
     </div>
   </div>
@@ -410,11 +486,11 @@
   <div class="modal" id="previewModal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
     <div class="modal-card preview-card">
       <div class="modal-head">
-        <h2 class="modal-title" id="previewTitle">动图预览</h2>
-        <button class="modal-close" id="previewCloseButton" type="button" aria-label="关闭">×</button>
+        <h2 class="modal-title" id="previewTitle">动画预览</h2>
+        <button class="modal-close" data-close="previewModal" type="button" aria-label="关闭">×</button>
       </div>
       <div class="preview-stage">
-        <img id="previewImage" alt="动图预览">
+        <img id="previewImage" alt="动画预览">
         <div id="svgaPreviewBox"></div>
         <div class="preview-message" id="previewMessage">正在加载…</div>
       </div>
@@ -428,7 +504,13 @@
     const API_URL = '/api/operat/driving_gift_detail.php';
     const UPLOAD_URL = 'https://app.kwxapp.cn/app/img/userimg/upload_profile.php';
     const SVGA_PROXY_URL = '/api/operat/svga_proxy.php';
-    const state = { page: 1, pageSize: 20, total: 0, list: [], venues: [], loading: false };
+    const params = new URLSearchParams(location.search);
+    const state = {
+      mode: '', roleId: 0, venueId: Number(params.get('venue_id') || params.get('id') || 0), venueName: '',
+      selectionLimit: 5, selectedCount: 0, panelDisplay: 0, schemaReady: true,
+      page: 1, pageSize: 20, total: 0, list: [], library: [], libraryChecked: new Set(), loading: false,
+      batchImages: [], batchSvga: []
+    };
     const byId = id => document.getElementById(id);
     let toastTimer = null;
     let svgaPreviewPlayer = null;
@@ -445,11 +527,11 @@
       toast.textContent = message;
       toast.className = 'toast show' + (type ? ' ' + type : '');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2200);
+      toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2600);
     }
 
     async function requestJson(url, options = {}) {
-      const response = await fetch(url, { credentials: 'include', ...options });
+      const response = await fetch(url, { credentials: 'include', cache: 'no-store', ...options });
       const text = await response.text();
       let data;
       try { data = JSON.parse(text); } catch (error) { throw new Error('接口未返回有效 JSON'); }
@@ -457,42 +539,117 @@
       return data;
     }
 
-    function queryString(params) {
+    function queryString(values) {
       const search = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) search.set(key, value);
+      Object.entries(values).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) search.set(key, String(value));
       });
       return search.toString();
     }
 
+    async function postAction(action, payload) {
+      return requestJson(`${API_URL}?act=${encodeURIComponent(action)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {})
+      });
+    }
+
+    function publicMode() { return state.mode === 'admin'; }
+    function franchiseMode() { return state.mode === 'franchise'; }
+
+    async function loadMeta() {
+      const result = await requestJson(`${API_URL}?${queryString({ act: 'meta', venue_id: state.venueId || '' })}`);
+      const data = result.data || {};
+      state.mode = String(data.mode || '');
+      state.roleId = Number(data.role_id || 0);
+      state.selectionLimit = Number(data.selection_limit || 5);
+      state.schemaReady = Number(data.schema_ready || 0) === 1;
+      if (franchiseMode()) {
+        state.venueId = Number(data.venue && data.venue.id || 0);
+        state.venueName = String(data.venue && data.venue.venue_name || '');
+        state.selectedCount = Number(data.selected_count || 0);
+        state.panelDisplay = Number(data.venue && data.venue.is_gift_command_panel_display || 0) === 1 ? 1 : 0;
+      }
+      renderMode();
+    }
+
+    function renderMode() {
+      byId('schemaWarning').style.display = state.schemaReady ? 'none' : 'block';
+      if (publicMode()) {
+        document.title = '驾驶礼物公共库';
+        byId('pageTitle').textContent = '驾驶礼物公共库';
+        byId('pageSubtitle').textContent = '管理员 role_id 1/2 维护公共礼物；加盟商只能从这里选择。';
+        byId('priceHeader').textContent = '默认价格（加盟商可改）';
+        byId('displayHeader').textContent = '公共库状态';
+        byId('displayCheckText').textContent = '公共库可选';
+        byId('priceLabel').textContent = '默认价格（电池）';
+        byId('priceHint').textContent = '公共库价格只是默认值；加盟商选入场地后可以自行修改。';
+        byId('createButton').style.display = '';
+        byId('batchButton').style.display = '';
+        byId('createButton').disabled = !state.schemaReady;
+        byId('batchButton').disabled = !state.schemaReady;
+        byId('chooseButton').style.display = 'none';
+        byId('panelToggleButton').style.display = 'none';
+        byId('limitBadge').style.display = 'none';
+      } else {
+        document.title = '场地驾驶礼物库';
+        byId('pageTitle').textContent = `${state.venueName || '场地'} · 驾驶礼物库`;
+        byId('pageSubtitle').textContent = `场地 ID：${state.venueId}。从平台公共库选择礼物，每个场地固定最多 ${state.selectionLimit} 个；名称、图片、SVGA、价格都可以自己调整。`;
+        byId('priceHeader').textContent = '场地价格（电池）';
+        byId('displayHeader').textContent = 'App 展示';
+        byId('displayCheckText').textContent = 'App 显示';
+        byId('priceLabel').textContent = '场地礼物价格（电池）';
+        byId('priceHint').textContent = '该价格只作用于当前场地，不影响公共礼物和其他加盟商。';
+        byId('createButton').style.display = 'none';
+        byId('batchButton').style.display = 'none';
+        byId('chooseButton').style.display = '';
+        byId('panelToggleButton').style.display = '';
+        byId('limitBadge').style.display = '';
+        updateFranchiseBadges();
+      }
+    }
+
+    function updateFranchiseBadges() {
+      if (!franchiseMode()) return;
+      byId('limitBadge').textContent = `已选 ${state.selectedCount}/${state.selectionLimit}`;
+      const button = byId('panelToggleButton');
+      button.textContent = `礼物命令：${state.panelDisplay ? '显示' : '隐藏'}`;
+      button.className = `btn ${state.panelDisplay ? 'btn-panel-on' : 'btn-panel-off'}`;
+      byId('chooseButton').disabled = !state.schemaReady || state.selectedCount >= state.selectionLimit;
+    }
+
     function imageCell(row) {
       const image = row.image_url
-        ? `<img class="thumb" src="${escapeHtml(row.image_url)}" alt="" onerror="this.classList.add('thumb-empty');this.removeAttribute('src');this.alt='加载失败'">`
+        ? `<img class="thumb" src="${escapeHtml(row.image_url)}" alt="" onerror="this.style.display='none'">`
         : '<div class="thumb thumb-empty">无图片</div>';
-      return `<div class="gift-cell">${image}<div><div class="gift-name">${escapeHtml(row.gift_name)}</div><div class="gift-id">ID：${Number(row.id)}</div>${row.image_url ? `<a class="file-link" href="${escapeHtml(row.image_url)}" target="_blank" rel="noopener">查看图片</a>` : ''}</div></div>`;
+      const source = franchiseMode() && Number(row.source_gift_id || 0) > 0
+        ? `<div class="gift-id">公共库 ID：${Number(row.source_gift_id)}</div>`
+        : '';
+      return `<div class="gift-cell">${image}<div><div class="gift-name">${escapeHtml(row.gift_name || '')}</div><div class="gift-id">记录 ID：${Number(row.id || 0)}</div>${source}${row.image_url ? `<a class="file-link" href="${escapeHtml(row.image_url)}" target="_blank" rel="noopener">查看图片</a>` : ''}</div></div>`;
     }
 
     function renderRows() {
       const body = byId('giftRows');
       if (!state.list.length) {
-        body.innerHTML = '<tr><td colspan="7" class="empty">暂无驾驶礼物</td></tr>';
+        body.innerHTML = `<tr><td colspan="6" class="empty">${publicMode() ? '公共礼物库暂无礼物' : '当前场地还没有选择驾驶礼物'}</td></tr>`;
       } else {
         body.innerHTML = state.list.map(row => {
           const displayOn = Number(row.is_display) === 1;
           const bannerOn = Number(row.is_top_banner_show) === 1;
           const svgaOn = Number(row.is_play_svga) === 1;
+          const statusText = publicMode() ? (displayOn ? '库中可选' : '库中隐藏') : (displayOn ? '显示中' : '已隐藏');
+          const deleteText = publicMode() ? '删除' : '移除';
           return `<tr>
             <td>${imageCell(row)}</td>
-            <td><div class="gift-name">${escapeHtml(row.venue_name || '未知场地')}</div><div class="gift-id">场地 ID：${Number(row.venue_id || 0)}</div></td>
             <td><span class="price">${Number(row.gift_price || 0)}</span></td>
-            <td>${row.gif_url ? `<button class="preview-link" data-preview-url="${escapeHtml(row.gif_url)}" data-preview-name="${escapeHtml(row.gift_name || '动图预览')}" type="button">点击播放</button>` : '<span class="gift-id">未配置</span>'}</td>
+            <td>${row.gif_url ? `<button class="preview-link" data-preview-url="${escapeHtml(row.gif_url)}" data-preview-name="${escapeHtml(row.gift_name || '动画预览')}" type="button">点击播放</button>` : '<span class="muted">可为空</span>'}</td>
             <td><div class="switch-summary"><span>顶部浮条：<strong>${bannerOn ? '显示' : '隐藏'}</strong></span><span>SVGA：<strong>${svgaOn ? '播放' : '关闭'}</strong></span></div></td>
-            <td><span class="tag ${displayOn ? 'tag-on' : 'tag-off'}" data-toggle="${Number(row.id)}" data-value="${displayOn ? 0 : 1}">${displayOn ? '显示中' : '已隐藏'}</span></td>
-            <td><div class="actions"><button class="btn btn-ghost btn-small" data-edit="${Number(row.id)}" type="button">编辑</button><button class="btn btn-danger btn-small" data-delete="${Number(row.id)}" type="button">删除</button></div></td>
+            <td><span class="tag ${displayOn ? 'tag-on' : 'tag-off'}" data-toggle="${Number(row.id)}" data-value="${displayOn ? 0 : 1}">${statusText}</span></td>
+            <td><div class="actions"><button class="btn btn-ghost btn-small" data-edit="${Number(row.id)}" type="button">编辑</button><button class="btn btn-danger btn-small" data-delete="${Number(row.id)}" type="button">${deleteText}</button></div></td>
           </tr>`;
         }).join('');
       }
-
       const pages = Math.max(1, Math.ceil(state.total / state.pageSize));
       byId('pagerInfo').textContent = `第 ${state.total ? state.page : 0}/${state.total ? pages : 0} 页，共 ${state.total} 条`;
       byId('prevButton').disabled = state.page <= 1;
@@ -500,44 +657,376 @@
       bindRowEvents();
     }
 
+    async function loadList() {
+      if (state.loading) return;
+      state.loading = true;
+      byId('giftRows').innerHTML = '<tr><td colspan="6" class="loading">正在加载…</td></tr>';
+      try {
+        const result = await requestJson(`${API_URL}?${queryString({
+          act: 'list', page: state.page, page_size: state.pageSize,
+          q: byId('keyword').value.trim(), is_display: byId('displayFilter').value,
+          venue_id: franchiseMode() ? state.venueId : ''
+        })}`);
+        state.list = Array.isArray(result.data.list) ? result.data.list : [];
+        state.total = Number(result.data.pagination && result.data.pagination.total || 0);
+        if (franchiseMode()) updateFranchiseBadges();
+        const maxPage = Math.max(1, Math.ceil(state.total / state.pageSize));
+        if (state.page > maxPage) {
+          state.page = maxPage;
+          state.loading = false;
+          return loadList();
+        }
+        renderRows();
+      } catch (error) {
+        state.list = [];
+        state.total = 0;
+        byId('giftRows').innerHTML = `<tr><td colspan="6" class="empty">加载失败：${escapeHtml(error.message)}</td></tr>`;
+      } finally {
+        state.loading = false;
+      }
+    }
+
     function bindRowEvents() {
       document.querySelectorAll('[data-edit]').forEach(button => {
         button.onclick = () => {
-          const id = Number(button.dataset.edit);
-          const row = state.list.find(item => Number(item.id) === id);
-          if (row) openModal(row);
+          const row = state.list.find(item => Number(item.id) === Number(button.dataset.edit));
+          if (row) openGiftModal(row);
         };
       });
-
       document.querySelectorAll('[data-delete]').forEach(button => {
         button.onclick = async () => {
           const id = Number(button.dataset.delete);
           const row = state.list.find(item => Number(item.id) === id);
-          if (!confirm(`确定删除驾驶礼物“${row ? row.gift_name : id}”吗？\n已产生订单的礼物建议改为隐藏。`)) return;
+          const text = publicMode()
+            ? `确定删除公共礼物“${row ? row.gift_name : id}”吗？\n已经被场地选中的副本不会一起删除。`
+            : `确定把“${row ? row.gift_name : id}”从当前场地移除吗？`;
+          if (!confirm(text)) return;
           try {
-            await postAction('delete', { id });
-            showToast('删除成功');
+            const result = await postAction('delete', { id });
+            showToast(result.msg || '操作成功');
+            await loadMeta();
             await loadList();
-          } catch (error) { showToast(error.message, 'error'); }
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
         };
       });
-
       document.querySelectorAll('[data-toggle]').forEach(tag => {
         tag.onclick = async () => {
           try {
             await postAction('toggle_display', { id: Number(tag.dataset.toggle), is_display: Number(tag.dataset.value) });
-            showToast('展示状态已更新');
+            showToast(publicMode() ? '公共库状态已更新' : 'App 展示状态已更新');
             await loadList();
-          } catch (error) { showToast(error.message, 'error'); }
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
         };
       });
-
       document.querySelectorAll('[data-preview-url]').forEach(button => {
-        button.onclick = () => openAnimationPreview(
-          button.dataset.previewUrl || '',
-          button.dataset.previewName || '动图预览'
-        );
+        button.onclick = () => openAnimationPreview(button.dataset.previewUrl || '', button.dataset.previewName || '动画预览');
       });
+    }
+
+    function openGiftModal(row = null) {
+      if (!row && !publicMode()) return;
+      byId('modalTitle').textContent = row ? (publicMode() ? '编辑公共礼物' : '编辑场地礼物') : '添加公共礼物';
+      byId('giftId').value = row ? row.id : '';
+      byId('giftName').value = row ? row.gift_name || '' : '';
+      byId('giftPrice').value = row ? row.gift_price ?? '' : '0';
+      byId('imageUrl').value = row ? row.image_url || '' : '';
+      byId('gifUrl').value = row ? row.gif_url || '' : '';
+      byId('isDisplay').checked = row ? Number(row.is_display) === 1 : true;
+      byId('topBanner').checked = row ? Number(row.is_top_banner_show) === 1 : true;
+      byId('playSvga').checked = row ? Number(row.is_play_svga) === 1 : false;
+      byId('giftModal').classList.add('show');
+      setTimeout(() => byId('giftName').focus(), 0);
+    }
+
+    async function saveGift() {
+      const id = Number(byId('giftId').value || 0);
+      const priceValue = byId('giftPrice').value.trim();
+      const payload = {
+        id,
+        gift_name: byId('giftName').value.trim(),
+        gift_price: priceValue || '0',
+        image_url: byId('imageUrl').value.trim(),
+        gif_url: byId('gifUrl').value.trim(),
+        is_display: byId('isDisplay').checked ? 1 : 0,
+        is_top_banner_show: byId('topBanner').checked ? 1 : 0,
+        is_play_svga: byId('gifUrl').value.trim() && byId('playSvga').checked ? 1 : 0
+      };
+      if (!payload.gift_name) return showToast('请输入礼物名称', 'error');
+      if (!/^\d+$/.test(payload.gift_price)) return showToast('礼物价格必须是整数', 'error');
+      if (!payload.image_url) return showToast('请上传或填写礼物图片', 'error');
+
+      const button = byId('saveButton');
+      button.disabled = true;
+      button.textContent = '保存中…';
+      try {
+        await postAction(id ? 'update' : 'create', payload);
+        closeModal('giftModal');
+        showToast(id ? '保存成功' : '公共礼物新增成功');
+        await loadMeta();
+        await loadList();
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = '保存';
+      }
+    }
+
+    async function uploadFile(file) {
+      const form = new FormData();
+      form.append('file', file);
+      const response = await fetch(UPLOAD_URL, { method: 'POST', body: form });
+      const text = await response.text();
+      let result;
+      try { result = JSON.parse(text); } catch (error) { throw new Error(`${file.name}：上传接口未返回有效 JSON`); }
+      const url = String(result.url || '').trim();
+      if (!response.ok || Number(result.code) !== 0 || !url) {
+        throw new Error(`${file.name}：${result.msg || '上传失败'}`);
+      }
+      return url;
+    }
+
+    async function uploadAndFill(file, inputId, button) {
+      if (!file) return;
+      const oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = '上传中…';
+      try {
+        byId(inputId).value = await uploadFile(file);
+        if (inputId === 'gifUrl') byId('playSvga').checked = true;
+        showToast('上传成功，链接已自动填入');
+      } catch (error) {
+        showToast(error.message || '上传失败', 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = oldText;
+      }
+    }
+
+    function baseFileName(name) {
+      return String(name || '').replace(/\.[^.]+$/, '').trim();
+    }
+
+    function fileKey(file) {
+      return baseFileName(file && file.name).toLowerCase();
+    }
+
+    function isImageFile(file) {
+      const name = String(file && file.name || '').toLowerCase();
+      const type = String(file && file.type || '').toLowerCase();
+      return /^image\//.test(type) || /\.(png|jpe?g|webp|gif|bmp)$/i.test(name);
+    }
+
+    function isSvgaFile(file) {
+      return /\.svga$/i.test(String(file && file.name || ''));
+    }
+
+    function buildBatchPairs() {
+      const svgaMap = new Map();
+      state.batchSvga.forEach(file => {
+        const key = fileKey(file);
+        if (key && !svgaMap.has(key)) svgaMap.set(key, file);
+      });
+      const pairs = state.batchImages.map((image, index) => ({
+        key: fileKey(image),
+        name: baseFileName(image.name).slice(0, 50) || `礼物${index + 1}`,
+        image,
+        svga: svgaMap.get(fileKey(image)) || null
+      }));
+      const imageKeys = new Set(pairs.map(pair => pair.key));
+      const orphanSvga = state.batchSvga.filter(file => !imageKeys.has(fileKey(file)));
+      return { pairs, orphanSvga };
+    }
+
+    function renderBatchFiles() {
+      const result = buildBatchPairs();
+      const list = byId('batchPairList');
+      if (!result.pairs.length && !result.orphanSvga.length) {
+        list.innerHTML = '<div class="muted">尚未选择文件</div>';
+        byId('batchPairSummary').textContent = '请先选择礼物图片，再选择同名 SVGA（SVGA 可为空）。';
+        return;
+      }
+      const rows = result.pairs.map(pair => `<div class="batch-pair">
+        <div class="batch-pair-name">${escapeHtml(pair.name)}</div>
+        <div class="batch-pair-file"><strong>图片：</strong>${escapeHtml(pair.image.name)}</div>
+        <div class="batch-pair-file"><strong>SVGA：</strong>${pair.svga ? escapeHtml(pair.svga.name) : '未配置（NULL）'}</div>
+      </div>`);
+      result.orphanSvga.forEach(file => {
+        rows.push(`<div class="batch-pair invalid">
+          <div class="batch-pair-name">${escapeHtml(baseFileName(file.name) || file.name)}</div>
+          <div class="batch-pair-file missing">缺少同名礼物图片</div>
+          <div class="batch-pair-file"><strong>SVGA：</strong>${escapeHtml(file.name)}</div>
+        </div>`);
+      });
+      list.innerHTML = rows.join('');
+      const pairedCount = result.pairs.filter(pair => pair.svga).length;
+      const withoutSvga = result.pairs.length - pairedCount;
+      const orphanText = result.orphanSvga.length ? `；${result.orphanSvga.length} 个 SVGA 未匹配图片` : '';
+      byId('batchPairSummary').textContent = `共 ${result.pairs.length} 组礼物：${pairedCount} 组含 SVGA，${withoutSvga} 组无 SVGA${orphanText}。`;
+    }
+
+    function openBatchModal() {
+      state.batchImages = [];
+      state.batchSvga = [];
+      byId('batchImageFiles').value = '';
+      byId('batchSvgaFiles').value = '';
+      byId('batchProgress').textContent = '尚未开始上传。';
+      renderBatchFiles();
+      byId('batchModal').classList.add('show');
+    }
+
+    async function runBatchUpload() {
+      const batch = buildBatchPairs();
+      if (!batch.pairs.length) return showToast('请先选择礼物图片', 'error');
+      if (batch.pairs.length > 50) return showToast('单次最多 50 组礼物', 'error');
+      if (batch.orphanSvga.length) {
+        return showToast(`有 ${batch.orphanSvga.length} 个 SVGA 没有同名图片，请补齐后再上传`, 'error');
+      }
+
+      const button = byId('batchUploadButton');
+      button.disabled = true;
+      button.textContent = '上传中…';
+      const items = [];
+      try {
+        for (let i = 0; i < batch.pairs.length; i += 1) {
+          const pair = batch.pairs[i];
+          byId('batchProgress').textContent = `正在上传第 ${i + 1}/${batch.pairs.length} 组：${pair.name}（图片）`;
+          const imageUrl = await uploadFile(pair.image);
+          let gifUrl = '';
+          if (pair.svga) {
+            byId('batchProgress').textContent = `正在上传第 ${i + 1}/${batch.pairs.length} 组：${pair.name}（SVGA）`;
+            gifUrl = await uploadFile(pair.svga);
+          }
+          items.push({
+            gift_name: pair.name,
+            gift_price: 0,
+            image_url: imageUrl,
+            gif_url: gifUrl,
+            is_display: 1,
+            is_top_banner_show: 1,
+            is_play_svga: gifUrl ? 1 : 0
+          });
+        }
+        byId('batchProgress').textContent = `文件上传完成，正在写入 ${items.length} 组公共礼物…`;
+        const result = await postAction('batch_create', { items });
+        byId('batchProgress').textContent = `完成：已导入 ${Number(result.data && result.data.count || items.length)} 组公共礼物。`;
+        showToast('批量导入成功');
+        await loadMeta();
+        await loadList();
+        setTimeout(() => closeModal('batchModal'), 500);
+      } catch (error) {
+        byId('batchProgress').textContent = `上传中断：${error.message}`;
+        showToast(error.message || '批量上传失败', 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = '开始批量上传';
+      }
+    }
+
+    async function openLibraryModal() {
+      if (!state.schemaReady) return showToast('请先执行礼物库数据库升级 SQL', 'error');
+      if (state.selectedCount >= state.selectionLimit) return showToast(`当前场地已经达到 ${state.selectionLimit} 个礼物上限`, 'error');
+      state.libraryChecked = new Set();
+      byId('libraryKeyword').value = '';
+      byId('libraryModal').classList.add('show');
+      await loadLibrary();
+    }
+
+    async function loadLibrary() {
+      byId('libraryGrid').innerHTML = '<div class="loading">正在读取公共礼物库…</div>';
+      try {
+        const result = await requestJson(`${API_URL}?${queryString({ act: 'library', venue_id: state.venueId, q: byId('libraryKeyword').value.trim() })}`);
+        state.library = Array.isArray(result.data.list) ? result.data.list : [];
+        renderLibrary();
+      } catch (error) {
+        byId('libraryGrid').innerHTML = `<div class="empty">加载失败：${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function renderLibrary() {
+      const remaining = Math.max(0, state.selectionLimit - state.selectedCount);
+      byId('libraryLimitText').textContent = `还可选择 ${remaining} 个`;
+      const grid = byId('libraryGrid');
+      if (!state.library.length) {
+        grid.innerHTML = '<div class="empty">公共礼物库暂无可选礼物</div>';
+        return;
+      }
+      grid.innerHTML = state.library.map(row => {
+        const id = Number(row.id || 0);
+        const selected = Number(row.selected || 0) === 1;
+        const checked = state.libraryChecked.has(id);
+        const image = row.image_url
+          ? `<img class="thumb" src="${escapeHtml(row.image_url)}" alt="" onerror="this.style.display='none'">`
+          : '<div class="thumb thumb-empty">无图片</div>';
+        return `<label class="library-card ${selected ? 'selected' : ''} ${checked ? 'checked' : ''}">
+          <input class="library-card-check" type="checkbox" data-library-check="${id}" ${selected ? 'checked disabled' : (checked ? 'checked' : '')}>
+          <div class="library-card-main">${image}<div class="library-card-text"><div class="library-card-name">${escapeHtml(row.gift_name || '')}</div><div class="library-card-meta">公共库 ID：${id} · 默认价格 ${Number(row.gift_price || 0)}</div><div class="library-card-meta">${row.gif_url ? '含 SVGA / 动画' : '无 SVGA（可选）'}</div></div></div>
+        </label>`;
+      }).join('');
+      document.querySelectorAll('[data-library-check]').forEach(check => {
+        check.onchange = () => {
+          const id = Number(check.dataset.libraryCheck || 0);
+          if (check.disabled) return;
+          if (check.checked) {
+            const remainingNow = Math.max(0, state.selectionLimit - state.selectedCount);
+            if (state.libraryChecked.size >= remainingNow) {
+              check.checked = false;
+              return showToast(`本次最多还能选择 ${remainingNow} 个礼物`, 'error');
+            }
+            state.libraryChecked.add(id);
+          } else {
+            state.libraryChecked.delete(id);
+          }
+          renderLibrary();
+        };
+      });
+    }
+
+    async function confirmChoose() {
+      const ids = Array.from(state.libraryChecked);
+      if (!ids.length) return showToast('请先勾选要添加的公共礼物', 'error');
+      const button = byId('confirmChooseButton');
+      button.disabled = true;
+      button.textContent = '添加中…';
+      try {
+        const result = await postAction('select_batch', { venue_id: state.venueId, gift_ids: ids });
+        showToast(result.msg || '礼物已添加到场地');
+        closeModal('libraryModal');
+        await loadMeta();
+        state.page = 1;
+        await loadList();
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = '添加所选礼物';
+      }
+    }
+
+    async function togglePanel() {
+      if (!franchiseMode()) return;
+      const next = state.panelDisplay ? 0 : 1;
+      const text = next ? '显示' : '隐藏';
+      if (!confirm(`确定把当前场地驾驶页的礼物命令列表设置为【${text}】吗？`)) return;
+      const button = byId('panelToggleButton');
+      button.disabled = true;
+      try {
+        const result = await postAction('toggle_panel', {
+          venue_id: state.venueId,
+          is_gift_command_panel_display: next
+        });
+        state.panelDisplay = Number(result.data && result.data.is_gift_command_panel_display || 0) === 1 ? 1 : 0;
+        updateFranchiseBadges();
+        showToast(result.msg || '礼物命令状态已更新');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        button.disabled = false;
+      }
     }
 
     function fileExtension(url) {
@@ -589,209 +1078,101 @@
     }
 
     function openAnimationPreview(url, giftName) {
-      if (!url) return showToast('该礼物未配置动图', 'error');
-
+      if (!url) return showToast('该礼物未配置动画', 'error');
       resetAnimationPreview();
-      byId('previewTitle').textContent = `${giftName} · 动图预览`;
+      byId('previewTitle').textContent = `${giftName} · 动画预览`;
       byId('previewMessage').textContent = '正在加载…';
       byId('previewModal').classList.add('show');
-
       if (fileExtension(url) === 'svga') {
-        if (!ensureSvgaPreviewPlayer()) {
-          showPreviewError('SVGA 播放组件加载失败，请刷新后重试');
-          return;
-        }
-
+        if (!ensureSvgaPreviewPlayer()) return showPreviewError('SVGA 播放组件加载失败，请刷新后重试');
         byId('svgaPreviewBox').style.display = 'block';
-        const proxyUrl = `${SVGA_PROXY_URL}?url=${encodeURIComponent(url)}`;
         svgaPreviewParser.load(
-          proxyUrl,
+          `${SVGA_PROXY_URL}?url=${encodeURIComponent(url)}`,
           videoItem => {
             try {
               byId('previewMessage').style.display = 'none';
               svgaPreviewPlayer.setVideoItem(videoItem);
               svgaPreviewPlayer.startAnimation();
             } catch (error) {
-              console.error('SVGA 播放失败：', error);
               showPreviewError('SVGA 播放失败');
             }
           },
-          error => {
-            console.error('SVGA 加载失败：', error);
-            showPreviewError('SVGA 加载失败，请检查代理接口返回');
-          }
+          () => showPreviewError('SVGA 加载失败，请检查资源链接')
         );
         return;
       }
-
       const image = byId('previewImage');
-      image.onload = () => {
-        byId('previewMessage').style.display = 'none';
-        image.style.display = 'block';
-      };
-      image.onerror = () => showPreviewError('动图加载失败');
+      image.onload = () => { byId('previewMessage').style.display = 'none'; image.style.display = 'block'; };
+      image.onerror = () => showPreviewError('动画加载失败');
       image.src = url;
     }
 
-    function closeAnimationPreview() {
-      byId('previewModal').classList.remove('show');
-      resetAnimationPreview();
+    function closeModal(id) {
+      const modal = byId(id);
+      if (!modal) return;
+      modal.classList.remove('show');
+      if (id === 'previewModal') resetAnimationPreview();
     }
 
-    async function loadList() {
-      if (state.loading) return;
-      state.loading = true;
-      byId('giftRows').innerHTML = '<tr><td colspan="7" class="loading">正在加载…</td></tr>';
-      try {
-        const query = queryString({
-          act: 'list', page: state.page, page_size: state.pageSize,
-          q: byId('keyword').value.trim(), is_display: byId('displayFilter').value,
-          venue_id: byId('venueFilter').value
-        });
-        const result = await requestJson(`${API_URL}?${query}`);
-        state.list = Array.isArray(result.data.list) ? result.data.list : [];
-        state.total = Number(result.data.pagination && result.data.pagination.total || 0);
-        const maxPage = Math.max(1, Math.ceil(state.total / state.pageSize));
-        if (state.page > maxPage) { state.page = maxPage; state.loading = false; return loadList(); }
-        renderRows();
-      } catch (error) {
-        state.list = [];
-        state.total = 0;
-        byId('giftRows').innerHTML = `<tr><td colspan="7" class="empty">加载失败：${escapeHtml(error.message)}</td></tr>`;
-      } finally { state.loading = false; }
-    }
-
-    async function loadVenues() {
-      try {
-        const result = await requestJson(`${API_URL}?act=venues`);
-        state.venues = Array.isArray(result.data.list) ? result.data.list : [];
-        const options = state.venues.map(venue =>
-          `<option value="${Number(venue.id)}">${Number(venue.id)} - ${escapeHtml(venue.venue_name || '')}</option>`
-        ).join('');
-        byId('venueFilter').innerHTML = '<option value="">全部场地</option>' + options;
-        byId('venueId').innerHTML = '<option value="">请选择场地</option>' + options;
-        byId('createButton').disabled = state.venues.length === 0;
-        if (state.venues.length === 1) {
-          byId('venueId').value = String(state.venues[0].id);
-        }
-        if (state.venues.length === 0) {
-          showToast('当前账号没有可管理的场地', 'error');
-        }
-      } catch (error) {
-        byId('createButton').disabled = true;
-        showToast(error.message || '场地加载失败', 'error');
-      }
-    }
-
-    function openModal(row = null) {
-      byId('modalTitle').textContent = row ? '编辑驾驶礼物' : '添加驾驶礼物';
-      byId('giftId').value = row ? row.id : '';
-      byId('venueId').value = row
-        ? String(row.venue_id || '')
-        : (state.venues.length === 1 ? String(state.venues[0].id) : '');
-      byId('giftName').value = row ? row.gift_name || '' : '';
-      byId('giftPrice').value = row ? row.gift_price ?? '' : '';
-      byId('imageUrl').value = row ? row.image_url || '' : '';
-      byId('gifUrl').value = row ? row.gif_url || '' : '';
-      byId('isDisplay').checked = row ? Number(row.is_display) === 1 : true;
-      byId('topBanner').checked = row ? Number(row.is_top_banner_show) === 1 : false;
-      byId('playSvga').checked = row ? Number(row.is_play_svga) === 1 : false;
-      byId('giftModal').classList.add('show');
-      setTimeout(() => byId('giftName').focus(), 0);
-    }
-
-    function closeModal() { byId('giftModal').classList.remove('show'); }
-
-    async function postAction(action, payload) {
-      return requestJson(`${API_URL}?act=${encodeURIComponent(action)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
-
-    async function saveGift() {
-      const id = Number(byId('giftId').value || 0);
-      const priceValue = byId('giftPrice').value.trim();
-      const payload = {
-        venue_id: Number(byId('venueId').value || 0),
-        gift_name: byId('giftName').value.trim(),
-        gift_price: priceValue,
-        image_url: byId('imageUrl').value.trim(),
-        gif_url: byId('gifUrl').value.trim(),
-        is_display: byId('isDisplay').checked ? 1 : 0,
-        is_top_banner_show: byId('topBanner').checked ? 1 : 0,
-        is_play_svga: byId('playSvga').checked ? 1 : 0
-      };
-
-      if (payload.venue_id <= 0) return showToast('请选择场地', 'error');
-      if (!payload.gift_name) return showToast('请输入礼物名称', 'error');
-      if (priceValue === '' || !/^\d+$/.test(priceValue)) return showToast('礼物价格必须是整数', 'error');
-      if (!payload.image_url) return showToast('请上传或填写礼物图片', 'error');
-
-      const button = byId('saveButton');
-      button.disabled = true;
-      button.textContent = '保存中…';
-      try {
-        await postAction(id ? 'update' : 'create', id ? { id, ...payload } : payload);
-        closeModal();
-        showToast(id ? '保存成功' : '新增成功');
-        await loadList();
-      } catch (error) { showToast(error.message, 'error'); }
-      finally { button.disabled = false; button.textContent = '保存'; }
-    }
-
-    async function uploadAndFill(file, inputId, button) {
-      if (!file) return;
-      const form = new FormData();
-      form.append('file', file);
-      const oldText = button.textContent;
-      button.disabled = true;
-      button.textContent = '上传中…';
-      try {
-        const response = await fetch(UPLOAD_URL, { method: 'POST', body: form });
-        const text = await response.text();
-        let result;
-        try { result = JSON.parse(text); } catch (error) { throw new Error('上传接口未返回有效 JSON'); }
-        const imageUrl = String(result.url || '').trim();
-        if (!response.ok || Number(result.code) !== 0 || !imageUrl) {
-          throw new Error(result.msg || '上传接口未返回 url');
-        }
-        byId(inputId).value = imageUrl;
-        showToast('上传成功，链接已自动填入');
-      } catch (error) { showToast(error.message || '上传失败', 'error'); }
-      finally { button.disabled = false; button.textContent = oldText; }
-    }
+    document.querySelectorAll('[data-close]').forEach(button => {
+      button.onclick = () => closeModal(button.dataset.close);
+    });
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', event => { if (event.target === modal) closeModal(modal.id); });
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') document.querySelectorAll('.modal.show').forEach(modal => closeModal(modal.id));
+    });
 
     byId('searchButton').onclick = () => { state.page = 1; loadList(); };
     byId('keyword').onkeydown = event => { if (event.key === 'Enter') { state.page = 1; loadList(); } };
     byId('displayFilter').onchange = () => { state.page = 1; loadList(); };
-    byId('venueFilter').onchange = () => { state.page = 1; loadList(); };
-    byId('createButton').onclick = () => openModal();
-    byId('closeButton').onclick = closeModal;
-    byId('cancelButton').onclick = closeModal;
-    byId('saveButton').onclick = saveGift;
-    byId('giftModal').onclick = event => { if (event.target === byId('giftModal')) closeModal(); };
-    byId('previewCloseButton').onclick = closeAnimationPreview;
-    byId('previewModal').onclick = event => { if (event.target === byId('previewModal')) closeAnimationPreview(); };
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        closeModal();
-        closeAnimationPreview();
-      }
-    });
-
     byId('prevButton').onclick = () => { if (state.page > 1) { state.page -= 1; loadList(); } };
     byId('nextButton').onclick = () => { state.page += 1; loadList(); };
     byId('pageSize').onchange = event => { state.pageSize = Number(event.target.value || 20); state.page = 1; loadList(); };
-
+    byId('createButton').onclick = () => openGiftModal();
+    byId('saveButton').onclick = saveGift;
+    byId('batchButton').onclick = openBatchModal;
+    byId('pickBatchImages').onclick = () => byId('batchImageFiles').click();
+    byId('pickBatchSvga').onclick = () => byId('batchSvgaFiles').click();
+    byId('batchImageFiles').onchange = event => {
+      const files = Array.from(event.target.files || []);
+      const valid = files.filter(isImageFile).slice(0, 50);
+      const rejected = files.length - valid.length;
+      state.batchImages = valid;
+      if (rejected > 0) showToast(`已忽略 ${rejected} 个非图片文件`, 'error');
+      renderBatchFiles();
+    };
+    byId('batchSvgaFiles').onchange = event => {
+      const files = Array.from(event.target.files || []);
+      const valid = files.filter(isSvgaFile).slice(0, 50);
+      const rejected = files.length - valid.length;
+      state.batchSvga = valid;
+      if (rejected > 0) showToast(`已忽略 ${rejected} 个非 SVGA 文件`, 'error');
+      renderBatchFiles();
+    };
+    byId('batchUploadButton').onclick = runBatchUpload;
+    byId('chooseButton').onclick = openLibraryModal;
+    byId('librarySearchButton').onclick = loadLibrary;
+    byId('libraryKeyword').onkeydown = event => { if (event.key === 'Enter') loadLibrary(); };
+    byId('confirmChooseButton').onclick = confirmChoose;
+    byId('panelToggleButton').onclick = togglePanel;
     byId('uploadImageButton').onclick = () => { byId('imageFile').value = ''; byId('imageFile').click(); };
     byId('imageFile').onchange = event => uploadAndFill(event.target.files[0], 'imageUrl', byId('uploadImageButton'));
     byId('uploadAnimationButton').onclick = () => { byId('animationFile').value = ''; byId('animationFile').click(); };
     byId('animationFile').onchange = event => uploadAndFill(event.target.files[0], 'gifUrl', byId('uploadAnimationButton'));
+    byId('gifUrl').addEventListener('input', () => { if (!byId('gifUrl').value.trim()) byId('playSvga').checked = false; });
 
-    loadVenues();
-    loadList();
+    (async function init() {
+      try {
+        await loadMeta();
+        await loadList();
+      } catch (error) {
+        byId('pageSubtitle').textContent = '页面初始化失败';
+        byId('giftRows').innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(error.message)}</td></tr>`;
+        showToast(error.message, 'error');
+      }
+    })();
   </script>
 </body>
 </html>

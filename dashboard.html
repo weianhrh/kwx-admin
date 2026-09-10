@@ -1970,32 +1970,26 @@
 
 .franchise-venue-actions {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 9px;
   padding-top: 4px;
 }
 
 .franchise-venue-actions .franchise-pricing-btn,
+.franchise-venue-actions .franchise-gift-btn,
 .franchise-venue-actions .franchise-manage-btn {
+  width: 100%;
   min-height: 38px;
-  min-width: 128px;
-  padding: 0 14px;
+  min-width: 0;
+  padding: 0 10px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
   margin: 0 !important;
 }
 
-.franchise-venue-actions .franchise-pricing-btn {
-  justify-self: start;
-}
-
-.franchise-venue-actions .franchise-manage-btn {
-  justify-self: end;
-}
     .category-card {
       min-height: 132px;
       display: grid;
@@ -2542,11 +2536,12 @@
       }
 
 .franchise-venue-actions {
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .franchise-venue-actions .franchise-pricing-btn,
+.franchise-venue-actions .franchise-gift-btn,
 .franchise-venue-actions .franchise-manage-btn {
   width: 100%;
   min-width: 0;
@@ -3591,6 +3586,10 @@
         renderFranchisePricingShortcut(item, venueId);
         return;
       }
+      if (isFranchiseUser() && module === 'gift' && venueId) {
+        renderFranchiseGiftShortcut(item, venueId);
+        return;
+      }
       if (shouldShowFranchiseVenueOverview(item, venueId)) {
         renderFranchiseVenueOverview(item);
         return;
@@ -3725,8 +3724,27 @@
         '</section>';
     }
 
+    function franchiseGiftShortcutItem() {
+      return {
+        id: 'franchise-driving-gift-shortcut',
+        name: 'franchise-driving-gift',
+        title: '礼物库',
+        jump: '/iframe/link/driving_gift_admin'
+      };
+    }
+
+    function renderFranchiseGiftShortcut(item, venueId) {
+      const giftItem = franchiseGiftShortcutItem();
+      const src = legacyModuleUrl(giftItem, { venueId: venueId });
+      document.querySelector('.crumb span').textContent = '加盟商 / 场地总览';
+      document.querySelector('.crumb strong').textContent = '礼物库';
+      pageContent.innerHTML = '<section class="legacy-module">' +
+        '<iframe src="' + escapeHtml(src) + '" title="礼物库"></iframe>' +
+        '</section>';
+    }
+
     function isFranchiseUser() {
-      return Number((currentUser && currentUser.role_id) || 0) === 3;
+      return [3, 4].includes(Number((currentUser && currentUser.role_id) || 0));
     }
 
     function shouldShowFranchiseVenueOverview(item, venueId) {
@@ -3867,6 +3885,9 @@
       const pricingButton = showPricingShortcut
         ? '<button class="primary-btn franchise-pricing-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenuePricing(event, this)">进入资费套餐</button>'
         : '';
+      const giftButton = showPricingShortcut
+        ? '<button class="primary-btn franchise-gift-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenueGift(event, this)">进入礼物库</button>'
+        : '';
       const stats = Array.isArray(venue.overview_stats) && venue.overview_stats.length
         ? venue.overview_stats
         : [
@@ -3888,6 +3909,7 @@
         franchiseOverviewExtraHtml(venue.overview_extra) +
         '<div class="franchise-venue-actions">' +
         pricingButton +
+        giftButton +
         '<button class="primary-btn franchise-manage-btn" type="button" data-menu-id="' + escapeHtml(String(item.id)) + '" data-venue-id="' + escapeHtml(String(venue.id)) + '" onclick="openFranchiseVenue(this)">进入' + escapeHtml(item.title) + '</button>' +
         '</div>' +
         '</article>';
@@ -3905,6 +3927,23 @@
       const venueId = el.dataset.venueId || '';
       if (!menuId || !venueId) return;
       const target = 'menu=' + encodeURIComponent(menuId) + '&venue=' + encodeURIComponent(venueId) + '&module=pricing';
+      if (location.hash.replace(/^#/, '') === target) {
+        routeFromHash();
+      } else {
+        location.hash = target;
+      }
+      if (isMobileSidebar()) {
+        closeSidebar();
+      }
+    }
+
+    function openFranchiseVenueGift(event, el) {
+      if (event) event.stopPropagation();
+      if (!el) return;
+      const menuId = el.dataset.menuId || '';
+      const venueId = el.dataset.venueId || '';
+      if (!menuId || !venueId) return;
+      const target = 'menu=' + encodeURIComponent(menuId) + '&venue=' + encodeURIComponent(venueId) + '&module=gift';
       if (location.hash.replace(/^#/, '') === target) {
         routeFromHash();
       } else {

@@ -32,7 +32,7 @@ if (!$user) {
 }
 
 $roleId = isset($user['role_id']) ? (int)$user['role_id'] : 0;
-if (!in_array($roleId, array(1, 2), true)) {
+if (!in_array($roleId, array(1, 2, 3, 4), true)) {
     svgaProxyError('无权预览驾驶礼物', 403);
 }
 
