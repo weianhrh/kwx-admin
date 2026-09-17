@@ -26,7 +26,7 @@ if (!$user || empty($user['role_id'])) {
 }
 
 $role_id = (int)$user['role_id'];
-$venue_id = $role_id != 1 ? ($user['venue_id'] ?? null) : null;
+$venue_id = !in_array($role_id, [1, 2], true) ? ($user['venue_id'] ?? null) : null;
 
 // ===== 日期处理：支持单日，也支持 start_date / end_date 区间 =====
 function is_valid_date_str($date) {
@@ -67,11 +67,12 @@ if (
     $period = 'day';
 }
 
-// ===== 排行方式：total/drive 都按驾驶订单业绩收入统计，不再合并礼物收入 =====
+// ===== 排行方式：业绩/驾驶继续沿用原口径；礼物收入单独按 orders.note='场地礼物' 统计 =====
 $rankType = $_GET['rank_type'] ?? 'total';
 $rankFieldMap = [
     'total' => 'totalPayment',
     'drive' => 'driveIncome',
+    'gift' => 'giftIncome',
 ];
 if (!isset($rankFieldMap[$rankType])) {
     $rankType = 'total';
@@ -100,7 +101,10 @@ foreach ($venueList as $venue) {
         // 驾驶收入：orders 表
         'driveIncome' => '0.00',
 
-        // 业绩收入：只统计驾驶订单收入，不含礼物收入
+        // 礼物收入：orders.note = '场地礼物'
+        'giftIncome' => '0.00',
+
+        // 业绩收入：继续沿用原口径，只统计驾驶订单收入，不含礼物收入
         'totalPayment' => '0.00',
     ];
 }
@@ -111,6 +115,7 @@ if (empty($venueMap)) {
         'msg' => '无数据',
         'totalIncome' => '0.00',
         'totalDriveIncome' => '0.00',
+        'totalGiftIncome' => '0.00',
         'rankType' => $rankType,
         'rankField' => $rankField,
         'rankTotal' => '0.00',
@@ -127,7 +132,7 @@ $orderSql = "
     WHERE end_time >= ?
       AND end_time < ?
       AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
-      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
+      AND (note NOT IN ('gift', '礼物', '场地礼物', '娃娃机抓取扣费') OR note IS NULL)
     GROUP BY reservation_id
 ";
 $orderRows = $database->query($orderSql, [$date, $dateEnd]);
@@ -156,14 +161,22 @@ foreach ($reservationRows as $row) {
     }
 }
 
-// 批量查驾驶收入：orders 表
+// 批量查驾驶收入和礼物收入。
+// 驾驶收入继续排除历史 gift/礼物/娃娃机记录，并额外排除新场地礼物；
+// 礼物收入只认当前业务约定的 orders.note = '场地礼物'。
 $paymentSql = "
-    SELECT reservation_id, COALESCE(SUM(payment_amount), 0) AS drive_income
+    SELECT
+        reservation_id,
+        COALESCE(SUM(CASE
+            WHEN (note NOT IN ('gift', '礼物', '场地礼物', '娃娃机抓取扣费') OR note IS NULL)
+            THEN payment_amount ELSE 0 END), 0) AS drive_income,
+        COALESCE(SUM(CASE
+            WHEN note = '场地礼物'
+            THEN payment_amount ELSE 0 END), 0) AS gift_income
     FROM orders
     WHERE end_time >= ?
       AND end_time < ?
       AND TRIM(IFNULL(pays_type, '')) NOT IN ('能量', '金币')
-      AND TRIM(IFNULL(note, '')) NOT IN ('gift', '礼物', '娃娃机抓取扣费')
     GROUP BY reservation_id
 ";
 $paymentRows = $database->query($paymentSql, [$date, $dateEnd]);
@@ -172,21 +185,26 @@ foreach ($paymentRows as $row) {
     $rid = $row['reservation_id'];
     if (isset($venueMap[$rid])) {
         $driveIncome = (float)$row['drive_income'];
+        $giftIncome = (float)$row['gift_income'];
         $venueMap[$rid]['driveIncome'] = number_format($driveIncome, 2, '.', '');
+        $venueMap[$rid]['giftIncome'] = number_format($giftIncome, 2, '.', '');
     }
 }
 
-// 计算每个场地业绩收入：只取驾驶订单收入
+// 业绩收入继续沿用原口径：只取驾驶收入；礼物收入单独展示/排行。
 $totalDriveIncome = 0.0;
+$totalGiftIncome = 0.0;
 $totalIncome = 0.0;
 
 foreach ($venueMap as $rid => $venue) {
     $driveIncome = (float)$venue['driveIncome'];
+    $giftIncome = (float)$venue['giftIncome'];
     $totalPayment = $driveIncome;
 
     $venueMap[$rid]['totalPayment'] = number_format($totalPayment, 2, '.', '');
 
     $totalDriveIncome += $driveIncome;
+    $totalGiftIncome += $giftIncome;
     $totalIncome += $totalPayment;
 }
 
@@ -207,6 +225,7 @@ usort($venueData, function ($a, $b) use ($rankField) {
 $rankTotalMap = [
     'total' => $totalIncome,
     'drive' => $totalDriveIncome,
+    'gift' => $totalGiftIncome,
 ];
 
 echo json_encode([
@@ -222,8 +241,9 @@ echo json_encode([
     // 兼容原来的总收入字段；当前不含礼物收入
     'totalIncome' => number_format($totalIncome, 2, '.', ''),
 
-    // 业绩收入累计
+    // 驾驶 / 礼物收入累计
     'totalDriveIncome' => number_format($totalDriveIncome, 2, '.', ''),
+    'totalGiftIncome' => number_format($totalGiftIncome, 2, '.', ''),
     'rankTotal' => number_format($rankTotalMap[$rankType], 2, '.', ''),
 
     'data' => $venueData

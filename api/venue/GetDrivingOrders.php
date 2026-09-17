@@ -1,11 +1,13 @@
 <?php
 require_once '../Database.php'; // 确保路径正确
 require_once '../lib/venue_scope.php';
+
 function logMessage($message) {
     $logFile = __DIR__ . '/order_test.log';
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
 }
+
 $database = new Database();
 $session_token = $_COOKIE['session_token'] ?? null;
 
@@ -20,10 +22,10 @@ if (!$user || !$user['role_id']) {
     exit;
 }
 
-$role_id = $user['role_id'];
+$role_id = (int)$user['role_id'];
 
-$page = $_GET['page'] ?? 1;
-$limit = $_GET['limit'] ?? 20;
+$page = max(1, (int)($_GET['page'] ?? 1));
+$limit = max(1, min(100, (int)($_GET['limit'] ?? 20)));
 $offset = ($page - 1) * $limit;
 
 $order_number   = $_GET['order_number'] ?? '';
@@ -34,6 +36,12 @@ $end_date       = $_GET['end_date'] ?? '';
 $status         = $_GET['status'] ?? '';
 $exclude_energy = $_GET['exclude_energy'] ?? 'off';
 $requestedVenueId = venue_scope_requested_id($_GET);
+
+// 收入类型：all 保持旧页面“累计收入”口径；gift 仅 orders.note='场地礼物'；drive 为其余收入。
+$incomeType = strtolower(trim((string)($_GET['income_type'] ?? 'all')));
+if (!in_array($incomeType, ['all', 'drive', 'gift'], true)) {
+    $incomeType = 'all';
+}
 
 $whereSql = " WHERE 1=1";
 $params = [];
@@ -56,16 +64,7 @@ if (!empty($serial_number)) {
     $params[] = "%$serial_number%";
 }
 
-// 起始时间：精确到分钟
-// if (!empty($start_date)) {
-//     $whereSql .= " AND start_time >= ?";
-//     $params[] = $start_date;
-// }
-
-// if (!empty($end_date)) {
-//     $whereSql .= " AND start_time <= ?";
-//     $params[] = $end_date;
-// }
+// 收入按订单结束时间统计，保持现有页面口径。
 if (!empty($start_date)) {
     $whereSql .= " AND end_time >= ?";
     $params[] = $start_date;
@@ -75,7 +74,6 @@ if (!empty($end_date)) {
     $whereSql .= " AND end_time <= ?";
     $params[] = $end_date;
 }
-
 
 // 状态筛选
 if (!empty($status)) {
@@ -90,12 +88,22 @@ if ($exclude_energy === 'on') {
 
 $whereSql .= venue_scope_apply_filter($database, $user, 'o.reservation_id', $params, $requestedVenueId);
 
+// 先保存未按收入类型切分的条件，用于同时返回累计总收入 / 驾驶收入 / 礼物收入。
+$summaryWhereSql = $whereSql;
+$summaryParams = $params;
+
+if ($incomeType === 'gift') {
+    $whereSql .= " AND o.note = '场地礼物'";
+} elseif ($incomeType === 'drive') {
+    $whereSql .= " AND (o.note <> '场地礼物' OR o.note IS NULL)";
+}
+
 // 查询语句（关联昵称）
-$sql = "SELECT o.*, u.nickname 
-        FROM orders o 
-        JOIN users u ON o.uid = u.uid 
-        $whereSql 
-        ORDER BY o.start_time DESC 
+$sql = "SELECT o.*, u.nickname
+        FROM orders o
+        JOIN users u ON o.uid = u.uid
+        $whereSql
+        ORDER BY o.start_time DESC
         LIMIT ?, ?";
 
 $paramsForData = $params;
@@ -104,8 +112,8 @@ $paramsForData[] = (int)$limit;
 
 $data = $database->query($sql, $paramsForData);
 
-// 主播后台仅展示订单原金额的 20%，不修改数据库中的订单金额。
-if ((int)$role_id === 4 && is_array($data)) {
+// 主播后台仅展示订单原金额的 80%，不修改数据库中的订单金额。
+if ($role_id === 4 && is_array($data)) {
     foreach ($data as &$order) {
         $order['payment_amount'] = number_format(
             (float)($order['payment_amount'] ?? 0) * 0.8,
@@ -117,34 +125,58 @@ if ((int)$role_id === 4 && is_array($data)) {
     unset($order);
 }
 
-// 查询总数
+// 查询当前收入类型总数
 $countSql = "SELECT COUNT(*) AS count FROM orders o $whereSql";
 $countResult = $database->query($countSql, $params);
-$totalCount = is_array($countResult) && isset($countResult[0]['count']) ? $countResult[0]['count'] : 0;
+$totalCount = is_array($countResult) && isset($countResult[0]['count']) ? (int)$countResult[0]['count'] : 0;
 
-// 构建总金额统计 SQL
-$sumSql = "SELECT SUM(payment_amount) as total_income FROM orders o $whereSql";
-logMessage($sumSql . ' | params=' . json_encode($params));
+// 一次聚合出总收入、驾驶收入、礼物收入。礼物收入只认 note='场地礼物'。
+$summarySql = "
+    SELECT
+        COALESCE(SUM(o.payment_amount), 0) AS total_all_income,
+        COALESCE(SUM(CASE
+            WHEN o.note = '场地礼物'
+            THEN o.payment_amount ELSE 0 END), 0) AS total_gift_income,
+        COALESCE(SUM(CASE
+            WHEN (o.note <> '场地礼物' OR o.note IS NULL)
+            THEN o.payment_amount ELSE 0 END), 0) AS total_drive_income
+    FROM orders o
+    $summaryWhereSql
+";
+logMessage($summarySql . ' | params=' . json_encode($summaryParams, JSON_UNESCAPED_UNICODE));
 
-$sumResult = $database->query($sumSql, $params);
-$totalIncome = 0.00;
+$summaryResult = $database->query($summarySql, $summaryParams);
+$summaryRow = is_array($summaryResult) && isset($summaryResult[0]) ? $summaryResult[0] : [];
+$totalAllIncome = round((float)($summaryRow['total_all_income'] ?? 0), 2);
+$totalDriveIncome = round((float)($summaryRow['total_drive_income'] ?? 0), 2);
+$totalGiftIncome = round((float)($summaryRow['total_gift_income'] ?? 0), 2);
 
-if (is_array($sumResult) && isset($sumResult[0]['total_income'])) {
-    $totalIncome = round(floatval($sumResult[0]['total_income']), 2);
+if ($role_id === 4) {
+    $totalAllIncome = round($totalAllIncome * 0.8, 2);
+    $totalDriveIncome = round($totalDriveIncome * 0.8, 2);
+    $totalGiftIncome = round($totalGiftIncome * 0.8, 2);
 }
 
-if ((int)$role_id === 4) {
-    $totalIncome = round($totalIncome * 0.8, 2);
-}
+$totalIncomeMap = [
+    'all' => $totalAllIncome,
+    'drive' => $totalDriveIncome,
+    'gift' => $totalGiftIncome,
+];
+$totalIncome = $totalIncomeMap[$incomeType];
 
 // 返回结果
+header('Content-Type: application/json; charset=utf-8');
 echo json_encode([
     'code' => 0,
     'msg'  => '',
     'count' => $totalCount,
-    'data'  => $data,
-    'total_income' => $totalIncome
-]);
+    'data'  => is_array($data) ? $data : [],
+    'income_type' => $incomeType,
+    'total_income' => $totalIncome,
+    'total_all_income' => $totalAllIncome,
+    'total_drive_income' => $totalDriveIncome,
+    'total_gift_income' => $totalGiftIncome,
+], JSON_UNESCAPED_UNICODE);
 
 $database->close();
 ?>

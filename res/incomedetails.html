@@ -64,7 +64,8 @@
         }
 
         button,
-        input {
+        input,
+        select {
             font: inherit;
         }
 
@@ -72,7 +73,8 @@
             user-select: none;
         }
 
-        input {
+        input,
+        select {
             outline: none;
         }
 
@@ -132,28 +134,41 @@
             justify-content: flex-start;
         }
 
-        #total-amount {
-            float: none !important;
+        .income-summary {
             margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .income-summary .summary-pill {
             min-height: 34px;
             display: inline-flex;
             align-items: center;
             padding: 0 12px;
             border: 1px solid rgba(15, 143, 140, .20);
             border-radius: 999px;
-            color: var(--primary) !important;
+            color: var(--primary);
             background: var(--primary-soft);
-            font-size: 14px !important;
+            font-size: 13px;
             line-height: 1;
-            font-weight: 900 !important;
+            font-weight: 900;
             white-space: nowrap;
+        }
+
+        .income-summary .summary-pill.is-gift {
+            color: #b45309;
+            border-color: rgba(217, 119, 6, .22);
+            background: var(--warning-soft);
         }
 
         .date-filter {
             margin: 18px 22px 0 !important;
             padding: 12px !important;
             display: grid !important;
-            grid-template-columns: minmax(200px, 1fr) auto minmax(200px, 1fr) auto;
+            grid-template-columns: minmax(150px, .7fr) minmax(200px, 1fr) auto minmax(200px, 1fr) auto;
             align-items: center !important;
             gap: 10px !important;
             border: 1px solid var(--line);
@@ -169,6 +184,7 @@
         }
 
         .date-filter input,
+        .date-filter select,
         .date-input,
         #jumpPage {
             width: 100% !important;
@@ -186,6 +202,7 @@
         }
 
         .date-filter input:focus,
+        .date-filter select:focus,
         #jumpPage:focus {
             border-color: rgba(15, 143, 140, .48) !important;
             box-shadow: 0 0 0 4px rgba(15, 143, 140, .10) !important;
@@ -385,10 +402,15 @@
                 font-size: 20px;
             }
 
-            #total-amount {
+            .income-summary {
                 width: 100%;
-                justify-content: center;
                 margin-left: 0;
+                justify-content: flex-start;
+            }
+
+            .income-summary .summary-pill {
+                flex: 1 1 180px;
+                justify-content: center;
             }
 
             .date-filter {
@@ -468,14 +490,23 @@
         <div class="card">
             <div class="card-title">
               收入明细
-              <span id="total-amount" style="float: right; font-size: 16px; font-weight: normal; color: var(--primary);">累计收入：0 元</span>
+              <div class="income-summary">
+                <span id="total-amount" class="summary-pill">累计收入：0.00 元</span>
+                <span id="drive-total" class="summary-pill">驾驶收入：0.00 元</span>
+                <span id="gift-total" class="summary-pill is-gift">礼物收入：0.00 元</span>
+              </div>
             </div>
 
-            <div class="date-filter" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <input type="datetime-local" id="startDate" class="date-input" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <div class="date-filter" style="margin-bottom: 20px;">
+                <select id="incomeType" class="date-input" title="收入类型">
+                    <option value="all">全部收入</option>
+                    <option value="drive">驾驶收入</option>
+                    <option value="gift">礼物收入</option>
+                </select>
+                <input type="datetime-local" id="startDate" class="date-input">
                 <span>至</span>
-                <input type="datetime-local" id="endDate" class="date-input" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                <button onclick="filterByDate()" style="padding: 5px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">筛选</button>
+                <input type="datetime-local" id="endDate" class="date-input">
+                <button onclick="filterByDate()">筛选</button>
             </div>
 
             <div id="income-details">
@@ -506,6 +537,7 @@
         let endDate = startDate; // 默认结束日期也是当天
         let totalPages = 0;
         const pageVenueId = new URLSearchParams(window.location.search).get('venue_id') || '';
+        let incomeType = 'all';
 
       
         document.addEventListener('DOMContentLoaded', function () {
@@ -519,6 +551,14 @@
             // 初始化时间变量
             startDate = `${yyyy_mm_dd} 00:00:00`;
             endDate = `${yyyy_mm_dd} 23:59:59`;
+
+            const incomeTypeSelect = document.getElementById('incomeType');
+            incomeTypeSelect.value = incomeType;
+            incomeTypeSelect.addEventListener('change', function () {
+                incomeType = ['all', 'drive', 'gift'].includes(this.value) ? this.value : 'all';
+                currentPage = 1;
+                loadIncomeData(currentPage);
+            });
         
             // 默认加载当天全部数据
             loadIncomeData(currentPage);
@@ -534,7 +574,8 @@
                 start_date: startDate,
                 end_date: endDate,
                 exclude_energy: 'on',
-                uid: ''
+                uid: '',
+                income_type: incomeType
             });
             if (pageVenueId) params.set('venue_id', pageVenueId);
             const url = `/api/venue/GetDrivingOrders.php?${params.toString()}`;
@@ -547,9 +588,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.code === 0) {
-                        if (data.total_income !== undefined) {
-                            document.getElementById('total-amount').textContent = `累计收入：${parseFloat(data.total_income).toFixed(2)} 元`;
-                        }
+                        const allIncome = Number.parseFloat(data.total_all_income ?? data.total_income ?? 0) || 0;
+                        const driveIncome = Number.parseFloat(data.total_drive_income ?? 0) || 0;
+                        const giftIncome = Number.parseFloat(data.total_gift_income ?? 0) || 0;
+                        document.getElementById('total-amount').textContent = `累计收入：${allIncome.toFixed(2)} 元`;
+                        document.getElementById('drive-total').textContent = `驾驶收入：${driveIncome.toFixed(2)} 元`;
+                        document.getElementById('gift-total').textContent = `礼物收入：${giftIncome.toFixed(2)} 元`;
 
                         totalPages = Math.ceil(data.count / limit);  // ✅ 始终更新总页数
                         updatePagination();
@@ -578,11 +622,11 @@
 
             pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
             prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.disabled = totalPages === 0 || currentPage >= totalPages;
 
             // 更新按钮样式
             prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
-            nextBtn.style.opacity = currentPage === totalPages ? '0.5' : '1';
+            nextBtn.style.opacity = (totalPages === 0 || currentPage >= totalPages) ? '0.5' : '1';
         }
 
         function prevPage() {
@@ -652,6 +696,10 @@ const seconds = totalSeconds % 60;
                     <div class="field">
                         <div class="label">支付类型:</div>
                         <div class="value">${order.pays_type}</div> 
+                    </div>
+                    <div class="field">
+                        <div class="label">收入类型:</div>
+                        <div class="value">${String(order.note || '').trim() === '场地礼物' ? '礼物收入（场地礼物）' : '驾驶收入'}</div>
                     </div>
                     <div class="field">
                         <div class="label">套餐驾驶时长:</div>

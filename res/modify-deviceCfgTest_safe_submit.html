@@ -309,24 +309,39 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
                 <div class="form-field"> 
                     <label for="throttle_max">油门最大值</label> 
                     <input type="range" id="throttle_max_range" min="0" max="100" oninput="updateThrottleMaxValue(this.value)">   
-                    <input type="number" id="throttle_max" name="throttle_max" readonly> 
+                    <input type="number"
+       id="throttle_max"
+       name="throttle_max"
+       min="1500"
+       max="2000"
+       step="1">
                  
                 </div> 
                 <div class="form-field"> 
                     <label for="direction_mid">方向中位值</label> 
                     <input type="range" id="direction_mid_range" min="0" max="100" oninput="updateValue('direction_mid', this.value)">   
-                    <input type="number" id="direction_mid" name="direction_mid" readonly> 
+                    <input type="number"
+       id="direction_mid"
+       name="direction_mid"
+       min="1000"
+       max="2000"
+       step="1">
                 </div> 
                 <div class="form-field" id="throttle-mid-field" style="display: none">
                     <label for="throttle_mid">油门中位值</label>
                     <input type="range" id="throttle_mid_range" min="0" max="100" oninput="updateThrottleMidValue(this.value)">
-                    <input type="number" id="throttle_mid" name="throttle_mid" readonly>
+                    <input type="number" id="throttle_mid" name="throttle_mid">
                 </div>
 
                 <div class="form-field"> 
                     <label for="throttle_min">油门最小值</label> 
                     <input type="range" id="throttle_min_range" min="0" max="100" oninput="updateThrottleMinValue(this.value)">   
-                    <input type="number" id="throttle_min" name="throttle_min" readonly> 
+                    <input type="number"
+       id="throttle_min"
+       name="throttle_min"
+       min="1000"
+       max="1500"
+       step="1">
                     
                 </div> 
                 <div class="form-field radio-group"> 
