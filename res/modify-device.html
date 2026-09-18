@@ -504,7 +504,7 @@ async function checkRejectedVehicleName(deviceId) {
     const list = Array.isArray(result?.data) ? result.data : [];
     if (!list.length) return;
 
-    const labelMap = { name: '设备名称', share_name: '设备分享名称' };
+    const labelMap = { name: '设备名称', share_name: '设备分享名称', photo_url: '设备图片' };
     const itemsHtml = list.map(item => {
       const field = labelMap[item.field] || item.field || '名称';
       const reason = item.reason || '未填写拒绝原因';
@@ -512,7 +512,7 @@ async function checkRejectedVehicleName(deviceId) {
     }).join('');
 
     await showAppModal({
-      title: '设备名称审核未通过',
+      title: '设备图文审核未通过',
       type: 'warning',
       message: `<div>以下审核结果已返回，请根据原因重新修改后再提交。</div>${itemsHtml}`,
       confirmText: '我知道了'
@@ -690,7 +690,7 @@ async function fetchCurrentUserRole() {
     const result = await res.json();
     const roleId = Number(result?.data?.role_id || 0);
     userCanEditImage = (roleId === 1);
-    userCanEditPhoto = (roleId === 1 || roleId === 2);
+    userCanEditPhoto = [1, 2, 3, 4].includes(roleId);
     userCanEditStatus = (roleId === 1 || roleId === 2);
     userCanDirectEditName = (roleId === 1 || roleId === 2);
   } catch (err) {

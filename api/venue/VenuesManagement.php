@@ -38,6 +38,26 @@ function generateVenueSubtitle()
     return (string)random_int(1000, 9999);
 }
 
+/**
+ * 为新场地生成全局唯一的四位纯数字引流标识。
+ * venue_unique_subtitle 与公共 venue_subtitle 分离：前者用于归因，后者用于分组搜索。
+ */
+function generateUniqueVenueSubtitle($database)
+{
+    for ($i = 0; $i < 200; $i++) {
+        $candidate = (string)random_int(1000, 9999);
+        $exists = $database->query(
+            'SELECT id FROM venues WHERE venue_unique_subtitle = ? LIMIT 1',
+            [$candidate]
+        );
+        if (!$exists) {
+            return $candidate;
+        }
+    }
+
+    throw new RuntimeException('无法生成唯一场地标识，请稍后重试');
+}
+
 // ================================
 // 同步 DR 海外场地配置
 // ================================
@@ -243,6 +263,7 @@ if ($method === 'POST') {
         $venue_name = $_POST['venue_name'] ?? ''; 
         // 添加场地时由后端随机分配四位纯数字副标题，允许重复，不采用前端传值。
         $venue_subtitle = generateVenueSubtitle();
+        $venue_unique_subtitle = generateUniqueVenueSubtitle($database);
 
         $image_url = $_POST['image_url'] ?? ''; 
         $venue_description = $_POST['venue_description'] ?? null; 
@@ -291,6 +312,7 @@ if ($method === 'POST') {
             id,
             venue_name,
             venue_subtitle,
+            venue_unique_subtitle,
             image_url,
             venue_description,
             venue_tags,
@@ -305,12 +327,13 @@ if ($method === 'POST') {
             is_claw_machine_venue,
             venue_level,
             zego_appid
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             $id,
             $venue_name,
             $venue_subtitle,
+            $venue_unique_subtitle,
             $image_url,
             $venue_description,
             $venue_tags,
@@ -1012,6 +1035,7 @@ elseif ($action === 'loadingdata') {
                         v.dr_venue_id,
                         v.venue_name,
                         v.venue_subtitle,
+                        v.venue_unique_subtitle,
                         COALESCE(NULLIF(TRIM(v.venue_level), ''), 'A') AS venue_level,
                         v.is_disabled_sound,
                         v.is_user_mic_enabled,

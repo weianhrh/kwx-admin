@@ -356,12 +356,25 @@ textarea {
   word-break: break-word;
 }
 
-.venue-subtitle {
-  display: block;
+.venue-code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.venue-subtitle,
+.venue-unique-subtitle {
+  display: inline-block;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.4;
   word-break: break-word;
+}
+
+.venue-unique-subtitle {
+  color: #0f8f87;
+  font-weight: 700;
 }
 
 .venue-meta-row {
@@ -1313,7 +1326,7 @@ button.venue-pill:hover {
             <div class="card-title">场地管理</div>
             <button class="add-btn" id="add-venue-btn">添加场地</button>
 
-            <input list="venue_options" id="venue_search" placeholder="输入场地名称、副标题或ID搜索" autocomplete="off"
+            <input list="venue_options" id="venue_search" placeholder="输入场地名称、副标题、唯一标识或ID搜索" autocomplete="off"
                 style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
             <datalist id="venue_options"></datalist>
 
@@ -1575,7 +1588,10 @@ function renderVenues(list) {
 
                     <div class="venue-info">
                         <span class="venue-name">ID:${venue.id}-${escapeHtml(venue.venue_name)}</span>
-                        ${venue.venue_subtitle ? `<span class="venue-subtitle">${escapeHtml(venue.venue_subtitle)}</span>` : ''}
+                        <div class="venue-code-row">
+                            ${venue.venue_subtitle ? `<span class="venue-subtitle">副标题：${escapeHtml(venue.venue_subtitle)}</span>` : '<span class="venue-subtitle">副标题：未设置</span>'}
+                            ${venue.venue_unique_subtitle ? `<span class="venue-unique-subtitle">唯一标识：${escapeHtml(venue.venue_unique_subtitle)}</span>` : '<span class="venue-unique-subtitle">唯一标识：未设置</span>'}
+                        </div>
 
 <div class="venue-meta-row">
     <button type="button"
@@ -1670,10 +1686,12 @@ function applyFilters() {
             const idText = String(v.id || '');
             const nameText = String(v.venue_name || '').toLowerCase();
             const subtitleText = String(v.venue_subtitle || '').toLowerCase();
-            const mixText = `${v.id} - ${v.venue_name} - ${v.venue_subtitle || ''}`.toLowerCase();
+            const uniqueSubtitleText = String(v.venue_unique_subtitle || '').toLowerCase();
+            const mixText = `${v.id} - ${v.venue_name} - ${v.venue_subtitle || ''} - ${v.venue_unique_subtitle || ''}`.toLowerCase();
             return idText.includes(keyword)
                 || nameText.includes(keyword)
                 || subtitleText.includes(keyword)
+                || uniqueSubtitleText.includes(keyword)
                 || mixText.includes(keyword);
         });
     }
@@ -1821,7 +1839,7 @@ window.setGiftCommandPanelDisplay = function (venueId, currentValue) {
 
                         venues.forEach(venue => {
                             const option = document.createElement('option');
-                            option.value = `${venue.id} - ${venue.venue_name}${venue.venue_subtitle ? ` - ${venue.venue_subtitle}` : ''}`;
+                            option.value = `${venue.id} - ${venue.venue_name}${venue.venue_subtitle ? ` - ${venue.venue_subtitle}` : ''}${venue.venue_unique_subtitle ? ` - ${venue.venue_unique_subtitle}` : ''}`;
                             venueOptions.appendChild(option);
                             venueMap.set(venue.id, venue.venue_name);
                         });

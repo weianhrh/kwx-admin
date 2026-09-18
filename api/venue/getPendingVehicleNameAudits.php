@@ -1,5 +1,14 @@
 <?php
 require_once '../RedisHelper.php';
+require_once '../Database.php';
+
+$database = new Database();
+$session_token = $_COOKIE['session_token'] ?? '';
+$user = $session_token !== '' ? $database->getUserBySessionToken($session_token) : null;
+if (!$user || !in_array((int)($user['role_id'] ?? 0), [1, 2], true)) {
+    echo json_encode(['code' => 1002, 'msg' => '权限不足，仅管理员可查看审核列表', 'data' => []], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $redis = new RedisHelper();
 $redis->connect();

@@ -188,6 +188,66 @@
   /*font-size: 16px;*/
 }
 
+/* 设备图片审核：横向对比图片区 + 设备信息区 */
+.device-photo-audit-card {
+  flex-wrap: wrap;
+}
+
+.device-photo-audit-card .venue-info {
+  display: grid;
+  grid-template-columns: minmax(360px, 460px) minmax(220px, 1fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.device-photo-compare {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.device-photo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.device-photo-label {
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.device-photo-item .venue-img {
+  width: 104px;
+  height: 78px;
+  border: 1px solid var(--border-color);
+  background: #f6f8fa;
+}
+
+.device-photo-arrow {
+  color: var(--secondary);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.device-audit-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.device-audit-type {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.device-photo-audit-card .textarea-box {
+  flex-basis: 100%;
+  width: 100%;
+}
+
 .venue-actions {
   display: flex;
   flex-direction: row;
@@ -237,10 +297,24 @@
   font-size: 13px;
 }
 
-.venue-info .venue-name {
+ .venue-info .venue-name {
   font-weight: bold;
   /*font-size: 15px;*/
 }
+
+  .device-photo-audit-card .venue-info {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .device-photo-compare {
+    flex-wrap: wrap;
+  }
+
+  .device-photo-arrow {
+    display: none;
+  }
 
 
   .venue-actions {
@@ -336,15 +410,34 @@
 
   list.forEach(item => {
     const time = new Date(item.timestamp * 1000).toLocaleString();
-    const fieldText = item.field === 'name' ? '设备名称' : '分享名称';
+    const fieldTextMap = { name: '设备名称', share_name: '分享名称', photo_url: '设备图片' };
+    const fieldText = fieldTextMap[item.field] || item.field;
+    const safeNew = String(item.new || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const safeOld = String(item.old || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const valueHtml = item.field === 'photo_url'
+      ? `<div class="device-photo-compare">
+           <div class="device-photo-item">
+             <span class="device-photo-label">当前图片</span>
+             <img class="venue-img" src="${safeOld}" alt="当前设备图片">
+           </div>
+           <span class="device-photo-arrow">→</span>
+           <div class="device-photo-item">
+             <span class="device-photo-label">申请图片</span>
+             <img class="venue-img" src="${safeNew}" alt="待审核设备图片">
+           </div>
+         </div>`
+      : `<span class="venue-name">${fieldText}：${safeNew}</span>`;
 
     const card = document.createElement("div");
-    card.className = "venue-card";
+    card.className = `venue-card${item.field === 'photo_url' ? ' device-photo-audit-card' : ''}`;
     card.innerHTML = `
       <div class="venue-info">
-        <span class="venue-name">${fieldText}：${item.new}</span>
-        <span>设备ID: ${item.device_id}</span>
-        <span>提交时间: ${time}</span>
+        ${valueHtml}
+        <div class="device-audit-meta">
+          <span class="device-audit-type">${fieldText}</span>
+          <span>设备ID：${item.device_id}</span>
+          <span>提交时间：${time}</span>
+        </div>
       </div>
       <div class="venue-actions">
         <button class="edit-btn" onclick="approveDevice('${item.device_id}', '${item.field}')">通过</button>

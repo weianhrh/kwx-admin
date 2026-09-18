@@ -69,7 +69,16 @@ function auth_has_column(Database $db, string $table, string $column): bool
     if (array_key_exists($key, $cache)) {
         return $cache[$key];
     }
-    $rows = $db->query("SHOW COLUMNS FROM `$table` LIKE ?", [$column]);
+    // $rows = $db->query("SHOW COLUMNS FROM `$table` LIKE ?", [$column]);
+    $rows = $db->query(
+    'SELECT COLUMN_NAME
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = ?
+     LIMIT 1',
+    [$table, $column]
+);
     $cache[$key] = !empty($rows);
     return $cache[$key];
 }

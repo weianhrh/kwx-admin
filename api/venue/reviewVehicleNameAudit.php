@@ -7,14 +7,21 @@ $redis->connect();
 $redis->selectDb(3);
 $database = new Database();
 
+$session_token = $_COOKIE['session_token'] ?? '';
+$user = $session_token !== '' ? $database->getUserBySessionToken($session_token) : null;
+if (!$user || !in_array((int)($user['role_id'] ?? 0), [1, 2], true)) {
+    echo json_encode(['code' => 1002, 'msg' => '权限不足，仅管理员可审核'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 
 $device_id = $data['device_id'] ?? null;
-$field = $data['field'] ?? null; // name 或 share_name
+$field = $data['field'] ?? null; // name、share_name 或 photo_url
 $action = $data['action'] ?? ''; // 'approve' 或 'reject'
 $reason = $data['reason'] ?? '';
 
-if (!$device_id || !in_array($field, ['name', 'share_name']) || !in_array($action, ['approve', 'reject'])) {
+if (!$device_id || !in_array($field, ['name', 'share_name', 'photo_url'], true) || !in_array($action, ['approve', 'reject'], true)) {
     echo json_encode(['code' => 400, 'msg' => '参数错误']);
     exit;
 }

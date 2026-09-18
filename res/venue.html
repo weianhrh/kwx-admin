@@ -1812,6 +1812,10 @@ body.role-3 .venue-cover-card {
             if (subtitleField) {
               subtitleField.style.display = (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) ? '' : 'none';
             }
+            const uniqueSubtitleField = document.getElementById('venue-unique-subtitle-field');
+            if (uniqueSubtitleField) {
+              uniqueSubtitleField.style.display = (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) ? '' : 'none';
+            }
 
 
 
@@ -2709,6 +2713,20 @@ function renderLocksUI() {
 
                   </div>
 
+                  <div class="field full" id="venue-unique-subtitle-field" style="display:none;">
+
+                    <div class="label">唯一标识（副标题）</div>
+
+                    <div class="value">
+
+                      <input id="venue-unique-subtitle-input" class="edit-input edit-control" maxlength="4"
+                        inputmode="numeric" pattern="\d{4}" title="请输入4位纯数字；每个场地必须唯一，用于引流归因"
+                        placeholder="例如 8801（每场地唯一）" disabled>
+
+                    </div>
+
+                  </div>
+
 
 
                   <div class="field full">
@@ -2940,6 +2958,10 @@ function renderLocksUI() {
       const venueSubtitleInput = document.getElementById('venue-subtitle-input');
 
       if (venueSubtitleInput) venueSubtitleInput.value = venue.venue_subtitle || '';
+
+      const venueUniqueSubtitleInput = document.getElementById('venue-unique-subtitle-input');
+
+      if (venueUniqueSubtitleInput) venueUniqueSubtitleInput.value = venue.venue_unique_subtitle || '';
 
       document.getElementById('venue-description-text').textContent = venue.venue_description || '';
 
@@ -3355,6 +3377,20 @@ if (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) {
 
     payload.venue_subtitle = venueSubtitle;
 
+  }
+
+  const venueUniqueSubtitleInput = document.getElementById('venue-unique-subtitle-input');
+
+  if (venueUniqueSubtitleInput) {
+    const venueUniqueSubtitle = venueUniqueSubtitleInput.value.trim();
+
+    if (!/^\d{4}$/.test(venueUniqueSubtitle)) {
+      alert('唯一标识（副标题）必须是4位纯数字');
+      venueUniqueSubtitleInput.focus();
+      return;
+    }
+
+    payload.venue_unique_subtitle = venueUniqueSubtitle;
   }
 }
 

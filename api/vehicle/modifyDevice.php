@@ -2,6 +2,7 @@
 // open.kwxapp.cn/single/api/vehicle/modifyDevice.php
 require_once '../Database.php';
 require_once '../RedisHelper.php';
+require_once '../lib/venue_scope.php';
 
 $database = new Database();
 $redis = new RedisHelper();
@@ -37,10 +38,18 @@ $incoming_status = trim((string)($data['status'] ?? ''));
 // $photo_url = $data['photo_url'] ?? '';
 // $status = $data['status'];
 // 获取旧值
-$deviceInfo = $database->query("SELECT name,share_name,photo_url,image_device_serial,bk_image_device_serial,is_banned,status FROM vehicles WHERE serial_number = ?", [$device_id]);
+$deviceInfo = $database->query("SELECT name,share_name,photo_url,image_device_serial,bk_image_device_serial,is_banned,status,bind_site FROM vehicles WHERE serial_number = ?", [$device_id]);
 
 if (!$deviceInfo) {
     echo json_encode(['code' => 1007, 'msg' => '未找到设备信息', 'data' => []]);
+    exit;
+}
+
+// 场地角色只能修改自己有权管理的场地设备，不能依赖前端列表过滤。
+if (in_array((int)$role_id, [3, 4], true)
+    && !venue_scope_can_access($database, $user, (int)($deviceInfo[0]['bind_site'] ?? 0))) {
+    echo json_encode(['code' => 1003, 'msg' => '无权修改其它场地的设备', 'data' => []], JSON_UNESCAPED_UNICODE);
+    $database->close();
     exit;
 }
 $old_name = $deviceInfo[0]['name'];
@@ -60,14 +69,10 @@ if (in_array((int)$role_id, [1, 2], true)) {
 } else {
     $status = $old_status;
 }
-// ✅ 权限：只有 role_id 为 1 或 2 才允许改 photo_url
-if ($role_id == 1 || $role_id == 2) {
-    $photo_url = isset($data['photo_url']) ? trim((string)$data['photo_url']) : $old_photo_url;
-    if ($photo_url === '') $photo_url = $old_photo_url; // 防止传空覆盖
-} else {
-    // role_id=3（或其它）一律不允许改
-    $photo_url = $old_photo_url;
-}
+// role 1/2 可直接改图；role 3/4 的新图只进入审核，未通过前继续使用旧图。
+$requested_photo_url = isset($data['photo_url']) ? trim((string)$data['photo_url']) : $old_photo_url;
+if ($requested_photo_url === '') $requested_photo_url = $old_photo_url;
+$photo_url = in_array((int)$role_id, [1, 2], true) ? $requested_photo_url : $old_photo_url;
 
 if (intval($deviceInfo[0]['is_banned']) === 1) {
     echo json_encode(['code' => 403, 'msg' => '该设备已被封禁，无法修改信息', 'data' => []]);
@@ -163,7 +168,9 @@ function submitAudit($redis, $device_id, $field, $old, $new) {
         'reason' => '',
         'timestamp' => time()
     ];
-    $redis->save($auditKey, json_encode($auditData), 86400);
+    // 图片审核给管理员保留 7 天处理时间；名称审核沿用原来的 1 天。
+    $ttl = $field === 'photo_url' ? 604800 : 86400;
+    $redis->save($auditKey, json_encode($auditData), $ttl);
 
     // 加入审核池
     $reflection = new ReflectionClass($redis);
@@ -171,6 +178,18 @@ function submitAudit($redis, $device_id, $field, $old, $new) {
     $property->setAccessible(true);
     $nativeRedis = $property->getValue($redis);
     $nativeRedis->sAdd('vehicle_name_audit_pool', $auditKey);
+}
+
+// 场地角色修改设备图片时进入同一设备审核池，不直接替换线上图片。
+if (in_array((int)$role_id, [3, 4], true) && $requested_photo_url !== $old_photo_url) {
+    if (!filter_var($requested_photo_url, FILTER_VALIDATE_URL)
+        || strtolower((string)parse_url($requested_photo_url, PHP_URL_SCHEME)) !== 'https') {
+        echo json_encode(['code' => 1010, 'msg' => '设备图片地址无效，仅允许 HTTPS 图片', 'data' => []], JSON_UNESCAPED_UNICODE);
+        $database->close();
+        exit;
+    }
+    $need_audit = true;
+    submitAudit($redis, $device_id, 'photo_url', $old_photo_url, $requested_photo_url);
 }
 function resolveImageDeviceSerial(Database $database, string $inputValue): array {
     $inputValue = trim($inputValue);
@@ -332,7 +351,7 @@ if ($updateResult === false) {
 } elseif ($need_audit) {
     echo json_encode([
         'code' => 1009,
-        'msg' => '名称或分享名已提交人工审核，其它信息修改成功。通过则默认会变成修改后的，审核未通过会在加载该页面时弹窗说明原因，请耐心等候...',
+        'msg' => '设备名称、分享名或图片已提交图文审核，其它信息修改成功。审核通过后自动生效；未通过会在再次打开设备信息时显示原因。',
         'data' => []
     ]);
 } else {

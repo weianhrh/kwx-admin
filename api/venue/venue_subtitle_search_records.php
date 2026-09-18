@@ -78,6 +78,10 @@ $subtitleOptionRows = $db->query("
         FROM venues
         WHERE venue_subtitle IS NOT NULL AND TRIM(venue_subtitle) <> ''
         UNION
+        SELECT TRIM(venue_unique_subtitle) AS venue_subtitle
+        FROM venues
+        WHERE venue_unique_subtitle IS NOT NULL AND TRIM(venue_unique_subtitle) <> ''
+        UNION
         SELECT TRIM(venue_subtitle) AS venue_subtitle
         FROM venue_subtitle_search_records
         WHERE venue_subtitle IS NOT NULL AND TRIM(venue_subtitle) <> ''

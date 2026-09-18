@@ -84,7 +84,7 @@ if (!venue_scope_can_access($database, $user[0], (int)$venue_id)) {
 
 // ========== 获取原始信息 ==========
 $venueInfo = $database->query("
-    SELECT id, is_banned, venue_name, venue_subtitle, venue_description, start_time, venue_status, live_stream_url, show_live_stream, income_30d_lock
+    SELECT id, is_banned, venue_name, venue_subtitle, venue_unique_subtitle, venue_description, start_time, venue_status, live_stream_url, show_live_stream, income_30d_lock
     FROM venues WHERE id = ?
 ", [$venue_id]);
 
@@ -297,6 +297,47 @@ if (array_key_exists('venue_subtitle', $data)) {
 
     $updates[] = 'venue_subtitle = ?';
     $params[]  = $venue_subtitle;
+}
+
+// 场地唯一副标题/引流标识：role_id=1/2/3 可修改；必须是四位纯数字，并且全局唯一。
+if (array_key_exists('venue_unique_subtitle', $data)) {
+    if (!in_array($role_id, [1, 2, 3], true)) {
+        echo json_encode([
+            'code' => 1003,
+            'msg'  => '权限不足，仅 role_id=1/2/3 可修改场地唯一标识',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $venue_unique_subtitle = trim((string)$data['venue_unique_subtitle']);
+    if (!preg_match('/^\d{4}$/', $venue_unique_subtitle)) {
+        echo json_encode([
+            'code' => 1008,
+            'msg'  => '场地唯一标识必须是4位纯数字',
+            'data' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $duplicateUniqueSubtitle = $database->query(
+        'SELECT id, venue_name FROM venues WHERE venue_unique_subtitle = ? AND id <> ? LIMIT 1',
+        [$venue_unique_subtitle, (int)$venue_id]
+    );
+    if ($duplicateUniqueSubtitle) {
+        echo json_encode([
+            'code' => 1009,
+            'msg'  => '场地唯一标识已被其他场地使用',
+            'data' => [
+                'venue_id' => (int)$duplicateUniqueSubtitle[0]['id'],
+                'venue_name' => (string)($duplicateUniqueSubtitle[0]['venue_name'] ?? '')
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $updates[] = 'venue_unique_subtitle = ?';
+    $params[]  = $venue_unique_subtitle;
 }
 
 // start_time
