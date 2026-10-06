@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
+require_once __DIR__ . '/../promotion/PromotionFeature.php';
 require_once __DIR__ . '/../RedisHelper.php';
 
 auth_json_headers();
@@ -103,6 +104,7 @@ $franchiseOnlineDevices = 0;
 $franchiseTotalDevices = 0;
 $franchiseVenueRows = [];
 $franchiseVenueIds = [];
+$franchisePromotionPreview = ['visible' => false, 'venues' => []];
 
 if (in_array($roleId, [3, 4], true)) {
     $franchiseVenueRows = venue_scope_visible_venues($db, $user);
@@ -152,6 +154,15 @@ if (in_array($roleId, [3, 4], true) && $franchiseVenueIds) {
         WHERE 1=1
           {$deviceWhere}
     ", $deviceParams, 'total', 0);
+}
+
+// 仅加盟商名下 8899 场地可获得预估数据；临时开关关闭时不查询，也不返回金额。
+if ($roleId === 3 && KWX_8899_PROMOTION_UI_VISIBLE && $franchiseVenueIds) {
+    try {
+        $franchisePromotionPreview = kwx_promotion_preview_for_venues($db, $franchiseVenueIds, $todayStart, $tomorrowStart);
+    } catch (Throwable $e) {
+        error_log('KWX 8899 promotion preview error: ' . $e->getMessage());
+    }
 }
 
 // 主播后台仅展示订单原金额的 20%，不修改数据库中的订单金额。
@@ -385,6 +396,7 @@ auth_out(0, 'ok', [
         'venue_id' => $franchiseVenueIds[0] ?? $venueId,
         'venue_name' => $franchiseVenueName,
         'venues' => $franchiseVenueRows,
+        'promotion_preview' => $franchisePromotionPreview,
         'notices' => [
             ['title' => '运营提醒', 'content' => '请保持车辆电量、网络与视频画面稳定，避免影响玩家远程驾驶体验。', 'date' => date('Y-m-d')],
             ['title' => '结算提示', 'content' => '今日收益按场地订单实时汇总，最终结算以财务审核后的账单为准。', 'date' => date('Y-m-d')],

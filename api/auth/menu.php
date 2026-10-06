@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/_common.php';
+require_once __DIR__ . '/../promotion/PromotionFeature.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -81,15 +82,21 @@ function menu_admin_tree(): array
         menu_leaf(9201, 9004, 'user-blacklist', '用户拉黑管理', '/iframe/link/black_user_gmt', 'user', 9201),
     ], 4);
 
-    $baseMenu[] = menu_group(9005, 'finance', '财务管理', 'finance', [
+    $financeMenus = [
         menu_leaf(87, 9005, 'venue_funds', '账户管理', '/iframe/link/venue_funds', '', 1),
         menu_leaf(61, 9005, 'CommodityTariff', '充值套餐', '/iframe/link/CommodityTariff', '', 2),
         menu_leaf(77, 9005, 'payment_global_config_manage', '支付管理', '/iframe/link/payment_global_config_manage', '', 3),
         menu_leaf(90051, 9005, 'venue-withdraw-config', '提现配置', '/iframe/link/venue_withdraw_config', '', 5),
         menu_leaf(59, 9005, 'withdraw', '提现审批', '/iframe/link/paylist', '', 6),
+    ];
+    if (KWX_8899_PROMOTION_UI_VISIBLE) {
+        $financeMenus[] = menu_leaf(90052, 9005, 'promotion-reward-settlement', '推广收益结算', '/iframe/link/Promotion_Reward_Settlement_Admin', 'finance', 7);
+    }
+    $financeMenus = array_merge($financeMenus, [
         menu_leaf(21, 9005, 'recharge-query', '充值查询', '/iframe/link/Rechargeinquiry', '', 8),
         menu_leaf(24, 9005, 'money-query', '金额查询', '/iframe/link/amountSearch', '', 11),
-    ], 5);
+    ]);
+    $baseMenu[] = menu_group(9005, 'finance', '财务管理', 'finance', $financeMenus, 5);
 
     $baseMenu[] = menu_group(9006, 'ops', '运营配置', 'ops', [
         menu_leaf(31, 9006, 'ranking', '业绩排行', '/iframe/link/top', '', 1),

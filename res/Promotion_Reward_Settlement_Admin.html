@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>推广收益结算管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/res/fa/css/all.min.css">
+  <style>
+:root {
+  --primary: #0f8f8c;
+  --primary-dark: #08706e;
+  --primary-soft: #e6f6f5;
+  --success: #20a876;
+  --warning: #d97706;
+  --danger: #df5b57;
+  --bg: #f4f7f8;
+  --card: #fff;
+  --border: #dfe8eb;
+  --border-strong: #c9d8dd;
+  --text: #172126;
+  --muted: #6b7d84;
+  --soft: #fbfcfd;
+  --shadow: 0 12px 34px rgba(30, 55, 66, .08);
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body { width: 100%; min-height: 100%; }
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 24px 26px 34px;
+  overflow-x: hidden;
+  color: var(--text);
+  background: var(--bg);
+}
+button, input, select, textarea { font: inherit; }
+button { user-select: none; }
+input, select, textarea { outline: none; }
+.page { width: 100%; max-width: none; margin: 0 auto; }
+
+.page-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+.title::before {
+  content: "";
+  width: 8px;
+  height: 23px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--primary);
+}
+.subtitle { margin: 7px 0 0 19px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.page-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+.card {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.card-head, .detail-title {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border);
+}
+h3 { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 18px; font-weight: 900; }
+h3::before { content: ""; width: 7px; height: 19px; border-radius: 999px; background: var(--primary); }
+h3 i { color: var(--primary); font-size: 15px; }
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+.form-item { width: 178px; max-width: 100%; }
+label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 800; }
+input, select, textarea {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: #fff;
+  font-size: 13px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(15, 143, 140, .55);
+  box-shadow: 0 0 0 4px rgba(15, 143, 140, .10);
+}
+input, select { height: 38px; padding: 0 11px; }
+textarea { min-height: 80px; padding: 10px 12px; resize: vertical; }
+
+button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid rgba(15, 143, 140, .18);
+  border-radius: var(--radius);
+  color: #fff;
+  background: var(--primary);
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+button:hover { background: var(--primary-dark); box-shadow: 0 8px 18px rgba(15, 143, 140, .18); transform: translateY(-1px); }
+button:disabled { opacity: .48; cursor: not-allowed; box-shadow: none; transform: none; }
+.btn-light { color: var(--primary-dark); background: var(--primary-soft); border-color: rgba(15, 143, 140, .22); }
+.btn-light:hover { color: #fff; background: var(--primary); }
+.btn-secondary { color: #4c666c; background: #fff; border-color: var(--border-strong); }
+.btn-secondary:hover { color: var(--primary-dark); background: var(--primary-soft); border-color: rgba(15, 143, 140, .35); box-shadow: 0 6px 16px rgba(30, 55, 66, .08); }
+.btn-warning { color: #9a570e; background: #fff7e8; border-color: #f2d4a4; }
+.btn-warning:hover { color: #fff; background: var(--warning); box-shadow: 0 8px 18px rgba(217, 119, 6, .18); }
+.btn-danger { color: #c94844; background: #fff0ef; border-color: rgba(223, 91, 87, .24); }
+.btn-danger:hover { color: #fff; background: var(--danger); box-shadow: 0 8px 18px rgba(223, 91, 87, .18); }
+
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 20px 18px; }
+.metric { min-width: 0; min-height: 94px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+.metric.primary { border-color: rgba(15, 143, 140, .25); background: #f2fbfa; }
+.metric.success { border-color: rgba(32, 168, 118, .25); background: #f2faf6; }
+.metric .k { margin-bottom: 10px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.metric .v { overflow: hidden; color: var(--primary-dark); font-size: clamp(19px, 2vw, 26px); font-weight: 900; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.metric.success .v { color: #168560; }
+.msg { display: none; margin: 0 20px 16px; padding: 10px 12px; border-radius: var(--radius); font-size: 13px; line-height: 1.6; }
+.msg.ok { display: block; color: #087443; background: #e8f7f1; border: 1px solid #addcca; }
+.msg.err { display: block; color: #ad3935; background: #fff0ef; border: 1px solid #f2bfbd; }
+
+.table-wrap { width: calc(100% - 40px); margin: 18px 20px 0; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+table { width: 100%; min-width: 1000px; border-collapse: collapse; }
+th, td { padding: 12px 13px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 13px; text-align: left; white-space: nowrap; }
+th { position: sticky; top: 0; z-index: 1; color: #50666d; background: #f2f7f7; font-size: 12px; font-weight: 900; }
+tbody tr:nth-child(even) { background: #fbfcfd; }
+tbody tr:hover td { background: #f1f9f8; }
+tbody tr:last-child td { border-bottom: 0; }
+td button { min-height: 32px; padding: 6px 10px; }
+.amount { color: var(--primary-dark); font-weight: 900; }
+.danger-text { color: var(--danger); }
+.muted, .state { color: var(--muted); }
+.state { padding: 14px 20px 0; font-size: 12px; line-height: 1.5; }
+.badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 9px; border-radius: 999px; color: var(--primary-dark); background: var(--primary-soft); font-size: 12px; font-weight: 800; }
+.badge.pending { color: #9a570e; background: #fff5df; }
+.badge.settled { color: #138356; background: #e8f7f1; }
+.badge.frozen { color: #52656b; background: #eef3f4; }
+.badge.cancelled { color: #c94844; background: #fff0ef; }
+.action-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detail-panel { display: none; }
+.detail-panel.show { display: block; }
+.remark-box {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  align-items: end;
+  gap: 10px;
+  margin: 18px 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+input[type="checkbox"] { width: 16px; height: 16px; padding: 0; accent-color: var(--primary); cursor: pointer; }
+@media (max-width: 980px) {
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .remark-box { grid-template-columns: repeat(3, max-content); }
+  .remark-box > div { grid-column: 1 / -1; }
+}
+@media (max-width: 680px) {
+  body { padding: 12px; }
+  .page-hero { align-items: stretch; flex-direction: column; padding: 16px; }
+  .title { font-size: 20px; }
+  .subtitle { margin-left: 18px; }
+  .page-actions { justify-content: flex-start; }
+  .card-head, .detail-title { align-items: flex-start; flex-direction: column; padding: 15px; }
+  .toolbar { margin: 14px 14px 0; padding: 12px; }
+  .form-item { width: calc(50% - 5px); }
+  .summary { margin: 14px; gap: 10px; }
+  .metric { min-height: 82px; padding: 12px; }
+  .metric .v { font-size: 20px; }
+  .table-wrap { width: calc(100% - 28px); margin: 14px 14px 0; }
+  .msg { margin: 0 14px 14px; }
+  .state { padding: 12px 14px 0; }
+  .remark-box { display: flex; flex-wrap: wrap; margin: 14px 14px 0; padding: 12px; }
+  .remark-box > div { width: 100%; }
+}
+@media (max-width: 420px) {
+  .form-item { width: 100%; }
+  .toolbar > button, .page-actions > button { flex: 1 1 auto; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-hero">
+      <div>
+        <div class="title">推广收益结算管理</div>
+        <div class="subtitle">查看 8899 二级邀请码生成的收益账本，按场地结算并处理异常明细</div>
+      </div>
+      <div class="page-actions">
+        <button type="button" id="refreshAllBtn" class="btn-light"><i class="fas fa-sync-alt"></i>刷新</button>
+        <button type="button" id="createSettlementBtn"><i class="fas fa-file-invoice-dollar"></i>批量生成结算</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><i class="fas fa-layer-group"></i>按场地汇总待结算</h3>
+      </div>
+      <div class="toolbar">
+        <div class="form-item">
+          <label for="startDate">开始日期</label>
+          <input id="startDate" type="date">
+        </div>
+        <div class="form-item">
+          <label for="endDate">结束日期</label>
+          <input id="endDate" type="date">
+        </div>
+        <div class="form-item">
+          <label for="venueId">场地ID</label>
+          <input id="venueId" type="number" placeholder="全部">
+        </div>
+        <button type="button" id="querySummaryBtn"><i class="fas fa-search"></i>查询待结算</button>
+        <button type="button" id="queryExceptionBtn" class="btn-secondary"><i class="fas fa-exclamation-circle"></i>查看冻结/撤销</button>
+      </div>
+      <div class="summary">
+        <div class="metric primary">
+          <div class="k">待结算场地</div>
+          <div class="v" id="pendingVenueCount">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">待结算订单</div>
+          <div class="v" id="pendingOrderCount">0</div>
+        </div>
+        <div class="metric">
+          <div class="k">订单金额</div>
+          <div class="v" id="pendingOrderAmount">0.00</div>
+        </div>
+        <div class="metric success">
+          <div class="k">推广收益</div>
+          <div class="v" id="pendingRewardAmount">0.00</div>
+        </div>
+      </div>
+      <div id="msg" class="msg"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAllVenues"></th>
+              <th>推广场地</th>
+              <th>账期范围</th>
+              <th>订单数</th>
+              <th>被邀请用户</th>
+              <th>订单金额</th>
+              <th>推广收益</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTbody"></tbody>
+        </table>
+      </div>
+      <div id="summaryState" class="state">加载中...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><i class="fas fa-list-alt"></i>结算批次列表</h3>
+        <button type="button" id="queryBatchesBtn" class="btn-light"><i class="fas fa-sync-alt"></i>刷新批次</button>
+      </div>
+      <div class="toolbar">
+        <div class="form-item">
+          <label for="batchStatus">批次状态</label>
+          <select id="batchStatus">
+            <option value="">全部</option>
+            <option value="settled">已结算</option>
+            <option value="cancelled">已撤销</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>批次号</th>
+              <th>推广场地</th>
+              <th>账期范围</th>
+              <th>订单数</th>
+              <th>订单金额</th>
+              <th>推广收益</th>
+              <th>状态</th>
+              <th>结算时间</th>
+              <th>操作人</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="batchTbody"></tbody>
+        </table>
+      </div>
+      <div id="batchState" class="state">加载中...</div>
+    </div>
+
+    <div class="card detail-panel" id="detailPanel">
+      <div class="detail-title">
+        <h3 id="detailTitle">明细</h3>
+        <button type="button" id="closeDetailBtn" class="btn-secondary"><i class="fas fa-times"></i>关闭明细</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAllLogs"></th>
+              <th>账期</th>
+              <th>推广场地</th>
+              <th>消费场地</th>
+              <th>被邀请人</th>
+              <th>邀请码</th>
+              <th>订单金额</th>
+              <th>推广收益</th>
+              <th>状态</th>
+              <th>订单号</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody id="detailTbody"></tbody>
+        </table>
+      </div>
+      <div class="remark-box">
+        <div>
+          <label for="exceptionRemark">异常处理原因</label>
+          <textarea id="exceptionRemark" placeholder="冻结或撤销时必须填写原因"></textarea>
+        </div>
+        <button type="button" id="freezeLogsBtn" class="btn-warning"><i class="fas fa-pause-circle"></i>冻结选中</button>
+        <button type="button" id="cancelLogsBtn" class="btn-danger"><i class="fas fa-ban"></i>撤销选中</button>
+        <button type="button" id="restoreLogsBtn" class="btn-secondary"><i class="fas fa-undo"></i>恢复待结算</button>
+      </div>
+      <div id="detailState" class="state">请选择汇总或批次查看明细</div>
+    </div>
+  </div>
+
+<script>
+const API = '/api/promotion/PromotionRewardSettlementAdmin.php';
+const els = {
+  startDate: document.getElementById('startDate'),
+  endDate: document.getElementById('endDate'),
+  venueId: document.getElementById('venueId'),
+  batchStatus: document.getElementById('batchStatus'),
+  querySummaryBtn: document.getElementById('querySummaryBtn'),
+  queryExceptionBtn: document.getElementById('queryExceptionBtn'),
+  queryBatchesBtn: document.getElementById('queryBatchesBtn'),
+  refreshAllBtn: document.getElementById('refreshAllBtn'),
+  createSettlementBtn: document.getElementById('createSettlementBtn'),
+  selectAllVenues: document.getElementById('selectAllVenues'),
+  selectAllLogs: document.getElementById('selectAllLogs'),
+  pendingVenueCount: document.getElementById('pendingVenueCount'),
+  pendingOrderCount: document.getElementById('pendingOrderCount'),
+  pendingOrderAmount: document.getElementById('pendingOrderAmount'),
+  pendingRewardAmount: document.getElementById('pendingRewardAmount'),
+  summaryTbody: document.getElementById('summaryTbody'),
+  batchTbody: document.getElementById('batchTbody'),
+  detailPanel: document.getElementById('detailPanel'),
+  detailTitle: document.getElementById('detailTitle'),
+  detailTbody: document.getElementById('detailTbody'),
+  summaryState: document.getElementById('summaryState'),
+  batchState: document.getElementById('batchState'),
+  detailState: document.getElementById('detailState'),
+  closeDetailBtn: document.getElementById('closeDetailBtn'),
+  freezeLogsBtn: document.getElementById('freezeLogsBtn'),
+  cancelLogsBtn: document.getElementById('cancelLogsBtn'),
+  restoreLogsBtn: document.getElementById('restoreLogsBtn'),
+  exceptionRemark: document.getElementById('exceptionRemark'),
+  msg: document.getElementById('msg')
+};
+
+let currentDetailMode = '';
+let currentDetailArgs = null;
+
+function pad(n){ return String(n).padStart(2, '0'); }
+function ymd(d){ const x = new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; }
+function money(n){ return `${Number(n || 0).toFixed(2)} 元`; }
+function esc(v){ return String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+function showMsg(type, text){ els.msg.className = `msg ${type}`; els.msg.textContent = text; }
+function clearMsg(){ els.msg.className = 'msg'; els.msg.textContent = ''; }
+function statusBadge(status){
+  const map = { pending: '待结算', settled: '已结算', frozen: '已冻结', cancelled: '已撤销', reversed: '已冲正' };
+  return `<span class="badge ${esc(status)}">${esc(map[status] || status)}</span>`;
+}
+function selectedVenueIds(){
+  return Array.from(document.querySelectorAll('[data-venue-check]:checked')).map(item => Number(item.value)).filter(Boolean);
+}
+function selectedLogIds(){
+  return Array.from(document.querySelectorAll('[data-log-check]:checked')).map(item => Number(item.value)).filter(Boolean);
+}
+async function requestJson(url, options = {}){
+  const res = await fetch(url, {
+    credentials: 'include',
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    ...options
+  });
+  const json = await res.json();
+  if (!json || json.code !== 200) throw new Error((json && json.msg) || '请求失败');
+  return json.data || {};
+}
+function applyFilters(url){
+  const startDate = els.startDate.value;
+  const endDate = els.endDate.value;
+  const venueId = els.venueId.value;
+  if (startDate) url.searchParams.set('start_date', startDate);
+  if (endDate) url.searchParams.set('end_date', endDate);
+  if (venueId) url.searchParams.set('venue_id', venueId);
+}
+
+async function loadSummary(){
+  clearMsg();
+  els.summaryState.textContent = '加载中...';
+  els.summaryTbody.innerHTML = '';
+  const url = new URL(API, window.location.origin);
+  url.searchParams.set('action', 'summary');
+  applyFilters(url);
+  try {
+    const data = await requestJson(url.toString());
+    const summary = data.summary || {};
+    const rows = data.list || [];
+    els.pendingVenueCount.textContent = String(summary.venue_count || 0);
+    els.pendingOrderCount.textContent = String(summary.order_count || 0);
+    els.pendingOrderAmount.textContent = money(summary.order_amount);
+    els.pendingRewardAmount.textContent = money(summary.reward_amount);
+    if (!rows.length) {
+      els.summaryState.textContent = '暂无待结算数据';
+      return;
+    }
+    els.summaryTbody.innerHTML = rows.map(row => `
+      <tr>
+        <td><input type="checkbox" data-venue-check value="${Number(row.promotion_venue_id || 0)}"></td>
+        <td>${esc(row.promotion_venue_id)} / ${esc(row.promotion_venue_name || '-')}</td>
+        <td>${esc(row.start_date || '-')} 至 ${esc(row.end_date || '-')}</td>
+        <td>${Number(row.order_count || 0)}</td>
+        <td>${Number(row.invitee_count || 0)}</td>
+        <td>${money(row.order_amount)}</td>
+        <td class="amount">${money(row.reward_amount)}</td>
+        <td><button type="button" class="btn-light" data-pending-detail="${Number(row.promotion_venue_id || 0)}"><i class="fas fa-eye"></i>查看明细</button></td>
+      </tr>`).join('');
+    els.summaryState.textContent = `共 ${rows.length} 个场地待结算`;
+  } catch (err) {
+    showMsg('err', err.message || '待结算汇总加载失败');
+    els.summaryState.textContent = '加载失败';
+  }
+}
+
+async function loadBatches(){
+  els.batchState.textContent = '加载中...';
+  els.batchTbody.innerHTML = '';
+  const url = new URL(API, window.location.origin);
+  url.searchParams.set('action', 'batches');
+  applyFilters(url);
+  if (els.batchStatus.value) url.searchParams.set('status', els.batchStatus.value);
+  try {
+    const data = await requestJson(url.toString());
+    const rows = data.list || [];
+    if (!rows.length) {
+      els.batchState.textContent = '暂无结算批次';
+      return;
+    }
+    els.batchTbody.innerHTML = rows.map(row => `
+      <tr>
+        <td>${esc(row.settlement_no)}</td>
+        <td>${esc(row.promotion_venue_id)} / ${esc(row.promotion_venue_name || '-')}</td>
+        <td>${esc(row.settlement_start_date)} 至 ${esc(row.settlement_end_date)}</td>
+        <td>${Number(row.order_count || 0)}</td>
+        <td>${money(row.order_amount)}</td>
+        <td class="amount">${money(row.reward_amount)}</td>
+        <td>${statusBadge(row.settlement_status)}</td>
+        <td>${esc(row.settled_at || '-')}</td>
+        <td>${esc(row.operator_name || row.operator_uid || '-')}</td>
+        <td><button type="button" class="btn-light" data-batch-detail="${Number(row.id || 0)}"><i class="fas fa-eye"></i>批次明细</button></td>
+      </tr>`).join('');
+    els.batchState.textContent = `共 ${rows.length} 个结算批次`;
+  } catch (err) {
+    showMsg('err', err.message || '结算批次加载失败');
+    els.batchState.textContent = '加载失败';
+  }
+}
+
+function renderDetailRows(rows){
+  if (!rows.length) {
+    els.detailTbody.innerHTML = '';
+    els.detailState.textContent = '暂无明细';
+    return;
+  }
+  els.detailTbody.innerHTML = rows.map(row => {
+    const canOperate = ['pending', 'frozen'].includes(row.reward_status);
+    return `
+      <tr>
+        <td>${canOperate ? `<input type="checkbox" data-log-check value="${Number(row.id || 0)}">` : ''}</td>
+        <td>${esc(row.reward_date)}</td>
+        <td>${esc(row.promotion_venue_id)} / ${esc(row.promotion_venue_name || '-')}</td>
+        <td>${esc(row.consumer_venue_id)} / ${esc(row.consumer_venue_name || '-')}</td>
+        <td>${esc(row.invitee_uid)}${row.invitee_nickname ? ' / ' + esc(row.invitee_nickname) : ''}</td>
+        <td>${esc(row.invite_code)}</td>
+        <td>${money(row.order_amount)}</td>
+        <td class="amount">${money(row.reward_amount)}</td>
+        <td>${statusBadge(row.reward_status)}</td>
+        <td>${esc(row.order_id)}</td>
+        <td>${esc(row.remark || '')}</td>
+      </tr>`;
+  }).join('');
+  els.detailState.textContent = `共 ${rows.length} 条明细`;
+}
+
+async function loadPendingDetail(venueId){
+  currentDetailMode = 'pending';
+  currentDetailArgs = { venueId };
+  els.detailPanel.classList.add('show');
+  els.detailTitle.textContent = `场地 ${venueId} 待结算明细`;
+  els.detailState.textContent = '加载中...';
+  els.detailTbody.innerHTML = '';
+  const url = new URL(API, window.location.origin);
+  url.searchParams.set('action', 'pending_detail');
+  url.searchParams.set('venue_id', venueId);
+  applyFilters(url);
+  try {
+    const data = await requestJson(url.toString());
+    renderDetailRows(data.list || []);
+  } catch (err) {
+    showMsg('err', err.message || '待结算明细加载失败');
+    els.detailState.textContent = '加载失败';
+  }
+}
+
+async function loadExceptionDetail(){
+  currentDetailMode = 'exceptions';
+  currentDetailArgs = null;
+  els.detailPanel.classList.add('show');
+  els.detailTitle.textContent = '冻结/撤销明细（冻结记录可恢复待结算）';
+  els.detailState.textContent = '加载中...';
+  els.detailTbody.innerHTML = '';
+  const url = new URL(API, window.location.origin);
+  url.searchParams.set('action', 'exception_detail');
+  applyFilters(url);
+  try {
+    const data = await requestJson(url.toString());
+    renderDetailRows(data.list || []);
+  } catch (err) {
+    showMsg('err', err.message || '异常明细加载失败');
+    els.detailState.textContent = '加载失败';
+  }
+}
+
+async function loadBatchDetail(batchId){
+  currentDetailMode = 'batch';
+  currentDetailArgs = { batchId };
+  els.detailPanel.classList.add('show');
+  els.detailTitle.textContent = `结算批次 ${batchId} 明细`;
+  els.detailState.textContent = '加载中...';
+  els.detailTbody.innerHTML = '';
+  const url = new URL(API, window.location.origin);
+  url.searchParams.set('action', 'batch_detail');
+  url.searchParams.set('batch_id', batchId);
+  try {
+    const data = await requestJson(url.toString());
+    const batch = data.batch || {};
+    els.detailTitle.textContent = `${batch.settlement_no || batchId} 明细`;
+    renderDetailRows(data.list || []);
+  } catch (err) {
+    showMsg('err', err.message || '批次明细加载失败');
+    els.detailState.textContent = '加载失败';
+  }
+}
+
+async function createSettlement(){
+  clearMsg();
+  const venueIds = selectedVenueIds();
+  if (!venueIds.length) {
+    showMsg('err', '请先勾选需要结算的场地');
+    return;
+  }
+  if (!els.startDate.value || !els.endDate.value) {
+    showMsg('err', '请先选择结算日期范围');
+    return;
+  }
+  const remark = window.prompt('请输入本次结算备注，可留空', '') || '';
+  if (!window.confirm(`确认给 ${venueIds.length} 个场地生成推广收益结算批次吗？生成后对应明细会变为已结算。`)) return;
+  els.createSettlementBtn.disabled = true;
+  try {
+    const data = await requestJson(API, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'create_settlement',
+        venue_ids: venueIds,
+        start_date: els.startDate.value,
+        end_date: els.endDate.value,
+        remark
+      })
+    });
+    await Promise.all([loadSummary(), loadBatches()]);
+    showMsg('ok', `结算完成：生成 ${((data.created || []).length)} 个批次，跳过 ${((data.skipped || []).length)} 个场地`);
+  } catch (err) {
+    showMsg('err', err.message || '生成结算批次失败');
+  } finally {
+    els.createSettlementBtn.disabled = false;
+  }
+}
+
+async function markException(targetStatus){
+  clearMsg();
+  const ids = selectedLogIds();
+  if (!ids.length) {
+    showMsg('err', '请先勾选需要处理的明细');
+    return;
+  }
+  const remark = els.exceptionRemark.value.trim();
+  if (targetStatus !== 'pending' && !remark) {
+    showMsg('err', '冻结或撤销异常收益时必须填写原因');
+    return;
+  }
+  const text = targetStatus === 'frozen' ? '冻结' : (targetStatus === 'cancelled' ? '撤销' : '恢复待结算');
+  if (!window.confirm(`确认${text}选中的 ${ids.length} 条明细吗？`)) return;
+  try {
+    await requestJson(API, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'mark_exception', ids, target_status: targetStatus, remark })
+    });
+    if (currentDetailMode === 'pending' && currentDetailArgs) await loadPendingDetail(currentDetailArgs.venueId);
+    if (currentDetailMode === 'batch' && currentDetailArgs) await loadBatchDetail(currentDetailArgs.batchId);
+    if (currentDetailMode === 'exceptions') await loadExceptionDetail();
+    await loadSummary();
+    showMsg('ok', `${text}完成`);
+  } catch (err) {
+    showMsg('err', err.message || '异常处理失败');
+  }
+}
+
+function initDate(){
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  els.startDate.value = ymd(yesterday);
+  els.endDate.value = ymd(yesterday);
+}
+
+els.querySummaryBtn.addEventListener('click', loadSummary);
+els.queryExceptionBtn.addEventListener('click', loadExceptionDetail);
+els.queryBatchesBtn.addEventListener('click', loadBatches);
+els.refreshAllBtn.addEventListener('click', () => { loadSummary(); loadBatches(); });
+els.createSettlementBtn.addEventListener('click', createSettlement);
+els.batchStatus.addEventListener('change', loadBatches);
+els.closeDetailBtn.addEventListener('click', () => els.detailPanel.classList.remove('show'));
+els.freezeLogsBtn.addEventListener('click', () => markException('frozen'));
+els.cancelLogsBtn.addEventListener('click', () => markException('cancelled'));
+els.restoreLogsBtn.addEventListener('click', () => markException('pending'));
+els.selectAllVenues.addEventListener('change', () => {
+  document.querySelectorAll('[data-venue-check]').forEach(item => item.checked = els.selectAllVenues.checked);
+});
+els.selectAllLogs.addEventListener('change', () => {
+  document.querySelectorAll('[data-log-check]').forEach(item => item.checked = els.selectAllLogs.checked);
+});
+els.summaryTbody.addEventListener('click', event => {
+  const btn = event.target.closest('[data-pending-detail]');
+  if (btn) loadPendingDetail(Number(btn.dataset.pendingDetail));
+});
+els.batchTbody.addEventListener('click', event => {
+  const btn = event.target.closest('[data-batch-detail]');
+  if (btn) loadBatchDetail(Number(btn.dataset.batchDetail));
+});
+
+initDate();
+loadSummary();
+loadBatches();
+</script>
+</body>
+</html>
