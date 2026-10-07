@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 
 // 临时隐藏推广预估卡片和结算菜单；闭环完成后只需将 false 改为 true。
 const KWX_8899_PROMOTION_UI_VISIBLE = true;
@@ -38,12 +39,13 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
 
     $eligibleIds = array_map('intval', array_column($venues, 'id'));
     $marks = implode(',', array_fill(0, count($eligibleIds), '?'));
+    $cutoverDate = KWX_8899_CUTOVER_DATE;
 
-    // 本场地真实驾驶订单；若用户由其他 8899 场地二级邀请码引流，扣除该订单的 10%。
+    // 跨场地订单预估 70/20/10；普通订单沿用场地自己的提现配置。
     $driving = $db->query(
         "SELECT o.reservation_id AS venue_id,
                 ROUND(COALESCE(SUM(o.payment_amount), 0), 2) AS order_amount,
-                ROUND(COALESCE(SUM(CASE WHEN EXISTS (
+                ROUND(COALESCE(SUM(CASE WHEN DATE(o.end_time) >= '{$cutoverDate}' AND EXISTS (
                     SELECT 1 FROM venues promotion_venue
                     WHERE promotion_venue.venue_subtitle = '8899'
                       AND promotion_venue.venue_unique_subtitle IS NOT NULL
@@ -52,14 +54,25 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
                       AND promotion_venue.venue_unique_subtitle = u.invitation_code
                       AND promotion_venue.id <> o.reservation_id
                 ) THEN ROUND(o.payment_amount * 0.10, 2) ELSE 0 END), 0), 2) AS promotion_deduction
+                ,ROUND(COALESCE(SUM(CASE WHEN DATE(o.end_time) >= '{$cutoverDate}' AND EXISTS (
+                    SELECT 1 FROM venues promotion_venue
+                    WHERE promotion_venue.venue_subtitle = '8899'
+                      AND promotion_venue.venue_unique_subtitle = u.invitation_code
+                      AND promotion_venue.venue_unique_subtitle NOT IN ('', '8899')
+                      AND promotion_venue.id <> o.reservation_id
+                ) THEN ROUND(o.payment_amount * 0.20, 2)
+                  ELSE ROUND(o.payment_amount * COALESCE(cfg.withdraw_ratio, 20.00) / 100, 2)
+                END), 0), 2) AS platform_deduction
          FROM orders o
          LEFT JOIN users u ON u.uid = o.uid
+         LEFT JOIN venue_withdrawal_configs cfg ON cfg.venue_id = o.reservation_id
          WHERE o.end_time >= ? AND o.end_time < ?
            AND o.reservation_id IN ({$marks})
            AND o.status = '已完成'
            AND COALESCE(o.payment_amount, 0) > 0
            AND (o.pays_type IS NULL OR o.pays_type <> '能量')
            AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+           AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)
          GROUP BY o.reservation_id",
         array_merge([$todayStart, $tomorrowStart], $eligibleIds)
     );
@@ -93,7 +106,11 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
                 AND TRIM(promotion_venue.venue_unique_subtitle) <> ''
                 AND TRIM(promotion_venue.venue_unique_subtitle) <> '8899'
                 AND promotion_venue.venue_unique_subtitle = u.invitation_code
+         INNER JOIN venues consumer_venue
+                 ON consumer_venue.id = o.reservation_id
+                AND consumer_venue.venue_subtitle = '8899'
          WHERE o.end_time >= ? AND o.end_time < ?
+           AND DATE(o.end_time) >= '{$cutoverDate}'
            AND promotion_venue.id IN ({$marks})
            AND o.reservation_id IS NOT NULL AND o.reservation_id > 0
            AND o.reservation_id <> promotion_venue.id
@@ -101,6 +118,7 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
            AND COALESCE(o.payment_amount, 0) > 0
            AND (o.pays_type IS NULL OR o.pays_type <> '能量')
            AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+           AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)
          GROUP BY promotion_venue.id",
         array_merge([$todayStart, $tomorrowStart], $eligibleIds)
     );
@@ -126,9 +144,10 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
         $id = (int)$venue['id'];
         $orderAmount = (float)($drivingByVenue[$id]['order_amount'] ?? 0);
         $promotionDeduction = (float)($drivingByVenue[$id]['promotion_deduction'] ?? 0);
+        $platformDeduction = (float)($drivingByVenue[$id]['platform_deduction'] ?? 0);
         $giftIncome = (float)($giftsByVenue[$id]['gift_income'] ?? 0);
         $promotionIncome = (float)($rewardsByVenue[$id]['promotion_income'] ?? 0);
-        $todayIncome = round($orderAmount - $promotionDeduction + $giftIncome, 2);
+        $todayIncome = round($orderAmount - $promotionDeduction - $platformDeduction + $giftIncome, 2);
         $totalPromotion += $promotionIncome;
         $totalTodayIncome += $todayIncome;
 

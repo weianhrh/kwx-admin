@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../auth/_common.php';
+require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 
 auth_json_headers();
 
@@ -386,6 +387,10 @@ try {
         if ($startDate > $endDate) {
             jsonOut(400, '开始日期不能大于结束日期');
         }
+        $todayShanghai = (new DateTimeImmutable('today', new DateTimeZone('Asia/Shanghai')))->format('Y-m-d');
+        if ($startDate < '2026-10-01' || $endDate >= $todayShanghai) {
+            jsonOut(400, '仅可结算 2026-10-01 起已经结束的账期');
+        }
 
         $created = [];
         $skipped = [];
@@ -415,6 +420,49 @@ try {
             if ($orderCount <= 0) {
                 $skipped[] = ['venue_id' => $venueId, 'reason' => '无待结算记录'];
                 continue;
+            }
+            if (!kwx8899IsVenue($database, $venueId)) {
+                throw new RuntimeException('推广场地必须是 8899 场地');
+            }
+            $uncredited = $database->query(
+                "SELECT vpr.id FROM venue_promotion_reward_logs vpr
+                 LEFT JOIN DailyVenueRevenue d
+                   ON d.venue_id = vpr.consumer_venue_id
+                  AND d.date = vpr.reward_date AND d.is_checked = 1
+                 LEFT JOIN kwx_8899_fee_exempt_ledger led
+                   ON led.venue_id = vpr.consumer_venue_id
+                  AND led.source_type = 'daily_revenue' AND led.source_id = d.id
+                 LEFT JOIN fund_changes hist_fc
+                   ON hist_fc.venue_id = vpr.consumer_venue_id
+                  AND hist_fc.source_type = 'KWX8899Historical' AND hist_fc.source_id = d.id
+                  AND hist_fc.change_type = 'withdrawal'
+                 WHERE vpr.promotion_venue_id = ? AND vpr.reward_status = 'pending'
+                   AND vpr.source_type = 'daily_17_snapshot'
+                   AND vpr.reward_date >= ? AND vpr.reward_date <= ?
+                   AND (d.id IS NULL OR led.id IS NULL
+                        OR (vpr.reward_date < '2026-10-07' AND hist_fc.id IS NULL)) LIMIT 1",
+                [$venueId, $startDate, $endDate]
+            );
+            if ($uncredited === false || $uncredited) {
+                throw new RuntimeException('消费场地日结未入账，或历史补扣及免重复扣费台账未完成，禁止提前结算推广收益');
+            }
+            $refunds = $database->query(
+                "SELECT rr.id FROM refund_records rr
+                 JOIN venue_promotion_reward_logs vpr ON vpr.order_id = rr.order_id
+                 WHERE vpr.promotion_venue_id = ? AND vpr.reward_status = 'pending'
+                   AND vpr.source_type = 'daily_17_snapshot'
+                   AND vpr.reward_date >= ? AND vpr.reward_date <= ? LIMIT 1",
+                [$venueId, $startDate, $endDate]
+            );
+            if ($refunds === false || $refunds) {
+                throw new RuntimeException('范围内存在退款订单，先冻结或取消对应推广明细并核账');
+            }
+            $funds = $database->query(
+                'SELECT account_balance FROM venue_funds WHERE venue_id = ? FOR UPDATE',
+                [$venueId]
+            );
+            if (!$funds) {
+                throw new RuntimeException('推广场地未绑定提现账户，无法入账');
             }
 
             $settlementNo = makeSettlementNo($venueId);
@@ -463,6 +511,27 @@ try {
             if ($updatedRows !== $orderCount) {
                 throw new Exception("结算批次 {$batchId} 明细数量异常，预期 {$orderCount}，实际 {$updatedRows}");
             }
+
+            $ok = $database->query(
+                'UPDATE venue_funds SET account_balance = account_balance + ? WHERE venue_id = ?',
+                [$rewardAmount, $venueId], true
+            );
+            if ($ok !== 1) {
+                throw new RuntimeException('推广场地余额入账失败');
+            }
+            $balanceAfter = round((float)$funds[0]['account_balance'] + $rewardAmount, 2);
+            $ok = $database->query(
+                "INSERT INTO fund_changes
+                 (venue_id, change_type, change_amount, balance_after_change, change_reason,
+                  operator_id, remarks)
+                 VALUES (?, 'revenue', ?, ?, '8899跨场地推广结算入账', ?, ?)",
+                [$venueId, $rewardAmount, $balanceAfter, $operatorUid, '推广结算批次=' . $batchId],
+                true
+            );
+            if ($ok !== 1) {
+                throw new RuntimeException('推广场地资金流水写入失败');
+            }
+            kwx8899Ledger($database, $venueId, $rewardAmount, 'promotion_batch', $batchId);
 
             $created[] = [
                 'batch_id' => $batchId,

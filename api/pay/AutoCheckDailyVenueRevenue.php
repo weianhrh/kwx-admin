@@ -23,6 +23,7 @@ if (!$isCli) {
 }
 
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 
 date_default_timezone_set('Asia/Shanghai');
 
@@ -133,7 +134,7 @@ try {
 
             // 先锁收益记录，避免和人工核对或另一个任务重复入账。
             $revenueStmt = $conn->prepare(
-                "SELECT id, venue_id, `date`, total_revenue, is_checked
+                "SELECT id, venue_id, `date`, revenue_before_deduction, total_revenue, is_checked
                  FROM DailyVenueRevenue
                  WHERE id = ?
                  FOR UPDATE"
@@ -157,6 +158,9 @@ try {
             $amount = (float)$revenue['total_revenue'];
             $revenueDate = $revenue['date'];
             $sourceType = 'DailyVenueRevenue';
+            $exemptCredit = kwx8899AssertDailyAmount(
+                $database, $venueId, $revenueDate, $amount, $revenue['revenue_before_deduction']
+            );
 
             // 没有 venue_funds 的场地不能入账，保留未核对状态供后续处理。
             $fundStmt = $conn->prepare(
@@ -242,6 +246,8 @@ try {
                 throw new RuntimeException('写入资金流水失败：' . $error);
             }
             $changeStmt->close();
+
+            kwx8899Ledger($database, $venueId, $exemptCredit, 'daily_revenue', $id);
 
             $checkStmt = $conn->prepare(
                 "UPDATE DailyVenueRevenue

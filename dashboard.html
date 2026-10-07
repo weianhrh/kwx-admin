@@ -4580,6 +4580,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
   const franchise = data.franchise || {};
   const venues = Array.isArray(franchise.venues) ? franchise.venues : [];
   const preview = franchise.promotion_preview || {};
+  const leadSearch = franchise.lead_search || {};
   const showPromotionPreview = Number(data.role_id || 0) === 3 &&
     preview.visible === true && Array.isArray(preview.venues) && preview.venues.length > 0;
   const venueCount = Number(metrics.franchiseVenueCount || venues.length || 0);
@@ -4626,6 +4627,9 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
       statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
       statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
       statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
+      (leadSearch.visible === true ?
+        statCard('今日引流人数', formatInt(leadSearch.today_total || 0) + ' 人', '8899 场地二级副标题首次搜索', 'user', { menuId: 9332 })
+        : '') +
       (showPromotionPreview ?
         statCard('预估推广收益', formatMoney(preview.total_promotion_income), '仅 8899 场地跨场地消费', 'ops') +
         statCard('预估今日收益', formatMoney(preview.total_today_income), '仅 8899 场地，驾驶扣推广分成后含礼物', 'finance')
@@ -4862,10 +4866,11 @@ function franchiseOverviewItem(label, value, icon) {
     function statCard(label, value, note, icon, options) {
       options = options || {};
       const detailUrl = String(options.url || '');
+      const menuId = String(options.menuId || '');
       const detailTitle = String(options.title || label || '数据详情');
-      const classes = 'stat' + (detailUrl ? ' is-clickable' : '');
-      const attrs = detailUrl
-        ? ' role="button" tabindex="0" title="点击查看详情" data-dashboard-detail-url="' + escapeHtml(detailUrl) + '" data-dashboard-detail-title="' + escapeHtml(detailTitle) + '" onclick="openDashboardMetricDetail(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openDashboardMetricDetail(this);}"'
+      const classes = 'stat' + (detailUrl || menuId ? ' is-clickable' : '');
+      const attrs = detailUrl || menuId
+        ? ' role="button" tabindex="0" title="点击查看详情" data-dashboard-detail-url="' + escapeHtml(detailUrl) + '" data-dashboard-menu-id="' + escapeHtml(menuId) + '" data-dashboard-detail-title="' + escapeHtml(detailTitle) + '" onclick="openDashboardMetricDetail(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openDashboardMetricDetail(this);}"'
         : '';
 
       return '<article class="' + classes + '"' + attrs + '>' + statInner(label, value, note, icon) + '</article>';
@@ -4873,6 +4878,11 @@ function franchiseOverviewItem(label, value, icon) {
 
     function openDashboardMetricDetail(el) {
       if (!el) return;
+      const menuId = el.dataset.dashboardMenuId || '';
+      if (menuId) {
+        if (findMenu(menuId)) navigateToMenu(menuId);
+        return;
+      }
       const src = el.dataset.dashboardDetailUrl || '';
       if (!src) return;
       const title = el.dataset.dashboardDetailTitle || '数据详情';

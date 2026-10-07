@@ -14,6 +14,7 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
 .title{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800}.title:before{content:"";width:5px;height:21px;border-radius:99px;background:var(--primary)}
 .hint{margin-top:7px;color:var(--muted);font-size:13px;line-height:1.6}.badge{padding:7px 10px;border:1px solid rgba(15,143,140,.22);border-radius:999px;background:var(--primary-soft);color:var(--primary-dark);font-size:12px;font-weight:700;white-space:nowrap}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat{width:100%;padding:15px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);text-align:left}.stat-label{display:block;color:var(--muted);font-size:13px;font-weight:700}.stat-value{display:block;margin-top:7px;font-size:25px;font-weight:800}.stat-clickable{position:relative;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}.stat-clickable:after{content:"点击查看场地";position:absolute;right:14px;bottom:13px;color:var(--primary-dark);font-size:12px;font-weight:700}.stat-clickable:hover{border-color:rgba(15,143,140,.45);box-shadow:0 7px 18px rgba(15,143,140,.1);transform:translateY(-1px)}
+.venue-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.venue-summary-item{display:block;width:100%;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--soft);text-align:left;cursor:pointer}.venue-summary-item:hover{border-color:var(--primary);background:var(--primary-soft)}.venue-summary-item strong{display:block;font-size:16px}.venue-summary-item small{display:block;margin-top:5px;color:var(--muted)}.venue-summary-item .count{display:block;margin-top:11px;color:var(--primary-dark);font-size:24px;font-weight:800}.venue-summary-empty{padding:18px;color:var(--muted)}
 .filters{display:grid;grid-template-columns:140px 150px 150px 390px 200px 80px 64px;grid-template-areas:"venue subtitle period date keyword size query";gap:8px;align-items:end;justify-content:space-between}.filters>*{min-width:0}.venue-field{grid-area:venue}.subtitle-field{grid-area:subtitle}.period-field{grid-area:period}.date-field{grid-area:date}.keyword-field{grid-area:keyword}.size-field{grid-area:size}.query-btn{grid-area:query}.field{min-width:0}.field label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:700}.field input,.field select{width:100%;min-width:0;height:39px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);outline:none}.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,143,140,.11)}
 .periods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.period{height:39px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--muted);font-weight:700;cursor:pointer}.period.active{border-color:var(--primary);background:var(--primary);color:#fff;box-shadow:0 7px 16px rgba(15,143,140,.16)}
 .date-range{display:grid;grid-template-columns:minmax(180px,1fr) 14px minmax(180px,1fr);gap:6px;align-items:center;min-width:0}.date-range input{width:100%;min-width:0;padding-left:8px;padding-right:6px}.date-separator{text-align:center;color:var(--muted);font-size:12px}.keyword-field{min-width:0}.keyword-field input{min-width:0}.btn{height:39px;padding:0 8px;border:1px solid var(--primary);border-radius:8px;background:var(--primary);color:#fff;font-weight:700;cursor:pointer}.btn:hover{background:var(--primary-dark)}.error{min-height:19px;margin-top:10px;color:#d34d49;font-size:13px}
@@ -28,7 +29,7 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
 <div class="container">
   <section class="card">
     <div class="head">
-      <div><h1 class="title">场地搜索记录</h1><p class="hint">查看用户第一次命中数字场地副标题的记录，并按时间汇总每个副标题的搜索人数。</p></div>
+      <div><h1 id="pageTitle" class="title">场地搜索记录</h1><p id="pageHint" class="hint">查看用户第一次命中数字场地副标题的记录，并按时间汇总每个副标题的搜索人数。</p></div>
       <span id="rangeBadge" class="badge">当天 · 全部场地</span>
     </div>
     <div class="stats">
@@ -36,6 +37,11 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
       <div class="stat"><div class="stat-label">筛选范围命中副标题</div><div id="subtitleTotal" class="stat-value">--</div></div>
       <button class="stat stat-clickable" type="button" onclick="openVenueModal()" aria-label="查看筛选范围命中场地"><span class="stat-label">筛选范围命中场地</span><span id="venueTotal" class="stat-value">--</span></button>
     </div>
+  </section>
+
+  <section id="venueBreakdownCard" class="card" hidden>
+    <div class="section-head"><div><h2 class="section-title">各场地二级引流人数</h2><p class="section-hint">各场地单独去重；点击场地可筛选下方的首次搜索明细。</p></div></div>
+    <div id="venueBreakdown" class="venue-summary-grid"></div>
   </section>
 
   <section class="card">
@@ -77,7 +83,7 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
     <div id="error" class="error"></div>
   </section>
 
-  <section class="card">
+  <section id="subtitleSummarySection" class="card">
     <button id="summaryToggle" class="collapse-head" type="button" aria-expanded="false" aria-controls="summaryPanel" onclick="toggleSubtitleSummary()">
       <div><h2 class="section-title">副标题人数汇总</h2><p class="section-hint">默认收起；展开后对比每个副标题的历史累计人数和筛选时间内人数。</p></div>
       <span class="collapse-action"><span id="summaryToggleText">展开汇总</span><span id="summaryToggleIcon" class="collapse-icon">⌄</span></span>
@@ -112,7 +118,7 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
 <script>
 const API_URL='/api/venue/venue_subtitle_search_records.php';
 const VENUE_API_URL='/api/operat/EnergyGift.php';
-let period='day',currentPage=1,total=0,venueLoadError='',summaryVenues=[],subtitleVenueLists=[];
+let period='day',currentPage=1,total=0,venueLoadError='',summaryVenues=[],subtitleVenueLists=[],viewerScope='';
 const el=id=>document.getElementById(id);
 const els={dayBtn:el('dayBtn'),weekBtn:el('weekBtn'),monthBtn:el('monthBtn'),venueId:el('venueId'),venueSubtitle:el('venueSubtitle'),startDate:el('startDate'),endDate:el('endDate'),keyword:el('keyword'),pageSize:el('pageSize'),rangeBadge:el('rangeBadge'),error:el('error'),tbody:el('tbody'),summaryBody:el('summaryBody'),summaryPanel:el('summaryPanel'),summaryToggle:el('summaryToggle'),summaryToggleText:el('summaryToggleText'),summaryToggleIcon:el('summaryToggleIcon'),recordTotal:el('recordTotal'),subtitleTotal:el('subtitleTotal'),venueTotal:el('venueTotal'),venueModal:el('venueModal'),venueModalTitle:el('venueModalTitle'),venueModalClose:el('venueModalClose'),venueList:el('venueList'),prevBtn:el('prevBtn'),nextBtn:el('nextBtn'),pageInfo:el('pageInfo')};
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
@@ -121,6 +127,35 @@ function periodRange(name){const today=new Date();today.setHours(0,0,0,0);let st
 function params(){const q=new URLSearchParams({period,page:String(currentPage),page_size:els.pageSize.value,start_date:els.startDate.value,end_date:els.endDate.value});if(els.venueId.value)q.set('venue_id',els.venueId.value);if(els.venueSubtitle.value)q.set('venue_subtitle',els.venueSubtitle.value);if(els.keyword.value.trim())q.set('keyword',els.keyword.value.trim());return q.toString()}
 function switchPeriod(next){period=next;const range=periodRange(next);els.startDate.value=range.start;els.endDate.value=range.end;['day','week','month'].forEach(name=>els[`${name}Btn`].classList.toggle('active',name===period));reload()}
 function markCustomDate(){['day','week','month'].forEach(name=>els[`${name}Btn`].classList.remove('active'))}
+function renderAllowedVenues(venues){
+  const selected=els.venueId.value;
+  const rows=Array.isArray(venues)?venues:[];
+  els.venueId.innerHTML='<option value="">全部关联场地</option>'+rows.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.id)+'-'+esc(v.venue_name||'未命名场地')+'</option>').join('');
+  if(rows.some(v=>String(v.id)===selected))els.venueId.value=selected;
+}
+function renderVenueBreakdown(rows){
+  const card=el('venueBreakdownCard');
+  const adminSummary=el('subtitleSummarySection');
+  const mine=viewerScope==='mine';
+  card.hidden=!mine;
+  adminSummary.hidden=mine;
+  if(!mine)return;
+  const chosenVenue=els.venueId.value;
+  const chosenSubtitle=els.venueSubtitle.value;
+  const visibleRows=(Array.isArray(rows)?rows:[]).filter(v=>
+    (!chosenVenue||String(v.venue_id)===chosenVenue)&&
+    (!chosenSubtitle||String(v.venue_subtitle)===chosenSubtitle)
+  );
+  el('venueBreakdown').innerHTML=visibleRows.length?visibleRows.map(v=>
+    '<button class="venue-summary-item" type="button" data-venue-id="'+esc(v.venue_id)+'" onclick="selectVenueForDetails(this)">'+
+    '<strong>'+esc(v.venue_name||('场地 '+v.venue_id))+'（ID：'+esc(v.venue_id)+'）</strong>'+
+    '<small>二级副标题：'+esc(v.venue_subtitle)+'</small>'+
+    '<span class="count">'+Number(v.user_total||0).toLocaleString('zh-CN')+' 人</span>'+
+    '<small>历史搜索人数：'+Number(v.history_user_total||0).toLocaleString('zh-CN')+' 人</small>'+
+    '</button>'
+  ).join(''):'<div class="venue-summary-empty">当前筛选条件下没有关联场地</div>';
+}
+function selectVenueForDetails(button){els.venueId.value=button.dataset.venueId||'';reload()}
 function toggleSubtitleSummary(){const shouldOpen=els.summaryPanel.hidden;els.summaryPanel.hidden=!shouldOpen;els.summaryToggle.setAttribute('aria-expanded',String(shouldOpen));els.summaryToggleText.textContent=shouldOpen?'收起汇总':'展开汇总';els.summaryToggleIcon.classList.toggle('open',shouldOpen)}
 function showVenueModal(venues,title){els.venueModalTitle.textContent=`${title}（${venues.length}）`;els.venueList.innerHTML=venues.length?venues.map(v=>`<li class="venue-item"><span class="venue-id">${esc(v.venue_id)}</span><span>-</span><span class="venue-name" title="${esc(v.venue_name||'未命名场地')}">${esc(v.venue_name||'未命名场地')}</span></li>`).join(''):'<li class="venue-list-empty">暂无场地</li>';els.venueModal.hidden=false;els.venueModalClose.focus()}
 function openVenueModal(){showVenueModal(summaryVenues,'命中场地')}
@@ -130,13 +165,41 @@ function renderSubtitleOptions(options){const selected=els.venueSubtitle.value;e
 function renderAggregates(rows){subtitleVenueLists=rows.map(r=>({venue_subtitle:r.venue_subtitle,venues:Array.isArray(r.venues)?r.venues:[]}));if(!rows.length){els.summaryBody.innerHTML='<tr><td colspan="5" class="empty">暂无副标题历史搜索记录</td></tr>';return}els.summaryBody.innerHTML=rows.map((r,index)=>{const venues=subtitleVenueLists[index].venues,first=venues[0],firstLabel=first?`${first.venue_id}-${first.venue_name||'未命名场地'}`:'暂无场地',more=venues.length>1?`<span class="owner-more">+${venues.length-1}</span>`:'';return `<tr><td><span class="code">${esc(r.venue_subtitle)}</span></td><td><button class="owner-button" type="button" onclick="openSubtitleVenueModal(${index})" title="点击查看全部所属场地"><span class="owner-first">${esc(firstLabel)}</span>${more}</button></td><td><span class="number">${Number(r.history_user_total||0).toLocaleString('zh-CN')}</span> 人</td><td><span class="number">${Number(r.user_total||0).toLocaleString('zh-CN')}</span> 人</td><td>${Number(r.venue_total||0).toLocaleString('zh-CN')}</td></tr>`}).join('')}
 function renderRows(rows){if(!rows.length){els.tbody.innerHTML='<tr><td colspan="6" class="empty">暂无数据</td></tr>';return}els.tbody.innerHTML=rows.map(r=>`<tr><td>${esc(r.id)}</td><td><strong>${esc(r.uid)}</strong></td><td>${esc(r.venue_id)}</td><td>${esc(r.venue_name||'--')}</td><td><span class="code">${esc(r.venue_subtitle)}</span></td><td>${esc(r.first_searched_at)}</td></tr>`).join('')}
 function renderPager(data){total=Number(data.total||0);const size=Number(data.page_size||els.pageSize.value);const pages=Math.max(1,Math.ceil(total/size));currentPage=Math.min(Number(data.page||1),pages);els.pageInfo.textContent=`第 ${currentPage} / ${pages} 页，共 ${total} 条`;els.prevBtn.disabled=currentPage<=1;els.nextBtn.disabled=currentPage>=pages}
-function renderSummary(data){const summary=data.summary||{},range=data.range||{};summaryVenues=Array.isArray(data.summary_venues)?data.summary_venues:[];els.recordTotal.textContent=Number(summary.user_total||summary.record_total||0).toLocaleString('zh-CN');els.subtitleTotal.textContent=Number(summary.subtitle_total||0).toLocaleString('zh-CN');els.venueTotal.textContent=Number(summary.venue_total||0).toLocaleString('zh-CN');if(range.start_date)els.startDate.value=range.start_date;if(range.end_date)els.endDate.value=range.end_date;const startText=String(range.start_date||'').replace('T',' '),endText=String(range.end_date||'').replace('T',' ');const dateLabel=startText===endText?startText:`${startText} 至 ${endText}`;const venueLabel=els.venueId.options[els.venueId.selectedIndex]?.text||'全部场地';const subtitleLabel=els.venueSubtitle.value?`副标题 ${els.venueSubtitle.value}`:'全部副标题';els.rangeBadge.textContent=`${dateLabel} · ${venueLabel} · ${subtitleLabel}`}
+function renderSummary(data){const summary=data.summary||{},range=data.range||{};summaryVenues=Array.isArray(data.summary_venues)?data.summary_venues:[];els.recordTotal.textContent=Number(summary.user_total??summary.record_total??0).toLocaleString('zh-CN');els.subtitleTotal.textContent=Number(summary.subtitle_total||0).toLocaleString('zh-CN');els.venueTotal.textContent=Number(summary.venue_total||0).toLocaleString('zh-CN');if(range.start_date)els.startDate.value=range.start_date;if(range.end_date)els.endDate.value=range.end_date;const startText=String(range.start_date||'').replace('T',' '),endText=String(range.end_date||'').replace('T',' ');const dateLabel=startText===endText?startText:`${startText} 至 ${endText}`;const venueLabel=els.venueId.options[els.venueId.selectedIndex]?.text||'全部场地';const subtitleLabel=els.venueSubtitle.value?`副标题 ${els.venueSubtitle.value}`:'全部副标题';els.rangeBadge.textContent=`${dateLabel} · ${venueLabel} · ${subtitleLabel}`}
 async function loadVenues(){try{const body=new URLSearchParams({action:'get_venues'});const res=await fetch(VENUE_API_URL,{method:'POST',credentials:'include',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()});const json=await res.json();if(json.code!==0)throw new Error(json.msg||'场地加载失败');const rows=Array.isArray(json.data)?json.data:[];rows.sort((a,b)=>Number(a.id)-Number(b.id));els.venueId.innerHTML='<option value="">全部场地</option>'+rows.map(v=>`<option value="${esc(v.id)}">${esc(v.id)}-${esc(v.venue_name||'未命名场地')}</option>`).join('');venueLoadError=''}catch(err){venueLoadError=err.message||'场地下拉框加载失败'}}
-async function loadData(){summaryVenues=[];subtitleVenueLists=[];els.error.textContent=venueLoadError;els.summaryBody.innerHTML='<tr><td colspan="5" class="loading">加载中...</td></tr>';els.tbody.innerHTML='<tr><td colspan="6" class="loading">加载中...</td></tr>';try{const res=await fetch(`${API_URL}?${params()}`,{credentials:'include',cache:'no-store'});const json=await res.json();if(json.code!==0)throw new Error(json.msg||'查询失败');const data=json.data||{};renderSubtitleOptions(Array.isArray(data.subtitle_options)?data.subtitle_options:[]);renderSummary(data);renderAggregates(Array.isArray(data.subtitle_summary)?data.subtitle_summary:[]);renderRows(Array.isArray(data.rows)?data.rows:[]);renderPager(data)}catch(err){els.error.textContent=err.message||'网络异常，请稍后重试';els.summaryBody.innerHTML='<tr><td colspan="5" class="empty">加载失败</td></tr>';els.tbody.innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';renderPager({total:0,page:1,page_size:Number(els.pageSize.value)})}}
+async function loadData(){
+  summaryVenues=[];subtitleVenueLists=[];
+  els.error.textContent=venueLoadError;
+  els.summaryBody.innerHTML='<tr><td colspan="5" class="loading">加载中...</td></tr>';
+  els.tbody.innerHTML='<tr><td colspan="6" class="loading">加载中...</td></tr>';
+  try{
+    const res=await fetch(API_URL+'?'+params(),{credentials:'include',cache:'no-store'});
+    const json=await res.json();
+    if(json.code!==0)throw new Error(json.msg||'查询失败');
+    const data=json.data||{};
+    viewerScope=data.scope||'';
+    if(viewerScope==='mine'){
+      renderAllowedVenues(data.eligible_venues);
+      el('pageTitle').textContent='二级引流搜索明细';
+      el('pageHint').textContent='仅显示当前账号关联的 8899 场地二级副标题首次搜索记录。';
+    }
+    renderSubtitleOptions(Array.isArray(data.subtitle_options)?data.subtitle_options:[]);
+    renderSummary(data);
+    renderVenueBreakdown(data.venue_summary);
+    if(viewerScope==='all')renderAggregates(Array.isArray(data.subtitle_summary)?data.subtitle_summary:[]);
+    renderRows(Array.isArray(data.rows)?data.rows:[]);
+    renderPager(data);
+  }catch(err){
+    els.error.textContent=err.message||'网络异常，请稍后重试';
+    els.summaryBody.innerHTML='<tr><td colspan="5" class="empty">加载失败</td></tr>';
+    els.tbody.innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';
+    renderPager({total:0,page:1,page_size:Number(els.pageSize.value)});
+  }
+}
 function reload(){currentPage=1;loadData()}function changePage(delta){const pages=Math.max(1,Math.ceil(total/Number(els.pageSize.value)));const next=currentPage+delta;if(next<1||next>pages)return;currentPage=next;loadData()}
 els.venueId.addEventListener('change',reload);els.venueSubtitle.addEventListener('change',reload);els.pageSize.addEventListener('change',reload);els.startDate.addEventListener('change',markCustomDate);els.endDate.addEventListener('change',markCustomDate);els.keyword.addEventListener('keydown',e=>{if(e.key==='Enter')reload()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!els.venueModal.hidden)closeVenueModal()});
-(async()=>{const range=periodRange('day');els.startDate.value=range.start;els.endDate.value=range.end;await loadVenues();await loadData()})();
+(async()=>{const range=periodRange('day');els.startDate.value=range.start;els.endDate.value=range.end;await loadData();if(viewerScope==='all')await loadVenues()})();
 </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
 require_once __DIR__ . '/../promotion/PromotionFeature.php';
+require_once __DIR__ . '/../venue/venue_subtitle_search_scope.php';
 require_once __DIR__ . '/../RedisHelper.php';
 
 auth_json_headers();
@@ -105,6 +106,7 @@ $franchiseTotalDevices = 0;
 $franchiseVenueRows = [];
 $franchiseVenueIds = [];
 $franchisePromotionPreview = ['visible' => false, 'venues' => []];
+$franchiseLeadSearch = ['visible' => false, 'today_total' => 0];
 
 if (in_array($roleId, [3, 4], true)) {
     $franchiseVenueRows = venue_scope_visible_venues($db, $user);
@@ -162,6 +164,28 @@ if ($roleId === 3 && KWX_8899_PROMOTION_UI_VISIBLE && $franchiseVenueIds) {
         $franchisePromotionPreview = kwx_promotion_preview_for_venues($db, $franchiseVenueIds, $todayStart, $tomorrowStart);
     } catch (Throwable $e) {
         error_log('KWX 8899 promotion preview error: ' . $e->getMessage());
+    }
+}
+
+// 首次搜索当前二级副标题的用户，按每个关联的 8899 场地分别去重后求和。
+if (in_array($roleId, [3, 4], true) && $franchiseVenueIds
+    && venue_scope_has_table($db, 'venue_subtitle_search_records')) {
+    $leadVenues = venue_search_eligible_venues($db, $user, $franchiseVenueIds);
+    if ($leadVenues) {
+        [$leadWhere, $leadParams] = venue_search_record_scope($leadVenues);
+        $leadRows = $db->query("
+            SELECT r.venue_id, COUNT(DISTINCT r.uid) AS user_total
+            FROM venue_subtitle_search_records r
+            WHERE r.first_searched_at >= ? AND r.first_searched_at < ?
+              AND {$leadWhere}
+            GROUP BY r.venue_id
+        ", array_merge([$todayStart, $tomorrowStart], $leadParams));
+        if (is_array($leadRows)) {
+            $franchiseLeadSearch = ['visible' => true, 'today_total' => array_sum(array_map(
+                static function (array $row): int { return (int)$row['user_total']; },
+                $leadRows
+            ))];
+        }
     }
 }
 
@@ -397,6 +421,7 @@ auth_out(0, 'ok', [
         'venue_name' => $franchiseVenueName,
         'venues' => $franchiseVenueRows,
         'promotion_preview' => $franchisePromotionPreview,
+        'lead_search' => $franchiseLeadSearch,
         'notices' => [
             ['title' => '运营提醒', 'content' => '请保持车辆电量、网络与视频画面稳定，避免影响玩家远程驾驶体验。', 'date' => date('Y-m-d')],
             ['title' => '结算提示', 'content' => '今日收益按场地订单实时汇总，最终结算以财务审核后的账单为准。', 'date' => date('Y-m-d')],

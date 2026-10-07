@@ -1364,8 +1364,9 @@ const feeHelp = `
 
       // 输入框展示的是加盟商实际可到账金额；接口仍以参与结算金额记账。
       const payoutRate = parseFloat(accountCache.actual_payout_rate || 0);
-      if (!(payoutRate > 0)) {
-        showCustomModal('提现提示', '当前场地实际到账比例为0%，无法提现。');
+      const exemptAvailable = parseFloat(accountCache.fee_exempt_available || 0);
+      if (!(payoutRate > 0) && withdrawAmount > exemptAvailable + 0.001) {
+        showCustomModal('提现提示', '普通收益的实际到账比例为0%，可申请金额不能超过已分账余额。');
         withdrawButton.disabled = false;
         statusMessage.style.display = 'none';
         return;
@@ -1376,9 +1377,10 @@ const feeHelp = `
       const maxWithdrawAmount = parseFloat(accountCache.available_balance || 0);
       const fullSettlementAmount = parseFloat(accountCache.settlement_balance || 0);
       const isFullWithdrawal = Math.abs(withdrawAmount - maxWithdrawAmount) < 0.01;
-      const settlementAmount = isFullWithdrawal && fullSettlementAmount > 0
+      const netPart = Math.min(withdrawAmount, exemptAvailable);
+      const settlementAmount = isFullWithdrawal && fullSettlementAmount > 0 && payoutRate > 0
         ? Math.round(fullSettlementAmount * 100) / 100
-        : Math.round((withdrawAmount / payoutRate) * 100) / 100;
+        : Math.round((netPart + (payoutRate > 0 ? (withdrawAmount - netPart) / payoutRate : 0)) * 100) / 100;
 
       const data = {
         amount: settlementAmount,

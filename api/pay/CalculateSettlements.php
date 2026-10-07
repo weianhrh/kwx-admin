@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
+require_once '../lib/kwx_8899_policy.php';
 require_once '../RedisHelper.php';   // ★ 新增
 
 // api/pay/CalculateSettlements.php
@@ -197,9 +198,15 @@ $settlement_balance = max(
     0.0,
     $account_balance - $frozen_amount - $totalRefund - $lockAmount - $unsettledImageTransmissionFee
 );
-$platform_deduction_amount = round($settlement_balance * $platformDeductionRate, 2);
-$withdrawal_fee_amount = round($settlement_balance * $withdrawalFeeRate, 2);
-$available_balance = round($settlement_balance * $actualPayoutRate, 2);
+$feeExemptBalance = kwx8899ExemptBalance($database, $venue_id);
+$quote = kwx8899Allocation(
+    $account_balance, $feeExemptBalance,
+    $frozen_amount + $totalRefund + $lockAmount + $unsettledImageTransmissionFee,
+    $settlement_balance, 0, $platformDeductionRate, $withdrawalFeeRate
+);
+$platform_deduction_amount = $quote['technical_fee'];
+$withdrawal_fee_amount = $quote['withdrawal_fee'];
+$available_balance = $quote['actual_amount'];
 
 // 账号掩码
 $withdrawal_account = $funds[0]['withdrawal_account'];
@@ -224,7 +231,10 @@ echo json_encode([
   'withdrawal_fee_rate' => $withdrawalFeeRate,
   'withdrawal_fee_amount' => $withdrawal_fee_amount,
   'actual_payout_rate' => $actualPayoutRate,
-  'actual_payout_rate_text' => ($actualPayoutRate * 100) . '%',
+  'actual_payout_rate_text' => $feeExemptBalance > 0 ? '分账后金额免重复扣费' : ($actualPayoutRate * 100) . '%',
+  'fee_exempt_balance' => $feeExemptBalance,
+  'fee_exempt_available' => $quote['exempt_available'],
+  'legacy_available_base' => $quote['legacy_available'],
   'frozen_amount' => $frozen_amount,         // ★ 新增
   'lock_amount' => $lockAmount,
   'lock_order_count' => $lockOrderCount,

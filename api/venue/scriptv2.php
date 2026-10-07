@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php'; // 确保路径正确
+require_once dirname(__DIR__) . '/lib/kwx_8899_policy.php';
 
 // api/venue/script.php
 $database = new Database();
@@ -13,6 +14,11 @@ $today = isset($_GET['date']) && $_GET['date'] !== ''
 
 // 临时固定只统计 2 号场地
 $venue_id = 2;
+// This legacy one-venue script must not overwrite a 70/20/10 daily record.
+if (kwx8899Active($today) && kwx8899IsVenue($database, $venue_id)) {
+    http_response_code(409);
+    exit(json_encode(['code' => 409, 'msg' => '8899 场地新账期请运行 script.php 的 CLI 日结任务'], JSON_UNESCAPED_UNICODE));
+}
 
 // 当天开始和结束时间
 $dayStart = $today . ' 00:00:00';

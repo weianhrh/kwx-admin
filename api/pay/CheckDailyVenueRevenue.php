@@ -1,5 +1,6 @@
 <?php
 require_once '../Database.php';
+require_once dirname(__DIR__) . '/lib/kwx_8899_policy.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -68,7 +69,7 @@ try {
 
     // 锁定收益记录，必须属于当前场地
     $revenueStmt = $conn->prepare("
-        SELECT id, venue_id, `date`, total_revenue, is_checked
+        SELECT id, venue_id, `date`, revenue_before_deduction, total_revenue, is_checked
         FROM DailyVenueRevenue
         WHERE id = ?
           AND venue_id = ?
@@ -98,6 +99,9 @@ try {
     $revenueDate = $revenueRow['date'];
     $sourceType = 'DailyVenueRevenue';
     $sourceId = (int)$revenueRow['id'];
+    $exemptCredit = kwx8899AssertDailyAmount(
+        $database, $venue_id, $revenueDate, $amount, $revenueRow['revenue_before_deduction']
+    );
 
     // 更新余额
     $updateBalanceStmt = $conn->prepare("
@@ -189,6 +193,8 @@ try {
         throw new Exception('插入余额变动记录失败：' . $insertStmt->error);
     }
     $insertStmt->close();
+
+    kwx8899Ledger($database, $venue_id, $exemptCredit, 'daily_revenue', $sourceId);
 
     // 标记收益记录为已核对，附带 is_checked = 0 防止异常并发
     $checkStmt = $conn->prepare("

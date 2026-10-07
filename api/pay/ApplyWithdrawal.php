@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
+require_once '../lib/kwx_8899_policy.php';
 require_once '../RedisHelper.php';   // ★ 新增
 // api/pay/ApplyWithdrawal.php
 // 日志记录函数
@@ -412,6 +413,18 @@ try {
         $account_balance - $frozen_amount - $totalRefundToDeduct - $totalLockAmount
     );
 
+    // The same venue can have legacy gross balance and 8899 already-split net
+    // balance. Only the legacy part incurs the configured withdrawal deductions.
+    $feeExemptBalance = kwx8899ExemptBalance($database, $venue_id);
+    $initialQuote = kwx8899Allocation(
+        $account_balance, $feeExemptBalance,
+        $frozen_amount + $totalRefundToDeduct + $totalLockAmount,
+        $amount, 0, $technical_service_rate, $withdrawal_fee_rate
+    );
+    $technical_service_fee = $initialQuote['technical_fee'];
+    $withdrawal_fee = $initialQuote['withdrawal_fee'];
+    $actual_amount = $initialQuote['actual_amount'];
+
     if ($amount > $available_balance + 0.01) {
         $database->rollBack();
 
@@ -453,6 +466,9 @@ if ($ok === false) {
 }
 $withdrawalRequestIdRows = $database->query("SELECT LAST_INSERT_ID() AS id");
 $withdrawalRequestId = (int)($withdrawalRequestIdRows[0]['id'] ?? 0);
+if ($withdrawalRequestId <= 0) {
+    throw new RuntimeException('未取得提现申请ID，已停止出账');
+}
 // ✅ 就加在这里：提现申请记录插入成功后，扣余额之前
 logMessage_frozen(
     "提现申请记录插入成功 | 场地ID: {$venue_id}, UID: {$uid}, 评级: {$venue_level}级, " .
@@ -567,6 +583,16 @@ if ($unsettled_image_fee_total > 0 && !empty($unsettled_image_ids)) {
 $settlementAmount = round($amount, 2); // 参与提现结算金额，例如 27.55
 $displayWithdrawalAmount = round($amount + $actualImageFeeToDeduct, 2); // 展示提现金额，例如 100.00
 $totalDebit = round($amount + $totalRefundToDeduct + $actualImageFeeToDeduct, 2); // 实际扣余额，例如 100.00
+$finalQuote = kwx8899Allocation(
+    $account_balance, $feeExemptBalance,
+    $frozen_amount + $totalRefundToDeduct + $totalLockAmount + $actualImageFeeToDeduct,
+    $amount, $totalRefundToDeduct + $actualImageFeeToDeduct,
+    $technical_service_rate, $withdrawal_fee_rate
+);
+$technical_service_fee = $finalQuote['technical_fee'];
+$withdrawal_fee = $finalQuote['withdrawal_fee'];
+$actual_amount = $finalQuote['actual_amount'];
+$feeExemptSpent = $finalQuote['exempt_spent'];
 $refundIds = array_values(array_filter(array_map(function ($row) {
     return (int)($row['id'] ?? 0);
 }, $refundRecords)));
@@ -591,8 +617,10 @@ $withdrawal_remark = sprintf(
 
 if ($withdrawalRequestId > 0) {
     $ok = $database->query(
-        "UPDATE withdrawal_requests SET remarks = ? WHERE id = ? AND venue_id = ?",
-        [$withdrawal_remark, $withdrawalRequestId, $venue_id],
+        "UPDATE withdrawal_requests
+         SET remarks = ?, technical_service_fee = ?, withdrawal_fee = ?, actual_amount = ?
+         WHERE id = ? AND venue_id = ?",
+        [$withdrawal_remark, $technical_service_fee, $withdrawal_fee, $actual_amount, $withdrawalRequestId, $venue_id],
         true
     );
 
@@ -697,6 +725,8 @@ if ($ok === false) {
     echo json_encode(['code' => 500, 'msg' => '插入余额变动记录失败', 'data' => []]);
     exit;
 }
+
+kwx8899Ledger($database, $venue_id, -$feeExemptSpent, 'withdrawal_requests', $withdrawalRequestId);
 
 // 更新退款记录为已减去
 foreach ($refundRecords as $record) {

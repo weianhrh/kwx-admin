@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
+require_once '../lib/kwx_8899_policy.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -96,6 +97,9 @@ try {
 
     if ($venue_id <= 0) {
         throw new Exception('订单缺少场地ID，不能核对');
+    }
+    if (kwx8899Active($revenueDate) && kwx8899IsVenue($database, $venue_id)) {
+        throw new Exception('8899 场地的新账期由每日收益统一入账，订单不能单独重复入账');
     }
 
     // 2. 多场地权限：role_id=1/2 可核对全场地；role_id=3 仅核对自己绑定场地。

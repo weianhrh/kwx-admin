@@ -96,6 +96,7 @@ try {
             d.venue_id,
             COALESCE(v.venue_name, '') AS venue_name,
             d.date,
+            d.revenue_before_deduction,
             d.total_revenue,
             d.created_at,
             d.updated_at,

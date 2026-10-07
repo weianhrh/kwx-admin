@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
+require_once '../lib/kwx_8899_policy.php';
 
 header('Content-Type: application/json; charset=utf-8');
 date_default_timezone_set('Asia/Shanghai');
@@ -212,6 +213,18 @@ try {
         );
         if ($affected === false || (int)$affected !== 1) {
             throw new RuntimeException('退回场地余额失败');
+        }
+
+        $exemptDebits = $database->query(
+            "SELECT amount FROM kwx_8899_fee_exempt_ledger
+             WHERE venue_id = ? AND source_type = 'withdrawal_requests' AND source_id = ? LIMIT 1",
+            [$venueId, $requestId]
+        );
+        if ($exemptDebits === false) {
+            throw new RuntimeException('查询原提现的免重复扣费金额失败');
+        }
+        if ($exemptDebits) {
+            kwx8899Ledger($database, $venueId, -(float)$exemptDebits[0]['amount'], 'withdrawal_reversal', $requestId);
         }
 
         $imageFeeAmount = remark_amount($remarks, ['图传费用扣减', '未结算图传费用', '图传费用']);

@@ -164,6 +164,10 @@
             background: var(--warning-soft);
         }
 
+        .income-summary .summary-pill[hidden] {
+            display: none;
+        }
+
         .date-filter {
             margin: 18px 22px 0 !important;
             padding: 12px !important;
@@ -494,6 +498,7 @@
                 <span id="total-amount" class="summary-pill">累计收入：0.00 元</span>
                 <span id="drive-total" class="summary-pill">驾驶收入：0.00 元</span>
                 <span id="gift-total" class="summary-pill is-gift">礼物收入：0.00 元</span>
+                <span id="kwx8899EstimatedTotal" class="summary-pill" hidden>8899 驾驶预估收益：0.00 元</span>
               </div>
             </div>
 
@@ -583,6 +588,7 @@
 
             document.getElementById('loading').style.display = 'block';
             document.getElementById('income-details').innerHTML = ''; // 清空现有数据
+            document.getElementById('kwx8899EstimatedTotal').hidden = true;
 
             fetch(url)
                 .then(response => response.json())
@@ -594,6 +600,12 @@
                         document.getElementById('total-amount').textContent = `累计收入：${allIncome.toFixed(2)} 元`;
                         document.getElementById('drive-total').textContent = `驾驶收入：${driveIncome.toFixed(2)} 元`;
                         document.getElementById('gift-total').textContent = `礼物收入：${giftIncome.toFixed(2)} 元`;
+                        const estimatedPill = document.getElementById('kwx8899EstimatedTotal');
+                        if (data.kwx_8899_estimate_visible === true) {
+                            const estimate = Number.parseFloat(data.kwx_8899_estimated_total ?? 0) || 0;
+                            estimatedPill.textContent = `8899 驾驶预估收益：${estimate.toFixed(2)} 元`;
+                            estimatedPill.hidden = false;
+                        }
 
                         totalPages = Math.ceil(data.count / limit);  // ✅ 始终更新总页数
                         updatePagination();
@@ -672,6 +684,12 @@
             orders.forEach(order => {
                 const orderItem = document.createElement('div');
                 orderItem.classList.add('order-item');
+                const estimatedIncome = order.kwx_8899_estimated_income;
+                const estimateHtml = estimatedIncome == null ? '' : `
+                    <div class="field">
+                        <div class="label">8899 预估收益:</div>
+                        <div class="value payment-amount">${Number(estimatedIncome).toFixed(2)} 元</div>
+                    </div>`;
                 const startTime = new Date(order.start_time);
                 const endTime = new Date(order.end_time);
                 const durationMs = endTime - startTime;
@@ -693,6 +711,7 @@ const seconds = totalSeconds % 60;
                         <div class="label">支付金额:</div>
                         <div class="value payment-amount">${order.payment_amount} 元</div>
                     </div>
+                    ${estimateHtml}
                     <div class="field">
                         <div class="label">支付类型:</div>
                         <div class="value">${order.pays_type}</div> 

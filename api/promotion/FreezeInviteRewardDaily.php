@@ -1,21 +1,15 @@
 <?php
 require_once dirname(__DIR__) . '/Database.php';
+require_once dirname(__DIR__) . '/lib/kwx_8899_policy.php';
+require_once dirname(__DIR__) . '/lib/kwx_8899_cron_access.php';
 
 date_default_timezone_set('Asia/Shanghai');
-
-if (PHP_SAPI !== 'cli') {
-    http_response_code(403);
-    echo json_encode([
-        'code' => 403,
-        'msg' => 'This script can only be executed from CLI',
-    ], JSON_UNESCAPED_UNICODE) . PHP_EOL;
-    exit;
-}
+kwx8899RequireCronWebAccess();
 
 function argValue($name, $default = null) {
     global $argv;
     $prefix = '--' . $name . '=';
-    foreach ($argv as $arg) {
+    foreach (($argv ?? []) as $arg) {
         if (strpos($arg, $prefix) === 0) {
             return substr($arg, strlen($prefix));
         }
@@ -25,11 +19,15 @@ function argValue($name, $default = null) {
 
 function hasFlag($name) {
     global $argv;
-    return in_array('--' . $name, $argv, true);
+    return in_array('--' . $name, $argv ?? [], true);
 }
 
 function isValidDateYmd($value) {
-    return is_string($value) && (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', $value);
+    if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        return false;
+    }
+    $parsed = DateTime::createFromFormat('!Y-m-d', $value);
+    return $parsed && $parsed->format('Y-m-d') === $value;
 }
 
 function out($data) {
@@ -37,6 +35,9 @@ function out($data) {
 }
 
 $rewardDate = argValue('date', date('Y-m-d', strtotime('-1 day')));
+if (PHP_SAPI !== 'cli' && isset($_GET['date'])) {
+    $rewardDate = (string)$_GET['date'];
+}
 $dryRun = hasFlag('dry-run');
 $rewardRate = 0.10;
 $promotionMainSubtitle = '8899';
@@ -46,6 +47,18 @@ if (!isValidDateYmd($rewardDate)) {
         'code' => 400,
         'msg' => '日期格式不正确，请使用 --date=YYYY-MM-DD',
     ]);
+    exit(1);
+}
+if (!kwx8899Active($rewardDate)) {
+    if (PHP_SAPI !== 'cli') {
+        out(['code' => 0, 'date' => $rewardDate, 'msg' => '生效日前的账期无需冻结，已跳过']);
+        exit;
+    }
+    out(['code' => 400, 'msg' => '新分账规则仅从 ' . KWX_8899_CUTOVER_DATE . ' 起生效；历史余额需要单独对账']);
+    exit(1);
+}
+if ($rewardDate >= date('Y-m-d')) {
+    out(['code' => 400, 'msg' => '只能固化已经结束的自然日账期，不能提前固化今天或未来日期']);
     exit(1);
 }
 
@@ -63,6 +76,7 @@ $transactionStarted = false;
  * 3. venue_unique_subtitle 为 NULL / 空 / '8899' 的全部忽略；
  * 4. users.invitation_code 命中二级推广码时，该 venues.id 即推广场地；
  * 5. 消费场地 orders.reservation_id 与推广场地不同，才产生 10% 推广收益。
+ * 6. 消费场地也必须是 8899 场地。
  */
 $promotionJoin = "
     INNER JOIN venues promotion_venue
@@ -71,9 +85,23 @@ $promotionJoin = "
            AND promotion_venue.venue_unique_subtitle <> ''
            AND promotion_venue.venue_unique_subtitle <> ?
            AND promotion_venue.venue_unique_subtitle = u.invitation_code
+    INNER JOIN venues consumer_venue
+            ON consumer_venue.id = o.reservation_id
+           AND consumer_venue.venue_subtitle = '8899'
 ";
 
 try {
+    kwx8899AcquireDailyLock($database, $rewardDate);
+    $duplicateCodes = $database->query(
+        "SELECT venue_unique_subtitle FROM venues
+         WHERE venue_subtitle = '8899'
+           AND venue_unique_subtitle IS NOT NULL
+           AND venue_unique_subtitle <> '' AND venue_unique_subtitle <> '8899'
+         GROUP BY venue_unique_subtitle HAVING COUNT(*) > 1 LIMIT 1"
+    );
+    if ($duplicateCodes === false || $duplicateCodes) {
+        throw new RuntimeException('8899 二级推广码重复或校验失败，禁止固化');
+    }
     $eligibleSql = "
         SELECT
             COUNT(*) AS eligible_order_count,
@@ -95,6 +123,7 @@ try {
           AND COALESCE(o.payment_amount, 0) > 0
           AND (o.pays_type IS NULL OR o.pays_type <> '能量')
           AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+          AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)
     ";
     $stmt = $conn->prepare($eligibleSql);
     if (!$stmt) {
@@ -201,6 +230,7 @@ try {
           AND COALESCE(o.payment_amount, 0) > 0
           AND (o.pays_type IS NULL OR o.pays_type <> '能量')
           AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+          AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)
           AND NOT EXISTS (
               SELECT 1
               FROM venue_promotion_reward_logs existed
@@ -247,6 +277,49 @@ try {
     }
     $summary = $stmt->get_result()->fetch_assoc();
     $stmt->close();
+    $platformRows = $database->query(
+        "SELECT COALESCE(SUM(ROUND(order_amount * 0.20, 2)), 0) AS platform_amount
+         FROM venue_promotion_reward_logs
+         WHERE reward_date = ? AND source_type = 'daily_17_snapshot'",
+        [$rewardDate]
+    );
+    if ($platformRows === false) {
+        throw new RuntimeException('平台份额统计失败');
+    }
+    $platformAmount = round((float)$platformRows[0]['platform_amount'], 2);
+    $consumerAmount = round((float)$summary['snapshot_order_amount'] - (float)$summary['snapshot_reward_amount'] - $platformAmount, 2);
+
+    if ((int)$summary['snapshot_order_count'] !== (int)$eligible['eligible_order_count']
+        || abs((float)$summary['snapshot_order_amount'] - (float)$eligible['eligible_order_amount']) > 0.005
+        || abs((float)$summary['snapshot_reward_amount'] - (float)$eligible['eligible_reward_amount']) > 0.005) {
+        throw new RuntimeException('推广订单与固化明细不一致，已回滚；检查重复订单或日期内新增订单');
+    }
+
+    $dayRows = $database->query(
+        'SELECT order_count, order_amount, reward_amount, platform_amount, consumer_amount FROM kwx_8899_revenue_days WHERE revenue_date = ? FOR UPDATE',
+        [$rewardDate]
+    );
+    if ($dayRows === false) {
+        throw new RuntimeException('读取固化账期失败，请先执行迁移 SQL');
+    }
+    if ($dayRows) {
+        if ((int)$dayRows[0]['order_count'] !== (int)$summary['snapshot_order_count']
+            || abs((float)$dayRows[0]['order_amount'] - (float)$summary['snapshot_order_amount']) > 0.005
+            || abs((float)$dayRows[0]['reward_amount'] - (float)$summary['snapshot_reward_amount']) > 0.005
+            || abs((float)$dayRows[0]['platform_amount'] - $platformAmount) > 0.005
+            || abs((float)$dayRows[0]['consumer_amount'] - $consumerAmount) > 0.005) {
+            throw new RuntimeException('该账期已经固化且金额发生变化，禁止覆盖历史账');
+        }
+    } else {
+        $written = $database->query(
+            'INSERT INTO kwx_8899_revenue_days (revenue_date, order_count, order_amount, reward_amount, platform_amount, consumer_amount) VALUES (?, ?, ?, ?, ?, ?)',
+            [$rewardDate, $summary['snapshot_order_count'], $summary['snapshot_order_amount'], $summary['snapshot_reward_amount'], $platformAmount, $consumerAmount],
+            true
+        );
+        if ($written !== 1) {
+            throw new RuntimeException('固化账期失败');
+        }
+    }
 
     $database->commit();
     $transactionStarted = false;

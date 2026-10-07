@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php'; // 确保路径正确
 require_once '../lib/venue_scope.php';
+require_once '../lib/kwx_8899_policy.php';
 
 function logMessage($message) {
     $logFile = __DIR__ . '/order_test.log';
@@ -41,6 +42,68 @@ $requestedVenueId = venue_scope_requested_id($_GET);
 $incomeType = strtolower(trim((string)($_GET['income_type'] ?? 'all')));
 if (!in_array($incomeType, ['all', 'drive', 'gift'], true)) {
     $incomeType = 'all';
+}
+
+// 仅 role_id=3 的关联 8899 场地显示驾驶订单预估收益。
+// 场地集合由后台账号的关系表确定，不使用前端传入的场地 ID 授权。
+$eligible8899Ids = [];
+if ($role_id === 3) {
+    $boundIds = venue_scope_user_ids($database, $user);
+    if ($boundIds) {
+        $marks = implode(',', array_fill(0, count($boundIds), '?'));
+        $eligibleRows = $database->query(
+            "SELECT id FROM venues
+             WHERE id IN ({$marks})
+               AND venue_subtitle = '8899'
+               AND venue_unique_subtitle IS NOT NULL
+               AND TRIM(venue_unique_subtitle) <> ''
+               AND TRIM(venue_unique_subtitle) <> '8899'",
+            $boundIds
+        );
+        if (is_array($eligibleRows)) {
+            $eligible8899Ids = venue_scope_ints(array_column($eligibleRows, 'id'));
+        }
+    }
+}
+$show8899Estimate = $role_id === 3 && $incomeType !== 'gift' && $eligible8899Ids
+    && ($requestedVenueId === 0 || in_array($requestedVenueId, $eligible8899Ids, true));
+
+$estimateSelect = '';
+if ($show8899Estimate) {
+    $idList = implode(',', $eligible8899Ids); // IDs 已由 venue_scope_ints 转为正整数。
+    $validDrivingSql = "o.reservation_id IN ({$idList})
+        AND o.status = '已完成'
+        AND COALESCE(o.payment_amount, 0) > 0
+        AND (o.pays_type IS NULL OR o.pays_type <> '能量')
+        AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+        AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)";
+    // 与首页 8899 预估口径一致：用户归属其他 8899 场地时扣订单金额的 10%。
+    $promotionExistsSql = "DATE(o.end_time) >= '" . KWX_8899_CUTOVER_DATE . "' AND EXISTS (
+        SELECT 1 FROM users promotion_user
+        INNER JOIN venues promotion_venue
+                ON promotion_venue.venue_subtitle = '8899'
+               AND promotion_venue.venue_unique_subtitle IS NOT NULL
+               AND TRIM(promotion_venue.venue_unique_subtitle) <> ''
+               AND TRIM(promotion_venue.venue_unique_subtitle) <> '8899'
+               AND promotion_venue.venue_unique_subtitle = promotion_user.invitation_code
+        WHERE promotion_user.uid = o.uid
+          AND promotion_venue.id <> o.reservation_id
+    )";
+    $promotionDeductionSql = "CASE WHEN {$promotionExistsSql}
+        THEN ROUND(o.payment_amount * 0.10, 2) ELSE 0 END";
+    $ordinaryRateSql = "COALESCE((
+        SELECT LEAST(100, GREATEST(0, cfg.withdraw_ratio)) / 100
+        FROM venue_withdrawal_configs cfg WHERE cfg.venue_id = o.reservation_id LIMIT 1
+    ), 0.20)";
+    $platformDeductionSql = "CASE WHEN {$promotionExistsSql}
+        THEN ROUND(o.payment_amount * 0.20, 2)
+        ELSE ROUND(o.payment_amount * {$ordinaryRateSql}, 2) END";
+    $estimateSelect = ",
+        CASE WHEN {$validDrivingSql} THEN {$promotionDeductionSql}
+             ELSE NULL END AS kwx_8899_promotion_deduction,
+        CASE WHEN {$validDrivingSql}
+             THEN ROUND(o.payment_amount - ({$promotionDeductionSql}) - ({$platformDeductionSql}), 2)
+             ELSE NULL END AS kwx_8899_estimated_income";
 }
 
 $whereSql = " WHERE 1=1";
@@ -99,7 +162,7 @@ if ($incomeType === 'gift') {
 }
 
 // 查询语句（关联昵称）
-$sql = "SELECT o.*, u.nickname
+$sql = "SELECT o.*, u.nickname {$estimateSelect}
         FROM orders o
         JOIN users u ON o.uid = u.uid
         $whereSql
@@ -157,6 +220,22 @@ if ($role_id === 4) {
     $totalGiftIncome = round($totalGiftIncome * 0.8, 2);
 }
 
+$estimated8899Total = null;
+if ($show8899Estimate) {
+    $estimateSumSql = "SELECT
+        ROUND(COALESCE(SUM(o.payment_amount - ({$promotionDeductionSql}) - ({$platformDeductionSql})), 0), 2)
+            AS total_estimated_income
+        FROM orders o
+        {$summaryWhereSql}
+          AND {$validDrivingSql}";
+    $estimateSumRows = $database->query($estimateSumSql, $summaryParams);
+    if (is_array($estimateSumRows) && isset($estimateSumRows[0]['total_estimated_income'])) {
+        $estimated8899Total = (float)$estimateSumRows[0]['total_estimated_income'];
+    } else {
+        $show8899Estimate = false;
+    }
+}
+
 $totalIncomeMap = [
     'all' => $totalAllIncome,
     'drive' => $totalDriveIncome,
@@ -176,6 +255,8 @@ echo json_encode([
     'total_all_income' => $totalAllIncome,
     'total_drive_income' => $totalDriveIncome,
     'total_gift_income' => $totalGiftIncome,
+    'kwx_8899_estimate_visible' => (bool)$show8899Estimate,
+    'kwx_8899_estimated_total' => $estimated8899Total,
 ], JSON_UNESCAPED_UNICODE);
 
 $database->close();

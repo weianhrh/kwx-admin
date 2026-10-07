@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/../promotion/PromotionFeature.php';
+require_once __DIR__ . '/../venue/venue_subtitle_search_scope.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -131,7 +132,7 @@ function menu_admin_tree(): array
  * 加盟商/主播菜单：role_id = 3 / 4 使用。
  * role_id = 4 不返回“提现申请”。
  */
-function menu_franchise_tree(int $roleId): array
+function menu_franchise_tree(int $roleId, bool $showVenueSearch): array
 {
     $baseMenu = [
         menu_leaf(9000, 0, 'dashboard', '首页', '', 'home', 0),
@@ -147,9 +148,13 @@ function menu_franchise_tree(int $roleId): array
         menu_leaf(9322, 9302, 'franchise-device-lock', '挂车占有', '/iframe/link/fill_energy', 'tools', 20),
     ], 2);
 
-    $baseMenu[] = menu_group(9303, 'franchise-venue', '场地管理', 'venue', [
+    $venueMenus = [
         menu_leaf(9331, 9303, 'franchise-venues', '场地管理', '/iframe/link/venue', 'venue', 10),
-    ], 3);
+    ];
+    if ($showVenueSearch) {
+        $venueMenus[] = menu_leaf(9332, 9303, 'franchise-subtitle-search-records', '引流搜索明细', '/iframe/link/venue_subtitle_search_records', 'user', 20);
+    }
+    $baseMenu[] = menu_group(9303, 'franchise-venue', '场地管理', 'venue', $venueMenus, 3);
 
     $financeMenus = [
         menu_leaf(9341, 9304, 'franchise-income', '收入明细', '/iframe/link/incomedetails', 'finance', 10),
@@ -178,10 +183,10 @@ function menu_franchise_tree(int $roleId): array
 /**
  * 参考旧项目 getMenuByRoleId 的入口函数。
  */
-function getMenuByRoleId(int $roleId): array
+function getMenuByRoleId(int $roleId, bool $showVenueSearch = false): array
 {
     if (in_array($roleId, [3, 4], true)) {
-        return menu_franchise_tree($roleId);
+        return menu_franchise_tree($roleId, $showVenueSearch);
     }
 
     // role_id = 1 / 2，以及其它后台角色，暂时都走管理员菜单。
@@ -208,9 +213,12 @@ if (!$user) {
 }
 
 $roleId = (int)($user['role_id'] ?? 0);
+$showVenueSearch = in_array($roleId, [3, 4], true)
+    && venue_scope_has_table($db, 'venue_subtitle_search_records')
+    && (bool)venue_search_eligible_venues($db, $user);
 $db->close();
 
 auth_out(0, 'ok', [
-    'menus' => getMenuByRoleId($roleId),
+    'menus' => getMenuByRoleId($roleId, $showVenueSearch),
     'user' => auth_user_payload($user),
 ]);

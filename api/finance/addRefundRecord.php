@@ -2,6 +2,7 @@
 // 文件：/api/finance/addRefundRecord.php
 header('Content-Type: application/json; charset=utf-8');
 require_once '../Database.php';
+require_once '../lib/kwx_8899_policy.php';
 
 try {
     $db = new Database();
@@ -77,6 +78,24 @@ if ($lock) {
         'code' => 2005,
         'msg'  => '该订单已锁定，请先解锁后再退款'
     ]);
+    exit;
+}
+// Once 70/20/10 has been frozen the old refund path would charge all 100 to
+// the consuming venue, even though it received only 70. Do not create that
+// incorrect liability until the three-party refund reversal is implemented.
+$splitRows = $db->query(
+    "SELECT id FROM venue_promotion_reward_logs
+     WHERE order_id = ? AND source_type = 'daily_17_snapshot' LIMIT 1",
+    [$order_id]
+);
+if ($splitRows === false) {
+    throw new RuntimeException('无法核验跨场地推广分账');
+}
+if ($splitRows) {
+    echo json_encode([
+        'code' => 2006,
+        'msg' => '此订单已进入 70/20/10 分账，请先由财务按消费场地、推广场地、平台分别冲正后再登记退款'
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 // 2) 入库（包含 reservation_id；并根据 NULL 情况拼SQL）

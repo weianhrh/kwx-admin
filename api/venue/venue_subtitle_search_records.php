@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
+require_once __DIR__ . '/venue_subtitle_search_scope.php';
 
 auth_json_headers();
 auth_handle_options();
@@ -60,9 +61,16 @@ if (!$user || empty($user['role_id'])) {
     auth_out(1001, '未登录或会话已过期');
 }
 
-if (!venue_scope_is_platform_admin($user)) {
+$isPlatformAdmin = venue_scope_is_platform_admin($user);
+if (!$isPlatformAdmin && !in_array((int)$user['role_id'], [3, 4], true)) {
     $db->close();
     auth_out(1003, '当前账号无权查看该页面');
+}
+
+$eligibleVenues = $isPlatformAdmin ? [] : venue_search_eligible_venues($db, $user);
+if (!$isPlatformAdmin && !$eligibleVenues) {
+    $db->close();
+    auth_out(1003, '当前账号未关联可查看的 8899 场地');
 }
 
 if (!venue_scope_has_table($db, 'venue_subtitle_search_records')) {
@@ -71,7 +79,7 @@ if (!venue_scope_has_table($db, 'venue_subtitle_search_records')) {
 }
 
 // 合并当前场地与历史记录中的副标题，使用 UNION 去重，避免相同副标题重复出现在下拉框。
-$subtitleOptionRows = $db->query("
+$subtitleOptionRows = $isPlatformAdmin ? ($db->query("
     SELECT subtitle.venue_subtitle
     FROM (
         SELECT TRIM(venue_subtitle) AS venue_subtitle
@@ -87,14 +95,15 @@ $subtitleOptionRows = $db->query("
         WHERE venue_subtitle IS NOT NULL AND TRIM(venue_subtitle) <> ''
     ) subtitle
     ORDER BY subtitle.venue_subtitle ASC
-") ?: [];
+") ?: []) : [];
 $subtitleOptions = [];
-foreach ($subtitleOptionRows as $subtitleOptionRow) {
-    $subtitleValue = trim((string)($subtitleOptionRow['venue_subtitle'] ?? ''));
+foreach ($isPlatformAdmin ? $subtitleOptionRows : $eligibleVenues as $subtitleOptionRow) {
+    $subtitleValue = trim((string)(($isPlatformAdmin ? $subtitleOptionRow['venue_subtitle'] : $subtitleOptionRow['venue_unique_subtitle']) ?? ''));
     if ($subtitleValue !== '') {
-        $subtitleOptions[] = $subtitleValue;
+        $subtitleOptions[$subtitleValue] = $subtitleValue;
     }
 }
+$subtitleOptions = array_values($subtitleOptions);
 
 $period = (string)($_GET['period'] ?? 'day');
 $period = in_array($period, ['day', 'week', 'month'], true) ? $period : 'day';
@@ -123,8 +132,25 @@ if ($venueSubtitleLength > 100) {
 $venueIdRaw = trim((string)($_GET['venue_id'] ?? ''));
 $venueId = ctype_digit($venueIdRaw) && (int)$venueIdRaw > 0 ? (int)$venueIdRaw : 0;
 
+if (!$isPlatformAdmin) {
+    $allowedIds = array_map('intval', array_column($eligibleVenues, 'id'));
+    if ($venueId > 0 && !in_array($venueId, $allowedIds, true)) {
+        $db->close();
+        auth_out(1003, '无权查看该场地');
+    }
+    if ($venueSubtitle !== '' && !in_array($venueSubtitle, $subtitleOptions, true)) {
+        $db->close();
+        auth_out(1003, '无权查看该副标题');
+    }
+}
+
 $scopeWhere = [];
 $scopeParams = [];
+if (!$isPlatformAdmin) {
+    [$pairSql, $pairParams] = venue_search_record_scope($eligibleVenues);
+    $scopeWhere[] = $pairSql;
+    array_push($scopeParams, ...$pairParams);
+}
 
 if ($venueId > 0) {
     $scopeWhere[] = 'r.venue_id = ?';
@@ -154,7 +180,7 @@ $whereSql = ' WHERE ' . implode(' AND ', $where);
 $historyWhereSql = $scopeWhere ? ' WHERE ' . implode(' AND ', $scopeWhere) : '';
 
 // 每个副标题的历史人数忽略时间，但保留场地、副标题和关键词条件。
-$historySubtitleRows = $db->query("
+$historySubtitleRows = $isPlatformAdmin ? ($db->query("
     SELECT
         r.venue_subtitle,
         COUNT(DISTINCT r.uid) AS history_user_total,
@@ -162,8 +188,8 @@ $historySubtitleRows = $db->query("
     FROM venue_subtitle_search_records r
     {$historyWhereSql}
     GROUP BY r.venue_subtitle
-", $scopeParams) ?: [];
-$historySubtitleVenues = $db->query("
+", $scopeParams) ?: []) : [];
+$historySubtitleVenues = $isPlatformAdmin ? ($db->query("
     SELECT
         r.venue_subtitle,
         r.venue_id,
@@ -172,7 +198,7 @@ $historySubtitleVenues = $db->query("
     {$historyWhereSql}
     GROUP BY r.venue_subtitle, r.venue_id
     ORDER BY r.venue_subtitle ASC, r.venue_id ASC
-", $scopeParams) ?: [];
+", $scopeParams) ?: []) : [];
 
 // 顶部统计、副标题汇总与明细列表使用完全相同的场地、副标题、日期和关键词条件。
 $summaryRows = $db->query("
@@ -186,7 +212,7 @@ $summaryRows = $db->query("
 ", $params) ?: [];
 
 $total = (int)($summaryRows[0]['record_total'] ?? 0);
-$filteredSubtitleRows = $db->query("
+$filteredSubtitleRows = $isPlatformAdmin ? ($db->query("
     SELECT
         r.venue_subtitle,
         COUNT(DISTINCT r.uid) AS user_total,
@@ -195,7 +221,43 @@ $filteredSubtitleRows = $db->query("
     {$whereSql}
     GROUP BY r.venue_subtitle
     ORDER BY user_total DESC, r.venue_subtitle ASC
-", $params) ?: [];
+", $params) ?: []) : [];
+
+$venueSummary = [];
+$scopedUserTotal = (int)($summaryRows[0]['user_total'] ?? 0);
+if (!$isPlatformAdmin) {
+    $venueHistoryRows = $db->query("
+        SELECT r.venue_id, COUNT(DISTINCT r.uid) AS user_total
+        FROM venue_subtitle_search_records r
+        {$historyWhereSql}
+        GROUP BY r.venue_id
+    ", $scopeParams) ?: [];
+    $venuePeriodRows = $db->query("
+        SELECT r.venue_id, COUNT(DISTINCT r.uid) AS user_total
+        FROM venue_subtitle_search_records r
+        {$whereSql}
+        GROUP BY r.venue_id
+    ", $params) ?: [];
+    $historyByVenue = [];
+    foreach ($venueHistoryRows as $row) {
+        $historyByVenue[(int)$row['venue_id']] = (int)$row['user_total'];
+    }
+    $periodByVenue = [];
+    foreach ($venuePeriodRows as $row) {
+        $periodByVenue[(int)$row['venue_id']] = (int)$row['user_total'];
+    }
+    $scopedUserTotal = array_sum($periodByVenue);
+    foreach ($eligibleVenues as $venue) {
+        $id = (int)$venue['id'];
+        $venueSummary[] = [
+            'venue_id' => $id,
+            'venue_name' => (string)$venue['venue_name'],
+            'venue_subtitle' => (string)$venue['venue_unique_subtitle'],
+            'history_user_total' => $historyByVenue[$id] ?? 0,
+            'user_total' => $periodByVenue[$id] ?? 0,
+        ];
+    }
+}
 
 // 以历史副标题为完整列表，再叠加时间范围数据；没有时间内记录时显示 0 人。
 $subtitleSummaryMap = [];
@@ -242,6 +304,21 @@ foreach ($filteredSubtitleRows as $filteredSubtitleRow) {
     $subtitleSummaryMap[$subtitleKey]['venue_total'] = (int)($filteredSubtitleRow['venue_total'] ?? 0);
 }
 $subtitleSummary = array_values($subtitleSummaryMap);
+if (!$isPlatformAdmin) {
+    $subtitleSummary = array_map(static function (array $venue): array {
+        return [
+            'venue_subtitle' => $venue['venue_subtitle'],
+            'history_user_total' => $venue['history_user_total'],
+            'history_venue_total' => $venue['history_user_total'] > 0 ? 1 : 0,
+            'user_total' => $venue['user_total'],
+            'venue_total' => $venue['user_total'] > 0 ? 1 : 0,
+            'venues' => [[
+                'venue_id' => $venue['venue_id'],
+                'venue_name' => $venue['venue_name'],
+            ]],
+        ];
+    }, $venueSummary);
+}
 usort($subtitleSummary, static function (array $left, array $right): int {
     $timeCompare = $right['user_total'] <=> $left['user_total'];
     if ($timeCompare !== 0) {
@@ -273,6 +350,8 @@ $rows = $db->query("
 $db->close();
 
 auth_out(0, 'ok', [
+    'scope' => $isPlatformAdmin ? 'all' : 'mine',
+    'eligible_venues' => $eligibleVenues,
     'period' => $defaultRange['period'],
     'range' => [
         'start_date' => $startDate,
@@ -286,11 +365,12 @@ auth_out(0, 'ok', [
     'total' => $total,
     'summary' => [
         'record_total' => $total,
-        'user_total' => (int)($summaryRows[0]['user_total'] ?? 0),
+        'user_total' => $scopedUserTotal,
         'subtitle_total' => (int)($summaryRows[0]['subtitle_total'] ?? 0),
         'venue_total' => (int)($summaryRows[0]['venue_total'] ?? 0),
     ],
     'subtitle_summary' => $subtitleSummary,
+    'venue_summary' => $venueSummary,
     'summary_venues' => $summaryVenues,
     'rows' => $rows,
 ]);
