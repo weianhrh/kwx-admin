@@ -4624,7 +4624,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
 
     '<div class="stats">' +
       statCard('场地', formatInt(venueCount || 0) + ' 个', venueCardNote, 'venue') +
-      statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '今日场地订单收入', 'finance') +
+      statCard('今日收益', formatMoney(metrics.franchiseTodayRevenue), '关联场地今日订单原金额（未扣分成）', 'finance') +
       statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
       statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
       (leadSearch.visible === true ?
@@ -4632,7 +4632,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         : '') +
       (showPromotionPreview ?
         statCard('预估推广收益', formatMoney(preview.total_promotion_income), '仅 8899 场地跨场地消费', 'ops') +
-        statCard('预估今日收益', formatMoney(preview.total_today_income), '仅 8899 场地，驾驶扣推广分成后含礼物', 'finance')
+        statCard('预估今日收益', formatMoney(preview.total_today_income), '仅 8899 完成订单，扣预计平台/推广分成，含礼物', 'finance')
         : '') +
     '</div>' +
 

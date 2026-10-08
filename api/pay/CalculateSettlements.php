@@ -208,11 +208,94 @@ $platform_deduction_amount = $quote['technical_fee'];
 $withdrawal_fee_amount = $quote['withdrawal_fee'];
 $available_balance = $quote['actual_amount'];
 
+// 推广收益只是提现页的账务说明：A 的推广款已从日结扣除，
+// B 的已结算推广款已计入 venue_funds.account_balance，不在此处再次加减。
+$promotion8899 = null;
+if ((int)$user['role_id'] === 3 && kwx8899IsVenue($database, $venue_id)) {
+    $today = new DateTimeImmutable('today', new DateTimeZone('Asia/Shanghai'));
+    $todayStart = $today->format('Y-m-d 00:00:00');
+    $tomorrowStart = $today->modify('+1 day')->format('Y-m-d 00:00:00');
+
+    $creditedRows = $database->query(
+        "SELECT COALESCE(SUM(amount), 0) AS amount
+         FROM kwx_8899_fee_exempt_ledger
+         WHERE venue_id = ? AND source_type = 'promotion_batch'",
+        [$venue_id]
+    );
+    $deductedRows = $database->query(
+        "SELECT COALESCE(SUM(l.reward_amount), 0) AS amount
+         FROM venue_promotion_reward_logs l
+         WHERE l.consumer_venue_id = ? AND l.reward_date >= ?
+           AND l.source_type = 'daily_17_snapshot'
+           AND l.reward_status IN ('pending', 'settled')
+           AND EXISTS (
+               SELECT 1 FROM DailyVenueRevenue d
+               WHERE d.venue_id = l.consumer_venue_id
+                 AND d.date = l.reward_date AND d.is_checked = 1
+           )",
+        [$venue_id, KWX_8899_CUTOVER_DATE]
+    );
+    // 与首页预估推广收益相同的订单筛选；今天的金额尚未固化，不计入余额。
+    $todayRows = $database->query(
+        "SELECT COALESCE(SUM(ROUND(o.payment_amount * 0.10, 2)), 0) AS amount
+         FROM orders o
+         JOIN users u ON u.uid = o.uid
+         JOIN venues p ON p.venue_subtitle = '8899'
+           AND p.venue_unique_subtitle IS NOT NULL
+           AND p.venue_unique_subtitle <> ''
+           AND p.venue_unique_subtitle <> '8899'
+           AND p.venue_unique_subtitle = u.invitation_code
+         JOIN venues c ON c.id = o.reservation_id AND c.venue_subtitle = '8899'
+         WHERE p.id = ? AND o.reservation_id IS NOT NULL AND o.reservation_id > 0
+           AND o.reservation_id <> p.id
+           AND o.end_time >= ? AND o.end_time < ?
+           AND DATE(o.end_time) >= ?
+           AND o.status = '已完成' AND COALESCE(o.payment_amount, 0) > 0
+           AND (o.pays_type IS NULL OR o.pays_type <> '能量')
+           AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+           AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)",
+        [$venue_id, $todayStart, $tomorrowStart, KWX_8899_CUTOVER_DATE]
+    );
+    // A 场地今天的跨场地订单预计扣款：今日尚未日结核对，单独展示，不能算作已扣金额。
+    $todayDeductedRows = $database->query(
+        "SELECT COALESCE(SUM(ROUND(o.payment_amount * 0.10, 2)), 0) AS amount
+         FROM orders o
+         JOIN users u ON u.uid = o.uid
+         JOIN venues p ON p.venue_subtitle = '8899'
+           AND p.venue_unique_subtitle IS NOT NULL
+           AND p.venue_unique_subtitle <> ''
+           AND p.venue_unique_subtitle <> '8899'
+           AND p.venue_unique_subtitle = u.invitation_code
+         JOIN venues c ON c.id = o.reservation_id AND c.venue_subtitle = '8899'
+         WHERE c.id = ? AND o.reservation_id IS NOT NULL AND o.reservation_id > 0
+           AND o.reservation_id <> p.id
+           AND o.end_time >= ? AND o.end_time < ?
+           AND DATE(o.end_time) >= ?
+           AND o.status = '已完成' AND COALESCE(o.payment_amount, 0) > 0
+           AND (o.pays_type IS NULL OR o.pays_type <> '能量')
+           AND (o.note IS NULL OR o.note NOT IN ('gift', '场地礼物'))
+           AND NOT EXISTS (SELECT 1 FROM refund_records rr WHERE rr.order_id = o.order_id)",
+        [$venue_id, $todayStart, $tomorrowStart, KWX_8899_CUTOVER_DATE]
+    );
+    if ($creditedRows === false || $deductedRows === false
+        || $todayRows === false || $todayDeductedRows === false) {
+        $promotion8899 = ['visible' => true, 'error' => '推广收益明细暂时无法读取'];
+    } else {
+        $promotion8899 = [
+            'visible' => true,
+            'credited_total' => round((float)$creditedRows[0]['amount'], 2),
+            'estimated_today' => round((float)$todayRows[0]['amount'], 2),
+            'deducted_total' => round((float)$deductedRows[0]['amount'], 2),
+            'estimated_deduction_today' => round((float)$todayDeductedRows[0]['amount'], 2),
+        ];
+    }
+}
+
 // 账号掩码
 $withdrawal_account = $funds[0]['withdrawal_account'];
 $masked_account = str_repeat('*', max(0, strlen($withdrawal_account) - 4)) . substr($withdrawal_account, -4);
 
-echo json_encode([
+$response = [
   'code' => 0,
   'msg'  => '',
   "ttl"  => $ttlText,
@@ -241,5 +324,9 @@ echo json_encode([
   'available_balance' => $available_balance, // 扣除平台比例和手续费后的实际可提现金额
   'total_refund' => $totalRefund,           // 新增退款金额
   'account_name' => $funds[0]['account_name']
-]);
+];
+if ($promotion8899 !== null) {
+    $response['promotion_8899'] = $promotion8899;
+}
+echo json_encode($response, JSON_UNESCAPED_UNICODE);
 $database->close();

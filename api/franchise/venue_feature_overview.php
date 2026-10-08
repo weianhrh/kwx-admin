@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
+require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 require_once __DIR__ . '/../RedisHelper.php';
 
 auth_json_headers();
@@ -369,6 +370,28 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
         $platformDeductionAmount = round($settlementBalance * $platformDeductionRate, 2);
         $withdrawalFeeAmount = round($settlementBalance * $withdrawalFeeRate, 2);
         $availableBalance = round($settlementBalance * $actualPayoutRate, 2);
+        $actualPayoutRateText = number_format($actualPayoutRate * 100, 2, '.', '') . '%';
+
+        // 与场地提现详情使用同一份免重复扣费台账和分摊算法。
+        // 已分账入余额的 8899 收益不能在总览里再次按 20% 扣平台费。
+        if (isset($fundRows[$venueId]) && kwx8899IsVenue($db, $venueId)) {
+            $feeExemptBalance = kwx8899ExemptBalance($db, $venueId);
+            $quote = kwx8899Allocation(
+                $accountBalance,
+                $feeExemptBalance,
+                $frozenAmount + $refundAmount + $lockAmount + $imageFeeAmount,
+                $settlementBalance,
+                0,
+                $platformDeductionRate,
+                $withdrawalFeeRate
+            );
+            $platformDeductionAmount = $quote['technical_fee'];
+            $withdrawalFeeAmount = $quote['withdrawal_fee'];
+            $availableBalance = $quote['actual_amount'];
+            if ($feeExemptBalance > 0) {
+                $actualPayoutRateText = '分账后金额免重复扣费';
+            }
+        }
 
         $summaryTotalBalance += $accountBalance;
         $summaryAvailable += $availableBalance;
@@ -382,7 +405,7 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
                 'value_text' => fvo_money($accountBalance),
             ],
             [
-                'label' => '可提现金额（' . number_format($actualPayoutRate * 100, 2, '.', '') . '%）',
+                'label' => '可提现金额（' . $actualPayoutRateText . '）',
                 'value' => round($availableBalance, 2),
                 'value_text' => fvo_money($availableBalance),
             ],

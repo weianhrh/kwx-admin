@@ -1086,6 +1086,13 @@
       <input type="hidden" id="unsettled-image-fee-total" value="0">
       <input type="hidden" id="unsettled-image-ids" value="[]">
     </section>
+    <section class="section-card" id="kwx-promotion-card" style="display:none;">
+      <div class="section-head">
+        <div class="section-title">8899 推广收益</div>
+        <div class="section-desc">今日预估金额尚未结算。推广收益隔日固化后自动计入余额；消费场地推广款在隔日日结扣除，提现时不重复扣。</div>
+      </div>
+      <div class="amount-grid" id="kwx-promotion-amount"></div>
+    </section>
 <!---->
     <section class="section-card">
       <div class="section-head">
@@ -1309,6 +1316,23 @@ const feeHelp = `
   </div>
 </div>
       `;
+
+      const promotion = data.promotion_8899;
+      const promotionCard = document.getElementById('kwx-promotion-card');
+      if (!promotion || promotion.visible !== true) {
+        promotionCard.style.display = 'none';
+      } else {
+        promotionCard.style.display = '';
+        const promotionAmount = document.getElementById('kwx-promotion-amount');
+        promotionAmount.innerHTML = promotion.error
+          ? `<div class="amount-item is-warning"><div class="amount-content"><div class="amount-label">推广收益</div><div class="amount-value">${esc(promotion.error)}</div></div></div>`
+          : `
+            <div class="amount-item is-primary"><div class="amount-icon">＋</div><div class="amount-content"><div class="amount-label">累计已入账推广收益:</div><div class="amount-value">${formatAmount(promotion.credited_total)}</div></div></div>
+            <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广收益:</div><div class="amount-value">${formatAmount(promotion.estimated_today)}</div></div></div>
+            <div class="amount-item is-warning"><div class="amount-icon">－</div><div class="amount-content"><div class="amount-label">累计已核对推广扣款:</div><div class="amount-value">${formatAmount(promotion.deducted_total)}</div></div></div>
+            <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广扣款:</div><div class="amount-value">${formatAmount(promotion.estimated_deduction_today)}</div></div></div>
+          `;
+      }
     }
 
     function loadAccountInfo() {
