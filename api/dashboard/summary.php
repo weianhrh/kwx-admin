@@ -158,10 +158,18 @@ if (in_array($roleId, [3, 4], true) && $franchiseVenueIds) {
     ", $deviceParams, 'total', 0);
 }
 
-// 仅加盟商名下 8899 场地可获得预估数据；临时开关关闭时不查询，也不返回金额。
-if ($roleId === 3 && KWX_8899_PROMOTION_UI_VISIBLE && $franchiseVenueIds) {
+// 3/4 角色只按各自关联的 8899 场地查看推广预估。
+if (in_array($roleId, [3, 4], true) && KWX_8899_PROMOTION_UI_VISIBLE && $franchiseVenueIds) {
     try {
         $franchisePromotionPreview = kwx_promotion_preview_for_venues($db, $franchiseVenueIds, $todayStart, $tomorrowStart);
+        // 场地方仅开放推广收益入口；场地自身的预估今日收益保持原有角色范围。
+        if ($roleId === 4 && $franchisePromotionPreview['visible']) {
+            unset($franchisePromotionPreview['total_today_income']);
+            foreach ($franchisePromotionPreview['venues'] as &$promotionVenue) {
+                unset($promotionVenue['today_income']);
+            }
+            unset($promotionVenue);
+        }
     } catch (Throwable $e) {
         error_log('KWX 8899 promotion preview error: ' . $e->getMessage());
     }

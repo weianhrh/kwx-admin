@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>推广收益历史明细</title>
+<style>
+:root{--page:#f4f7f8;--card:#fff;--border:#dfe8eb;--soft:#f7fbfb;--ink:#172126;--muted:#6b7d84;--accent:#0f8f8c;--deep:#08706e;--tint:#e6f6f5;--shadow:0 10px 28px rgba(30,55,66,.07)}
+*{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh;padding:20px 22px 32px;background:var(--page);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}.container{max-width:1380px;margin:0 auto}.panel{margin-bottom:16px;padding:19px;border:1px solid var(--border);border-radius:11px;background:var(--card);box-shadow:var(--shadow)}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.title{margin:0;font-size:22px;font-weight:800}.title:before{display:inline-block;width:5px;height:21px;margin-right:10px;border-radius:9px;background:var(--accent);vertical-align:-3px;content:""}.hint{margin:9px 0 0;color:var(--muted);font-size:13px;line-height:1.6}.tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.button{min-height:38px;padding:8px 13px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--deep);font-weight:700}.button:hover,.button:focus-visible{border-color:var(--accent);background:var(--tint)}.button.primary{border-color:var(--accent);background:var(--accent);color:#fff}.button.primary:hover{background:var(--deep)}.button:disabled{opacity:.45;cursor:not-allowed}.error{margin:12px 0 0;color:#c33e3e;font-size:13px}.error:empty{display:none}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}.stat{padding:15px;border:1px solid var(--border);border-radius:9px;background:var(--soft)}.stat small{display:block;color:var(--muted);font-size:13px}.stat strong{display:block;margin-top:7px;color:var(--deep);font-size:24px}.section-title{margin:0 0 7px;font-size:17px;font-weight:800}.venue-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px;margin-top:17px}.venue-card{width:100%;min-height:160px;padding:17px;border:1px solid var(--border);border-radius:10px;background:var(--soft);text-align:left;transition:border-color .16s,box-shadow .16s,transform .16s}.venue-card:hover,.venue-card:focus-visible{border-color:var(--accent);box-shadow:0 7px 18px rgba(15,143,140,.13);transform:translateY(-1px)}.venue-name{display:block;font-size:16px;font-weight:800}.venue-code{display:block;margin-top:4px;color:var(--muted);font-size:12px}.venue-label{display:block;margin-top:15px;color:var(--muted);font-size:13px}.venue-amount{display:block;margin-top:4px;color:var(--deep);font-size:24px;font-weight:800}.venue-footer{display:flex;justify-content:space-between;gap:8px;margin-top:12px;color:var(--muted);font-size:12px}.venue-footer b{color:var(--deep)}.empty{padding:28px 10px;color:var(--muted);font-size:13px;text-align:center}.filter{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:14px}.field label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:700}.field input{height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink)}.field input:focus{outline:2px solid rgba(15,143,140,.19);border-color:var(--accent)}.table-wrap{overflow-x:auto;margin-top:12px;border:1px solid var(--border);border-radius:9px}table{width:100%;min-width:730px;border-collapse:collapse}th,td{padding:12px 13px;border-bottom:1px solid #edf3f5;text-align:left;white-space:nowrap;font-size:13px}th{background:#f6fafa;color:#53666d;font-weight:800}tr:last-child td{border-bottom:0}tbody tr:hover{background:#f9fcfc}.amount{color:var(--deep);font-weight:800}.date-link{padding:5px 8px;border:0;border-radius:6px;background:var(--tint);color:var(--deep);font-weight:700}.date-link:hover{background:#d2f0ed}.order-table{min-width:1020px}.order-id{max-width:240px;white-space:normal;overflow-wrap:anywhere}.status{padding:4px 8px;border-radius:99px;background:#e5f5ed;color:#138056;font-weight:700}.pager{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:14px;color:var(--muted);font-size:13px}.detail-view[hidden],.overview-view[hidden]{display:none}@media(max-width:700px){body{padding:12px}.head{flex-direction:column}.stats{grid-template-columns:1fr 1fr}.stat strong{font-size:21px}.pager{justify-content:center}}@media(max-width:440px){.stats{grid-template-columns:1fr}.venue-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="container">
+  <section class="panel">
+    <div class="head">
+      <div>
+        <h1 class="title" id="pageTitle">推广收益历史总览</h1>
+        <p class="hint" id="pageHint">仅展示当前账号关联的 8899 场地。历史累计以已入账推广批次为准；今日预估暂不计入。</p>
+      </div>
+      <div class="tools">
+        <button type="button" class="button" id="backButton" hidden>← 返回场地总览</button>
+        <button type="button" class="button" id="refreshButton">刷新数据</button>
+      </div>
+    </div>
+    <p class="error" id="error" role="alert"></p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <div class="overview-view" id="overviewView">
+    <section class="panel">
+      <h2 class="section-title">各场地累计推广收益</h2>
+      <p class="hint">点击场地卡片，查看该场地按日汇总及逐笔已入账明细。</p>
+      <div class="venue-grid" id="venueGrid"><div class="empty">正在读取场地...</div></div>
+    </section>
+  </div>
+
+  <div class="detail-view" id="detailView" hidden>
+    <section class="panel">
+      <h2 class="section-title">每日推广收益</h2>
+      <p class="hint">下面列出所有已入账的账期；订单明细默认查看昨天，点击日期可切换账期。</p>
+      <div class="table-wrap"><table><thead><tr><th>账期</th><th>订单数</th><th>订单金额</th><th>推广收益</th><th>查看</th></tr></thead><tbody id="dailyRows"><tr><td colspan="5" class="empty">正在读取...</td></tr></tbody></table></div>
+    </section>
+    <section class="panel">
+      <h2 class="section-title">订单推广明细</h2>
+      <div class="filter">
+        <div class="field"><label for="dateFilter">按账期筛选（默认昨天）</label><input type="date" id="dateFilter"></div>
+        <button type="button" class="button" id="clearDate">查看全部日期</button>
+      </div>
+      <div class="table-wrap"><table class="order-table"><thead><tr><th>账期</th><th>消费场地</th><th>被邀请用户</th><th>订单金额</th><th>推广收益</th><th>状态</th><th>订单号</th></tr></thead><tbody id="orderRows"><tr><td colspan="7" class="empty">正在读取...</td></tr></tbody></table></div>
+      <div class="pager"><button type="button" class="button" id="prevPage">上一页</button><span id="pageInfo">第 1 / 1 页</span><button type="button" class="button" id="nextPage">下一页</button></div>
+    </section>
+  </div>
+</main>
+<script>
+const api = '../api/promotion/FranchisePromotionHistory.php';
+const $ = id => document.getElementById(id);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const money = value => '¥' + Number(value || 0).toFixed(2);
+let venueId = 0;
+let page = 1;
+let pages = 1;
+let requestNo = 0;
+let selectedDate = null; // null：由服务器选择上海时间的昨日；空字符串：查看全部日期。
+
+async function getData(params) {
+  const response = await fetch(api + '?' + new URLSearchParams(params).toString(), {credentials:'same-origin',cache:'no-store'});
+  const json = await response.json();
+  if (json.code !== 0) throw new Error(json.msg || '数据读取失败');
+  return json.data || {};
+}
+
+function showError(message) { $('error').textContent = message || ''; }
+function stat(label, value) { return `<div class="stat"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`; }
+function setRoute(id) {
+  const url = new URL(location.href);
+  if (id) url.searchParams.set('venue_id', String(id));
+  else url.searchParams.delete('venue_id');
+  history.replaceState(null, '', url);
+}
+
+async function loadOverview() {
+  const current = ++requestNo;
+  venueId = 0;
+  selectedDate = null;
+  $('overviewView').hidden = false;
+  $('detailView').hidden = true;
+  $('backButton').hidden = true;
+  $('pageTitle').textContent = '推广收益历史总览';
+  $('pageHint').textContent = '仅展示当前账号关联的 8899 场地。历史累计以已入账推广批次为准；今日预估暂不计入。';
+  $('venueGrid').innerHTML = '<div class="empty">正在读取场地...</div>';
+  $('stats').innerHTML = '';
+  showError('');
+  try {
+    const data = await getData({action:'overview'});
+    if (current !== requestNo) return;
+    $('stats').innerHTML = stat('关联 8899 场地', `${Number(data.venue_count || 0)} 个`) +
+      stat('历史累计已入账推广收益', money(data.credited_total)) +
+      stat('已入账订单', `${Number(data.order_count || 0)} 单`);
+    const venues = Array.isArray(data.venues) ? data.venues : [];
+    $('venueGrid').innerHTML = venues.length ? venues.map(venue => `
+      <button type="button" class="venue-card" data-venue-id="${Number(venue.venue_id)}">
+        <span class="venue-name">${esc(venue.venue_name || ('场地 ' + venue.venue_id))}</span>
+        <span class="venue-code">场地 ID：${Number(venue.venue_id)}${venue.promotion_code ? ' · 二级邀请码：' + esc(venue.promotion_code) : ''}</span>
+        <span class="venue-label">历史累计已入账推广收益</span>
+        <span class="venue-amount">${money(venue.credited_total)}</span>
+        <span class="venue-footer"><span>${Number(venue.order_count || 0)} 笔已入账订单</span><b>查看历史明细 →</b></span>
+      </button>`).join('') : '<div class="empty">当前账号暂无关联的 8899 场地</div>';
+  } catch (error) {
+    if (current !== requestNo) return;
+    showError(error.message || '推广历史暂时无法读取');
+    $('venueGrid').innerHTML = '<div class="empty">数据加载失败</div>';
+  }
+}
+
+async function openVenue(id) {
+  if (!Number.isSafeInteger(id) || id <= 0) return;
+  venueId = id;
+  page = 1;
+  selectedDate = null;
+  $('dateFilter').value = '';
+  setRoute(id);
+  $('overviewView').hidden = true;
+  $('detailView').hidden = false;
+  $('backButton').hidden = false;
+  await loadDetail();
+}
+
+async function loadDetail() {
+  if (!venueId) return;
+  const current = ++requestNo;
+  $('dailyRows').innerHTML = '<tr><td colspan="5" class="empty">正在读取...</td></tr>';
+  $('orderRows').innerHTML = '<tr><td colspan="7" class="empty">正在读取...</td></tr>';
+  showError('');
+  try {
+    const params = {action:'detail',venue_id:venueId,page};
+    if (selectedDate !== null) params.date = selectedDate;
+    const data = await getData(params);
+    if (current !== requestNo) return;
+    const venue = data.venue || {};
+    const summary = data.summary || {};
+    const pagination = data.pagination || {};
+    selectedDate = String(data.date ?? '');
+    $('dateFilter').value = selectedDate;
+    page = Number(pagination.page || 1);
+    pages = Number(pagination.pages || 1);
+    $('pageTitle').textContent = (venue.venue_name || `场地 ${venueId}`) + ' · 推广历史明细';
+    $('pageHint').textContent = `场地 ID：${venueId}` + (venue.promotion_code ? ` · 二级邀请码：${venue.promotion_code}` : '') +
+      `。当前订单明细：${selectedDate || '全部日期'}；累计金额仍统计所有已入账账期，今日预估不在其中。`;
+    $('stats').innerHTML = stat('历史累计已入账推广收益', money(summary.credited_total)) +
+      stat('已入账订单', `${Number(summary.order_count || 0)} 单`) +
+      stat('当前筛选订单', `${Number(pagination.total || 0)} 单`);
+    const days = Array.isArray(data.days) ? data.days : [];
+    $('dailyRows').innerHTML = days.length ? days.map(day => `<tr>
+      <td>${esc(day.reward_date)}</td><td>${Number(day.order_count || 0)} 单</td>
+      <td>${money(day.order_amount)}</td><td class="amount">${money(day.reward_amount)}</td>
+      <td><button type="button" class="date-link" data-date="${esc(day.reward_date)}">查看订单 →</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" class="empty">暂无已入账推广记录</td></tr>';
+    const orders = Array.isArray(data.orders) ? data.orders : [];
+    $('orderRows').innerHTML = orders.length ? orders.map(order => `<tr>
+      <td>${esc(order.reward_date)}</td>
+      <td>${esc(order.consumer_venue_id)} / ${esc(order.consumer_venue_name || '-')}</td>
+      <td>${esc(order.invitee_uid)} / ${esc(order.invitee_nickname || '-')}</td>
+      <td>${money(order.order_amount)}</td><td class="amount">${money(order.reward_amount)}</td>
+      <td><span class="status">已入账</span></td><td class="order-id">${esc(order.order_id)}</td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">所选日期暂无已入账订单</td></tr>';
+    $('pageInfo').textContent = `第 ${page} / ${pages} 页，共 ${Number(pagination.total || 0)} 笔`;
+    $('prevPage').disabled = page <= 1;
+    $('nextPage').disabled = page >= pages;
+  } catch (error) {
+    if (current !== requestNo) return;
+    showError(error.message || '推广明细暂时无法读取');
+    $('dailyRows').innerHTML = '<tr><td colspan="5" class="empty">加载失败</td></tr>';
+    $('orderRows').innerHTML = '<tr><td colspan="7" class="empty">加载失败</td></tr>';
+  }
+}
+
+$('venueGrid').addEventListener('click', event => {
+  const button = event.target.closest('[data-venue-id]');
+  if (button) openVenue(Number(button.dataset.venueId));
+});
+$('dailyRows').addEventListener('click', event => {
+  const button = event.target.closest('[data-date]');
+  if (!button) return;
+  selectedDate = button.dataset.date;
+  $('dateFilter').value = selectedDate;
+  page = 1;
+  loadDetail();
+});
+$('backButton').addEventListener('click', () => { setRoute(0); loadOverview(); });
+$('refreshButton').addEventListener('click', () => venueId ? loadDetail() : loadOverview());
+$('dateFilter').addEventListener('change', () => { selectedDate = $('dateFilter').value; page = 1; loadDetail(); });
+$('clearDate').addEventListener('click', () => { selectedDate = ''; $('dateFilter').value = ''; page = 1; loadDetail(); });
+$('prevPage').addEventListener('click', () => { if (page > 1) { page--; loadDetail(); } });
+$('nextPage').addEventListener('click', () => { if (page < pages) { page++; loadDetail(); } });
+const initialVenue = Number(new URLSearchParams(location.search).get('venue_id') || 0);
+if (Number.isSafeInteger(initialVenue) && initialVenue > 0) openVenue(initialVenue);
+else loadOverview();
+</script>
+</body>
+</html>

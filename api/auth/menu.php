@@ -132,7 +132,7 @@ function menu_admin_tree(): array
  * 加盟商/主播菜单：role_id = 3 / 4 使用。
  * role_id = 4 不返回“提现申请”。
  */
-function menu_franchise_tree(int $roleId, bool $showVenueSearch): array
+function menu_franchise_tree(int $roleId, bool $showVenueSearch, bool $showPromotionHistory): array
 {
     $baseMenu = [
         menu_leaf(9000, 0, 'dashboard', '首页', '', 'home', 0),
@@ -159,6 +159,9 @@ function menu_franchise_tree(int $roleId, bool $showVenueSearch): array
     $financeMenus = [
         menu_leaf(9341, 9304, 'franchise-income', '收入明细', '/iframe/link/incomedetails', 'finance', 10),
     ];
+    if ($showPromotionHistory) {
+        $financeMenus[] = menu_leaf(9344, 9304, 'franchise-promotion-history', '推广明细', '/iframe/link/franchise_promotion_history', 'finance', 12);
+    }
     if ($roleId === 3) {
         $financeMenus[] = menu_leaf(9343, 9304, 'performance-details', '业绩明细', '/iframe/link/performance_details', 'finance', 15);
         $financeMenus[] = menu_leaf(9342, 9304, 'franchise-withdraw', '提现申请', '/iframe/link/PaymentDisbursement_optimized', 'finance', 20);
@@ -183,10 +186,10 @@ function menu_franchise_tree(int $roleId, bool $showVenueSearch): array
 /**
  * 参考旧项目 getMenuByRoleId 的入口函数。
  */
-function getMenuByRoleId(int $roleId, bool $showVenueSearch = false): array
+function getMenuByRoleId(int $roleId, bool $showVenueSearch = false, bool $showPromotionHistory = false): array
 {
     if (in_array($roleId, [3, 4], true)) {
-        return menu_franchise_tree($roleId, $showVenueSearch);
+        return menu_franchise_tree($roleId, $showVenueSearch, $showPromotionHistory);
     }
 
     // role_id = 1 / 2，以及其它后台角色，暂时都走管理员菜单。
@@ -216,9 +219,21 @@ $roleId = (int)($user['role_id'] ?? 0);
 $showVenueSearch = in_array($roleId, [3, 4], true)
     && venue_scope_has_table($db, 'venue_subtitle_search_records')
     && (bool)venue_search_eligible_venues($db, $user);
+$showPromotionHistory = false;
+if (in_array($roleId, [3, 4], true) && KWX_8899_PROMOTION_UI_VISIBLE) {
+    $boundIds = venue_scope_user_ids($db, $user);
+    if ($boundIds) {
+        $marks = implode(',', array_fill(0, count($boundIds), '?'));
+        $promotionVenues = $db->query(
+            "SELECT id FROM venues WHERE id IN ({$marks}) AND venue_subtitle = '8899' LIMIT 1",
+            $boundIds
+        );
+        $showPromotionHistory = !empty($promotionVenues);
+    }
+}
 $db->close();
 
 auth_out(0, 'ok', [
-    'menus' => getMenuByRoleId($roleId, $showVenueSearch),
+    'menus' => getMenuByRoleId($roleId, $showVenueSearch, $showPromotionHistory),
     'user' => auth_user_payload($user),
 ]);

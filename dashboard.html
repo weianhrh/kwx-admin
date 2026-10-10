@@ -841,6 +841,7 @@
 .franchise-promo-venue h3 { margin: 0 0 10px; font-size: 15px; }
 .franchise-promo-venue small { margin-left: 6px; color: var(--muted); font-size: 12px; }
 .franchise-promo-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.franchise-promo-values.single { grid-template-columns: minmax(0, 1fr); }
 .franchise-promo-values div { padding: 10px; border-radius: 8px; background: var(--primary-soft); }
 .franchise-promo-values span { display: block; color: var(--muted); font-size: 12px; }
 .franchise-promo-values strong { display: block; margin-top: 6px; color: var(--primary-dark); font-size: 17px; }
@@ -4560,14 +4561,14 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         '</div>' +
         '</div>';
     }
-    function franchisePromotionPreviewHtml(preview) {
+    function franchisePromotionPreviewHtml(preview, showTodayIncome) {
   const venueCards = (preview.venues || []).map(function(venue) {
     return '<article class="franchise-promo-venue">' +
       '<h3>' + escapeHtml(venue.venue_name || ('场地 ' + venue.id)) +
       '<small>ID：' + escapeHtml(String(venue.id || '-')) + '</small></h3>' +
-      '<div class="franchise-promo-values">' +
+      '<div class="franchise-promo-values' + (showTodayIncome ? '' : ' single') + '">' +
         '<div><span>预估推广收益</span><strong>' + formatMoney(venue.promotion_income) + '</strong></div>' +
-        '<div><span>预估今日收益</span><strong>' + formatMoney(venue.today_income) + '</strong></div>' +
+        (showTodayIncome ? '<div><span>预估今日收益</span><strong>' + formatMoney(venue.today_income) + '</strong></div>' : '') +
       '</div></article>';
   }).join('');
   return '<section class="panel franchise-promo-panel">' +
@@ -4581,7 +4582,8 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
   const venues = Array.isArray(franchise.venues) ? franchise.venues : [];
   const preview = franchise.promotion_preview || {};
   const leadSearch = franchise.lead_search || {};
-  const showPromotionPreview = Number(data.role_id || 0) === 3 &&
+  const roleId = Number(data.role_id || 0);
+  const showPromotionPreview = [3, 4].includes(roleId) &&
     preview.visible === true && Array.isArray(preview.venues) && preview.venues.length > 0;
   const venueCount = Number(metrics.franchiseVenueCount || venues.length || 0);
   const hasMultipleVenues = venueCount > 1 || venues.length > 1;
@@ -4631,14 +4633,14 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
         statCard('今日引流人数', formatInt(leadSearch.today_total || 0) + ' 人', '8899 场地二级副标题首次搜索', 'user', { menuId: 9332 })
         : '') +
       (showPromotionPreview ?
-        statCard('预估推广收益', formatMoney(preview.total_promotion_income), '仅 8899 场地跨场地消费', 'ops') +
-        statCard('预估今日收益', formatMoney(preview.total_today_income), '仅 8899 完成订单，扣预计平台/推广分成，含礼物', 'finance')
+        statCard('预估推广收益', formatMoney(preview.total_promotion_income), '仅 8899 跨场地消费 · 点击查看历史明细', 'ops', { menuId: 9344 }) +
+        (roleId === 3 ? statCard('预估今日收益', formatMoney(preview.total_today_income), '仅 8899 完成订单，扣预计平台/推广分成，含礼物', 'finance') : '')
         : '') +
     '</div>' +
 
     '<div class="franchise-home-stack">' +
 
-      (showPromotionPreview ? franchisePromotionPreviewHtml(preview) : '') +
+      (showPromotionPreview ? franchisePromotionPreviewHtml(preview, roleId === 3) : '') +
 
       '<section class="panel franchise-overview-panel">' +
         '<div class="panel-head">' +

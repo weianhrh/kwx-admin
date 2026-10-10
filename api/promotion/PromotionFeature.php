@@ -6,8 +6,8 @@ require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 const KWX_8899_PROMOTION_UI_VISIBLE = true;
 
 /**
- * 仅统计当前加盟商已绑定且 venue_subtitle=8899 的场地。
- * 二级邀请码取 venue_unique_subtitle；同场地消费不产生推广收益。
+ * 仅统计当前账号已绑定且 venue_subtitle=8899 的场地。
+ * 二级邀请码取 venue_unique_subtitle；未配置有效邀请码时该场地的推广收益预估为零。
  */
 function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, string $todayStart, string $tomorrowStart): array
 {
@@ -24,9 +24,6 @@ function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, st
          FROM venues
          WHERE id IN ({$boundMarks})
            AND venue_subtitle = '8899'
-           AND venue_unique_subtitle IS NOT NULL
-           AND TRIM(venue_unique_subtitle) <> ''
-           AND TRIM(venue_unique_subtitle) <> '8899'
          ORDER BY id ASC",
         $boundVenueIds
     );
