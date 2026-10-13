@@ -222,6 +222,23 @@ textarea {
   background: #fff;
 }
 
+.summary-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.summary-card-link:hover {
+  border-color: var(--primary);
+  background: #f2fbfa;
+}
+
+.summary-card-link:focus-visible {
+  outline: 3px solid rgba(15, 143, 140, .35);
+  outline-offset: 3px;
+}
+
 .summary-card-label {
   margin-bottom: 9px;
   color: var(--muted);
@@ -544,12 +561,12 @@ textarea {
                     <div class="summary-card is-primary is-loading" data-summary-key="available_balance">
                         <div class="summary-card-label">可提现</div>
                         <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">按各加盟商提现比例分别计算</div>
+                        <div class="summary-card-note">逐场地计算，已分账金额免重复扣费</div>
                     </div>
                     <div class="summary-card is-loading" data-summary-key="platform_deduction_amount">
                         <div class="summary-card-label">平台扣除</div>
                         <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">按各加盟商平台比例分别计算</div>
+                        <div class="summary-card-note">仅对需扣费金额按场地比例计算</div>
                     </div>
                     <div class="summary-card is-loading" data-summary-key="settlement_balance">
                         <div class="summary-card-label">参与结算</div>
@@ -561,11 +578,11 @@ textarea {
                         <div class="summary-card-value">加载中</div>
                         <div class="summary-card-note">当前仍在冻结期内的金额</div>
                     </div>
-                    <div class="summary-card is-loading" data-summary-key="lock_order_count" data-summary-format="count">
+                    <a class="summary-card is-loading summary-card-link" id="admin-locked-orders-card" href="withdrawal_locked_orders.html?scope=all" data-summary-key="lock_order_count" data-summary-format="count" aria-label="查看全部场地锁定订单">
                         <div class="summary-card-label">锁定订单</div>
                         <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">当前锁定中的订单数量</div>
-                    </div>
+                        <div class="summary-card-note">查看全部场地锁定明细 →</div>
+                    </a>
                     <div class="summary-card is-warning is-loading" data-summary-key="lock_amount" data-summary-format="battery">
                         <div class="summary-card-label">待复核订单</div>
                         <div class="summary-card-value">加载中</div>
@@ -598,6 +615,12 @@ textarea {
 
     <script src="/res/assets/js/xlsx.full.min.js"></script> 
     <script>
+        const lockedOrdersEmbed = new URLSearchParams(window.location.search).get('embed');
+        if (lockedOrdersEmbed) {
+            const lockedOrdersParams = new URLSearchParams({ scope: 'all', embed: lockedOrdersEmbed });
+            document.getElementById('admin-locked-orders-card').href = 'withdrawal_locked_orders.html?' + lockedOrdersParams.toString();
+        }
+
         function formatSummaryMoney(value) {
             const amount = Number(value);
             if (!Number.isFinite(amount)) return '--';
@@ -624,6 +647,9 @@ textarea {
             if (Number.isFinite(Number(values.venue_count))) {
                 scopeElement.textContent = `全部 ${Number(values.venue_count).toLocaleString('zh-CN')} 个场地的加盟商实时汇总`;
             }
+            if (values.fee_calculation_error) {
+                scopeElement.textContent += `；${values.fee_calculation_error}`;
+            }
             document.querySelectorAll('[data-summary-key]').forEach(card => {
                 const key = card.dataset.summaryKey;
                 const format = card.dataset.summaryFormat || 'money';
@@ -632,7 +658,9 @@ textarea {
                 const unavailable = (dependsOnFrozen && values.frozen_amount_available === false) || values[key] === null;
                 valueElement.textContent = unavailable ? '--' : formatSummaryValue(values[key], format);
                 if (unavailable) {
-                    valueElement.title = '冻结金额服务暂时不可用，请稍后刷新';
+                    valueElement.title = values.frozen_amount_available === false
+                        ? '冻结金额服务暂时不可用，请稍后刷新'
+                        : (values.fee_calculation_error || '资金汇总暂时不可用，请稍后刷新');
                 } else {
                     valueElement.removeAttribute('title');
                 }

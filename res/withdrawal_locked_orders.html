@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>锁定订单明细</title>
+  <style>
+    :root { --text:#172126; --muted:#6b7d84; --border:#dfe8eb; --primary:#0f8f8c; --soft:#e6f6f5; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:22px 24px 32px; color:var(--text); background:linear-gradient(180deg,#f4f8f9,#f3f6f7); font:14px/1.6 Arial,"Microsoft YaHei",sans-serif; }
+    button, input { font:inherit; }
+    button, .back-link { min-height:40px; padding:8px 16px; border:1px solid var(--border); border-radius:8px; color:var(--text); background:#fff; cursor:pointer; text-decoration:none; }
+    button:hover, .back-link:hover { border-color:var(--primary); color:var(--primary); }
+    button:disabled { opacity:.45; cursor:default; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid #9adbd8; outline-offset:2px; }
+    .primary { background:var(--primary); border-color:var(--primary); color:white; }
+    .primary:hover { background:#08706e; color:white; }
+    .page { max-width:1280px; margin:auto; }
+    .page-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+    h1 { margin:0; font-size:24px; line-height:1.4; }
+    .subtitle { margin:6px 0 0; color:var(--muted); }
+    .back-link { flex-shrink:0; }
+    .summary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:18px; }
+    .summary-card { padding:18px 22px; border:1px solid var(--border); border-radius:12px; background:#fff; }
+    .summary-card.total { border-color:#bfe3e0; background:linear-gradient(135deg,#fff,#eefaf8); }
+    .summary-label { color:var(--muted); }
+    .summary-value { margin-top:5px; font-size:28px; font-weight:700; line-height:1.4; }
+    .summary-value small { margin-left:5px; color:var(--muted); font-size:13px; font-weight:400; }
+    .total .summary-value { color:#08706e; }
+    .list-card { border:1px solid var(--border); border-radius:12px; background:#fff; overflow:hidden; }
+    .list-head { padding:18px 20px; border-bottom:1px solid var(--border); }
+    .list-title { display:flex; align-items:center; gap:10px; margin:0 0 14px; font-size:16px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:5px; color:#9a5d00; background:#fff2d7; font-size:12px; font-weight:400; white-space:nowrap; }
+    .filters { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+    .search-field { display:flex; align-items:center; gap:8px; min-width:0; }
+    input { width:250px; max-width:100%; height:40px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; color:var(--text); background:#fff; }
+    .refresh { margin-left:auto; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; min-width:900px; border-collapse:collapse; text-align:left; }
+    .venue-column { display:none; }
+    .all-venues .venue-column { display:table-cell; }
+    .all-venues table { min-width:1100px; }
+    .venue-name { min-width:130px; max-width:190px; overflow-wrap:anywhere; }
+    th { padding:13px 18px; color:var(--muted); background:#f8fafb; font-size:13px; font-weight:600; white-space:nowrap; }
+    td { padding:16px 18px; border-top:1px solid #edf1f3; vertical-align:middle; }
+    tbody tr:hover { background:#fbfdfd; }
+    .order-number { min-width:180px; max-width:240px; overflow-wrap:anywhere; font-weight:600; }
+    .secondary { margin-top:3px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+    .money { color:#08706e; font-weight:700; white-space:nowrap; }
+    .date { white-space:nowrap; font-size:13px; }
+    .detail-button { min-height:34px; padding:5px 12px; color:var(--primary); background:var(--soft); border-color:#bfe3e0; white-space:nowrap; }
+    .message { padding:44px 20px; text-align:center; color:var(--muted); }
+    .pagination { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 20px; border-top:1px solid var(--border); color:var(--muted); }
+    .pagination-actions { display:flex; gap:8px; }
+    dialog { width:620px; max-width:calc(100vw - 28px); max-height:calc(100vh - 40px); margin:auto; padding:0; color:var(--text); border:0; border-radius:14px; box-shadow:0 24px 80px rgba(23,33,38,.24); overflow:auto; }
+    dialog::backdrop { background:rgba(23,33,38,.45); }
+    .dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 22px; border-bottom:1px solid var(--border); }
+    .dialog-head h2 { margin:0; font-size:18px; }
+    .close-button { min-height:32px; padding:2px 10px; border:0; font-size:24px; line-height:1.2; }
+    .detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 22px; margin:0; padding:22px; }
+    .detail-grid .wide { grid-column:1 / -1; }
+    dt { color:var(--muted); font-size:12px; }
+    dd { margin:4px 0 0; overflow-wrap:anywhere; }
+    @media(max-width:700px) {
+      body { padding:14px 10px 24px; }
+      .page-head { align-items:flex-start; gap:10px; }
+      h1 { font-size:20px; }
+      .subtitle { font-size:12px; }
+      .back-link { min-height:36px; padding:6px 10px; font-size:12px; }
+      .summary-grid { gap:10px; margin-bottom:12px; }
+      .summary-card { padding:14px; }
+      .summary-value { font-size:24px; }
+      .summary-label { font-size:12px; }
+      .list-head, .pagination { padding:14px; }
+      .search-field { width:100%; }
+      .search-field label { flex-shrink:0; }
+      input { flex:1; width:0; }
+      .detail-grid { padding:18px; gap:14px; }
+    }
+    @media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-head">
+      <div><h1 id="page-title">锁定订单明细</h1><p class="subtitle" id="venue-caption">仅显示当前仍处于锁定状态的订单</p></div>
+      <a class="back-link" id="back-link" href="PaymentDisbursement_optimized.html">‹ 返回提现申请</a>
+    </header>
+    <section class="summary-grid" aria-label="锁定订单汇总">
+      <div class="summary-card"><div class="summary-label" id="count-label">锁定订单</div><div class="summary-value"><span id="lock-count">--</span><small>笔</small></div></div>
+      <div class="summary-card total"><div class="summary-label" id="amount-label">锁定金额</div><div class="summary-value"><span id="lock-amount">--</span><small>元</small></div></div>
+    </section>
+    <section class="list-card" aria-label="锁定订单列表">
+      <div class="list-head">
+        <h2 class="list-title">订单明细 <span class="badge">锁定中</span></h2>
+        <form class="filters" id="search-form">
+          <div class="search-field"><label for="order-keyword">订单号</label><input id="order-keyword" type="search" maxlength="100" placeholder="输入订单号查询" autocomplete="off"></div>
+          <button type="submit" class="primary" id="search-button">查询</button>
+          <button type="button" id="reset-button">重置</button>
+          <button type="button" class="refresh" id="refresh-button">刷新</button>
+        </form>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="订单明细，可左右滚动">
+        <table>
+          <thead><tr><th scope="col">订单号</th><th scope="col" class="venue-column">场地</th><th scope="col">用户</th><th scope="col">设备</th><th scope="col">锁定金额</th><th scope="col">锁定时间</th><th scope="col">操作</th></tr></thead>
+          <tbody id="orders-body"><tr><td colspan="6" class="message">正在加载锁定订单…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="page-info" role="status" aria-live="polite">正在加载…</span>
+        <div class="pagination-actions"><button type="button" id="prev-button" disabled>上一页</button><button type="button" id="next-button" disabled>下一页</button></div>
+      </div>
+    </section>
+  </main>
+  <dialog id="detail-dialog" aria-labelledby="detail-title">
+    <div class="dialog-head"><h2 id="detail-title">锁定订单详情</h2><button class="close-button" id="close-detail" type="button" aria-label="关闭详情">×</button></div>
+    <dl class="detail-grid" id="detail-content"></dl>
+  </dialog>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const venueId = params.get('venue_id') || params.get('venueId') || '';
+    const embed = params.get('embed') || '';
+    const isAllVenues = params.get('scope') === 'all';
+    const columnCount = isAllVenues ? 7 : 6;
+    const state = { venueId, page:1, pages:1, rows:[], keyword:'', loading:false, failed:false };
+    let requestVersion = 0;
+    let controller;
+    const dialog = document.getElementById('detail-dialog');
+    if (isAllVenues) {
+      document.body.classList.add('all-venues');
+      document.getElementById('page-title').textContent = '全部锁定订单明细';
+      document.title = '全部锁定订单明细';
+      document.getElementById('venue-caption').textContent = '全部场地 · 仅显示当前仍处于锁定状态的订单';
+    }
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+    function money(value) {
+      if (value === null || value === undefined || value === '') return '-';
+      const amount = Number(value);
+      return Number.isFinite(amount) ? amount.toFixed(2) : '-';
+    }
+    function text(value) { return value === null || value === undefined || value === '' ? '-' : String(value); }
+    function updateBackLink() {
+      const query = new URLSearchParams();
+      if (!isAllVenues && state.venueId) query.set('venue_id', state.venueId);
+      if (embed) query.set('embed', embed);
+      const search = query.toString();
+      const backLink = document.getElementById('back-link');
+      backLink.href = (isAllVenues ? 'paylist.html' : 'PaymentDisbursement_optimized.html') + (search ? '?' + search : '');
+      backLink.textContent = isAllVenues ? '‹ 返回提现审批' : '‹ 返回提现申请';
+    }
+    function updateControls() {
+      ['search-button','reset-button','refresh-button'].forEach(id => document.getElementById(id).disabled = state.loading);
+      document.getElementById('prev-button').disabled = state.loading || state.failed || state.page <= 1;
+      document.getElementById('next-button').disabled = state.loading || state.failed || state.page >= state.pages;
+    }
+    function renderRows() {
+      const tbody = document.getElementById('orders-body');
+      if (!state.rows.length) {
+        tbody.innerHTML = '<tr><td colspan="' + columnCount + '" class="message">' + (state.keyword ? '未找到匹配的锁定订单' : '暂无锁定订单') + '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = state.rows.map((row, index) => `
+        <tr>
+          <td><div class="order-number">${esc(text(row.order_id))}</div><div class="secondary">锁定中</div></td>
+          ${isAllVenues ? `<td><div class="venue-name">${esc(text(row.venue_name))}</div><div class="secondary">场地 ID：${esc(text(row.venue_id))}</div></td>` : ''}
+          <td>${esc(text(row.nickname))}<div class="secondary">UID：${esc(text(row.uid))}</div></td>
+          <td>${esc(text(row.device_name))}<div class="secondary">${esc(text(row.serial_number))}</div></td>
+          <td class="money">${esc(money(row.lock_amount))} 元</td>
+          <td class="date">${esc(text(row.lock_time))}</td>
+          <td><button type="button" class="detail-button" data-index="${index}">查看详情</button></td>
+        </tr>`).join('');
+    }
+    async function loadOrders(page = 1) {
+      if (controller) controller.abort();
+      controller = new AbortController();
+      const version = ++requestVersion;
+      state.loading = true;
+      state.failed = false;
+      state.rows = [];
+      if (dialog.open) dialog.close();
+      updateControls();
+      document.getElementById('orders-body').innerHTML = '<tr><td colspan="' + columnCount + '" class="message">正在加载锁定订单…</td></tr>';
+      document.getElementById('page-info').textContent = '正在加载…';
+      const query = new URLSearchParams({ page:String(page), page_size:'20' });
+      if (isAllVenues) query.set('scope', 'all');
+      else if (state.venueId) query.set('venue_id', state.venueId);
+      if (state.keyword) query.set('order_id', state.keyword);
+      try {
+        const response = await fetch('/api/pay/getLockedOrders.php?' + query.toString(), { signal:controller.signal, cache:'no-store' });
+        if (!response.ok) throw new Error('锁定订单读取失败，请稍后重试');
+        const result = await response.json();
+        if (version !== requestVersion) return;
+        if (result.code !== 0) throw new Error(result.msg || '锁定订单读取失败，请稍后重试');
+        const data = result.data;
+        state.venueId = String(data.venue_id);
+        state.page = data.page;
+        state.pages = data.total_pages;
+        state.rows = data.rows;
+        updateBackLink();
+        document.getElementById('venue-caption').textContent = text(data.venue_name) + ' · 仅显示当前仍处于锁定状态的订单';
+        document.getElementById('count-label').textContent = state.keyword ? '匹配锁定订单' : '锁定订单';
+        document.getElementById('amount-label').textContent = state.keyword ? '匹配锁定金额' : '锁定金额';
+        document.getElementById('lock-count').textContent = String(data.total);
+        document.getElementById('lock-amount').textContent = money(data.lock_amount);
+        document.getElementById('page-info').textContent = `共 ${data.total} 笔 · 第 ${data.page} / ${data.total_pages} 页`;
+        renderRows();
+      } catch (error) {
+        if (error.name === 'AbortError' || version !== requestVersion) return;
+        state.failed = true;
+        state.rows = [];
+        document.getElementById('lock-count').textContent = '--';
+        document.getElementById('lock-amount').textContent = '--';
+        document.getElementById('orders-body').innerHTML = '<tr><td colspan="' + columnCount + '" class="message">' + esc(error.message || '锁定订单读取失败，请稍后重试') + '</td></tr>';
+        document.getElementById('page-info').textContent = '读取失败，可点击刷新重试';
+      } finally {
+        if (version === requestVersion) { state.loading = false; updateControls(); }
+      }
+    }
+    function openDetail(index) {
+      const row = state.rows[index];
+      if (!row) return;
+      const items = [
+        ['订单号', row.order_id, true], ['场地', row.venue_name], ['场地 ID', row.venue_id], ['锁定状态', '锁定中'],
+        ['用户昵称', row.nickname], ['用户 UID', row.uid], ['设备名称', row.device_name], ['设备编号', row.serial_number],
+        ['锁定金额（元）', money(row.lock_amount)], ['订单支付金额（元）', money(row.payment_amount)],
+        ['支付方式', row.pays_type], ['订单状态', row.order_status], ['订单开始时间', row.start_time], ['订单结束时间', row.end_time],
+        ['当前锁定时间', row.lock_time], ['首次锁定时间', row.create_at], ['锁定操作人 UID', row.operator_uid]
+      ];
+      document.getElementById('detail-content').innerHTML = items.map(([label, value, wide]) =>
+        `<div${wide ? ' class="wide"' : ''}><dt>${esc(label)}</dt><dd>${esc(text(value))}</dd></div>`).join('');
+      dialog.showModal();
+    }
+    document.getElementById('search-form').addEventListener('submit', event => {
+      event.preventDefault();
+      state.keyword = document.getElementById('order-keyword').value.trim();
+      loadOrders(1);
+    });
+    document.getElementById('reset-button').addEventListener('click', () => {
+      document.getElementById('order-keyword').value = '';
+      state.keyword = '';
+      loadOrders(1);
+    });
+    document.getElementById('refresh-button').addEventListener('click', () => loadOrders(state.page));
+    document.getElementById('prev-button').addEventListener('click', () => { if (state.page > 1) loadOrders(state.page - 1); });
+    document.getElementById('next-button').addEventListener('click', () => { if (state.page < state.pages) loadOrders(state.page + 1); });
+    document.getElementById('orders-body').addEventListener('click', event => {
+      const button = event.target.closest('button[data-index]');
+      if (button) openDetail(Number(button.dataset.index));
+    });
+    document.getElementById('close-detail').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', event => {
+      const rect = dialog.getBoundingClientRect();
+      if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close();
+    });
+    updateBackLink();
+    loadOrders();
+  </script>
+</body>
+</html>

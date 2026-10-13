@@ -199,6 +199,25 @@
       box-shadow: 0 12px 28px rgba(30, 55, 66, .10);
     }
 
+    .amount-link {
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .amount-link:focus-visible {
+      outline: 3px solid rgba(15, 143, 140, .35);
+      outline-offset: 3px;
+      border-color: var(--primary);
+    }
+
+    .amount-link-hint {
+      margin-left: auto;
+      color: var(--primary);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
     .amount-item:nth-child(3n),
     .amount-item:nth-child(2n),
     .amount-item:nth-last-child(-n + 3),
@@ -1161,6 +1180,15 @@
       return url + (url.includes('?') ? '&' : '?') + 'venue_id=' + encodeURIComponent(pageVenueId);
     }
 
+    function lockedOrdersUrl(venueId) {
+      const params = new URLSearchParams();
+      if (venueId) params.set('venue_id', venueId);
+      const embed = new URLSearchParams(window.location.search).get('embed');
+      if (embed) params.set('embed', embed);
+      const query = params.toString();
+      return 'withdrawal_locked_orders.html' + (query ? '?' + query : '');
+    }
+
     let accountCache = {};
     let withdrawalRecords = [];
     let currentPage = 1;
@@ -1292,10 +1320,10 @@ const feeHelp = `
   <div class="amount-icon">↔</div>
   <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
 </div>
-<div class="amount-item is-muted">
+<a class="amount-item is-muted amount-link" id="locked-orders-card" href="${esc(lockedOrdersUrl(data.venue_id || pageVenueId))}" aria-label="查看锁定订单明细">
   <div class="amount-icon">◷</div>
-  <div class="amount-content"><div class="amount-label">锁定订单:</div><div class="amount-value">${esc(data.lock_order_count || 0)} <small>笔</small></div></div>
-</div>
+  <div class="amount-content"><div class="amount-label">锁定订单:<span class="amount-link-hint">查看明细 ›</span></div><div class="amount-value">${esc(data.lock_order_count || 0)} <small>笔</small></div></div>
+</a>
 <div class="amount-item is-warning">
   <div class="amount-icon">?</div>
   <div class="amount-content"><div class="amount-label">待复核订单:</div><div class="amount-value">${esc(data.lock_amount || 0)} <small>电池</small></div></div>
@@ -1327,7 +1355,15 @@ const feeHelp = `
         promotionAmount.innerHTML = promotion.error
           ? `<div class="amount-item is-warning"><div class="amount-content"><div class="amount-label">推广收益</div><div class="amount-value">${esc(promotion.error)}</div></div></div>`
           : `
-            <div class="amount-item is-primary"><div class="amount-icon">＋</div><div class="amount-content"><div class="amount-label">累计已入账推广收益:</div><div class="amount-value">${formatAmount(promotion.credited_total)}</div></div></div>
+            <a class="amount-item is-primary"
+               style="text-decoration:none;cursor:pointer;"
+               href="franchise_promotion_history.html?venue_id=${encodeURIComponent(data.venue_id || pageVenueId)}">
+              <div class="amount-icon">＋</div>
+              <div class="amount-content">
+                <div class="amount-label">累计已入账推广收益:</div>
+                <div class="amount-value">${formatAmount(promotion.credited_total)}</div>
+              </div>
+            </a>
             <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广收益:</div><div class="amount-value">${formatAmount(promotion.estimated_today)}</div></div></div>
             <div class="amount-item is-warning"><div class="amount-icon">－</div><div class="amount-content"><div class="amount-label">累计已核对推广扣款:</div><div class="amount-value">${formatAmount(promotion.deducted_total)}</div></div></div>
             <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广扣款:</div><div class="amount-value">${formatAmount(promotion.estimated_deduction_today)}</div></div></div>

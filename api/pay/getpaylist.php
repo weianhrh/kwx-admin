@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php'; 
 require_once '../RedisHelper.php';
+require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -109,7 +110,8 @@ foreach ($result as &$row) {
 unset($row);
 
 // 全部加盟商资金汇总，完整沿用提现申请页 CalculateSettlements.php 的口径。
-// 先按场地分别扣除冻结、退款、锁定和图传费用，再按各场地自己的费率计算可提现与平台扣除。
+// 先扣除各场地冻结、退款、锁定和图传费用，再按免重复扣费台账分摊结算金额。
+// 推广收益和已分账日收益已在账户余额中，不能在汇总时再次加减。
 $summaryRows = $database->query(
     "SELECT
         v.id AS venue_id,
@@ -170,12 +172,31 @@ if (is_array($summaryRows)) {
         return (int)($row['venue_id'] ?? 0);
     }, $summaryRows);
     $frozenSummary = getAllVenueFrozenAmounts($venueIds);
+    $feeExemptBalances = [];
+    $feeCalculationError = '';
+    try {
+        // 一次读取所有场地的台账净额，包含入账、提现扣减及退回记录。
+        $feeExemptRows = $summaryRows ? $database->query(
+            'SELECT venue_id, COALESCE(SUM(amount), 0) AS amount
+             FROM kwx_8899_fee_exempt_ledger GROUP BY venue_id'
+        ) : [];
+        if (!is_array($feeExemptRows)) {
+            throw new RuntimeException('读取免重复扣费余额失败');
+        }
+        foreach ($feeExemptRows as $feeExemptRow) {
+            $feeExemptBalances[(int)$feeExemptRow['venue_id']] = round((float)$feeExemptRow['amount'], 2);
+        }
+    } catch (Throwable $e) {
+        error_log('提现审批免重复扣费余额汇总失败: ' . $e->getMessage());
+        $feeCalculationError = '免重复扣费金额暂时读取失败，请稍后刷新';
+    }
+    $feeCalculationAvailable = $feeCalculationError === '';
 
     $summary = [
         'venue_count' => count($summaryRows),
         'total_balance' => 0.0,
-        'available_balance' => $frozenSummary['available'] ? 0.0 : null,
-        'platform_deduction_amount' => $frozenSummary['available'] ? 0.0 : null,
+        'available_balance' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
+        'platform_deduction_amount' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
         'settlement_balance' => $frozenSummary['available'] ? 0.0 : null,
         'frozen_amount' => $frozenSummary['available'] ? 0.0 : null,
         'frozen_amount_available' => $frozenSummary['available'],
@@ -208,14 +229,31 @@ if (is_array($summaryRows)) {
             );
             $platformRate = max(0.0, min(1.0, (float)($summaryRow['withdraw_ratio'] ?? 20.00) / 100));
             $withdrawalFeeRate = max(0.0, min(1.0, (float)($summaryRow['withdrawal_fee_rate'] ?? 0.00) / 100));
-            $actualPayoutRate = max(0.0, 1.0 - $platformRate - $withdrawalFeeRate);
 
             $summary['frozen_amount'] += $frozenAmount;
             $summary['settlement_balance'] += $settlementBalance;
-            $summary['platform_deduction_amount'] += round($settlementBalance * $platformRate, 2);
-            $summary['available_balance'] += round($settlementBalance * $actualPayoutRate, 2);
+            if ($feeCalculationAvailable) {
+                try {
+                    $quote = kwx8899Allocation(
+                        $accountBalance, $feeExemptBalances[$venueId] ?? 0.0,
+                        $frozenAmount + $refundAmount + $lockAmount + $imageAmount,
+                        $settlementBalance, 0, $platformRate, $withdrawalFeeRate
+                    );
+                    $summary['platform_deduction_amount'] += $quote['technical_fee'];
+                    $summary['available_balance'] += $quote['actual_amount'];
+                } catch (Throwable $e) {
+                    error_log('提现审批场地 ' . $venueId . ' 结算金额汇总失败: ' . $e->getMessage());
+                    // 不能把异常场地当作零元，也不能退回对整笔余额扣费的旧算法。
+                    $feeCalculationAvailable = false;
+                    $feeCalculationError = '部分场地结算金额校验失败，请先对账';
+                    $summary['platform_deduction_amount'] = null;
+                    $summary['available_balance'] = null;
+                }
+            }
         }
     }
+    $summary['fee_calculation_available'] = $feeCalculationAvailable;
+    $summary['fee_calculation_error'] = $feeCalculationError;
 
     foreach ($summary as $key => $value) {
         if (is_float($value)) {
