@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 
 // 临时隐藏推广预估卡片和结算菜单；闭环完成后只需将 false 改为 true。
-const KWX_8899_PROMOTION_UI_VISIBLE = true;
+const KWX_8899_PROMOTION_UI_VISIBLE = false;
 
 /**
  * 仅统计当前账号已绑定且 venue_subtitle=8899 的场地。
@@ -11,6 +11,7 @@ const KWX_8899_PROMOTION_UI_VISIBLE = true;
  */
 function kwx_promotion_preview_for_venues(Database $db, array $boundVenueIds, string $todayStart, string $tomorrowStart): array
 {
+    if (kwx8899Stopped()) return ['visible' => false, 'venues' => []];
     $boundVenueIds = array_values(array_unique(array_filter(array_map('intval', $boundVenueIds), static function ($id) {
         return $id > 0;
     })));

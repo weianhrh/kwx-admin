@@ -65,7 +65,7 @@ if ($role_id === 3) {
         }
     }
 }
-$show8899Estimate = $role_id === 3 && $incomeType !== 'gift' && $eligible8899Ids
+$show8899Estimate = !kwx8899Stopped() && $role_id === 3 && $incomeType !== 'gift' && $eligible8899Ids
     && ($requestedVenueId === 0 || in_array($requestedVenueId, $eligible8899Ids, true));
 
 $estimateSelect = '';

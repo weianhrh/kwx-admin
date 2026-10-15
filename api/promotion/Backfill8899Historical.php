@@ -13,6 +13,10 @@ if (PHP_SAPI !== 'cli') {
 
 require_once dirname(__DIR__) . '/Database.php';
 require_once dirname(__DIR__) . '/lib/kwx_8899_policy.php';
+if (kwx8899Stopped()) {
+    exit("8899推广已停止，禁止历史补算重新产生推广款\n");
+}
+
 date_default_timezone_set('Asia/Shanghai');
 
 function historicalArg($name, $default) {

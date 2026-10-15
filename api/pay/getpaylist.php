@@ -2,6 +2,7 @@
 require_once '../Database.php'; 
 require_once '../RedisHelper.php';
 require_once __DIR__ . '/../lib/kwx_8899_policy.php';
+require_once __DIR__ . '/../lib/withdrawal_display.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -105,6 +106,7 @@ if ($result === false) {
 
 $canReject = (int)$user['role_id'] === 1 ? 1 : 0;
 foreach ($result as &$row) {
+    $row = kwxWithdrawalDisplayAmounts($row);
     $row['can_reject'] = $canReject;
 }
 unset($row);
@@ -197,6 +199,7 @@ if (is_array($summaryRows)) {
         'total_balance' => 0.0,
         'available_balance' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
         'platform_deduction_amount' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
+        'withdrawal_fee_amount' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
         'settlement_balance' => $frozenSummary['available'] ? 0.0 : null,
         'frozen_amount' => $frozenSummary['available'] ? 0.0 : null,
         'frozen_amount_available' => $frozenSummary['available'],
@@ -240,6 +243,7 @@ if (is_array($summaryRows)) {
                         $settlementBalance, 0, $platformRate, $withdrawalFeeRate
                     );
                     $summary['platform_deduction_amount'] += $quote['technical_fee'];
+                    $summary['withdrawal_fee_amount'] += $quote['withdrawal_fee'];
                     $summary['available_balance'] += $quote['actual_amount'];
                 } catch (Throwable $e) {
                     error_log('提现审批场地 ' . $venueId . ' 结算金额汇总失败: ' . $e->getMessage());
@@ -247,6 +251,7 @@ if (is_array($summaryRows)) {
                     $feeCalculationAvailable = false;
                     $feeCalculationError = '部分场地结算金额校验失败，请先对账';
                     $summary['platform_deduction_amount'] = null;
+                    $summary['withdrawal_fee_amount'] = null;
                     $summary['available_balance'] = null;
                 }
             }

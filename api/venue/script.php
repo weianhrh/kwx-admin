@@ -22,7 +22,6 @@ if (!$parsed || $parsed->format('Y-m-d') !== $date || $date >= date('Y-m-d')) {
 // Only the 8899 group needs the promotion snapshot. Ordinary venues commit
 // separately so a broken promotion freeze cannot delay their legacy daily rows.
 function kwx8899VerifyFrozenRevenueDay(Database $database, $date) {
-    kwx8899AcquireDailyLock($database, $date);
     $day = kwx8899RequireFrozenDay($database, $date);
     // A completed order added after the freeze must not be settled at a stale split.
     $live = $database->query(
@@ -61,6 +60,16 @@ function kwx8899WriteRevenueGroup(Database $database, $date, $venues, $isNew8899
         $processed = 0;
         foreach ($venues as $venue) {
         $venueId = (int)$venue['id'];
+        // Never overwrite an explicitly reversed historical row with a fresh order aggregate.
+        if ($date < KWX_8899_STOP_DATE && kwx8899HistoricalReverted($database)) {
+            $restored = $database->query(
+                'SELECT id FROM DailyVenueRevenue WHERE venue_id = ? AND date = ? AND revenue_before_deduction IS NOT NULL',
+                [$venueId, $date]
+            );
+            if ($restored === false) throw new RuntimeException('读取历史返还日结失败');
+            if ($restored) continue;
+        }
+        $trackGross = $isNew8899 || ((string)$venue['venue_subtitle'] === '8899' && $date >= KWX_8899_STOP_DATE);
         $paymentFilter = $isNew8899
             ? "(pays_type IS NULL OR pays_type <> '能量')
                AND status = '已完成'
@@ -104,7 +113,7 @@ function kwx8899WriteRevenueGroup(Database $database, $date, $venues, $isNew8899
         if ($current) {
             if ((int)$current[0]['is_checked'] === 1) {
                 if (abs((float)$current[0]['total_revenue'] - $amount) > 0.005
-                    || ($isNew8899 && (
+                    || ($trackGross && (
                         $current[0]['revenue_before_deduction'] === null
                         || abs((float)$current[0]['revenue_before_deduction'] - $gross) > 0.005
                     ))) {
@@ -112,7 +121,7 @@ function kwx8899WriteRevenueGroup(Database $database, $date, $venues, $isNew8899
                 }
                 continue;
             }
-            if ($isNew8899) {
+            if ($trackGross) {
                 $ok = $database->query(
                     'UPDATE DailyVenueRevenue SET revenue_before_deduction = ?, total_revenue = ? WHERE id = ? AND is_checked = 0',
                     [number_format($gross, 2, '.', ''), $amountText, $current[0]['id']], true
@@ -124,7 +133,7 @@ function kwx8899WriteRevenueGroup(Database $database, $date, $venues, $isNew8899
                 );
             }
         } else {
-            if ($isNew8899) {
+            if ($trackGross) {
                 $ok = $database->query(
                     'INSERT INTO DailyVenueRevenue (venue_id, date, revenue_before_deduction, total_revenue) VALUES (?, ?, ?, ?)',
                     [$venueId, $date, number_format($gross, 2, '.', ''), $amountText], true
@@ -152,9 +161,11 @@ function kwx8899WriteRevenueGroup(Database $database, $date, $venues, $isNew8899
 
 $database = new Database();
 try {
+    // Serialize daily generation against historical reversal.
+    kwx8899AcquireDailyLock($database, $date);
     $venues = $database->query('SELECT id, venue_subtitle FROM venues');
     if ($venues === false) throw new RuntimeException('读取场地失败');
-    $newPeriod = kwx8899Active($date);
+    $newPeriod = kwx8899Active($date) && !kwx8899HistoricalReverted($database);
     $ordinaryVenues = [];
     $promotionVenues = [];
     foreach ($venues as $venue) {

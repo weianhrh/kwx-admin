@@ -370,6 +370,9 @@ try {
         jsonOut(200, 'ok', ['batch' => $batchRows[0], 'list' => buildLogList($rows)]);
     }
 
+    if (kwx8899Stopped() && in_array($action, ['create_settlement', 'mark_exception'], true)) {
+        jsonOut(400, '8899推广已停止；历史账由返还脚本统一冲正，本页仅供查看原始记录');
+    }
     if ($action === 'create_settlement') {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             jsonOut(405, '仅支持 POST 请求');

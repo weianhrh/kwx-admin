@@ -2,12 +2,35 @@
 // Date is the first complete business day settled under the 70/20/10 rule.
 // Never backdate this over an already checked DailyVenueRevenue row.
 const KWX_8899_CUTOVER_DATE = '2026-10-07';
+// Shanghai business date; the entire 15 October day uses ordinary settlement.
+const KWX_8899_STOP_DATE = '2026-10-15';
+
+function kwx8899Stopped() {
+    return (new DateTimeImmutable('now', new DateTimeZone('Asia/Shanghai')))->format('Y-m-d') >= KWX_8899_STOP_DATE;
+}
+
+function kwx8899HistoricalReverted(Database $database) {
+    $tables = $database->query(
+        "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kwx_8899_rollback_runs'"
+    );
+    if ($tables === false) throw new RuntimeException('无法读取推广返还状态');
+    if (!$tables) return false;
+    $rows = $database->query(
+        "SELECT id FROM kwx_8899_rollback_runs WHERE run_key = 'stop_20261015' AND status = 'completed' LIMIT 1"
+    );
+    if ($rows === false) throw new RuntimeException('无法核验推广返还结果');
+    return !empty($rows);
+}
 
 function kwx8899Active($date) {
-    return (string)$date >= KWX_8899_CUTOVER_DATE;
+    return (string)$date >= KWX_8899_CUTOVER_DATE && (string)$date < KWX_8899_STOP_DATE;
 }
 
 function kwx8899AcquireDailyLock(Database $database, $date) {
+    $guard = $database->query("SELECT GET_LOCK('kwx_8899_global', 30) AS acquired");
+    if ($guard === false || (int)($guard[0]['acquired'] ?? 0) !== 1) {
+        throw new RuntimeException('8899 账务正在处理，请稍后重试');
+    }
     $rows = $database->query('SELECT GET_LOCK(?, 30) AS acquired', ['kwx_8899_daily_' . $date]);
     if ($rows === false || (int)($rows[0]['acquired'] ?? 0) !== 1) {
         throw new RuntimeException($date . ' 账期已有任务执行或锁定失败，请稍后重试');
@@ -38,7 +61,7 @@ function kwx8899RequireFrozenDay(Database $database, $date) {
 }
 
 function kwx8899NetConsumerRevenue(Database $database, $venueId, $date) {
-    if (!kwx8899Active($date) || !kwx8899IsVenue($database, $venueId)) {
+    if (!kwx8899Active($date) || kwx8899HistoricalReverted($database) || !kwx8899IsVenue($database, $venueId)) {
         return 0.0;
     }
     kwx8899RequireFrozenDay($database, $date);
@@ -55,7 +78,7 @@ function kwx8899NetConsumerRevenue(Database $database, $venueId, $date) {
 }
 
 function kwx8899AssertDailyAmount(Database $database, $venueId, $date, $amount, $beforeDeduction = null) {
-    if (!kwx8899Active($date) || !kwx8899IsVenue($database, $venueId)) {
+    if (!kwx8899Active($date) || kwx8899HistoricalReverted($database) || !kwx8899IsVenue($database, $venueId)) {
         return 0.0;
     }
     kwx8899RequireFrozenDay($database, $date);

@@ -372,9 +372,9 @@ function fvo_apply_withdraw_overview(Database $db, array $rows, array $venueIds)
         $availableBalance = round($settlementBalance * $actualPayoutRate, 2);
         $actualPayoutRateText = number_format($actualPayoutRate * 100, 2, '.', '') . '%';
 
-        // 与场地提现详情使用同一份免重复扣费台账和分摊算法。
-        // 已分账入余额的 8899 收益不能在总览里再次按 20% 扣平台费。
-        if (isset($fundRows[$venueId]) && kwx8899IsVenue($db, $venueId)) {
+        // 所有场地与提现详情、审批汇总使用相同算法，分别取整费用后计算到账额。
+        // 历史返还后的免扣台账净额为零，按场地配置正常扣费。
+        if (isset($fundRows[$venueId])) {
             $feeExemptBalance = kwx8899ExemptBalance($db, $venueId);
             $quote = kwx8899Allocation(
                 $accountBalance,

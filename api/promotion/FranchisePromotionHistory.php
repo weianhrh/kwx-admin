@@ -24,6 +24,10 @@ function promotionHistoryAmounts(Database $db, array $venueIds): array
         "SELECT venue_id, COALESCE(SUM(amount), 0) AS credited_total
          FROM kwx_8899_fee_exempt_ledger
          WHERE source_type = 'promotion_batch' AND venue_id IN ({$marks})
+           AND EXISTS (SELECT 1 FROM venue_promotion_reward_logs l
+               WHERE l.settlement_batch_id = kwx_8899_fee_exempt_ledger.source_id
+                 AND l.promotion_venue_id = kwx_8899_fee_exempt_ledger.venue_id
+                 AND l.source_type = 'daily_17_snapshot' AND l.reward_status = 'settled')
          GROUP BY venue_id",
         $venueIds
     );

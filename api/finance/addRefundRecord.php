@@ -91,7 +91,7 @@ $splitRows = $db->query(
 if ($splitRows === false) {
     throw new RuntimeException('无法核验跨场地推广分账');
 }
-if ($splitRows) {
+if ($splitRows && !kwx8899HistoricalReverted($db)) {
     echo json_encode([
         'code' => 2006,
         'msg' => '此订单已进入 70/20/10 分账，请先由财务按消费场地、推广场地、平台分别冲正后再登记退款'

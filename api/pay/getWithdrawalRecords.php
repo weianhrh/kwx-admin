@@ -1,6 +1,7 @@
 <?php
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
+require_once __DIR__ . '/../lib/withdrawal_display.php';
 
 // 创建数据库连接
 $database = new Database();
@@ -27,20 +28,6 @@ if ($venue_id <= 0) {
 }
 
 header('Content-Type: application/json');
-
-function extractRemarkAmount($remarks, $labels) {
-    $remarks = (string)$remarks;
-
-    foreach ($labels as $label) {
-        $pattern = '/' . preg_quote($label, '/') . '\s*[:：=]\s*([0-9]+(?:\.[0-9]+)?)/u';
-        if (preg_match($pattern, $remarks, $m)) {
-            return round((float)$m[1], 2);
-        }
-    }
-
-    return 0.00;
-}
-
 
 function extractRemarkText($remarks, $label) {
     $remarks = (string)$remarks;
@@ -121,51 +108,7 @@ if ($results === false) {
 foreach ($results as &$row) {
     $remarks = $row['remarks'] ?? '';
 
-    $imageFeeAmount = extractRemarkAmount($remarks, [
-        '图传费用扣减',
-        '未结算图传费用',
-        '图传费用'
-    ]);
-
-    $settlementAmount = extractRemarkAmount($remarks, [
-        '参与提现结算金额',
-        '结算金额'
-    ]);
-
-    $displayWithdrawalAmount = extractRemarkAmount($remarks, [
-        '提现金额',
-        '展示提现金额'
-    ]);
-
-    $refundDeductAmount = extractRemarkAmount($remarks, [
-        '退款扣减'
-    ]);
-
-    $totalDebitAmount = extractRemarkAmount($remarks, [
-        '账户余额扣减',
-        '总扣款'
-    ]);
-
-    // 老数据兼容：没有新快照字段时，按原字段展示
-    if ($settlementAmount <= 0) {
-        $settlementAmount = (float)($row['withdrawal_amount'] ?? 0);
-    }
-
-    if ($displayWithdrawalAmount <= 0) {
-        $displayWithdrawalAmount = $imageFeeAmount > 0
-            ? round($settlementAmount + $imageFeeAmount, 2)
-            : (float)($row['withdrawal_amount'] ?? 0);
-    }
-
-    if ($totalDebitAmount <= 0) {
-        $totalDebitAmount = round($displayWithdrawalAmount + $refundDeductAmount, 2);
-    }
-
-    $row['image_fee_amount'] = round($imageFeeAmount, 2);
-    $row['settlement_amount'] = round($settlementAmount, 2);
-    $row['display_withdrawal_amount'] = round($displayWithdrawalAmount, 2);
-    $row['refund_deduct_amount'] = round($refundDeductAmount, 2);
-    $row['total_debit_amount'] = round($totalDebitAmount, 2);
+    $row = kwxWithdrawalDisplayAmounts($row);
 
     $reversalAction = '';
     if ((int)($row['application_status'] ?? 0) === 3) {

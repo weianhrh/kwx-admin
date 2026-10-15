@@ -211,7 +211,7 @@ $available_balance = $quote['actual_amount'];
 // 推广收益只是提现页的账务说明：A 的推广款已从日结扣除，
 // B 的已结算推广款已计入 venue_funds.account_balance，不在此处再次加减。
 $promotion8899 = null;
-if ((int)$user['role_id'] === 3 && kwx8899IsVenue($database, $venue_id)) {
+if (!kwx8899Stopped() && (int)$user['role_id'] === 3 && kwx8899IsVenue($database, $venue_id)) {
     $today = new DateTimeImmutable('today', new DateTimeZone('Asia/Shanghai'));
     $todayStart = $today->format('Y-m-d 00:00:00');
     $tomorrowStart = $today->modify('+1 day')->format('Y-m-d 00:00:00');

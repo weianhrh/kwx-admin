@@ -224,6 +224,10 @@ if (!isValidDateYmd($rewardDate)) {
     ]);
     exit(1);
 }
+if ($rewardDate >= KWX_8899_STOP_DATE) {
+    out(['code' => 0, 'date' => $rewardDate, 'msg' => '8899推广自2026-10-15起停止，已跳过']);
+    exit;
+}
 if (!kwx8899Active($rewardDate)) {
     if (PHP_SAPI !== 'cli') {
         out(['code' => 0, 'date' => $rewardDate, 'msg' => '生效日前的账期无需冻结，已跳过']);
@@ -267,6 +271,10 @@ $promotionJoin = "
 
 try {
     kwx8899AcquireDailyLock($database, $rewardDate);
+    if (kwx8899HistoricalReverted($database)) {
+        out(['code' => 0, 'date' => $rewardDate, 'msg' => '8899历史推广已返还，不再生成或入账推广']);
+        exit;
+    }
     requirePromotionTransactionTables($database);
     $duplicateCodes = $database->query(
         "SELECT venue_unique_subtitle FROM venues

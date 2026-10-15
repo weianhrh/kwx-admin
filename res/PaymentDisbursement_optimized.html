@@ -1105,13 +1105,6 @@
       <input type="hidden" id="unsettled-image-fee-total" value="0">
       <input type="hidden" id="unsettled-image-ids" value="[]">
     </section>
-    <section class="section-card" id="kwx-promotion-card" style="display:none;">
-      <div class="section-head">
-        <div class="section-title">8899 推广收益</div>
-        <div class="section-desc">今日预估金额尚未结算。推广收益隔日固化后自动计入余额；消费场地推广款在隔日日结扣除，提现时不重复扣。</div>
-      </div>
-      <div class="amount-grid" id="kwx-promotion-amount"></div>
-    </section>
 <!---->
     <section class="section-card">
       <div class="section-head">
@@ -1121,10 +1114,10 @@
       </div>
       <div class="withdraw-box">
         <div class="form-topline">
-          <label for="withdraw-amount">提现金额</label>
+          <label for="withdraw-amount">申请到账金额</label>
           <!--<span class="fee-tip">手续费：以系统计算为准</span>-->
         </div>
-        <input type="number" id="withdraw-amount" class="withdraw-input" placeholder="提现金额" min="0" step="0.01" />
+        <input type="number" id="withdraw-amount" class="withdraw-input" placeholder="申请到账金额" min="0" step="0.01" />
         <button class="withdraw-button" id="withdraw-button" type="button" onclick="applyWithdrawal()">立即提现</button>
         <button class="ledger-button" type="button" onclick="window.location.href='VenueFundChanges.html'">场地流水变动记录</button>
         <div id="status-message" class="status-message">正在申请提现...</div>
@@ -1313,6 +1306,10 @@ const feeHelp = `
   <div class="amount-content"><div class="amount-label">平台扣除${data.platform_deduction_rate_text ? `（${esc(data.platform_deduction_rate_text)}）` : ''}:</div><div class="amount-value">${formatAmount(data.platform_deduction_amount)}</div></div>
 </div>
 <div class="amount-item is-muted">
+  <div class="amount-icon">%</div>
+  <div class="amount-content"><div class="amount-label">提现手续费:</div><div class="amount-value">${formatAmount(data.withdrawal_fee_amount)}</div></div>
+</div>
+<div class="amount-item is-muted">
   <div class="amount-icon">≈</div>
   <div class="amount-content"><div class="amount-label">参与结算:</div><div class="amount-value">${formatAmount(data.settlement_balance)}</div></div>
 </div>
@@ -1345,30 +1342,6 @@ const feeHelp = `
 </div>
       `;
 
-      const promotion = data.promotion_8899;
-      const promotionCard = document.getElementById('kwx-promotion-card');
-      if (!promotion || promotion.visible !== true) {
-        promotionCard.style.display = 'none';
-      } else {
-        promotionCard.style.display = '';
-        const promotionAmount = document.getElementById('kwx-promotion-amount');
-        promotionAmount.innerHTML = promotion.error
-          ? `<div class="amount-item is-warning"><div class="amount-content"><div class="amount-label">推广收益</div><div class="amount-value">${esc(promotion.error)}</div></div></div>`
-          : `
-            <a class="amount-item is-primary"
-               style="text-decoration:none;cursor:pointer;"
-               href="franchise_promotion_history.html?venue_id=${encodeURIComponent(data.venue_id || pageVenueId)}">
-              <div class="amount-icon">＋</div>
-              <div class="amount-content">
-                <div class="amount-label">累计已入账推广收益:</div>
-                <div class="amount-value">${formatAmount(promotion.credited_total)}</div>
-              </div>
-            </a>
-            <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广收益:</div><div class="amount-value">${formatAmount(promotion.estimated_today)}</div></div></div>
-            <div class="amount-item is-warning"><div class="amount-icon">－</div><div class="amount-content"><div class="amount-label">累计已核对推广扣款:</div><div class="amount-value">${formatAmount(promotion.deducted_total)}</div></div></div>
-            <div class="amount-item is-muted"><div class="amount-icon">≈</div><div class="amount-content"><div class="amount-label">今日预估推广扣款:</div><div class="amount-value">${formatAmount(promotion.estimated_deduction_today)}</div></div></div>
-          `;
-      }
     }
 
     function loadAccountInfo() {
@@ -1426,7 +1399,7 @@ const feeHelp = `
       const payoutRate = parseFloat(accountCache.actual_payout_rate || 0);
       const exemptAvailable = parseFloat(accountCache.fee_exempt_available || 0);
       if (!(payoutRate > 0) && withdrawAmount > exemptAvailable + 0.001) {
-        showCustomModal('提现提示', '普通收益的实际到账比例为0%，可申请金额不能超过已分账余额。');
+        showCustomModal('提现提示', '当前场地费率配置下，该金额无法提现，请联系平台核对提现配置。');
         withdrawButton.disabled = false;
         statusMessage.style.display = 'none';
         return;
@@ -1693,7 +1666,7 @@ function listStatusBadgeClass(record) {
           <div class="detail-row"><div class="detail-label">结算金额:</div><div class="detail-value">${money(settlementAmount)} 元</div></div>
 
           <div class="detail-row"><div class="detail-label">技术服务费:</div><div class="detail-value">${money(record.technical_service_fee)} 元</div></div>
-          <!--<div class="detail-row"><div class="detail-label">提现手续费:</div><div class="detail-value">${money(record.withdrawal_fee)} 元</div></div>-->
+          <div class="detail-row"><div class="detail-label">提现手续费:</div><div class="detail-value">${money(record.withdrawal_fee)} 元</div></div>
           <div class="detail-row"><div class="detail-label">实际到账金额:</div><div class="detail-value">${money(receivedAmount)} 元</div></div>
 
           ${refundRow}
