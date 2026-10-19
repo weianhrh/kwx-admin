@@ -105,6 +105,40 @@ button {
   flex: 0 0 auto;
 }
 
+.venue-context {
+  padding: 16px 18px 0;
+  background: var(--panel-soft);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.venue-context p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#bindStatus.is-error {
+  color: var(--danger);
+}
+
+.field.form-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.field .secondary-button {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  color: var(--primary-dark);
+}
+
+.field .secondary-button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
 #bindForm {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -217,6 +251,11 @@ button {
   <div class="container">
     <div class="card">
       <div class="card-title">绑定收款账号</div>
+      <div class="venue-context">
+        <strong id="venueInfo">正在确认当前场地…</strong>
+        <p>主场地、子场地分别绑定收款账号，互不替代。绑定后如需更换，请联系平台管理员。</p>
+        <p id="bindStatus" role="status">正在读取本场地收款账号，请稍候。</p>
+      </div>
       <form id="bindForm">
         <div class="field">
           <label>账号类型</label>
@@ -242,8 +281,9 @@ button {
           <label>备注（可选）</label>
           <input type="text" id="remarks" name="remarks">
         </div>
-        <div class="field">
-          <button type="submit" id="submitBtn">提交绑定</button>
+        <div class="field form-actions">
+          <button type="submit" id="submitBtn" disabled>正在加载…</button>
+          <button type="button" id="backBtn" class="secondary-button" disabled>返回本场地提现</button>
         </div>
       </form>
     </div>
@@ -252,56 +292,163 @@ button {
   <script>
     const form = document.getElementById('bindForm');
     const submitBtn = document.getElementById('submitBtn');
+    const backBtn = document.getElementById('backBtn');
+    const venueInfo = document.getElementById('venueInfo');
+    const bindStatus = document.getElementById('bindStatus');
     const withdrawalAccountInput = document.getElementById('withdrawal_account');
+    const pageParams = new URLSearchParams(window.location.search);
+    let targetVenueId = pageParams.has('venue_id') ? pageParams.get('venue_id')
+      : (pageParams.has('venueId') ? pageParams.get('venueId') : null);
+    let embed = pageParams.get('embed') || '';
+    let venueLabel = '';
+    let bindingLoaded = false;
+    let isBound = false;
+    let submitting = false;
 
-    withdrawalAccountInput.addEventListener('input', function () {
-      this.value = this.value.replace(/\s+/g, '');
+    // 兼容已经停留在旧版无参数绑定页的 iframe：从同源 dashboard 的 #venue 恢复场地。
+    // URL 已显式传参时不回退，非法场地参数由接口拒绝。
+    try {
+      if (window.parent !== window && /\/dashboard\.html$/.test(window.parent.location.pathname)) {
+        const parentParams = new URLSearchParams(window.parent.location.hash.replace(/^#/, ''));
+        if (targetVenueId === null) {
+          targetVenueId = parentParams.has('venue') ? parentParams.get('venue')
+            : (parentParams.has('venue_id') ? parentParams.get('venue_id') : null);
+        }
+        if (!embed) embed = 'dashboard';
+      }
+    } catch (ignore) {
+      // 跨域父页面不可读，仍只使用本页参数及后端权限校验。
+    }
+
+    function bindingApiUrl() {
+      const params = new URLSearchParams();
+      if (targetVenueId !== null) params.set('venue_id', targetVenueId);
+      const query = params.toString();
+      return '/api/pay/BindPaymentAccount.php' + (query ? '?' + query : '');
+    }
+
+    function withdrawalPageUrl() {
+      const params = new URLSearchParams();
+      if (targetVenueId !== null) params.set('venue_id', targetVenueId);
+      if (embed) params.set('embed', embed);
+      const query = params.toString();
+      return 'PaymentDisbursement_optimized.html' + (query ? '?' + query : '');
+    }
+
+    function showStatus(message, isError) {
+      bindStatus.textContent = message;
+      bindStatus.classList.toggle('is-error', !!isError);
+    }
+
+    function setFormEnabled(enabled) {
+      form.querySelectorAll('input').forEach(el => { el.disabled = !enabled; });
+      submitBtn.disabled = !enabled;
+    }
+
+    function confirmResponseVenue(data) {
+      const resolvedId = Number(data.venue_id);
+      if (!Number.isSafeInteger(resolvedId) || resolvedId <= 0 ||
+          (targetVenueId !== null && Number(targetVenueId) !== resolvedId)) {
+        throw new Error('场地信息不一致，请从提现场地总览重新进入，并确认修复文件已全部替换。');
+      }
+      return String(resolvedId);
+    }
+
+    async function loadBinding() {
+      bindingLoaded = false;
+      setFormEnabled(false);
+      backBtn.disabled = true;
+      submitBtn.textContent = '正在加载…';
+      try {
+        const response = await fetch(bindingApiUrl(), { credentials: 'same-origin', cache: 'no-store' });
+        if (!response.ok) throw new Error('收款账号加载失败，请刷新后重试。');
+        const data = await response.json();
+        if (Number(data.code) !== 0) throw new Error(data.msg || '无法读取本场地收款账号。');
+        targetVenueId = confirmResponseVenue(data);
+        venueLabel = (data.venue_name || '场地') + '（ID：' + targetVenueId + '）';
+        venueInfo.textContent = '当前场地：' + venueLabel;
+
+        // 把后端确认后的场地固定在地址中，刷新、提交及返回时不会切回主场地。
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('venue_id', targetVenueId);
+        if (embed) currentUrl.searchParams.set('embed', embed);
+        window.history.replaceState(null, '', currentUrl.href);
+
+        const account = data.data || {};
+        ['account_type', 'account_name', 'withdrawal_account', 'bank_name', 'bank_number', 'remarks'].forEach(key => {
+          document.getElementById(key).value = account[key] || (key === 'account_type' ? '银行卡' : '');
+        });
+        isBound = data.is_bound === true;
+        bindingLoaded = true;
+        backBtn.disabled = false;
+        submitBtn.textContent = isBound ? '本场地已绑定' : '提交本场地绑定';
+        setFormEnabled(!isBound);
+        showStatus(isBound
+          ? '本场地已绑定收款账号，不能重复绑定。下方仅显示本场地的收款资料。'
+          : '本场地尚未绑定收款账号，请填写下方信息。', false);
+      } catch (error) {
+        venueInfo.textContent = '场地或收款账号加载失败';
+        submitBtn.textContent = '暂不可提交';
+        showStatus(error.message || '加载失败，请刷新后重试。', true);
+      }
+    }
+
+    [withdrawalAccountInput, document.getElementById('bank_number')].forEach(input => {
+      input.addEventListener('input', function () {
+        this.value = this.value.replace(/\s+/g, '');
+      });
     });
 
-    // 页面加载时检查是否已绑定
-    fetch('/api/pay/BindPaymentAccount.php')
-      .then(res => res.json())
-      .then(data => {
-        if (data.code === 0 && data.data) {
-          // 自动填充字段
-          document.getElementById('account_type').value = data.data.account_type || '银行卡';
-          document.getElementById('account_name').value = data.data.account_name || '';
-          document.getElementById('withdrawal_account').value = data.data.withdrawal_account || '';
-          document.getElementById('bank_name').value = data.data.bank_name || '';
-          document.getElementById('bank_number').value = data.data.bank_number || '';
-          document.getElementById('remarks').value = data.data.remarks || '';
+    backBtn.addEventListener('click', function () {
+      if (bindingLoaded && !submitting) window.location.href = withdrawalPageUrl();
+    });
 
-          // 禁用表单
-          document.querySelectorAll('#bindForm input').forEach(el => el.disabled = true);
-          submitBtn.disabled = true;
-
-          alert('已绑定账号，不能再次绑定');
-        }
-      });
-
-    // 首次提交绑定
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!bindingLoaded || isBound || submitting) return;
       withdrawalAccountInput.value = withdrawalAccountInput.value.replace(/\s+/g, '');
+      document.getElementById('bank_number').value = document.getElementById('bank_number').value.replace(/\s+/g, '');
+      if (!form.reportValidity()) return;
+      if (!window.confirm('确认将此收款账号绑定到 ' + venueLabel + '？\n绑定后如需更换，请联系平台管理员。')) return;
+
+      // 必须在禁用输入框前读取表单；禁用后 FormData 不会收集这些输入框。
       const formData = new FormData(form);
-      fetch('/api/pay/BindPaymentAccount.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.code === 0) {
-          alert('绑定成功');
-          location.reload();
-        } else {
-          alert('绑定失败：' + data.msg);
+      formData.set('venue_id', targetVenueId);
+      submitting = true;
+      setFormEnabled(false);
+      backBtn.disabled = true;
+      submitBtn.textContent = '正在绑定…';
+      try {
+        const response = await fetch(bindingApiUrl(), {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          body: formData
+        });
+        if (!response.ok) throw new Error('提交失败，请稍后重试。');
+        const data = await response.json();
+        if (Number(data.code) === 1002) {
+          window.alert(data.msg || '本场地已绑定收款账号。');
+          await loadBinding();
+          return;
         }
-      })
-      .catch(err => {
-        alert('提交失败，请稍后再试');
-        console.error(err);
-      });
+        if (Number(data.code) !== 0) throw new Error(data.msg || '绑定失败，请稍后重试。');
+        confirmResponseVenue(data);
+        isBound = true;
+        showStatus('本场地绑定成功，正在返回提现申请。', false);
+        window.alert(venueLabel + ' 收款账号绑定成功');
+        window.location.replace(withdrawalPageUrl());
+      } catch (error) {
+        showStatus(error.message || '提交失败，请稍后重试。', true);
+      } finally {
+        submitting = false;
+        setFormEnabled(bindingLoaded && !isBound);
+        backBtn.disabled = !bindingLoaded;
+        submitBtn.textContent = isBound ? '本场地已绑定' : '提交本场地绑定';
+      }
     });
+
+    loadBinding();
   </script>
 </body>
 </html>

@@ -1173,6 +1173,16 @@
       return url + (url.includes('?') ? '&' : '?') + 'venue_id=' + encodeURIComponent(pageVenueId);
     }
 
+    // 绑定页与当前提现场地保持一致，同时保留 dashboard 嵌入上下文。
+    function paymentAccountBindingUrl(venueId) {
+      const params = new URLSearchParams();
+      if (venueId) params.set('venue_id', venueId);
+      const embed = new URLSearchParams(window.location.search).get('embed');
+      if (embed) params.set('embed', embed);
+      const query = params.toString();
+      return 'paybind.html' + (query ? '?' + query : '');
+    }
+
     function lockedOrdersUrl(venueId) {
       const params = new URLSearchParams();
       if (venueId) params.set('venue_id', venueId);
@@ -1279,7 +1289,7 @@
       document.getElementById('unsettled-image-ids').value = JSON.stringify(data.unsettled_image_ids || []);
 
       const checkBtn = Math.abs(parseFloat(data.notSettledAmount || 0)) > 0
-        ? `<button type="button" class="check-money-btn" onclick="location.href='moeny.html'">去核对</button>`
+        ? ''
         : '';
 
 const feeHelp = `
@@ -1357,7 +1367,7 @@ const feeHelp = `
             updateWithdrawButtonState();
           } else if (data.code === 1002) {
             if (confirm('需要先绑定收款账号才可以提现，是否立即绑定？')) {
-              window.location.href = 'paybind.html';
+              window.location.href = paymentAccountBindingUrl(data.venue_id || pageVenueId);
             } else {
               window.history.back();
             }

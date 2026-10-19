@@ -5,100 +5,384 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>场地提现配置</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}.head{margin-bottom:18px}.head h1{font-size:22px;margin:0 0 7px}.head p{margin:0;color:#6b7280;font-size:14px}
+    *{box-sizing:border-box}[hidden]{display:none!important}
+    body{margin:0;background:#f4f7fb;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}.head{margin-bottom:18px}.head h1{font-size:22px;margin:0 0 7px}.head p{margin:0;color:#6b7280;font-size:14px;line-height:1.6}
     .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 18px rgba(31,41,55,.05);padding:20px;margin-bottom:18px}
-    .form{display:grid;grid-template-columns:minmax(260px,2fr) 1fr 1fr auto;gap:14px;align-items:end}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}.field input{width:100%;height:42px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px;font-size:14px;outline:none}.field input:focus{border-color:#2f7df6;box-shadow:0 0 0 3px rgba(47,125,246,.12)}
-    button{height:42px;border:0;border-radius:8px;padding:0 20px;background:#2f7df6;color:#fff;font-size:14px;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.search{display:flex;gap:10px;margin-bottom:14px}.search input{flex:1;height:40px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px}.search button{height:40px;background:#374151}
-    table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:13px 12px;text-align:left;border-bottom:1px solid #eef0f3}th{background:#f8fafc;color:#4b5563;font-weight:600}.tag{display:inline-block;border-radius:999px;padding:3px 9px;background:#eaf2ff;color:#2563eb;font-size:12px}.tag.default{background:#f3f4f6;color:#6b7280}.edit{height:32px;padding:0 12px}.empty{text-align:center!important;color:#9ca3af;padding:36px!important}.notice{padding:10px 12px;margin-bottom:14px;border-radius:8px;background:#fff7ed;color:#9a5215;font-size:13px}.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:8px;background:#111827;color:#fff;display:none;z-index:99}
-    .actions{display:flex;gap:7px;white-space:nowrap}.secondary{background:#eef2f7;color:#374151}.history-head h2{font-size:18px;margin:0 0 8px}.history-head p{font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 16px}.history-filters{display:grid;grid-template-columns:minmax(180px,2fr) 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:16px}.table-scroll{overflow:auto}.history-table{min-width:1080px;font-size:13px}.history-table th{white-space:nowrap}.history-table td{vertical-align:top}.history-table .values,.history-table .time{white-space:nowrap}.meta{display:block;color:#6b7280;font-size:12px;margin-top:5px;line-height:1.5}.ip{overflow-wrap:anywhere;max-width:160px}.pagination{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}.pagination span{color:#6b7280;font-size:13px}.pagination button{height:34px;padding:0 14px}.tag{white-space:nowrap}
-    @media(max-width:760px){.wrap{padding:14px}.form{grid-template-columns:1fr 1fr}.venue-field{grid-column:1/-1}.save{grid-column:1/-1}.config-table th:nth-child(5),.config-table td:nth-child(5){display:none}.config-table{min-width:580px}.card{padding:14px}th,td{padding:11px 7px;font-size:13px}.history-filters{grid-template-columns:1fr 1fr}.history-venue{grid-column:1/-1}.pagination{justify-content:flex-start}}
+    button{height:40px;border:0;border-radius:8px;padding:0 18px;background:#2f7df6;color:#fff;font-size:14px;cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible{outline:3px solid rgba(47,125,246,.35);outline-offset:2px}.secondary{background:#eef2f7;color:#374151}
+    .notice{padding:10px 12px;margin-bottom:16px;border-radius:8px;background:#fff7ed;color:#9a5215;font-size:13px;line-height:1.6}
+    .search{display:flex;gap:10px;margin-bottom:12px}.search input{min-width:0;flex:1;height:40px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px;font-size:14px}.search button{background:#374151;flex-shrink:0}
+    input{font-family:inherit}input:focus{outline:none;border-color:#2f7df6!important;box-shadow:0 0 0 3px rgba(47,125,246,.12)}
+    .list-summary{margin:0 0 12px;color:#6b7280;font-size:12px;line-height:1.6;min-height:19px}.list-summary.has-drafts{color:#9a5215}
+    .table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:12px;text-align:left;border-bottom:1px solid #eef0f3}th{background:#f8fafc;color:#4b5563;font-weight:600}
+    .config-table{min-width:720px}.config-table th{white-space:nowrap}.config-table td{vertical-align:middle}.venue-cell{min-width:150px;overflow-wrap:anywhere}.config-table tr.dirty>td{background:#f5f9ff}
+    .rate-control{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.rate-input{width:94px;height:36px;border:1px solid #dbe2ec;border-radius:7px;padding:0 10px;background:#fff;color:#1f2937;font-size:14px;font-variant-numeric:tabular-nums;transition:border-color .15s}.rate-input:hover:not(:disabled){border-color:#93b4ea}.rate-input:disabled{background:#f3f4f6;color:#6b7280}.rate-input[aria-invalid="true"]{border-color:#dc2626}.rate-unit{color:#6b7280;font-size:13px}
+    .tag{display:inline-block;border-radius:999px;padding:3px 9px;background:#eaf2ff;color:#2563eb;font-size:12px;white-space:nowrap}.tag.default{background:#f3f4f6;color:#6b7280}.tag.pending{background:#fff2d8;color:#a16207}
+    .actions{display:flex;gap:7px;white-space:nowrap}.row-button{height:34px;padding:0 12px}.empty{text-align:center!important;color:#9ca3af;padding:36px!important}
+    .toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:8px;background:#111827;color:#fff;display:none;z-index:1200;font-size:14px;max-width:calc(100vw - 28px);line-height:1.6;overflow-wrap:anywhere}
+    .modal{position:fixed;inset:0;z-index:1000;padding:24px;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center}
+    .modal-panel{width:1200px;max-width:100%;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);min-height:0;display:flex;flex-direction:column;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 20px 70px rgba(15,23,42,.2);outline:none;overflow:hidden}
+    .history-head{padding:20px 22px 14px;display:flex;align-items:flex-start;gap:14px;border-bottom:1px solid #eef0f3;flex-shrink:0}.history-heading{flex:1;min-width:0}.history-head h2{font-size:18px;margin:0 0 7px;line-height:1.5;overflow-wrap:anywhere}.history-head p{font-size:12px;color:#6b7280;line-height:1.7;margin:0}.close-button{height:34px;padding:0 13px;flex-shrink:0}
+    .history-filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:16px 22px;flex-shrink:0}.field{min-width:150px}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}.field input{width:100%;height:40px;border:1px solid #d1d5db;border-radius:8px;padding:0 10px;font-size:14px;background:#fff}
+    .history-scroll{overflow:auto;min-height:100px;flex:1;margin:0 22px}.history-table{min-width:1060px;font-size:13px}.history-table th{position:sticky;top:0;z-index:1;white-space:nowrap}.history-table td{vertical-align:top}.history-table .values,.history-table .time{white-space:nowrap}.meta{display:block;color:#6b7280;font-size:12px;margin-top:5px;line-height:1.5}.ip{overflow-wrap:anywhere;min-width:120px;max-width:180px}
+    .pagination{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:16px 22px;flex-shrink:0}.pagination span{color:#6b7280;font-size:13px}.pagination button{height:34px;padding:0 14px}
+    @media(max-width:760px){.wrap{padding:14px}.card{padding:14px}th,td{padding:11px 9px;font-size:13px}.head h1{font-size:20px}.modal{padding:10px}.modal-panel{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px)}.history-head{padding:14px}.history-head h2{font-size:16px}.history-filters{padding:12px 14px;gap:8px}.field{flex:1;min-width:125px}.history-scroll{margin:0 14px}.pagination{padding:14px;justify-content:flex-start}.history-head p{font-size:12px}}
   </style>
 </head>
 <body>
-<div class="toast" id="toast" role="status"></div>
-<main class="wrap">
-  <div class="head"><h1>场地提现配置</h1><p>按场地设置平台扣除比例和提现手续费。</p></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<main class="wrap" id="mainContent">
+  <div class="head"><h1>场地提现配置</h1><p>直接修改列表中的比例，点击本行“保存”后确认。修改记录可在每行右侧查看。</p></div>
   <section class="card">
     <div class="notice">未单独配置的场地默认：平台扣除比例 20%，提现手续费 0%，加盟商实际到账比例为 80%。</div>
-    <div class="form">
-      <div class="field venue-field"><label for="venueInput">选择场地（支持输入名称或ID模糊搜索）</label><input id="venueInput" list="venueList" placeholder="输入场地名称或ID"><datalist id="venueList"></datalist></div>
-      <div class="field"><label for="ratio">平台扣除比例（%）</label><input id="ratio" type="number" min="0" max="100" step="0.01" value="20"></div>
-      <div class="field"><label for="fee">提现手续费（%）</label><input id="fee" type="number" min="0" max="100" step="0.01" value="0"></div>
-      <button class="save" id="saveBtn" onclick="saveConfig()">保存配置</button>
-    </div>
-  </section>
-  <section class="card">
-    <div class="search"><input id="keyword" aria-label="搜索当前配置的场地" placeholder="搜索场地名称或ID" onkeydown="if(event.key==='Enter')loadRows()"><button onclick="loadRows()">搜索</button></div>
+    <form class="search" id="searchForm"><input id="keyword" aria-label="搜索当前配置的场地" placeholder="搜索场地名称或ID" autocomplete="off"><button id="searchBtn" type="submit">搜索</button></form>
+    <p class="list-summary" id="listSummary" aria-live="polite">正在读取场地配置...</p>
     <div class="table-scroll"><table class="config-table"><thead><tr><th>场地ID</th><th>场地名称</th><th>平台扣除比例</th><th>手续费</th><th>状态</th><th>操作</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table></div>
   </section>
-  <section class="card" id="historyCard">
-    <div class="history-head"><h2>提现配置修改记录</h2><p>记录启用后的每次成功保存，包括数值未变更的保存；启用前的历史无法补回。时间为北京时间，精确到秒。IP 为服务器记录的连接 IP。</p></div>
-    <div class="history-filters">
-      <div class="field history-venue"><label for="historyKeyword">场地名称或ID</label><input id="historyKeyword" list="venueList" placeholder="留空查看全部场地" onkeydown="if(event.key==='Enter')loadHistory(1)"></div>
+</main>
+<!-- 修改记录仅在点击某行“修改记录”后打开；查询始终限定为该场地。 -->
+<div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle" aria-describedby="historyDescription" hidden>
+  <section class="modal-panel" tabindex="-1" id="historyPanel">
+    <div class="history-head">
+      <div class="history-heading"><h2 id="historyTitle">提现配置修改记录</h2><p id="historyDescription">仅显示当前场地的记录。记录启用后的成功保存，启用前的历史无法补回。时间为北京时间，精确到秒；IP 为服务器记录的连接 IP。</p></div>
+      <button class="close-button secondary" id="historyClose" type="button" aria-label="关闭修改记录">关闭</button>
+    </div>
+    <form class="history-filters" id="historyForm">
       <div class="field"><label for="historyStart">开始日期</label><input id="historyStart" type="date"></div>
       <div class="field"><label for="historyEnd">结束日期</label><input id="historyEnd" type="date"></div>
-      <button onclick="loadHistory(1)">查询记录</button><button class="secondary" onclick="resetHistory()">重置</button>
-    </div>
-    <div class="table-scroll"><table class="history-table"><thead><tr><th>修改时间</th><th>场地</th><th>保存类型</th><th>平台扣除比例（前 → 后）</th><th>手续费（前 → 后）</th><th>修改人</th><th>角色</th><th>IP</th></tr></thead><tbody id="historyBody"><tr><td colspan="8" class="empty">加载中...</td></tr></tbody></table></div>
-    <div class="pagination"><span id="historySummary" aria-live="polite"></span><button class="secondary" id="historyPrev" onclick="loadHistory(historyPage-1)" disabled>上一页</button><button class="secondary" id="historyNext" onclick="loadHistory(historyPage+1)" disabled>下一页</button></div>
+      <button type="submit">查询记录</button><button class="secondary" type="button" id="historyReset">重置日期</button>
+    </form>
+    <div class="history-scroll"><table class="history-table"><thead><tr><th>修改时间</th><th>场地</th><th>保存类型</th><th>平台扣除比例（前 → 后）</th><th>手续费（前 → 后）</th><th>修改人</th><th>角色</th><th>IP</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+    <div class="pagination"><span id="historySummary" aria-live="polite"></span><button class="secondary" id="historyPrev" type="button" disabled>上一页</button><button class="secondary" id="historyNext" type="button" disabled>下一页</button></div>
   </section>
-</main>
+</div>
 <script>
-const API='/api/pay/VenueWithdrawalConfig.php';
-let venues=[];
-let rowsCache=[];
-let historyPage=1;
-let historyRequest=0;
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const percent=v=>`${Number(v).toFixed(2)}%`;
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(el.t);el.t=setTimeout(()=>el.style.display='none',2200)}
-function venueLabel(v){return `${v.venue_name}（ID:${v.id||v.venue_id}）`}
-async function request(url,opts){const r=await fetch(url,opts);const d=await r.json();if(d.code===1001){top.location.href='/';throw new Error(d.msg)}if(d.code!==0)throw new Error(d.msg||'请求失败');return d.data}
-async function loadVenues(){venues=await request(API+'?action=venues');document.getElementById('venueList').innerHTML=venues.map(v=>`<option value="${esc(venueLabel(v))}"></option>`).join('')}
-function resolveVenue(){const val=document.getElementById('venueInput').value.trim();return venues.find(v=>venueLabel(v)===val)||venues.find(v=>String(v.id)===val)||null}
-async function loadRows(){const key=document.getElementById('keyword').value.trim();try{rowsCache=await request(API+'?action=list&keyword='+encodeURIComponent(key));document.getElementById('tbody').innerHTML=rowsCache.length?rowsCache.map(r=>`<tr><td>${Number(r.venue_id)}</td><td>${esc(r.venue_name)}</td><td>${percent(r.withdraw_ratio)}</td><td>${percent(r.withdrawal_fee_rate)}</td><td><span class="tag ${Number(r.configured)?'':'default'}">${Number(r.configured)?'已配置':'默认值'}</span></td><td><div class="actions"><button class="edit" onclick="editRow(${Number(r.venue_id)})">编辑</button><button class="edit secondary" onclick="viewHistory(${Number(r.venue_id)})">修改记录</button></div></td></tr>`).join(''):'<tr><td colspan="6" class="empty">没有匹配的场地</td></tr>'}catch(e){toast(e.message)}}
-function editRow(id){const r=rowsCache.find(x=>Number(x.venue_id)===Number(id));if(!r)return;const v=venues.find(x=>Number(x.id)===Number(r.venue_id));document.getElementById('venueInput').value=v?venueLabel(v):r.venue_name;document.getElementById('ratio').value=Number(r.withdraw_ratio);document.getElementById('fee').value=Number(r.withdrawal_fee_rate);scrollTo({top:0,behavior:'smooth'})}
-async function saveConfig(){
-  const v=resolveVenue(),ratioInput=document.getElementById('ratio'),feeInput=document.getElementById('fee');
-  const ratio=Number(ratioInput.value),fee=Number(feeInput.value);
-  if(!v)return toast('请从下拉列表中选择场地');
-  if(!ratioInput.value.trim()||!feeInput.value.trim()||!Number.isFinite(ratio)||!Number.isFinite(fee)||!ratioInput.checkValidity()||!feeInput.checkValidity())return toast('请输入0%到100%之间的比例，最多两位小数');
-  if(Math.round(ratio*100)+Math.round(fee*100)>10000)return toast('平台扣除比例与手续费合计不能超过100%');
-  const btn=document.getElementById('saveBtn');btn.disabled=true;
-  try{
-    await request(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'save',venue_id:v.id,withdraw_ratio:ratio,withdrawal_fee_rate:fee})});
-    toast('保存成功，已记录操作日志');
-    await Promise.all([loadRows(),loadHistory(1)]);
-  }catch(e){toast(e.message)}finally{btn.disabled=false}
+'use strict';
+const API = '/api/pay/VenueWithdrawalConfig.php';
+const configs = new Map();
+const drafts = new Map();
+const savingIds = new Set();
+let visibleIds = [];
+let rowsRequest = 0;
+let rowsLoading = false;
+let historyContext = null;
+let historyPage = 1;
+let historyRequest = 0;
+let historyReturnFocus = null;
+let previousBodyOverflow = '';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fixed = v => Number(v).toFixed(2);
+const percent = v => fixed(v) + '%';
+const cents = v => Math.round(Number(v) * 100);
+const venueLabel = r => `${r.venue_name}（ID：${r.venue_id}）`;
+
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.style.display = 'block';
+  clearTimeout(el.hideTimer);
+  el.hideTimer = setTimeout(() => { el.style.display = 'none'; }, 3400);
 }
-function historyType(type){return {create:'首次配置',update:'修改配置',no_change:'数值未变更'}[type]||'保存配置'}
-function roleName(id){return {1:'平台管理员',2:'运营管理员'}[Number(id)]||'后台账号'}
-async function loadHistory(page=1){
-  const key=document.getElementById('historyKeyword').value.trim(),start=document.getElementById('historyStart').value,end=document.getElementById('historyEnd').value;
-  if(start&&end&&start>end)return toast('开始日期不能晚于结束日期');
-  const selected=venues.find(v=>venueLabel(v)===key);
-  const params=new URLSearchParams({action:'logs',page:Math.max(1,page),page_size:20});
-  if(selected)params.set('venue_id',selected.id);else if(/^[1-9]\d*$/.test(key))params.set('venue_id',key);else if(key)params.set('keyword',key);
-  if(start)params.set('start_date',start);if(end)params.set('end_date',end);
-  const requestId=++historyRequest,body=document.getElementById('historyBody'),prev=document.getElementById('historyPrev'),next=document.getElementById('historyNext'),summary=document.getElementById('historySummary');
-  prev.disabled=true;next.disabled=true;summary.textContent='正在读取记录...';body.innerHTML='<tr><td colspan="8" class="empty">加载中...</td></tr>';
-  try{
-    const data=await request(API+'?'+params);
-    if(requestId!==historyRequest)return;
-    historyPage=Number(data.page);
-    body.innerHTML=data.rows.length?data.rows.map(r=>`<tr><td class="time">${esc(r.created_at)}<span class="meta">记录 #${esc(r.id)}</span></td><td>${esc(r.venue_name)}<span class="meta">场地ID：${esc(r.venue_id)}</span></td><td><span class="tag ${r.change_type==='no_change'?'default':''}">${historyType(r.change_type)}</span>${Number(r.old_configured)?'':'<span class="meta">修改前为默认值</span>'}</td><td class="values">${percent(r.old_withdraw_ratio)} → ${percent(r.new_withdraw_ratio)}</td><td class="values">${percent(r.old_withdrawal_fee_rate)} → ${percent(r.new_withdrawal_fee_rate)}</td><td>${esc(r.operator_name)}<span class="meta">账号UID：${esc(r.operator_id)}</span></td><td>${roleName(r.operator_role_id)}<span class="meta">role_id：${esc(r.operator_role_id)}</span></td><td class="ip">${esc(r.ip||'—')}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">暂无修改记录（仅记录启用后的成功保存）</td></tr>';
-    const pages=Math.max(1,Math.ceil(Number(data.total)/Number(data.page_size)));
-    summary.textContent=`共 ${Number(data.total)} 条 · 第 ${historyPage} / ${pages} 页`;
-    prev.disabled=historyPage<=1;next.disabled=historyPage>=pages;
-  }catch(e){
-    if(requestId!==historyRequest)return;
-    body.innerHTML='<tr><td colspan="8" class="empty">修改记录读取失败，请重新查询</td></tr>';summary.textContent='读取失败';toast(e.message);
+
+async function request(url, options) {
+  const writing = options && options.method === 'POST';
+  let response, result;
+  try {
+    response = await fetch(url, Object.assign({credentials:'same-origin'}, options || {}));
+    result = await response.json();
+  } catch (error) {
+    throw new Error(writing ? '保存结果未确认，请先查看该场地的修改记录再重试' : '网络或响应异常，请重新查询');
+  }
+  if (Number(result.code) === 1001) {
+    window.top.location.href = '/';
+    throw new Error(result.msg || '登录已过期');
+  }
+  if (!response.ok || Number(result.code) !== 0) throw new Error(result.msg || '请求失败');
+  return result.data;
+}
+
+// 使用普通文本输入框，避免鼠标滚轮或数字微调按钮误改财务比例。
+// 验证后按两位小数提交；整数“30”、小数“0.5”均可直接输入。
+function parseRate(raw) {
+  const text = String(raw).trim();
+  if (!/^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/.test(text)) return null;
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 0 || value > 100) return null;
+  return value;
+}
+
+function rowDraft(id) {
+  const r = configs.get(id);
+  return drafts.get(id) || {ratio:fixed(r.withdraw_ratio), fee:fixed(r.withdrawal_fee_rate)};
+}
+
+function isDirty(id) {
+  const r = configs.get(id), draft = drafts.get(id);
+  if (!r || !draft) return false;
+  const ratio = parseRate(draft.ratio), fee = parseRate(draft.fee);
+  return ratio === null || fee === null || cents(ratio) !== cents(r.withdraw_ratio) || cents(fee) !== cents(r.withdrawal_fee_rate);
+}
+
+function updateSummary() {
+  const summary = $('listSummary');
+  const dirtyCount = Array.from(drafts.keys()).filter(isDirty).length;
+  summary.textContent = `${rowsLoading ? '正在查询… ' : ''}当前 ${visibleIds.length} 个场地${dirtyCount ? ` · ${dirtyCount} 个场地未保存（搜索不会丢失已输入的修改）` : ''}`;
+  summary.classList.toggle('has-drafts', dirtyCount > 0);
+}
+
+function updateRowState(id) {
+  const tr = $('row-' + id), r = configs.get(id);
+  if (!tr || !r) return;
+  const dirty = isDirty(id), busy = savingIds.has(id), configured = Number(r.configured) !== 0;
+  tr.classList.toggle('dirty', dirty);
+  const tag = tr.querySelector('.config-state');
+  tag.className = 'tag config-state' + (dirty ? ' pending' : configured ? '' : ' default');
+  tag.textContent = dirty ? '未保存' : configured ? '已配置' : '默认值';
+  tr.querySelectorAll('.rate-input').forEach(input => { input.disabled = busy; });
+  const button = tr.querySelector('[data-action="save"]');
+  button.disabled = busy || (configured && !dirty);
+  button.textContent = busy ? '保存中…' : '保存';
+  button.title = busy ? '正在保存，请稍候' : configured && !dirty ? '修改本行比例后即可保存' : '仅保存本行场地，保存前会确认一次';
+}
+
+function renderRows() {
+  $('tbody').innerHTML = visibleIds.length ? visibleIds.map(id => {
+    const r = configs.get(id), draft = rowDraft(id);
+    return `<tr id="row-${id}" data-venue-id="${id}">
+      <td>${id}</td><td class="venue-cell">${esc(r.venue_name)}</td>
+      <td><label class="rate-control"><input class="rate-input" data-field="ratio" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="12" aria-label="${esc(venueLabel(r))} 平台扣除比例" value="${esc(draft.ratio)}"><span class="rate-unit">%</span></label></td>
+      <td><label class="rate-control"><input class="rate-input" data-field="fee" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="12" aria-label="${esc(venueLabel(r))} 手续费" value="${esc(draft.fee)}"><span class="rate-unit">%</span></label></td>
+      <td><span class="tag config-state"></span></td>
+      <td><div class="actions"><button class="row-button" type="button" data-action="save">保存</button><button class="row-button secondary" type="button" data-action="history">修改记录</button></div></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="empty">没有匹配的场地</td></tr>';
+  visibleIds.forEach(updateRowState);
+  updateSummary();
+}
+
+async function loadRows() {
+  const requestId = ++rowsRequest, key = $('keyword').value.trim();
+  rowsLoading = true;
+  $('searchBtn').textContent = '查询中…';
+  updateSummary();
+  // 某行保存与搜索并发时，不用搜索返回的旧快照覆盖刚保存的结果。
+  const pendingAtStart = new Set(savingIds);
+  const revisionsAtStart = new Map(Array.from(configs, ([id, r]) => [id, r.localRevision || 0]));
+  try {
+    const data = await request(API + '?action=list&keyword=' + encodeURIComponent(key));
+    if (requestId !== rowsRequest) return;
+    if (!Array.isArray(data)) throw new Error('场地列表返回格式异常');
+    visibleIds = data.map(row => {
+      const id = Number(row.venue_id), current = configs.get(id);
+      if (!Number.isSafeInteger(id) || id <= 0) throw new Error('场地ID格式异常');
+      if (!pendingAtStart.has(id) && !savingIds.has(id) && (!current || (current.localRevision || 0) === (revisionsAtStart.get(id) || 0))) {
+        configs.set(id, Object.assign({}, row, {venue_id:id, localRevision:current ? current.localRevision || 0 : 0}));
+      }
+      return id;
+    });
+    renderRows();
+  } catch (error) {
+    if (requestId !== rowsRequest) return;
+    if (!visibleIds.length) $('tbody').innerHTML = '<tr><td colspan="6" class="empty">场地配置读取失败，请点击搜索重试</td></tr>';
+    toast(error.message);
+  } finally {
+    if (requestId === rowsRequest) {
+      rowsLoading = false;
+      $('searchBtn').textContent = '搜索';
+      updateSummary();
+    }
   }
 }
-function viewHistory(id){const v=venues.find(x=>Number(x.id)===Number(id));document.getElementById('historyKeyword').value=v?venueLabel(v):String(id);document.getElementById('historyStart').value='';document.getElementById('historyEnd').value='';loadHistory(1);document.getElementById('historyCard').scrollIntoView({behavior:'smooth',block:'start'})}
-function resetHistory(){document.getElementById('historyKeyword').value='';document.getElementById('historyStart').value='';document.getElementById('historyEnd').value='';loadHistory(1)}
-Promise.all([loadVenues(),loadRows(),loadHistory(1)]).catch(e=>toast(e.message));
+
+function captureDraft(tr) {
+  const id = Number(tr.dataset.venueId);
+  if (!configs.has(id) || savingIds.has(id)) return;
+  drafts.set(id, {ratio:tr.querySelector('[data-field="ratio"]').value, fee:tr.querySelector('[data-field="fee"]').value});
+  if (!isDirty(id)) drafts.delete(id);
+  updateRowState(id);
+  updateSummary();
+}
+
+async function saveRow(id) {
+  const r = configs.get(id);
+  if (!r || savingIds.has(id)) return;
+  const tr = $('row-' + id);
+  if (tr) captureDraft(tr);
+  const draft = rowDraft(id), ratio = parseRate(draft.ratio), fee = parseRate(draft.fee);
+  if (ratio === null || fee === null) {
+    const input = tr && tr.querySelector(`[data-field="${ratio === null ? 'ratio' : 'fee'}"]`);
+    if (input) { input.setAttribute('aria-invalid', 'true'); input.focus(); }
+    return toast('请输入0%到100%之间的比例，最多两位小数');
+  }
+  if (cents(ratio) + cents(fee) > 10000) return toast('平台扣除比例与手续费合计不能超过100%');
+  const changes = [];
+  if (cents(ratio) !== cents(r.withdraw_ratio)) changes.push(`平台扣除：${percent(r.withdraw_ratio)} → ${percent(ratio)}`);
+  if (cents(fee) !== cents(r.withdrawal_fee_rate)) changes.push(`手续费：${percent(r.withdrawal_fee_rate)} → ${percent(fee)}`);
+  if (!changes.length && Number(r.configured)) return toast('数值未变更，无需保存');
+  if (!changes.length) changes.push(`保存默认配置：平台扣除 ${percent(ratio)}，手续费 ${percent(fee)}`);
+
+  // 仅在真正保存前确认一次；取消不提交，输入和查看记录均不弹确认。
+  if (!window.confirm(`确认保存 ${venueLabel(r)}？\n\n${changes.join('\n')}`)) return;
+  savingIds.add(id);
+  updateRowState(id);
+  try {
+    const data = await request(API, {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({action:'save', venue_id:String(id), withdraw_ratio:fixed(ratio), withdrawal_fee_rate:fixed(fee)})
+    });
+    // 后端仍使用原来的事务保存和日志；只刷新本行，保留其他行未保存的输入。
+    const current = configs.get(id) || r;
+    configs.set(id, Object.assign({}, current, {withdraw_ratio:fixed(ratio), withdrawal_fee_rate:fixed(fee), configured:1, updated_at:data && data.created_at, localRevision:(current.localRevision || 0) + 1}));
+    drafts.delete(id);
+    const currentTr = $('row-' + id);
+    if (currentTr) {
+      currentTr.querySelector('[data-field="ratio"]').value = fixed(ratio);
+      currentTr.querySelector('[data-field="fee"]').value = fixed(fee);
+    }
+    toast(`${venueLabel(r)} 保存成功，已记录操作日志`);
+    if (historyContext && historyContext.id === id && !$('historyModal').hidden) loadHistory(1);
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    savingIds.delete(id);
+    updateRowState(id);
+    updateSummary();
+  }
+}
+
+function historyType(type) { return {create:'首次配置', update:'修改配置', no_change:'数值未变更'}[type] || '保存配置'; }
+function roleName(id) { return {1:'平台管理员', 2:'运营管理员'}[Number(id)] || '后台账号'; }
+
+async function loadHistory(page = 1) {
+  if (!historyContext || $('historyModal').hidden) return;
+  // 即使日期校验失败，也取消上一轮结果回填，避免显示别次查询的记录。
+  const requestId = ++historyRequest;
+  const start = $('historyStart').value, end = $('historyEnd').value;
+  if (start && end && start > end) {
+    $('historyPrev').disabled = true;
+    $('historyNext').disabled = true;
+    $('historyBody').innerHTML = '<tr><td colspan="8" class="empty">开始日期不能晚于结束日期，请调整后查询</td></tr>';
+    $('historySummary').textContent = '日期范围无效';
+    return toast('开始日期不能晚于结束日期');
+  }
+  const venueId = historyContext.id;
+  const params = new URLSearchParams({action:'logs', venue_id:String(venueId), page:String(Math.max(1, page)), page_size:'20'});
+  if (start) params.set('start_date', start);
+  if (end) params.set('end_date', end);
+  const body = $('historyBody'), prev = $('historyPrev'), next = $('historyNext'), summary = $('historySummary');
+  prev.disabled = true;
+  next.disabled = true;
+  summary.textContent = '正在读取记录...';
+  body.innerHTML = '<tr><td colspan="8" class="empty">加载中...</td></tr>';
+  document.querySelector('.history-scroll').scrollTop = 0;
+  try {
+    const data = await request(API + '?' + params);
+    if (requestId !== historyRequest || !historyContext || historyContext.id !== venueId || $('historyModal').hidden) return;
+    if (!data || !Array.isArray(data.rows)) throw new Error('修改记录返回格式异常');
+    historyPage = Number(data.page) || 1;
+    body.innerHTML = data.rows.length ? data.rows.map(r => `<tr>
+      <td class="time">${esc(r.created_at)}<span class="meta">记录 #${esc(r.id)}</span></td>
+      <td>${esc(r.venue_name)}<span class="meta">场地ID：${esc(r.venue_id)}</span></td>
+      <td><span class="tag ${r.change_type === 'no_change' ? 'default' : ''}">${historyType(r.change_type)}</span>${Number(r.old_configured) ? '' : '<span class="meta">修改前为默认值</span>'}</td>
+      <td class="values">${percent(r.old_withdraw_ratio)} → ${percent(r.new_withdraw_ratio)}</td>
+      <td class="values">${percent(r.old_withdrawal_fee_rate)} → ${percent(r.new_withdrawal_fee_rate)}</td>
+      <td>${esc(r.operator_name)}<span class="meta">账号UID：${esc(r.operator_id)}</span></td>
+      <td>${roleName(r.operator_role_id)}<span class="meta">role_id：${esc(r.operator_role_id)}</span></td>
+      <td class="ip">${esc(r.ip || '—')}</td>
+    </tr>`).join('') : '<tr><td colspan="8" class="empty">该场地暂无修改记录（仅记录启用后的成功保存）</td></tr>';
+    const total = Number(data.total) || 0, size = Number(data.page_size) || 20, pages = Math.max(1, Math.ceil(total / size));
+    summary.textContent = `共 ${total} 条 · 第 ${historyPage} / ${pages} 页`;
+    prev.disabled = historyPage <= 1;
+    next.disabled = historyPage >= pages;
+  } catch (error) {
+    if (requestId !== historyRequest || $('historyModal').hidden) return;
+    body.innerHTML = '<tr><td colspan="8" class="empty">修改记录读取失败，请重新查询</td></tr>';
+    summary.textContent = '读取失败';
+    toast(error.message);
+  }
+}
+
+function viewHistory(id, sourceButton) {
+  const r = configs.get(id);
+  if (!r) return;
+  const wasHidden = $('historyModal').hidden;
+  clearTimeout($('toast').hideTimer);
+  $('toast').style.display = 'none';
+  historyReturnFocus = sourceButton || document.activeElement;
+  historyContext = {id:id, name:r.venue_name};
+  historyPage = 1;
+  $('historyTitle').textContent = `${venueLabel(r)} · 修改记录`;
+  $('historyStart').value = '';
+  $('historyEnd').value = '';
+  if (wasHidden) previousBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  $('historyModal').hidden = false;
+  $('mainContent').inert = true;
+  $('historyClose').focus({preventScroll:true});
+  loadHistory(1);
+}
+
+function closeHistory() {
+  if ($('historyModal').hidden) return;
+  ++historyRequest;
+  historyContext = null;
+  $('historyModal').hidden = true;
+  $('mainContent').inert = false;
+  document.body.style.overflow = previousBodyOverflow;
+  if (historyReturnFocus && historyReturnFocus.isConnected) historyReturnFocus.focus({preventScroll:true});
+}
+
+function resetHistory() {
+  // 只重置日期，不清除场地条件，绝不退回全场地查询。
+  $('historyStart').value = '';
+  $('historyEnd').value = '';
+  loadHistory(1);
+}
+
+$('searchForm').addEventListener('submit', event => { event.preventDefault(); loadRows(); });
+$('tbody').addEventListener('input', event => {
+  const input = event.target.closest('.rate-input');
+  if (!input) return;
+  input.removeAttribute('aria-invalid');
+  captureDraft(input.closest('tr'));
+});
+$('tbody').addEventListener('focusin', event => {
+  // 键盘切换或点击比例后选中旧值，可直接输入，无需先删除旧值。
+  if (event.target.classList.contains('rate-input')) event.target.select();
+});
+$('tbody').addEventListener('keydown', event => {
+  // 回车等同于点击本行保存，也仍然需要同一次确认。
+  if (event.key === 'Enter' && event.target.classList.contains('rate-input')) {
+    event.preventDefault();
+    saveRow(Number(event.target.closest('tr').dataset.venueId));
+  }
+});
+$('tbody').addEventListener('click', event => {
+  const button = event.target.closest('button[data-action]');
+  if (!button || button.disabled) return;
+  const id = Number(button.closest('tr').dataset.venueId);
+  if (button.dataset.action === 'save') saveRow(id);
+  else if (button.dataset.action === 'history') viewHistory(id, button);
+});
+$('historyForm').addEventListener('submit', event => { event.preventDefault(); loadHistory(1); });
+$('historyReset').addEventListener('click', resetHistory);
+$('historyPrev').addEventListener('click', () => loadHistory(historyPage - 1));
+$('historyNext').addEventListener('click', () => loadHistory(historyPage + 1));
+$('historyClose').addEventListener('click', closeHistory);
+$('historyModal').addEventListener('click', event => { if (event.target === $('historyModal')) closeHistory(); });
+document.addEventListener('keydown', event => {
+  if ($('historyModal').hidden) return;
+  if (event.key === 'Escape') { event.preventDefault(); closeHistory(); return; }
+  if (event.key !== 'Tab') return;
+  const focusable = Array.from($('historyPanel').querySelectorAll('button:not(:disabled),input:not(:disabled),[tabindex="0"]')).filter(el => el.getClientRects().length);
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (!first) { event.preventDefault(); $('historyPanel').focus(); }
+  else if (event.shiftKey && (document.activeElement === first || !$('historyPanel').contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && (document.activeElement === last || !$('historyPanel').contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+});
+loadRows();
 </script>
 </body>
 </html>

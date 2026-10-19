@@ -662,6 +662,29 @@ textarea.input {
     flex: 1;
   }
 }
+
+/* 截图录屏白名单：独立面板，仅管理员授权后显示。 */
+.screen-note {
+  margin-bottom: 14px; padding: 12px 14px; border: 1px solid #d9e1ec;
+  border-radius: 8px; background: #f8fafc; color: #5f6b7a; font-size: 13px; line-height: 1.8;
+}
+.screen-note strong { color: #0f766e; }
+.screen-form { display: grid; grid-template-columns: 240px minmax(220px, 1fr) 110px; gap: 10px; margin-bottom: 12px; }
+.screen-search { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.screen-search .input { max-width: 340px; }
+.screen-count { color: #64748b; font-size: 13px; margin-left: auto; }
+.screen-message { margin: 0 0 14px; padding: 12px 14px; color: #a12339; border: 1px solid #f1c9d1; background: #fff7f8; border-radius: 8px; font-size: 13px; line-height: 1.7; }
+.screen-card::before { background: var(--kx-primary); }
+.screen-card:hover { border-color: rgba(15, 159, 143, .35); }
+.screen-card .tag { color: #0f766e; background: rgba(15, 159, 143, .08); border-color: rgba(15, 159, 143, .2); }
+.screen-card .reason { white-space: pre-wrap; }
+.screen-empty-remark { color: #94a3b8; }
+@media (max-width: 720px) {
+  .screen-form { grid-template-columns: 1fr; }
+  .screen-search { display: grid; grid-template-columns: 1fr; }
+  .screen-search .input { max-width: none; }
+  .screen-count { margin-left: 0; }
+}
   </style>
 </head>
 <body>
@@ -670,15 +693,17 @@ textarea.input {
       <div class="page-hero">
         <div>
           <div class="kx-eyebrow">KUWANXING RISK CONTROL</div>
-          <h1>场地用户拉黑管理</h1>
-          <p>集中查看场地拉黑名单，支持按 UID、原因和场地筛选，并快速新增或取消拉黑。</p>
+          <h1 id="riskTitle">场地用户拉黑管理</h1>
+          <p id="riskDescription">集中查看场地拉黑名单，支持按 UID、原因和场地筛选，并快速新增或取消拉黑。</p>
         </div>
-        <div class="hero-tag">拉黑管理</div>
+        <div class="hero-tag" id="riskTag">拉黑管理</div>
       </div>
-<!--<div class="page-tabs">-->
-<!--  <a href="black_user_gmt.html" class="active">拉黑用户</a>-->
-<!--  <a href="venue_mute_records.html">禁言用户</a>-->
-<!--</div>-->
+      <!-- 两个标签只向 role_id=1/2 开放，其他角色保持原来的拉黑页面。 -->
+      <div class="page-tabs" id="riskTabs" role="tablist" aria-label="用户风控管理" hidden>
+        <a href="#blacklist" id="blacklistTab" class="active" role="tab" aria-selected="true" aria-controls="blacklistPanel">拉黑用户</a>
+        <a href="#screen" id="screenTab" role="tab" aria-selected="false" aria-controls="screenPanel" tabindex="-1">截图录屏白名单</a>
+      </div>
+      <section id="blacklistPanel" aria-label="拉黑用户">
       <div class="toolbar">
         <input id="kw" class="input" placeholder="按 UID 精确 / 按原因模糊搜索…" />
         <!-- 仅 role_id == 1 可见：场地筛选 -->
@@ -708,6 +733,31 @@ textarea.input {
         <button class="btn btn-outline" id="prev">上一页</button>
         <button class="btn btn-outline" id="next">下一页</button>
       </div>
+      </section>
+
+      <section id="screenPanel" aria-label="截图录屏白名单" hidden>
+        <div class="screen-note">
+          这里维护的是 KWX App <strong>允许截图 / 录屏的用户 UID</strong>，与拉黑用户名单相互独立。<br>
+          仅管理员可查看、添加和移除。后台与 App 使用同一份 KWX 名单；保存后，App 下次请求权限接口时按新名单判断。
+        </div>
+        <form id="screenAddForm" class="screen-form" autocomplete="off">
+          <input id="screenUid" class="input" type="text" inputmode="numeric" maxlength="16" aria-label="用户 UID" placeholder="输入用户 UID" required />
+          <input id="screenRemark" class="input" type="text" maxlength="200" aria-label="备注" placeholder="备注，例如：官方巡查 / 内部测试，可留空" />
+          <button id="screenAdd" class="btn btn-primary" type="submit" disabled>添加权限</button>
+        </form>
+        <div class="screen-search">
+          <input id="screenSearch" class="input" type="search" aria-label="搜索白名单" placeholder="搜索 UID 或备注…" />
+          <button id="screenRefresh" class="btn btn-outline" type="button">刷新</button>
+          <span id="screenCount" class="screen-count">尚未加载</span>
+        </div>
+        <div id="screenMessage" class="screen-message" role="alert" hidden></div>
+        <div id="screenCards" class="cards" aria-live="polite"></div>
+        <div class="pagination">
+          <span class="page-info" id="screenPageInfo">—</span>
+          <button class="btn btn-outline" type="button" id="screenPrev" disabled>上一页</button>
+          <button class="btn btn-outline" type="button" id="screenNext" disabled>下一页</button>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -1263,6 +1313,7 @@ $('#confirmAssign').addEventListener('click', async ()=>{
           state.venueId = Number(pageVenueId || json.data.venue_id || 0);
         // role_id === 1 或 2 显示“指定添加”“场地筛选”“一键拉黑”
          const admin = isPlatformAdmin();
+         configureScreenPermissions(admin);
          $('#btnAssign').hidden = !admin;
          $('#venueFilter').hidden = !admin;
          $('#confirmAddAll').hidden = !admin;
@@ -1348,6 +1399,195 @@ $('#confirmAssign').addEventListener('click', async ()=>{
         loadList();
       });
     }
+
+
+    // ===== 截图录屏白名单（与原拉黑操作完全独立） =====
+    const SCREEN_API = API_BASE + '/screen_permission.php';
+    const screenState = { rows: [], csrf: '', loaded: false, busy: false, page: 1, pageSize: 12, kw: '' };
+
+    function configureScreenPermissions(admin) {
+      $('#riskTabs').hidden = !admin;
+      if (!admin) {
+        screenState.rows = [];
+        screenState.csrf = '';
+        screenState.loaded = false;
+        $('#screenCards').replaceChildren();
+        $('#screenUid').value = '';
+        $('#screenRemark').value = '';
+        $('#screenSearch').value = '';
+        $('#screenCount').textContent = '尚未加载';
+        switchRiskTab(false);
+      }
+    }
+
+    function switchRiskTab(screen) {
+      screen = Boolean(screen && isPlatformAdmin() && !$('#riskTabs').hidden);
+      $('#blacklistPanel').hidden = screen;
+      $('#screenPanel').hidden = !screen;
+      $('#blacklistTab').classList.toggle('active', !screen);
+      $('#screenTab').classList.toggle('active', screen);
+      $('#blacklistTab').setAttribute('aria-selected', String(!screen));
+      $('#screenTab').setAttribute('aria-selected', String(screen));
+      $('#blacklistTab').tabIndex = screen ? -1 : 0;
+      $('#screenTab').tabIndex = screen ? 0 : -1;
+      $('#riskTitle').textContent = screen ? '截图录屏白名单' : '场地用户拉黑管理';
+      $('#riskDescription').textContent = screen
+        ? '管理 KWX App 允许截图、录屏的用户，支持添加备注、搜索和移除权限。'
+        : '集中查看场地拉黑名单，支持按 UID、原因和场地筛选，并快速新增或取消拉黑。';
+      $('#riskTag').textContent = screen ? '仅管理员' : '拉黑管理';
+      if (screen && !screenState.loaded) loadScreenList();
+    }
+
+    function screenMessage(text = '') {
+      $('#screenMessage').textContent = text;
+      $('#screenMessage').hidden = !text;
+    }
+
+    function setScreenBusy(busy) {
+      screenState.busy = busy;
+      $('#screenPanel').setAttribute('aria-busy', String(busy));
+      $('#screenAdd').disabled = busy || !screenState.csrf;
+      $('#screenRefresh').disabled = busy;
+      $('#screenUid').disabled = busy;
+      $('#screenRemark').disabled = busy;
+      $$('#screenCards [data-screen-remove]').forEach(button => { button.disabled = busy; });
+      updateScreenPager();
+    }
+
+    function filteredScreenRows() {
+      const kw = screenState.kw.toLocaleLowerCase();
+      return screenState.rows.filter(row => !kw || String(row.uid).includes(kw) || String(row.remark || '').toLocaleLowerCase().includes(kw));
+    }
+
+    function updateScreenPager() {
+      const total = filteredScreenRows().length;
+      const pages = Math.max(1, Math.ceil(total / screenState.pageSize));
+      screenState.page = Math.min(screenState.page, pages);
+      $('#screenPageInfo').textContent = screenState.loaded ? `共 ${total} 条，${screenState.page}/${pages} 页` : '—';
+      $('#screenPrev').disabled = screenState.busy || screenState.page <= 1;
+      $('#screenNext').disabled = screenState.busy || screenState.page >= pages;
+    }
+
+    function renderScreenCards() {
+      const rows = filteredScreenRows();
+      updateScreenPager();
+      $('#screenCount').textContent = screenState.kw
+        ? `筛选 ${rows.length} / 全部 ${screenState.rows.length} 人` : `共 ${screenState.rows.length} 人`;
+      const visible = rows.slice((screenState.page - 1) * screenState.pageSize, screenState.page * screenState.pageSize);
+      $('#screenCards').innerHTML = visible.length ? visible.map(row => `
+        <div class="black-card screen-card">
+          <div class="card-top"><div class="uid"><span class="tag">UID ${escapeHTML(row.uid)}</span></div></div>
+          <div class="reason${row.remark ? '' : ' screen-empty-remark'}" title="${escapeHTML(row.remark || '')}">${row.remark ? '备注：' + escapeHTML(row.remark) : '暂无备注'}</div>
+          <div class="meta">${row.created_at
+            ? `<div>添加时间：${escapeHTML(row.created_at)}</div><div>操作人 UID：${escapeHTML(row.operator_uid || '-')}</div>`
+            : '<div>来源：原接口白名单保留</div>'}</div>
+          <div class="actions"><button type="button" class="btn btn-danger" data-screen-remove="${escapeHTML(row.uid)}" ${screenState.busy ? 'disabled' : ''}>移除权限</button></div>
+        </div>`).join('') : `<div class="muted">${screenState.kw ? '没有匹配的 UID 或备注' : '白名单为空，暂无用户拥有截图录屏权限'}</div>`;
+    }
+
+    async function screenRequest(action, fields = {}) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 22000);
+      try {
+        const write = action !== 'list';
+        const response = await fetch(SCREEN_API + (write ? '' : '?action=list'), {
+          method: write ? 'POST' : 'GET', credentials: 'include', cache: 'no-store', signal: controller.signal,
+          headers: write ? { 'Content-Type': 'application/json', 'X-Screen-CSRF': screenState.csrf } : { 'Accept': 'application/json' },
+          ...(write ? { body: JSON.stringify({ action, ...fields }) } : {})
+        });
+        let result;
+        try { result = await response.json(); }
+        catch { throw new Error('白名单接口未返回有效数据，请检查两站文件是否已上传；增删后请先刷新核对'); }
+        if (result.code !== 0 || !response.ok) {
+          if (result.code === 1001 || result.code === 403) {
+            configureScreenPermissions(false);
+          }
+          if (result.code === 419) screenState.csrf = '';
+          throw new Error(result.msg || '白名单操作失败');
+        }
+        if (!result.data || !Array.isArray(result.data.list) || !result.data.csrf_token) {
+          throw new Error('白名单返回格式错误，请刷新重试');
+        }
+        screenState.rows = result.data.list;
+        screenState.csrf = result.data.csrf_token;
+        screenState.loaded = true;
+        return result;
+      } finally { clearTimeout(timeout); }
+    }
+
+    function showScreenError(error) {
+      const text = error.name === 'AbortError'
+        ? '请求超时，请点击刷新核对当前名单后再操作，不要连续重复提交。'
+        : (error.message || '网络异常，请刷新核对当前名单后再操作。');
+      screenMessage(text);
+      toast(text, false);
+    }
+
+    async function loadScreenList() {
+      if (!isPlatformAdmin() || $('#riskTabs').hidden || screenState.busy) return;
+      screenMessage();
+      setScreenBusy(true);
+      if (!screenState.loaded) $('#screenCards').innerHTML = '<div class="loading">正在加载白名单…</div>';
+      try {
+        await screenRequest('list');
+        renderScreenCards();
+      } catch (error) {
+        if (!screenState.loaded) $('#screenCards').replaceChildren();
+        showScreenError(error);
+      } finally { setScreenBusy(false); }
+    }
+
+    $('#blacklistTab').addEventListener('click', event => { event.preventDefault(); switchRiskTab(false); });
+    $('#screenTab').addEventListener('click', event => { event.preventDefault(); switchRiskTab(true); });
+    $('#riskTabs').addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      const screen = $('#screenPanel').hidden;
+      switchRiskTab(screen);
+      $(screen ? '#screenTab' : '#blacklistTab').focus();
+    });
+    $('#screenRefresh').addEventListener('click', loadScreenList);
+    $('#screenSearch').addEventListener('input', () => {
+      screenState.kw = $('#screenSearch').value.trim(); screenState.page = 1;
+      if (screenState.loaded) renderScreenCards();
+    });
+    $('#screenPrev').addEventListener('click', () => { if (screenState.page > 1) { screenState.page--; renderScreenCards(); } });
+    $('#screenNext').addEventListener('click', () => { if (screenState.page * screenState.pageSize < filteredScreenRows().length) { screenState.page++; renderScreenCards(); } });
+
+    $('#screenAddForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!isPlatformAdmin() || $('#riskTabs').hidden || screenState.busy || !screenState.csrf) return;
+      const rawUid = $('#screenUid').value.trim();
+      const uid = Number(rawUid);
+      const remark = $('#screenRemark').value.trim();
+      if (!/^[0-9]{1,16}$/.test(rawUid) || !Number.isSafeInteger(uid) || uid <= 0) {
+        screenMessage('请输入正确的正整数 UID'); $('#screenUid').focus(); return;
+      }
+      if (Array.from(remark).length > 200) { screenMessage('备注最多 200 个字'); return; }
+      if (screenState.rows.some(row => String(row.uid) === String(uid))) { screenMessage('该 UID 已在白名单中，无需重复添加'); return; }
+      if (!confirm(`确认允许 UID ${uid} 在 KWX App 中截图 / 录屏？`)) return;
+      screenMessage(); setScreenBusy(true);
+      try {
+        const result = await screenRequest('add', { uid: String(uid), remark });
+        $('#screenUid').value = ''; $('#screenRemark').value = ''; $('#screenSearch').value = '';
+        screenState.kw = ''; screenState.page = 1;
+        renderScreenCards(); toast(result.msg || '权限已添加');
+      } catch (error) { showScreenError(error); }
+      finally { setScreenBusy(false); }
+    });
+
+    $('#screenCards').addEventListener('click', async event => {
+      const button = event.target.closest('[data-screen-remove]');
+      if (!button || !isPlatformAdmin() || $('#riskTabs').hidden || screenState.busy || !screenState.csrf) return;
+      const uid = button.dataset.screenRemove;
+      if (!confirm(`确认移除 UID ${uid} 的截图 / 录屏权限？\nApp 下次请求权限接口时，该账号将不再获得此权限。`)) return;
+      screenMessage(); setScreenBusy(true);
+      try {
+        const result = await screenRequest('delete', { uid });
+        renderScreenCards(); toast(result.msg || '权限已移除');
+      } catch (error) { showScreenError(error); }
+      finally { setScreenBusy(false); }
+    });
 
     // 初始
     (async function init(){

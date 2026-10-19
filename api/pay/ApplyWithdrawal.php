@@ -102,8 +102,9 @@ $actual_payout_rate = max(0, 1 - $technical_service_rate - $withdrawal_fee_rate)
 // 资金账号
 $fundsSql = "SELECT withdrawal_account, account_type, account_balance, account_name FROM venue_funds WHERE venue_id = ?";
 $fundsResult = $database->query($fundsSql, [$venue_id]);
-if (empty($fundsResult)) {
-    echo json_encode(['code' => 1002, 'msg' => '请先绑定提现账号', 'data' => []]); exit;
+// 只允许使用本场地已绑定的账号，资金行存在但卡号为空时不能提交提现。
+if (empty($fundsResult) || trim((string)($fundsResult[0]['withdrawal_account'] ?? '')) === '') {
+    echo json_encode(['code' => 1002, 'msg' => '请先绑定本场地提现账号', 'data' => [], 'venue_id' => $venue_id], JSON_UNESCAPED_UNICODE); exit;
 }
 $account_pay     = $fundsResult[0]['account_type'];
 $account_balance = (float)$fundsResult[0]['account_balance'];

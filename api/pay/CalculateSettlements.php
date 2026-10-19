@@ -58,8 +58,9 @@ $notSettledAmount = (float)($database->query($notSettledSql, [$venue_id])[0]['to
 
 $fundsSql = "SELECT withdrawal_account, account_type, account_balance, account_name FROM venue_funds WHERE venue_id = ?";
 $funds = $database->query($fundsSql, [$venue_id]);
-if (empty($funds)) {
-  echo json_encode(['code'=>1002,'msg'=>'请先绑定提现账号','data'=>[]]); exit;
+// 资金行存在不代表已绑卡；本场地账号为空时仍须独立绑定，不能借用主场地账号。
+if (empty($funds) || trim((string)($funds[0]['withdrawal_account'] ?? '')) === '') {
+  echo json_encode(['code'=>1002,'msg'=>'请先绑定本场地提现账号','data'=>[],'venue_id'=>$venue_id], JSON_UNESCAPED_UNICODE); exit;
 }
 $account_balance = (float)$funds[0]['account_balance'];
 
