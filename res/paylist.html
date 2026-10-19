@@ -553,6 +553,11 @@ textarea {
                     <span id="summary-scope">全部加盟商实时汇总，不受下方待审批列表影响</span>
                 </div>
                 <div class="summary-grid" id="withdrawal-summary">
+                    <div class="summary-card is-loading" id="player-balance-card">
+                        <div class="summary-card-label">玩家余额</div>
+                        <div class="summary-card-value">加载中</div>
+                        <div class="summary-card-note" title="所有用户的钱包余额合计，不含金币及电池">全部玩家钱包余额 · 每15秒刷新</div>
+                    </div>
                     <div class="summary-card is-loading" data-summary-key="total_balance">
                         <div class="summary-card-label">总余额</div>
                         <div class="summary-card-value">加载中</div>
@@ -960,6 +965,43 @@ function displayWithdrawalRecords(records) {
                     alert('导出失败，请重试');
                 });
         }
+
+        // 独立刷新玩家余额，避免定时刷新打断提现审批操作。
+        let playerBalanceLoading = false;
+        async function loadPlayerBalance() {
+            if (playerBalanceLoading || document.hidden) return;
+            playerBalanceLoading = true;
+            const card = document.getElementById('player-balance-card');
+            const value = card.querySelector('.summary-card-value');
+            const note = card.querySelector('.summary-card-note');
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            try {
+                const response = await fetch('/api/pay/getPlayerBalanceSummary.php', {
+                    cache: 'no-store', signal: controller.signal
+                });
+                if (!response.ok) throw new Error('请求失败');
+                const result = await response.json();
+                const balance = result.data && result.data.player_balance;
+                if (result.code !== 0 || balance === null || balance === undefined || !Number.isFinite(Number(balance))) {
+                    throw new Error(result.msg || '余额读取失败');
+                }
+                value.textContent = formatSummaryMoney(balance);
+                note.textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN', {hour12: false}) + ' · 每15秒刷新';
+            } catch (error) {
+                value.textContent = '--';
+                note.textContent = '读取失败，稍后自动重试';
+            } finally {
+                clearTimeout(timeout);
+                card.classList.remove('is-loading');
+                playerBalanceLoading = false;
+            }
+        }
+        loadPlayerBalance();
+        setInterval(loadPlayerBalance, 15000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadPlayerBalance();
+        });
 
         // 页面加载时获取提现记录
         loadWithdrawalRecords();
