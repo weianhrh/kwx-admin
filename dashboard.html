@@ -4630,7 +4630,7 @@ window.changeDashboardNoticePage = changeDashboardNoticePage;
       statCard('今日订单数', formatInt(metrics.franchiseTodayOrderCount || 0) + ' 单', '今日完成驾驶订单', 'order') +
       statCard('设备在线数', formatInt(metrics.franchiseOnlineDevices || 0) + '/' + formatInt(metrics.franchiseTotalDevices || 0), '在线设备 / 绑定设备', 'device') +
       (leadSearch.visible === true ?
-        statCard('今日引流人数', formatInt(leadSearch.today_total || 0) + ' 人', '8899 场地二级副标题首次搜索', 'user', { menuId: 9332 })
+        statCard('今日引流人数', formatInt(leadSearch.today_total || 0) + ' 人', '关联场地搜索人数（各场地去重）', 'user', { menuId: 9332 })
         : '') +
       (showPromotionPreview ?
         statCard('预估推广收益', formatMoney(preview.total_promotion_income), '仅 8899 跨场地消费 · 点击查看历史明细', 'ops', { menuId: 9344 }) +

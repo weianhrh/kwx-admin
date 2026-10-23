@@ -40,7 +40,7 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
   </section>
 
   <section id="venueBreakdownCard" class="card" hidden>
-    <div class="section-head"><div><h2 class="section-title">各场地二级引流人数</h2><p class="section-hint">各场地单独去重；点击场地可筛选下方的首次搜索明细。</p></div></div>
+    <div class="section-head"><div><h2 class="section-title">各场地引流人数</h2><p class="section-hint">各场地单独去重；点击场地可筛选下方的首次搜索明细。</p></div></div>
     <div id="venueBreakdown" class="venue-summary-grid"></div>
   </section>
 
@@ -143,8 +143,7 @@ function renderVenueBreakdown(rows){
   const chosenVenue=els.venueId.value;
   const chosenSubtitle=els.venueSubtitle.value;
   const visibleRows=(Array.isArray(rows)?rows:[]).filter(v=>
-    (!chosenVenue||String(v.venue_id)===chosenVenue)&&
-    (!chosenSubtitle||String(v.venue_subtitle)===chosenSubtitle)
+    (!chosenVenue||String(v.venue_id)===chosenVenue)
   );
   el('venueBreakdown').innerHTML=visibleRows.length?visibleRows.map(v=>
     '<button class="venue-summary-item" type="button" data-venue-id="'+esc(v.venue_id)+'" onclick="selectVenueForDetails(this)">'+
@@ -180,8 +179,8 @@ async function loadData(){
     viewerScope=data.scope||'';
     if(viewerScope==='mine'){
       renderAllowedVenues(data.eligible_venues);
-      el('pageTitle').textContent='二级引流搜索明细';
-      el('pageHint').textContent='仅显示当前账号关联的 8899 场地二级副标题首次搜索记录。';
+      el('pageTitle').textContent='引流搜索明细';
+      el('pageHint').textContent='仅显示当前账号关联场地的搜索记录；支持全部关联场地汇总或选择单个场地。';
     }
     renderSubtitleOptions(Array.isArray(data.subtitle_options)?data.subtitle_options:[]);
     renderSummary(data);

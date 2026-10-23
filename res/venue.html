@@ -1838,6 +1838,7 @@ body.role-3 .venue-cover-card {
             applyDrVenueIdPermission();
 
             applyZegoConfigPermission();
+            applyDescriptionPermission();
 
             syncRole3TopCardHeight();
 
@@ -2735,9 +2736,9 @@ function renderLocksUI() {
 
                     <div class="value readonly-text" id="venue-description" data-original="__KEEP__">
 
+                      <textarea id="venue-description-input" class="edit-control" rows="3" hidden disabled style="width:100%;box-sizing:border-box;resize:vertical" placeholder="请输入场地描述"></textarea>
                       <span id="venue-description-text"></span>
-
-                      <div class="hint"><i class="fas fa-lock"></i> 前台不可编辑（由审核更新）</div>
+                      <div class="hint" id="venue-description-hint">前台不可编辑（由审核更新）</div>
 
                     </div>
 
@@ -2963,7 +2964,11 @@ function renderLocksUI() {
 
       if (venueUniqueSubtitleInput) venueUniqueSubtitleInput.value = venue.venue_unique_subtitle || '';
 
-      document.getElementById('venue-description-text').textContent = venue.venue_description || '';
+      const descInput = document.getElementById('venue-description-input');
+      if (descInput) descInput.value = venue.venue_description || '';
+      const descText = document.getElementById('venue-description-text');
+      if (descText) descText.textContent = venue.venue_description || '';
+      applyDescriptionPermission();
 
       document.getElementById('venue-tags').textContent = venue.venue_tags || '';
 
@@ -3284,6 +3289,18 @@ function clearVenueLock(type) {
 
     // ================= 进入编辑/保存 =================
 
+    function applyDescriptionPermission() {
+      const input = document.getElementById('venue-description-input');
+      const text = document.getElementById('venue-description-text');
+      const hint = document.getElementById('venue-description-hint');
+      if (!input || !text || !hint) return;
+      const canEdit = ROLE_ID === 1 || ROLE_ID === 2;
+      input.hidden = !canEdit;
+      input.disabled = !canEdit || !IS_EDITING;
+      text.hidden = canEdit;
+      hint.textContent = canEdit ? '管理员可编辑，保存后直接生效' : '前台不可编辑（由审核更新）';
+    }
+
     function enableEdit() {
 
     //   alert("因服务器更新维护需将设备重启后方可设置营业!");
@@ -3303,6 +3320,7 @@ function clearVenueLock(type) {
       // 批量解锁可编辑控件
 
       document.querySelectorAll('.edit-control').forEach(el => el.disabled = false);
+      applyDescriptionPermission();
 
 
 
@@ -3395,6 +3413,8 @@ if (ROLE_ID === 1 || ROLE_ID === 2 || ROLE_ID === 3) {
 }
 
 if (ROLE_ID === 1 || ROLE_ID === 2) {
+  const descriptionInput = document.getElementById('venue-description-input');
+  if (descriptionInput) payload.venue_description = descriptionInput.value.trim();
   const zegoAppIdSelect = document.getElementById('zego-appid-select');
 
   if (zegoAppIdSelect) {

@@ -70,7 +70,7 @@ if (!$isPlatformAdmin && !in_array((int)$user['role_id'], [3, 4], true)) {
 $eligibleVenues = $isPlatformAdmin ? [] : venue_search_eligible_venues($db, $user);
 if (!$isPlatformAdmin && !$eligibleVenues) {
     $db->close();
-    auth_out(1003, '当前账号未关联可查看的 8899 场地');
+    auth_out(1003, '当前账号未关联可查看的场地');
 }
 
 if (!venue_scope_has_table($db, 'venue_subtitle_search_records')) {
@@ -101,6 +101,19 @@ foreach ($isPlatformAdmin ? $subtitleOptionRows : $eligibleVenues as $subtitleOp
     $subtitleValue = trim((string)(($isPlatformAdmin ? $subtitleOptionRow['venue_subtitle'] : $subtitleOptionRow['venue_unique_subtitle']) ?? ''));
     if ($subtitleValue !== '') {
         $subtitleOptions[$subtitleValue] = $subtitleValue;
+    }
+}
+// 加盟商下拉框包含其关联场地的当前及历史搜索码，不能读取其他场地。
+if (!$isPlatformAdmin) {
+    foreach ($eligibleVenues as $venue) {
+        $value = trim((string)($venue['venue_subtitle'] ?? ''));
+        if ($value !== '') $subtitleOptions[$value] = $value;
+    }
+    [$optionScope, $optionParams] = venue_search_record_scope($eligibleVenues);
+    $historyOptions = $db->query("SELECT DISTINCT r.venue_subtitle FROM venue_subtitle_search_records r WHERE {$optionScope}", $optionParams) ?: [];
+    foreach ($historyOptions as $row) {
+        $value = trim((string)($row['venue_subtitle'] ?? ''));
+        if ($value !== '') $subtitleOptions[$value] = $value;
     }
 }
 $subtitleOptions = array_values($subtitleOptions);

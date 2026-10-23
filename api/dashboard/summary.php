@@ -175,7 +175,7 @@ if (in_array($roleId, [3, 4], true) && KWX_8899_PROMOTION_UI_VISIBLE && $franchi
     }
 }
 
-// 首次搜索当前二级副标题的用户，按每个关联的 8899 场地分别去重后求和。
+// 搜索记录中的用户，按每个关联场地分别去重后求和。
 if (in_array($roleId, [3, 4], true) && $franchiseVenueIds
     && venue_scope_has_table($db, 'venue_subtitle_search_records')) {
     $leadVenues = venue_search_eligible_venues($db, $user, $franchiseVenueIds);

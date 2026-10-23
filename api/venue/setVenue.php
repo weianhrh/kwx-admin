@@ -243,7 +243,23 @@ if (array_key_exists('venue_name', $data)) {
 // ===== 描述审核（仅当传了 venue_description 且与旧值不同）=====
 if (array_key_exists('venue_description', $data)) {
     $new_desc = trim((string)$data['venue_description']);
-    if ($new_desc !== $old_desc) {
+    if ($new_desc !== $old_desc && in_array($role_id, [1, 2], true)) {
+        // 管理员直接更新；普通账号仍走原审核流程。
+        $updateRes = $database->query(
+            'UPDATE venues SET venue_description = ? WHERE id = ?',
+            [$new_desc, $venue_id],
+            true
+        );
+        if ($updateRes === false) {
+            echo json_encode(['code' => 1, 'msg' => '场地描述保存失败'], JSON_UNESCAPED_UNICODE);
+            $database->close();
+            exit;
+        }
+        // 清理旧审核项，避免旧的待审核描述之后覆盖管理员的新描述。
+        $descKey = "venue_description_audit:$venue_id";
+        $redis->delete($descKey);
+        $redis->getNative()->sRem('venue_description_audit_pool', $descKey);
+    } elseif ($new_desc !== $old_desc) {
         $check = containsSensitiveWords($new_desc, $words);
         $is_sensitive = $is_sensitive || !$check['pass'];
         // ✅ 新增：标记“进入审核：描述”
