@@ -623,7 +623,16 @@ select.btn.ghost {
     padding-left: 42px;
   }
 }
-  </style>
+  
+    .date-range { align-items:center; gap:8px; flex-wrap:wrap; max-width:100%; }
+    .date-label, .date-separator { color:#627d8b; font-size:13px; white-space:nowrap; }
+    .date-inputs { display:flex; align-items:center; gap:8px; min-width:0; }
+    .date-range input[type="date"] { box-sizing:border-box; width:150px; min-width:0; height:38px; padding:0 10px; border:1px solid #d8e5ea; border-radius:7px; background:#fff; color:#244a5b; font-family:inherit; font-size:13px; color-scheme:light; outline:none; }
+    .date-range input[type="date"]:focus { border-color:#0d9396; box-shadow:0 0 0 3px rgba(13,147,150,.1); }
+    .date-range input[type="date"]::-webkit-calendar-picker-indicator { cursor:pointer; opacity:.6; }
+    @media(max-width:600px) { .date-range { width:100%; } .date-inputs { flex:1; } .date-range input[type="date"] { flex:1; width:0; padding:0 5px; } }
+
+</style>
 </head>
 
 <body>
@@ -639,9 +648,11 @@ select.btn.ghost {
         <div class="left-tools">
           <div class="segmented">
             <button id="btnLevel" class="active" type="button">等级榜</button>
+            <button id="btnRecharge" type="button">充值榜</button>
             <button id="btnSpending" type="button">消费榜</button>
           </div>
 
+          <div id="rechargeDates" class="date-range" style="display:none"><span class="date-label">支付日期</span><div class="date-inputs"><input type="date" id="startDate" aria-label="开始日期"><span class="date-separator">至</span><input type="date" id="endDate" aria-label="结束日期"></div></div>
           <div class="searchbox">
             <input id="keyword" placeholder="搜索：昵称 / uid（支持模糊）" />
           </div>
@@ -661,6 +672,7 @@ select.btn.ghost {
       </div>
     </div>
 
+    <p id="rechargeNote" class="muted" style="display:none">充值榜：仅统计充值订单中支付成功的实付金额，按支付日期筛选；留空为累计。包含注销用户，不扣退款，不含后台赠送能量及单独苹果内购金币折算。搜索后为筛选结果排名。仅管理员/运营可查看。</p>
     <!-- Top3 -->
     <div class="card">
       <div class="card-title">
@@ -727,15 +739,19 @@ select.btn.ghost {
   }
 
   function labelForType(){
-    return state.type === "spending" ? "消费榜" : "等级榜";
+    return state.type === "recharge" ? "充值榜" : state.type === "spending" ? "消费榜" : "等级榜";
   }
 
   function buildUrl(){
-    const u = new URL(API_URL, location.origin);
+    const u = new URL(state.type === "recharge" ? "/api/operat/recharge_rankings.php" : API_URL, location.origin);
     u.searchParams.set("type", state.type);
     u.searchParams.set("page", String(state.page));
     u.searchParams.set("page_size", String(state.pageSize));
     if (state.keyword) u.searchParams.set("keyword", state.keyword);
+    if (state.type === "recharge") {
+      u.searchParams.set("start_date", document.getElementById("startDate").value);
+      u.searchParams.set("end_date", document.getElementById("endDate").value);
+    }
     return u.toString();
   }
 
@@ -750,6 +766,9 @@ select.btn.ghost {
   }
 
   function updateHeader(){
+    document.getElementById("rechargeDates").style.display = state.type === "recharge" ? "flex" : "none";
+    document.getElementById("rechargeNote").style.display = state.type === "recharge" ? "block" : "none";
+    for (const [id,t] of [["btnRecharge","recharge"],["btnLevel","level"],["btnSpending","spending"]]) document.getElementById(id).classList.toggle("active", state.type === t);
     document.getElementById("topTitle").innerText = `Top 3（${labelForType()}）`;
     document.getElementById("statusText").innerText = `当前：${labelForType()}`;
   }
@@ -757,14 +776,16 @@ select.btn.ghost {
   // ====== 渲染 Top3 + 列表 ======
   function render(data){
     const list = Array.isArray(data?.data?.list) ? data.data.list : [];
+    state.page = Number(data?.data?.page) || state.page;
     state.total = Number(data?.data?.total ?? 0) || 0;
     state.lastList = list;
 
     updateHeader();
 
     // 分离 top3 + others（按照当前页拿到的数据的前3名来展示）
-    const top3 = list.slice(0, 3);
-    const others = list.slice(3);
+    const top3 = state.page === 1 ? list.slice(0, 3) : [];
+    const others = state.page === 1 ? list.slice(3) : list;
+    document.getElementById("top3").closest(".card").style.display = state.page === 1 ? "block" : "none";
 
     // Top3
     const topWrap = document.getElementById("top3");
@@ -795,11 +816,11 @@ select.btn.ghost {
         const cls = classes[i] || "silver";
         const crown = crownText[i] || "TOP";
 
-        const showMain = state.type === "spending"
+        const showMain = state.type === "recharge" ? `¥ ${fmtMoney(u.recharge_total)}` : state.type === "spending"
           ? `¥ ${fmtMoney(u.cumulative_spending)}`
           : `Lv.${esc(u.vip)}`;
 
-        const showSub = state.type === "spending"
+        const showSub = state.type === "recharge" ? `成功充值 ${esc(u.recharge_count)} 笔` : state.type === "spending"
           ? `等级 Lv.${esc(u.vip)}`
           : `消费 ¥ ${fmtMoney(u.cumulative_spending)}`;
 
@@ -834,11 +855,11 @@ select.btn.ghost {
       document.getElementById("listEmpty").style.display = "none";
       others.forEach(u => {
         const leftPill = `<span class="pill">Lv.${esc(u.vip)} · ${esc(u.vip_name || "")}</span>`;
-        const rightMain = state.type === "spending"
+        const rightMain = state.type === "recharge" ? `¥ ${fmtMoney(u.recharge_total)}` : state.type === "spending"
           ? `¥ ${fmtMoney(u.cumulative_spending)}`
           : `Lv.${esc(u.vip)}`;
 
-        const rightSub = state.type === "spending"
+        const rightSub = state.type === "recharge" ? `成功充值 ${esc(u.recharge_count)} 笔` : state.type === "spending"
           ? `累计消费`
           : `消费 ¥ ${fmtMoney(u.cumulative_spending)}`;
 
@@ -873,7 +894,11 @@ select.btn.ghost {
   }
 
   // ====== 拉取 ======
+  let loadSequence = 0;
   async function load(){
+    const sequence = ++loadSequence;
+    document.getElementById("top3").innerHTML = "";
+    document.getElementById("list").innerHTML = "";
     setLoading(true);
     document.getElementById("statusText").innerText = `加载中...`;
 
@@ -884,6 +909,7 @@ select.btn.ghost {
       });
 
       const data = await res.json();
+      if (sequence !== loadSequence) return;
 
       if (data?.code !== 200){
         setLoading(false);
@@ -898,6 +924,7 @@ select.btn.ghost {
       render(data);
 
     }catch(e){
+      if (sequence !== loadSequence) return;
       setLoading(false);
       setEmpty(true, true);
       document.getElementById("statusText").innerText = "网络错误 / 跨域 / 未登录";
@@ -908,6 +935,7 @@ select.btn.ghost {
   // ====== 事件绑定 ======
   function setType(t){
     state.type = t;
+    updateHeader();
     state.page = 1;
 
     document.getElementById("btnLevel").classList.toggle("active", t === "level");
@@ -916,6 +944,7 @@ select.btn.ghost {
     load();
   }
 
+  document.getElementById("btnRecharge").addEventListener("click", ()=>setType("recharge"));
   document.getElementById("btnLevel").addEventListener("click", ()=>setType("level"));
   document.getElementById("btnSpending").addEventListener("click", ()=>setType("spending"));
 
@@ -927,6 +956,8 @@ select.btn.ghost {
 
   document.getElementById("btnReset").addEventListener("click", ()=>{
     document.getElementById("keyword").value = "";
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
     state.keyword = "";
     state.page = 1;
     load();

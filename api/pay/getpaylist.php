@@ -85,7 +85,9 @@ if (!in_array((int)$user['role_id'], [1, 2], true)) {
 // 查询未打款且仍可处理的申请列表，并关联 venue_funds 表获取 withdrawal_account，关联 venues 表获取 venue_name
 $query = "SELECT
     wr.*,
-    vf.withdrawal_account, 
+    vf.withdrawal_account,
+    vf.bank_name,
+    vf.bank_number, 
     v.venue_name
 FROM
     withdrawal_requests wr

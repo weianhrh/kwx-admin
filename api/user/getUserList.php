@@ -74,6 +74,7 @@ $offset = ($page - 1) * $limit;
 if (!in_array($role_id, [1, 2], true)) {
     // 非管理员
     $sql = "SELECT uid AS id,
+                   (unionid IS NULL) AS can_reset_password,
                    nickname AS username,
                    IFNULL(headimgurl, 'https://app.kwxapp.cn/img/logo.png') AS avatar,
                    created_at,
@@ -87,6 +88,7 @@ if (!in_array($role_id, [1, 2], true)) {
 } else {
     // 管理员
     $sql = "SELECT uid AS id,
+                   (unionid IS NULL) AS can_reset_password,
                    nickname AS username,
                    IFNULL(headimgurl, 'https://app.kwxapp.cn/img/logo.png') AS avatar,
                    phone_number AS phone,

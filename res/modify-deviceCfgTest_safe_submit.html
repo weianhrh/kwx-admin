@@ -427,6 +427,14 @@ if (window.self !== window.top || new URLSearchParams(window.location.search).ge
                         <input type="radio" id="excavator_arm_swap" name="excavator_arm" value="1">
                         <label for="excavator_arm_swap">换位</label>
                     </div>
+
+                    <div class="form-field radio-group">
+                        <label>挖机左右旋转</label>
+                        <input type="radio" id="excavator_rotation_normal" name="excavator_rotation" value="0">
+                        <label for="excavator_rotation_normal">不换位</label>
+                        <input type="radio" id="excavator_rotation_swap" name="excavator_rotation" value="1">
+                        <label for="excavator_rotation_swap">换位</label>
+                    </div>
                 </div>
 
 
@@ -810,7 +818,7 @@ window.addEventListener('DOMContentLoaded',  async function () {
 document.getElementById('is_display_true').checked  = Number(DEVICE_DATA.is_display) === 1;
 document.getElementById('is_display_false').checked = Number(DEVICE_DATA.is_display) === 0;
 
-    ['excavator_bucket', 'excavator_boom', 'excavator_arm'].forEach(field => {
+    ['excavator_bucket', 'excavator_boom', 'excavator_arm', 'excavator_rotation'].forEach(field => {
       const value = Number(DEVICE_DATA[field]) === 1 ? '1' : '0';
       const radio = document.querySelector(`input[name="${field}"][value="${value}"]`);
       if (radio) radio.checked = true;
@@ -897,6 +905,7 @@ document.getElementById('modify-form').addEventListener('submit', async function
             addChanged(data, 'excavator_bucket', getCheckedValue('excavator_bucket'), DEVICE_DATA.excavator_bucket);
             addChanged(data, 'excavator_boom',   getCheckedValue('excavator_boom'),   DEVICE_DATA.excavator_boom);
             addChanged(data, 'excavator_arm',    getCheckedValue('excavator_arm'),    DEVICE_DATA.excavator_arm);
+            addChanged(data, 'excavator_rotation',    getCheckedValue('excavator_rotation'),    DEVICE_DATA.excavator_rotation);
           }
         }
 

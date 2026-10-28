@@ -725,15 +725,16 @@ textarea {
         //         container.appendChild(item); 
         //     });
         // }
+function formatAccountGroups(account) {
+    const value = String(account ?? '').trim();
+    const digits = value.replace(/\s+/g, '');
+    return /^\d+$/.test(digits) ? digits.replace(/(\d{4})(?=\d)/g, '$1 ') : value;
+}
+function escapeAccountHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
 function formatWithdrawalAccount(account, accountType) {
-    const value = String(account || '').trim();
-    if (!value || !String(accountType || '').includes('银行卡')) {
-        return value;
-    }
-
-    return value
-        .replace(/\s+/g, '')
-        .replace(/(\d{4})(?=\d)/g, '$1 ');
+    return escapeAccountHtml(formatAccountGroups(account));
 }
 
 // 显示提现记录列表
@@ -756,7 +757,9 @@ function displayWithdrawalRecords(records) {
             <span>场地名称：${record.venue_name}(ID:${record.venue_id})</span> 
             <span>账户类型：${record.account_type}</span> 
             <span style="color: #007BFF; font-weight: 700; text-shadow: 0 0 2px rgba(0,123,255,0.3);">实际打款：${record.actual_amount} 元</span>
-            <span>提现账号 ：${formatWithdrawalAccount(record.withdrawal_account, record.account_type)}</span> 
+            <span>提现账号 ：${formatWithdrawalAccount(record.withdrawal_account, record.account_type)}</span>
+            <span>开户银行：${escapeAccountHtml(record.bank_name || '未填写')}</span>
+        
             <span>提现总额：${formatSummaryMoney(record.display_withdrawal_amount ?? record.withdrawal_amount)}</span>
             <span>图传费用扣减：${formatSummaryMoney(record.image_fee_amount ?? 0)}</span>
             <span>参与结算金额：${formatSummaryMoney(record.settlement_amount ?? record.withdrawal_amount)}</span>

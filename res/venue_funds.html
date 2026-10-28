@@ -784,9 +784,9 @@ document.addEventListener('DOMContentLoaded', function () {
   <span class="tag">${escapeHtml(row.account_type || '未知类型')}</span>
   <span>${escapeHtml(venueTitle)}</span>
 </div>
-          <span><b>提现账号：</b>${escapeHtml(row.withdrawal_account || '')}</span>
+          <span><b>提现账号：</b>${escapeHtml(formatAccountGroups(row.withdrawal_account))}</span>
           <span><b>姓名：</b>${escapeHtml(row.account_name || '')}</span>
-          <span><b>银行：</b>${escapeHtml(row.bank_name || '')} ${row.bank_number ? (' / ' + escapeHtml(row.bank_number)) : ''}</span>
+          <span><b>银行：</b>${escapeHtml(row.bank_name || '')} ${row.bank_number ? (' / ' + escapeHtml(formatAccountGroups(row.bank_number))) : ''}</span>
           <span><b>余额：</b>${escapeHtml(row.account_balance || '0.00')}</span>
           ${row.remarks ? `<span class="muted"><b>备注：</b>${escapeHtml(row.remarks)}</span>` : ''}
           <span class="muted">创建：${escapeHtml(row.created_at || '')}　更新：${escapeHtml(row.updated_at || '')}</span>
@@ -809,6 +809,12 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.addEventListener('click', () => onDelete(btn.dataset.id));
     });
   }
+
+function formatAccountGroups(account) {
+    const value = String(account ?? '').trim();
+    const digits = value.replace(/\s+/g, '');
+    return /^\d+$/.test(digits) ? digits.replace(/(\d{4})(?=\d)/g, '$1 ') : value;
+}
 
   function escapeHtml(s) {
     return String(s ?? '')

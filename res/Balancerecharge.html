@@ -682,6 +682,31 @@ const streamerVenueFilter = document.getElementById('streamer_venue_filter');
 
 let venueFilterEventsBound = false;
 
+  const resetPasswordPermission = fetch('/api/user/resetUserPassword.php', {
+    credentials: 'same-origin', cache: 'no-store'
+  }).then(r => r.json()).then(d => Number(d.code) === 0 && d.data?.can_reset === true).catch(() => false);
+  let canResetUserPassword = false;
+
+  async function resetUserPassword(uid, button) {
+    if (!canResetUserPassword || button.disabled) return;
+    if (!confirm(`确认将用户 UID ${uid} 的密码恢复为默认密码 123456 吗？`)) return;
+    if (!confirm(`慎重操作！这是第二次确认。\n用户 UID：${uid}\n原密码将失效，新密码为：123456。\n仅unionid为NULL的用户可恢复。\n请确认用户身份，并提醒用户及时修改密码。\n确定继续恢复吗？`)) return;
+    button.disabled = true;
+    try {
+      const response = await fetch('/api/user/resetUserPassword.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: String(uid), confirmed: true })
+      });
+      const data = await response.json();
+      alert(data.msg || '操作失败，请稍后重试');
+    } catch (e) {
+      alert('请求异常，未能确认重置结果，请核实后再试');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   let venueList = [];
   let currentPage = 1;
   let totalPages = 1;
@@ -940,6 +965,7 @@ async function saveStreamerVenue(uid) {
 
   // 初始化表格数据
 async function loadTableData(params = {}) {
+  canResetUserPassword = await resetPasswordPermission;
   await fetchVenueList();
     lastParams = params;
 
@@ -1060,6 +1086,10 @@ async function loadTableData(params = {}) {
       </button>
       `
   }
+
+  ${canResetUserPassword && Number(item.can_reset_password) === 1 ? `<button class="action-btn btn-delete" onclick="resetUserPassword(${item.id}, this)">
+    <i class="fas fa-key"></i> 恢复默认密码
+  </button>` : ''}
 
   <button class="action-btn ${isDeleted ? 'btn-undelete' : 'btn-delete'}"
           onclick="toggleUserDeleted(${item.id}, ${isDeleted})">
