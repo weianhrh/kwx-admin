@@ -360,6 +360,61 @@ $rows = $db->query("
     LIMIT {$pageSize} OFFSET {$offset}
 ", $params) ?: [];
 
+
+// 仅查询已通过权限、筛选和分页的 UID；首充按全历史成功支付时间计算。
+// 每个用户每类最多取一笔，避免把所有历史充值加载到 PHP。
+$firstRechargeByUid = [];
+if ($rows) {
+    $uids = array_values(array_unique(array_map('strval', array_column($rows, 'uid'))));
+    $uidSql = implode(' UNION ALL ', array_fill(0, count($uids), 'SELECT ? AS uid'));
+    $firstRechargeRows = $db->query("
+        SELECT c.* FROM (
+            SELECT u.uid, r.id, 'battery' AS recharge_type,
+                   CAST(NULLIF(r.payer_total, '') AS DECIMAL(10,2)) AS amount,
+                   COALESCE(NULLIF(r.paid_at, '0000-00-00 00:00:00'), r.created_at) AS paid_at
+            FROM ({$uidSql}) u
+            INNER JOIN RechargeOrders r ON r.id = (
+                SELECT r1.id FROM RechargeOrders r1
+                WHERE r1.uid = u.uid AND r1.status = '支付成功'
+                ORDER BY COALESCE(NULLIF(r1.paid_at, '0000-00-00 00:00:00'), r1.created_at), r1.id
+                LIMIT 1
+            )
+            UNION ALL
+            SELECT u.uid, a.id, 'gold' AS recharge_type,
+                   CAST(p.price AS DECIMAL(10,2)) AS amount,
+                   COALESCE(NULLIF(a.purchase_date, '0000-00-00 00:00:00'), a.created_at) AS paid_at
+            FROM ({$uidSql}) u
+            INNER JOIN apple_iap_orders a ON a.id = (
+                SELECT a1.id FROM apple_iap_orders a1
+                WHERE a1.uid = u.uid AND a1.order_status = 'success' AND a1.verify_status = 1
+                  AND COALESCE(a1.environment, '') <> 'Sandbox'
+                ORDER BY COALESCE(NULLIF(a1.purchase_date, '0000-00-00 00:00:00'), a1.created_at), a1.id
+                LIMIT 1
+            )
+            LEFT JOIN iap_gold_products p ON p.product_id = a.product_id
+        ) c
+        ORDER BY c.paid_at ASC, c.recharge_type ASC, c.id ASC
+    ", array_merge($uids, $uids));
+    if ($firstRechargeRows === false) {
+        $db->close();
+        auth_out(500, '首充记录查询失败，请稍后重试');
+    }
+    foreach ($firstRechargeRows as $recharge) {
+        $uid = (string)$recharge['uid'];
+        if (!isset($firstRechargeByUid[$uid])) {
+            $firstRechargeByUid[$uid] = $recharge;
+        }
+    }
+}
+foreach ($rows as &$row) {
+    $first = $firstRechargeByUid[(string)$row['uid']] ?? null;
+    $row['has_first_recharge'] = $first !== null;
+    $row['first_recharge_amount'] = $first['amount'] ?? null;
+    $row['first_recharge_at'] = $first['paid_at'] ?? null;
+    $row['first_recharge_type'] = $first['recharge_type'] ?? null;
+}
+unset($row);
+
 $db->close();
 
 auth_out(0, 'ok', [

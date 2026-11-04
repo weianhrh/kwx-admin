@@ -99,11 +99,11 @@ button,input,select{font:inherit}.container{width:100%;max-width:1380px;margin:0
   </section>
 
   <section class="card">
-    <div class="section-head"><h2 class="section-title">首次搜索明细</h2></div>
+    <div class="section-head"><div><h2 class="section-title">首次搜索明细</h2><p class="section-hint">首充为用户历史第一笔成功充值，不受搜索时间筛选限制；苹果金币按商品价格显示，不含沙盒订单。</p></div></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>记录 ID</th><th>用户 UID</th><th>命中场地 ID</th><th>场地名称</th><th>输入数字</th><th>首次搜索时间</th></tr></thead>
-        <tbody id="tbody"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+        <thead><tr><th>记录 ID</th><th>用户 UID</th><th>命中场地 ID</th><th>场地名称</th><th>输入数字</th><th>首次搜索时间</th><th>首充金额（元）</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
       </table>
     </div>
     <div class="pager"><button id="prevBtn" type="button" onclick="changePage(-1)">上一页</button><span id="pageInfo" class="page-info">--</span><button id="nextBtn" type="button" onclick="changePage(1)">下一页</button></div>
@@ -162,7 +162,13 @@ function openSubtitleVenueModal(index){const item=subtitleVenueLists[index];if(!
 function closeVenueModal(){els.venueModal.hidden=true}
 function renderSubtitleOptions(options){const selected=els.venueSubtitle.value;els.venueSubtitle.innerHTML='<option value="">全部副标题</option>'+options.map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('');if(options.includes(selected))els.venueSubtitle.value=selected}
 function renderAggregates(rows){subtitleVenueLists=rows.map(r=>({venue_subtitle:r.venue_subtitle,venues:Array.isArray(r.venues)?r.venues:[]}));if(!rows.length){els.summaryBody.innerHTML='<tr><td colspan="5" class="empty">暂无副标题历史搜索记录</td></tr>';return}els.summaryBody.innerHTML=rows.map((r,index)=>{const venues=subtitleVenueLists[index].venues,first=venues[0],firstLabel=first?`${first.venue_id}-${first.venue_name||'未命名场地'}`:'暂无场地',more=venues.length>1?`<span class="owner-more">+${venues.length-1}</span>`:'';return `<tr><td><span class="code">${esc(r.venue_subtitle)}</span></td><td><button class="owner-button" type="button" onclick="openSubtitleVenueModal(${index})" title="点击查看全部所属场地"><span class="owner-first">${esc(firstLabel)}</span>${more}</button></td><td><span class="number">${Number(r.history_user_total||0).toLocaleString('zh-CN')}</span> 人</td><td><span class="number">${Number(r.user_total||0).toLocaleString('zh-CN')}</span> 人</td><td>${Number(r.venue_total||0).toLocaleString('zh-CN')}</td></tr>`}).join('')}
-function renderRows(rows){if(!rows.length){els.tbody.innerHTML='<tr><td colspan="6" class="empty">暂无数据</td></tr>';return}els.tbody.innerHTML=rows.map(r=>`<tr><td>${esc(r.id)}</td><td><strong>${esc(r.uid)}</strong></td><td>${esc(r.venue_id)}</td><td>${esc(r.venue_name||'--')}</td><td><span class="code">${esc(r.venue_subtitle)}</span></td><td>${esc(r.first_searched_at)}</td></tr>`).join('')}
+function firstRechargeCell(r){
+  if(r.has_first_recharge!==true)return '未充值';
+  if(r.first_recharge_amount==null||r.first_recharge_amount===''||!Number.isFinite(Number(r.first_recharge_amount)))return '金额未知';
+  const type=r.first_recharge_type==='gold'?'苹果金币（商品价格）':'充值实付';
+  return `<span title="${esc(type+' · '+(r.first_recharge_at||''))}">${Number(r.first_recharge_amount).toFixed(2)}</span>`;
+}
+function renderRows(rows){if(!rows.length){els.tbody.innerHTML='<tr><td colspan="7" class="empty">暂无数据</td></tr>';return}els.tbody.innerHTML=rows.map(r=>`<tr><td>${esc(r.id)}</td><td><strong>${esc(r.uid)}</strong></td><td>${esc(r.venue_id)}</td><td>${esc(r.venue_name||'--')}</td><td><span class="code">${esc(r.venue_subtitle)}</span></td><td>${esc(r.first_searched_at)}</td><td>${firstRechargeCell(r)}</td></tr>`).join('')}
 function renderPager(data){total=Number(data.total||0);const size=Number(data.page_size||els.pageSize.value);const pages=Math.max(1,Math.ceil(total/size));currentPage=Math.min(Number(data.page||1),pages);els.pageInfo.textContent=`第 ${currentPage} / ${pages} 页，共 ${total} 条`;els.prevBtn.disabled=currentPage<=1;els.nextBtn.disabled=currentPage>=pages}
 function renderSummary(data){const summary=data.summary||{},range=data.range||{};summaryVenues=Array.isArray(data.summary_venues)?data.summary_venues:[];els.recordTotal.textContent=Number(summary.user_total??summary.record_total??0).toLocaleString('zh-CN');els.subtitleTotal.textContent=Number(summary.subtitle_total||0).toLocaleString('zh-CN');els.venueTotal.textContent=Number(summary.venue_total||0).toLocaleString('zh-CN');if(range.start_date)els.startDate.value=range.start_date;if(range.end_date)els.endDate.value=range.end_date;const startText=String(range.start_date||'').replace('T',' '),endText=String(range.end_date||'').replace('T',' ');const dateLabel=startText===endText?startText:`${startText} 至 ${endText}`;const venueLabel=els.venueId.options[els.venueId.selectedIndex]?.text||'全部场地';const subtitleLabel=els.venueSubtitle.value?`副标题 ${els.venueSubtitle.value}`:'全部副标题';els.rangeBadge.textContent=`${dateLabel} · ${venueLabel} · ${subtitleLabel}`}
 async function loadVenues(){try{const body=new URLSearchParams({action:'get_venues'});const res=await fetch(VENUE_API_URL,{method:'POST',credentials:'include',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()});const json=await res.json();if(json.code!==0)throw new Error(json.msg||'场地加载失败');const rows=Array.isArray(json.data)?json.data:[];rows.sort((a,b)=>Number(a.id)-Number(b.id));els.venueId.innerHTML='<option value="">全部场地</option>'+rows.map(v=>`<option value="${esc(v.id)}">${esc(v.id)}-${esc(v.venue_name||'未命名场地')}</option>`).join('');venueLoadError=''}catch(err){venueLoadError=err.message||'场地下拉框加载失败'}}
@@ -170,7 +176,7 @@ async function loadData(){
   summaryVenues=[];subtitleVenueLists=[];
   els.error.textContent=venueLoadError;
   els.summaryBody.innerHTML='<tr><td colspan="5" class="loading">加载中...</td></tr>';
-  els.tbody.innerHTML='<tr><td colspan="6" class="loading">加载中...</td></tr>';
+  els.tbody.innerHTML='<tr><td colspan="7" class="loading">加载中...</td></tr>';
   try{
     const res=await fetch(API_URL+'?'+params(),{credentials:'include',cache:'no-store'});
     const json=await res.json();
@@ -191,7 +197,7 @@ async function loadData(){
   }catch(err){
     els.error.textContent=err.message||'网络异常，请稍后重试';
     els.summaryBody.innerHTML='<tr><td colspan="5" class="empty">加载失败</td></tr>';
-    els.tbody.innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';
+    els.tbody.innerHTML='<tr><td colspan="7" class="empty">加载失败</td></tr>';
     renderPager({total:0,page:1,page_size:Number(els.pageSize.value)});
   }
 }
