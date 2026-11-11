@@ -1,8 +1,10 @@
 <?php
-require_once '../Database.php';
-require_once '../RedisHelper.php';
+require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../RedisHelper.php';
+require_once __DIR__ . '/_pending_image_files.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 $database = new Database();
 
@@ -55,7 +57,7 @@ function buildImageUrl($url) {
 
 /**
  * 1. 从数据库读取待审核图片
- * 注意：这里不再 scandir 目录
+ * 再逐条检查对应本地原图，不扫描整个目录、不删除或修改审核记录。
  */
 $sql = "
     SELECT
@@ -75,10 +77,29 @@ $sql = "
 $rows = $database->query($sql, []);
 
 $results = [];
+$pendingDirectoryInfo = kwxPendingImageDirectoryInfo();
+$pendingDirectory = $pendingDirectoryInfo['directory'];
+$realPendingDirectory = $pendingDirectoryInfo['real_directory'];
+$skippedCount = 0;
+$skippedDetails = [];
 
 if ($rows) {
     foreach ($rows as $row) {
         $rawUrl = $row['image_url'] ?? '';
+        $fileCheck = checkLocalPendingImage($rawUrl, $pendingDirectory, $realPendingDirectory);
+        if (!$fileCheck['exists']) {
+            $skippedCount++;
+            // 每次请求最多记录 50 条明细；不记录会话或完整远程 URL。
+            if (count($skippedDetails) < 50) {
+                $skippedDetails[] = [
+                    'review_id' => (int)$row['review_id'],
+                    'venue_id' => (int)$row['venue_id'],
+                    'filename' => $fileCheck['filename'],
+                    'reason' => $fileCheck['reason'],
+                ];
+            }
+            continue;
+        }
 
         $results[] = [
             // 兼容旧前端：原来 id 返回的是 venue_id
@@ -100,6 +121,21 @@ if ($rows) {
             'reason' => $row['reason'] ?? '',
             'upload_time' => $row['uploaded_at'] ?? ''
         ];
+    }
+}
+
+if ($skippedCount > 0) {
+    $logLine = json_encode([
+        'time' => date('c'),
+        'version' => '20261110-local-files-1',
+        'event' => 'pending_images_filtered',
+        'directory' => $pendingDirectory,
+        'skipped_count' => $skippedCount,
+        'returned_count' => count($results),
+        'details' => $skippedDetails,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($logLine !== false) {
+        @file_put_contents(__DIR__ . '/get_pending_images.log', $logLine . PHP_EOL, FILE_APPEND | LOCK_EX);
     }
 }
 
