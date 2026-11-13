@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// KWX-VENUE-SEARCH-V11-20260812-SUBTITLE-VENUE-OWNER
+// KWX-VENUE-SEARCH-V12-20261111-FIRST-INVITATION-GIFT
 
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../lib/venue_scope.php';
@@ -364,6 +364,7 @@ $rows = $db->query("
 // 仅查询已通过权限、筛选和分页的 UID；首充按全历史成功支付时间计算。
 // 每个用户每类最多取一笔，避免把所有历史充值加载到 PHP。
 $firstRechargeByUid = [];
+$firstInvitationGiftByUid = [];
 if ($rows) {
     $uids = array_values(array_unique(array_map('strval', array_column($rows, 'uid'))));
     $uidSql = implode(' UNION ALL ', array_fill(0, count($uids), 'SELECT ? AS uid'));
@@ -405,6 +406,27 @@ if ($rows) {
             $firstRechargeByUid[$uid] = $recharge;
         }
     }
+
+    // 与首充一致，只查询当前已授权分页中的用户，取全历史第一笔邀请码赠送。
+    // 金额来自实际能量变动；不使用当前余额，不累计后续赠送，也不把代理充值或退款算作赠送。
+    $firstInvitationGiftRows = $db->query("
+        SELECT u.uid, g.id, g.venue_id, g.energy_change AS amount, g.created_at AS gifted_at
+        FROM ({$uidSql}) u
+        INNER JOIN energy_changes g ON g.id = (
+            SELECT g1.id FROM energy_changes g1
+            WHERE g1.user_uid = u.uid AND g1.energy_change > 0
+              AND g1.reason REGEXP '^首次填写1010分组二级邀请码[0-9]{4}赠送'
+            ORDER BY g1.created_at ASC, g1.id ASC
+            LIMIT 1
+        )
+    ", $uids);
+    if ($firstInvitationGiftRows === false) {
+        $db->close();
+        auth_out(500, '首次邀请码赠送记录查询失败，请稍后重试');
+    }
+    foreach ($firstInvitationGiftRows as $gift) {
+        $firstInvitationGiftByUid[(string)$gift['uid']] = $gift;
+    }
 }
 foreach ($rows as &$row) {
     $first = $firstRechargeByUid[(string)$row['uid']] ?? null;
@@ -412,6 +434,12 @@ foreach ($rows as &$row) {
     $row['first_recharge_amount'] = $first['amount'] ?? null;
     $row['first_recharge_at'] = $first['paid_at'] ?? null;
     $row['first_recharge_type'] = $first['recharge_type'] ?? null;
+
+    $firstGift = $firstInvitationGiftByUid[(string)$row['uid']] ?? null;
+    $row['has_first_invitation_gift'] = $firstGift !== null;
+    $row['first_invitation_gift_energy'] = $firstGift['amount'] ?? null;
+    $row['first_invitation_gift_at'] = $firstGift['gifted_at'] ?? null;
+    $row['first_invitation_gift_venue_id'] = $firstGift === null ? null : (int)$firstGift['venue_id'];
 }
 unset($row);
 
