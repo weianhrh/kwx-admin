@@ -322,6 +322,50 @@ textarea {
   padding-top: 18px;
 }
 
+.filter-field {
+  display: flex;
+  flex: 1 1 210px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.filter-field input {
+  width: 100%;
+  min-width: 0;
+  flex: none;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+}
+
+.filter-actions .action-button {
+  margin: 0;
+}
+
+.secondary-button {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.secondary-button:hover {
+  color: #fff;
+}
+
+.query-summary {
+  margin: 16px 18px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 @supports not selector(:has(*)) {
   .card-title {
     position: relative;
@@ -410,112 +454,150 @@ textarea {
 
     <div class="container">
         <div class="card">
-            <div class="card-title">查询提现记录</div>
+            <div class="card-title"><span>查询提现记录</span></div>
             <div class="input-group">
-                <select id="venue_id">
-                    <option value="">选择场地</option>
-                </select>
+                <label class="filter-field" for="start-date">开始日期
+                    <input type="date" id="start-date">
+                </label>
+                <label class="filter-field" for="end-date">结束日期
+                    <input type="date" id="end-date">
+                </label>
+                <label class="filter-field" for="keyword">场地名称 / 提现编号
+                    <input type="search" id="keyword" placeholder="输入场地名称或提现编号" autocomplete="off">
+                </label>
             </div>
-            <div class="input-group">
-                <input type="date" id="start-date" placeholder="开始日期">
-                <input type="date" id="end-date" placeholder="结束日期">
+            <div class="filter-actions">
+                <button type="button" class="action-button" onclick="queryRecords()">查询</button>
+                <button type="button" class="action-button secondary-button" onclick="resetToday()">重置为今日</button>
+                <button type="button" class="action-button secondary-button" onclick="queryAllDates()">全部日期</button>
             </div>
-            <button class="action-button" onclick="queryRecords()">查询</button>
-            <div id="query-results" class="record-list"></div>
+            <p id="query-summary" class="query-summary" aria-live="polite">默认查询今日记录，按申请时间从新到旧排列。</p>
+            <div id="query-results" class="record-list" aria-live="polite"></div>
         </div>
     </div>
 
     <script>
+        let querySequence = 0;
+
+        function todayInShanghai() {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).formatToParts(new Date());
+            const value = type => parts.find(part => part.type === type).value;
+            return `${value('year')}-${value('month')}-${value('day')}`;
+        }
+
+        function resetToday() {
+            const today = todayInShanghai();
+            document.getElementById('start-date').value = today;
+            document.getElementById('end-date').value = today;
+            document.getElementById('keyword').value = '';
+            queryRecords();
+        }
+
+        function queryAllDates() {
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            queryRecords();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            // 获取场地信息
-            const venueSelect = document.getElementById('venue_id');  
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/operat/EnergyGift.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);  
-                    if (response.code === 0) {
-                        const data = response.data;  
-                        data.forEach(venue => {
-                            const option = document.createElement('option');  
-                            option.value = venue.id;  
-                            option.textContent = `${venue.id} - ${venue.venue_name}`;  
-                            venueSelect.appendChild(option);  
-                        });
-                        // 设置默认场地
-                        if (data.length > 0) {
-                            venueSelect.value = data[6].id; // 设置第一个场地为默认选项
-                        }
+            ['start-date', 'end-date', 'keyword'].forEach(id => {
+                document.getElementById(id).addEventListener('keydown', event => {
+                    if (event.key === 'Enter' && !event.isComposing) {
+                        event.preventDefault();
+                        queryRecords();
                     }
-                }
-            };
-            const data = 'action=get_venues';
-            xhr.send(data);  
-
-            // 设置默认日期为近一周
-            const today = new Date();
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(today.getDate() - 31);
-
-            const formatDate = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-
-            document.getElementById('start-date').value = formatDate(oneWeekAgo);
-            document.getElementById('end-date').value = formatDate(today);
+                });
+            });
+            resetToday();
         });
 
+        function showQueryMessage(message) {
+            const container = document.getElementById('query-results');
+            container.textContent = '';
+            const paragraph = document.createElement('p');
+            paragraph.textContent = message;
+            container.appendChild(paragraph);
+        }
+
         function queryRecords() {
-            const venueId = document.getElementById('venue_id').value;
+            const sequence = ++querySequence;
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
-            const url = `/api/pay/getWithdrawalRecords.php?venue_id=${venueId}&start_date=${startDate}&end_date=${endDate}`;
-            
-            fetch(url)
-                .then(response => response.json())
+            const keyword = document.getElementById('keyword').value.trim();
+            const summary = document.getElementById('query-summary');
+            if (startDate && endDate && startDate > endDate) {
+                summary.textContent = '请调整日期范围后查询。';
+                showQueryMessage('开始日期不能晚于结束日期');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                all_venues: '1', withdraw_type: 'all',
+                start_date: startDate, end_date: endDate, keyword: keyword
+            });
+            summary.textContent = '正在查询…';
+            showQueryMessage('正在加载提现记录…');
+            fetch(`/api/pay/getWithdrawalRecords.php?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('查询失败，请稍后重试');
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.code === 0 && data.data && data.data.length > 0) {
-                        displayQueryResults(data.data);
+                    if (sequence !== querySequence) return;
+                    if (data.code !== 0) throw new Error(data.msg || '查询失败，请稍后重试');
+                    const records = Array.isArray(data.data) ? data.data : [];
+                    summary.textContent = `共 ${records.length} 条记录，按申请时间从新到旧排列。`;
+                    if (records.length) {
+                        displayQueryResults(records);
                     } else {
-                        document.getElementById('query-results').innerHTML = '<p style="text-align:center;">未找到记录</p>';
+                        showQueryMessage('未找到符合条件的提现记录');
                     }
                 })
                 .catch(error => {
+                    if (sequence !== querySequence) return;
+                    summary.textContent = '查询未完成';
+                    showQueryMessage(error.message || '查询失败，请稍后重试');
                     console.error('查询失败:', error);
                 });
         }
 
         function displayQueryResults(records) {
             const container = document.getElementById('query-results');
-            container.innerHTML = '';
+            container.textContent = '';
+            const fragment = document.createDocumentFragment();
             records.forEach(record => {
                 const item = document.createElement('div');
                 item.classList.add('record-item');
-                item.style.border = '1px solid #ddd';
-                item.style.borderRadius = '8px';
-                item.style.padding = '15px';
-                item.style.marginBottom = '10px';
-                item.style.backgroundColor = '#f9f9f9';
-                item.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-
-                item.innerHTML = `
-                    <h4 style="margin-bottom: 10px; color: #333;">提现编号：<span style="color: #5b8cff;">${record.id}</span></h4>
-                    <p style="margin: 5px 0;"><strong>账户姓名：</strong>${record.account_name}</p>
-                    <p style="margin: 5px 0;"><strong>提现金额：</strong>${record.withdrawal_amount} 元</p>
-                    <p style="margin: 5px 0;"><strong>技术服务费：</strong>${record.technical_service_fee} 元</p>
-                    <p style="margin: 5px 0;"><strong>提现手续费：</strong>${record.withdrawal_fee} 元</p>
-              
-                    <h4 style="margin-bottom: 10px; color: #333;">实际打款：<span style="color: #5b8cff;">${record.actual_amount} 元</span></h4>
-                    <p style="margin: 5px 0;"><strong>申请时间：</strong>${record.application_time}</p>
-                    <p style="margin: 5px 0;"><strong>打款状态：</strong>${record.payout_status === 0 ? '未打款' : '已打款'}</p>
-                    <p style="margin: 5px 0;"><strong>申请状态：</strong>${Number(record.application_status) === 0 ? '待处理' : (Number(record.application_status) === 1 ? '已处理' : (Number(record.application_status) === 2 ? '已打款' : (record.reversal_action === 'cancelled' ? '已取消' : '已驳回')))}</p>
-                `;
-                container.appendChild(item);
+                const title = document.createElement('h4');
+                title.textContent = `提现编号：${record.id}`;
+                item.appendChild(title);
+                const status = Number(record.application_status);
+                const isGift = record.withdrawal_type === 'gift' || String(record.remarks || '').includes('礼物提现记录');
+                const fields = [
+                    ['场地名称', `${record.venue_name || '场地已删除或未命名'}（ID：${record.venue_id}）`],
+                    ['账户姓名', record.account_name],
+                    ['提现类型', isGift ? '礼物提现' : '普通提现'],
+                    ['申请时间', record.application_time],
+                    ['提现金额', `${record.withdrawal_amount} 元`],
+                    ['技术服务费', `${record.technical_service_fee} 元`],
+                    ['提现手续费', `${record.withdrawal_fee} 元`],
+                    ['实际打款', `${record.actual_amount} 元`],
+                    ['打款状态', Number(record.payout_status) === 0 ? '未打款' : '已打款'],
+                    ['申请状态', status === 0 ? '待处理' : (status === 1 ? '已处理' : (status === 2 ? '已打款' : (record.reversal_action === 'cancelled' ? '已取消' : '已驳回')))]
+                ];
+                fields.forEach(([label, value]) => {
+                    const paragraph = document.createElement('p');
+                    const strong = document.createElement('strong');
+                    strong.textContent = `${label}：`;
+                    paragraph.appendChild(strong);
+                    paragraph.appendChild(document.createTextNode(value == null || value === '' ? '-' : String(value)));
+                    item.appendChild(paragraph);
+                });
+                fragment.appendChild(item);
             });
+            container.appendChild(fragment);
         }
     </script>
 

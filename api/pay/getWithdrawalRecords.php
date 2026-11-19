@@ -3,6 +3,8 @@ require_once '../Database.php';
 require_once '../lib/venue_scope.php';
 require_once __DIR__ . '/../lib/withdrawal_display.php';
 
+header('Content-Type: application/json; charset=utf-8');
+
 // 创建数据库连接
 $database = new Database();
 
@@ -21,13 +23,17 @@ if (!$user || !$user['role_id']) {
     exit;
 }
 
-$venue_id = venue_scope_resolve_single_id($database, $user, venue_scope_requested_id($_GET));
-if ($venue_id <= 0) {
+// 汇总查询页不指定场地；旧提现申请页仍保留单场地历史记录的行为。
+$all_venues = ($_GET['all_venues'] ?? '') === '1';
+$requested_venue_id = venue_scope_requested_id($_GET);
+$venue_id = $all_venues
+    ? $requested_venue_id
+    : venue_scope_resolve_single_id($database, $user, $requested_venue_id);
+if ((!$all_venues && $venue_id <= 0)
+    || ($venue_id > 0 && !venue_scope_can_access($database, $user, $venue_id))) {
     echo json_encode(['code' => 1003, 'msg' => '未绑定或无权访问该场地', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
 }
-
-header('Content-Type: application/json');
 
 function extractRemarkText($remarks, $label) {
     $remarks = (string)$remarks;
@@ -36,66 +42,106 @@ function extractRemarkText($remarks, $label) {
 }
 
 $withdraw_type = $_GET['withdraw_type'] ?? $_POST['withdraw_type'] ?? 'account';
-$withdraw_type = ($withdraw_type === 'gift') ? 'gift' : 'account';
-// 获取请求参数
-$start_date = $_GET['start_date'] ?? null;
-$end_date = $_GET['end_date'] ?? null;
+$withdraw_type = in_array($withdraw_type, ['account', 'gift', 'all'], true) ? $withdraw_type : 'account';
 
-// 定义 SQL 查询，根据场地ID和日期过滤，并按创建时间降序排序
+// 汇总查询默认当天（北京时间）；显式传空日期可查全部日期。
+// 旧提现申请页没有日期参数时继续返回历史记录。
+$date_zone = new DateTimeZone('Asia/Shanghai');
+$default_date = $all_venues && !isset($_GET['start_date']) && !isset($_GET['end_date'])
+    ? (new DateTimeImmutable('now', $date_zone))->format('Y-m-d') : '';
+$dates = [];
+foreach (['start_date', 'end_date'] as $key) {
+    $value = $_GET[$key] ?? $default_date;
+    $date = is_string($value) && $value !== ''
+        ? DateTimeImmutable::createFromFormat('!Y-m-d', $value, $date_zone) : false;
+    if (!is_string($value) || ($value !== '' && (!$date || $date->format('Y-m-d') !== $value))) {
+        echo json_encode(['code' => 1002, 'msg' => '日期格式不正确，请使用 YYYY-MM-DD', 'data' => []], JSON_UNESCAPED_UNICODE);
+        $database->close();
+        exit;
+    }
+    $dates[$key] = $date;
+}
+$start_date = $dates['start_date'];
+$end_date = $dates['end_date'];
+if ($start_date && $end_date && $start_date > $end_date) {
+    echo json_encode(['code' => 1002, 'msg' => '开始日期不能晚于结束日期', 'data' => []], JSON_UNESCAPED_UNICODE);
+    $database->close();
+    exit;
+}
+$keyword = $_GET['keyword'] ?? '';
+if (!is_string($keyword)) {
+    echo json_encode(['code' => 1002, 'msg' => '搜索内容格式不正确', 'data' => []], JSON_UNESCAPED_UNICODE);
+    $database->close();
+    exit;
+}
+$keyword = trim($keyword);
+
+// LEFT JOIN 保留场地已删除的历史提现记录。
 $sql = "SELECT 
-            id, 
-            account_name, 
-            account_type, 
-            withdrawal_amount, 
-            application_time, 
-            payout_time, 
-            technical_service_fee, 
-            withdrawal_fee, 
-            application_status, 
-            actual_amount, 
-            venue_id, 
-            uid, 
-            payout_person, 
-            auditor, 
-            payout_status, 
-            created_at, 
-            updated_at, 
-            remarks,
-            withdrawal_type
-        FROM withdrawal_requests 
-        WHERE venue_id = ?";
+            wr.id,
+            wr.account_name,
+            wr.account_type,
+            wr.withdrawal_amount,
+            wr.application_time,
+            wr.payout_time,
+            wr.technical_service_fee,
+            wr.withdrawal_fee,
+            wr.application_status,
+            wr.actual_amount,
+            wr.venue_id,
+            wr.uid,
+            wr.payout_person,
+            wr.auditor,
+            wr.payout_status,
+            wr.created_at,
+            wr.updated_at,
+            wr.remarks,
+            wr.withdrawal_type,
+            v.venue_name
+        FROM withdrawal_requests wr
+        LEFT JOIN venues v ON v.id = wr.venue_id
+        WHERE 1=1";
 
-// 添加日期过滤条件
-// 添加提现类型过滤
-$params = [$venue_id];
+$params = [];
+// 管理员可查全部；加盟商、主播仍限制在绑定场地内。
+$sql .= venue_scope_apply_filter($database, $user, 'wr.venue_id', $params, $venue_id);
 
 if ($withdraw_type === 'gift') {
     // 礼物提现记录
     $sql .= " AND (
-        withdrawal_type = 'gift'
-        OR remarks LIKE '%礼物提现记录%'
+        wr.withdrawal_type = 'gift'
+        OR wr.remarks LIKE '%礼物提现记录%'
     )";
-} else {
+} elseif ($withdraw_type === 'account') {
     // 普通账号余额提现记录
     // 兼容老数据：老记录 withdrawal_type 为空，也算普通提现
     $sql .= " AND (
-        withdrawal_type IS NULL
-        OR withdrawal_type = ''
-        OR withdrawal_type = 'account'
+        wr.withdrawal_type IS NULL
+        OR wr.withdrawal_type = ''
+        OR wr.withdrawal_type = 'account'
     )";
 }
 
 // 添加日期过滤条件
 if ($start_date) {
-    $sql .= " AND application_time >= ?";
-    $params[] = $start_date;
+    $sql .= " AND wr.application_time >= ?";
+    $params[] = $start_date->format('Y-m-d 00:00:00');
 }
 if ($end_date) {
-    $sql .= " AND application_time <= ?";
-    $params[] = $end_date;
+    // 使用次日零点之前，包含结束日期的整天记录。
+    $sql .= " AND wr.application_time < ?";
+    $params[] = $end_date->modify('+1 day')->format('Y-m-d 00:00:00');
 }
 
-$sql .= " ORDER BY created_at DESC";
+if ($keyword !== '') {
+    // 将通配符作为普通字符搜索，所有搜索值仍使用参数绑定。
+    $like_keyword = '%' . strtr($keyword, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
+    $sql .= " AND (v.venue_name LIKE ? ESCAPE '!' OR CAST(wr.id AS CHAR) LIKE ? ESCAPE '!')";
+    $params[] = $like_keyword;
+    $params[] = $like_keyword;
+}
+
+$sql .= " ORDER BY wr.application_time DESC, wr.id DESC";
 
 // 执行查询，绑定参数
 $results = $database->query($sql, $params);
