@@ -181,32 +181,28 @@ textarea {
 }
 
 .summary-section {
-  margin: 18px 18px 0;
-  padding: 16px;
+  margin: 12px 18px 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel-soft);
 }
 
 .summary-heading {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 6px 14px;
+  padding: 11px 16px;
+  cursor: pointer;
+  list-style: none;
 }
-
-.summary-heading h2 {
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.summary-heading span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
+.summary-heading::-webkit-details-marker { display: none; }
+.summary-heading:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.summary-heading .panel-title { color: var(--text); font-size: 15px; font-weight: 900; }
+.summary-heading .panel-scope { color: var(--muted); font-size: 12px; font-weight: 700; }
+.summary-heading .panel-toggle { color: var(--primary-dark); font-size: 13px; font-weight: 700; }
+.summary-section:not([open]) .when-open, .summary-section[open] .when-closed { display: none; }
+.summary-section > .summary-grid { padding: 2px 16px 16px; }
 
 .summary-grid {
   display: grid;
@@ -512,14 +508,14 @@ textarea {
   }
 
   .summary-section {
-    margin: 14px 14px 0;
-    padding: 14px;
+    margin: 10px 14px 0;
   }
 
-  .summary-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .summary-heading { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 12px; }
+  .summary-heading .panel-scope { grid-row: 2; grid-column: 1 / -1; }
+  .summary-heading .panel-scope:empty { display: none; }
+  .summary-heading .panel-toggle { grid-row: 1; grid-column: 2; }
+  .summary-section > .summary-grid { padding: 2px 12px 12px; }
 
   .summary-grid {
     grid-template-columns: 1fr;
@@ -534,6 +530,40 @@ textarea {
     width: 100%;
   }
 }
+
+[hidden] { display: none !important; }
+.filter-bar {
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px 20px;
+  margin:16px 18px 0; font-size:13px;
+}
+.filter-group, .date-range, .presets { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.filter-label { font-weight:700; color:var(--muted); }
+.filter-bar button, .filter-bar input {
+  min-height:34px; padding:6px 10px; border:1px solid var(--line-strong);
+  border-radius:6px; background:white; color:var(--text);
+}
+.filter-bar button { cursor:pointer; }
+.filter-bar button[aria-pressed="true"], .filter-bar button:hover {
+  background:var(--primary-soft); color:var(--primary-dark); border-color:var(--primary);
+}
+.filter-bar :focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.venue-picker { position:relative; }
+#venue-button { max-width:250px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+#venue-button::after { content:' ▾'; color:var(--muted); }
+.venue-menu {
+  position:absolute; top:calc(100% + 4px); left:0; z-index:3; width:min(265px,70vw);
+  border:1px solid var(--line-strong); border-radius:8px; padding:8px; background:white; box-shadow:var(--shadow-sm);
+}
+.venue-menu input { width:100%; }
+#venue-options { max-height:220px; overflow:auto; margin-top:6px; }
+#venue-options button { width:100%; border:0; text-align:left; }
+#venue-options p { padding:8px; color:var(--muted); }
+#filter-status { font-size:13px; color:var(--danger); margin:10px 18px 0; }
+#export-records:disabled { opacity:.55; cursor:default; }
+@media(max-width:640px) {
+  .filter-bar { margin:14px 14px 0; }
+  .date-range input { max-width:100%; min-width:0; }
+}
     </style>
 </head>
 
@@ -547,11 +577,41 @@ textarea {
                 <button class="action-button" onclick="window.location.href='query_withdrawal.html'" style="margin-left: 20px;">查询提现记录</button>
             </div>
 
-            <section class="summary-section" aria-labelledby="withdrawal-summary-title">
-                <div class="summary-heading">
-                    <h2 id="withdrawal-summary-title">全部加盟商资金汇总</h2>
-                    <span id="summary-scope">全部加盟商实时汇总，不受下方待审批列表影响</span>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <span class="filter-label">场地</span>
+                    <div class="venue-picker" id="venue-picker">
+                        <button type="button" id="venue-button" aria-expanded="false" aria-controls="venue-menu">全部场地</button>
+                        <div class="venue-menu" id="venue-menu" hidden>
+                            <input id="venue-search" type="search" placeholder="搜索场地名称" aria-label="搜索场地名称" autocomplete="off">
+                            <div id="venue-options"></div>
+                        </div>
+                    </div>
                 </div>
+                <div class="presets" id="presets" role="group" aria-label="时间范围">
+                    <span class="filter-label">时间</span>
+                    <button type="button" data-period="all" aria-pressed="true">全部时间</button>
+                    <button type="button" data-period="today" aria-pressed="false">今天</button>
+                    <button type="button" data-period="yesterday" aria-pressed="false">昨天</button>
+                    <button type="button" data-period="week" aria-pressed="false">本周</button>
+                    <button type="button" data-period="lastWeek" aria-pressed="false">上周</button>
+                    <button type="button" data-period="month" aria-pressed="false">本月</button>
+                    <button type="button" data-period="lastMonth" aria-pressed="false">上月</button>
+                </div>
+                <form id="date-range" class="date-range">
+                    <input type="date" id="date-start" aria-label="开始日期" min="1000-01-01" max="9999-12-31" required>
+                    <span>至</span>
+                    <input type="date" id="date-end" aria-label="结束日期" min="1000-01-01" max="9999-12-31" required>
+                    <button type="submit">查询时段</button>
+                </form>
+            </div>
+            <p id="filter-status" role="alert" hidden></p>
+            <details open class="summary-section" id="live-section" aria-labelledby="withdrawal-summary-title">
+                <summary class="summary-heading">
+                    <span class="panel-title" id="withdrawal-summary-title">全部加盟商资金汇总</span>
+                    <span class="panel-scope" id="summary-scope">全部加盟商实时汇总，不受下方待审批列表影响</span>
+                    <span class="panel-toggle" aria-hidden="true"><span class="when-closed">展开 ▾</span><span class="when-open">收起 ▴</span></span>
+                </summary>
                 <div class="summary-grid" id="withdrawal-summary">
                     <div class="summary-card is-loading" id="player-balance-card">
                         <div class="summary-card-label">玩家余额</div>
@@ -561,7 +621,7 @@ textarea {
                     <div class="summary-card is-loading" data-summary-key="total_balance">
                         <div class="summary-card-label">总余额</div>
                         <div class="summary-card-value">加载中</div>
-                        <div class="summary-card-note">全部加盟商账户余额</div>
+                        <div class="summary-card-note">所选场地的加盟商账户余额</div>
                     </div>
                     <div class="summary-card is-primary is-loading" data-summary-key="available_balance">
                         <div class="summary-card-label">可提现</div>
@@ -614,10 +674,59 @@ textarea {
                         <div class="summary-card-note">尚未结算的图传费用</div>
                     </div>
                 </div>
-            </section>
+            </details>
             
+            <details class="summary-section" aria-labelledby="activity-title">
+                <summary class="summary-heading">
+                    <span class="panel-title" id="activity-title">资金流水与提现汇总</span>
+                    <span class="panel-scope" id="activity-scope"></span>
+                    <span class="panel-toggle" aria-hidden="true"><span class="when-closed">展开 ▾</span><span class="when-open">收起 ▴</span></span>
+                </summary>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-card-label">账户入账</div>
+                        <div class="summary-card-value" data-activity="inflow">—</div>
+                        <div class="summary-card-note">按流水时间，含提现撤销退回</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">账户出账</div>
+                        <div class="summary-card-value" data-activity="outflow">—</div>
+                        <div class="summary-card-note">按流水时间统计提现扣款</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">提现申请</div>
+                        <div class="summary-card-value" data-activity="request_count">—</div>
+                        <div class="summary-card-note">按申请时间，含已驳回、已取消</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">申请结算金额</div>
+                        <div class="summary-card-value" data-activity="requested_settlement">—</div>
+                        <div class="summary-card-note">按申请金额，剔除驳回、取消</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">待处理打款金额</div>
+                        <div class="summary-card-value" data-activity="pending_amount">—</div>
+                        <div class="summary-card-note">可处理且未打款申请的实际金额</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">已打款金额</div>
+                        <div class="summary-card-value" data-activity="paid_amount">—</div>
+                        <div class="summary-card-note">所选申请中已打款的实际金额</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">已打款平台扣除</div>
+                        <div class="summary-card-value" data-activity="paid_platform_fee">—</div>
+                        <div class="summary-card-note">已打款申请的技术服务费</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">已打款提现手续费</div>
+                        <div class="summary-card-value" data-activity="paid_withdrawal_fee">—</div>
+                        <div class="summary-card-note">已打款申请的提现手续费</div>
+                    </div>
+                </div>
+            </details>
             <!-- 导出按钮 -->
-            <button class="action-button" onclick="exportToExcel()">导出到 Excel</button>
+            <button class="action-button" id="export-records" disabled onclick="exportToExcel()">导出到 Excel</button>
             <!-- 提现记录列表 -->
             <div id="withdrawal-records" class="record-list"></div>
         </div>
@@ -625,10 +734,133 @@ textarea {
 
     <script src="/res/assets/js/xlsx.full.min.js"></script> 
     <script>
-        const lockedOrdersEmbed = new URLSearchParams(window.location.search).get('embed');
-        if (lockedOrdersEmbed) {
-            const lockedOrdersParams = new URLSearchParams({ scope: 'all', embed: lockedOrdersEmbed });
-            document.getElementById('admin-locked-orders-card').href = 'withdrawal_locked_orders.html?' + lockedOrdersParams.toString();
+        const byId = id => document.getElementById(id);
+        const pageParams = new URLSearchParams(location.search);
+        const filters = {venue: pageParams.get('venue_id') || '', start: '', end: '', period: 'all'};
+        let venues = [];
+        let recordsForExport = [];
+        let activeRequest;
+        const dateStart = byId('date-start');
+        const dateEnd = byId('date-end');
+
+        function periodDates(period, now = new Date()) {
+            if (period === 'all') return ['', ''];
+            // 固定使用北京时间的自然日，再用 UTC 日历算术处理跨月和跨年。
+            const day = new Date(now.getTime() + 8 * 3600000).toISOString().slice(0, 10);
+            const start = new Date(day + 'T00:00:00Z');
+            const end = new Date(start);
+            if (period === 'yesterday') {
+                start.setUTCDate(start.getUTCDate() - 1);
+                end.setTime(start.getTime());
+            } else if (period === 'week' || period === 'lastWeek') {
+                const offset = (start.getUTCDay() + 6) % 7;
+                start.setUTCDate(start.getUTCDate() - offset - (period === 'lastWeek' ? 7 : 0));
+                end.setTime(start.getTime());
+                end.setUTCDate(end.getUTCDate() + 6);
+            } else if (period === 'month' || period === 'lastMonth') {
+                start.setUTCDate(1);
+                if (period === 'lastMonth') start.setUTCMonth(start.getUTCMonth() - 1);
+                end.setUTCFullYear(start.getUTCFullYear(), start.getUTCMonth() + 1, 0);
+            }
+            return [start, end].map(date => date.toISOString().slice(0, 10));
+        }
+
+        function applyPeriod(period, start, end) {
+            Object.assign(filters, {period, start, end});
+            dateStart.value = start;
+            dateEnd.value = end;
+            dateEnd.setCustomValidity('');
+            byId('presets').querySelectorAll('button').forEach(button => {
+                button.setAttribute('aria-pressed', String(button.dataset.period === period));
+            });
+            loadWithdrawalRecords();
+        }
+        byId('presets').addEventListener('click', event => {
+            const period = event.target.dataset.period;
+            if (period) applyPeriod(period, ...periodDates(period));
+        });
+        byId('date-range').addEventListener('input', () => dateEnd.setCustomValidity(''));
+        byId('date-range').addEventListener('submit', event => {
+            event.preventDefault();
+            if (dateStart.value > dateEnd.value) {
+                dateEnd.setCustomValidity('结束日期不能早于开始日期');
+                dateEnd.reportValidity();
+                return;
+            }
+            applyPeriod('custom', dateStart.value, dateEnd.value);
+        });
+
+        function venueLabel() {
+            if (!filters.venue) return '全部场地';
+            const venue = venues.find(item => String(item.id) === filters.venue);
+            return (venue ? venue.venue_name + ' · ' : '') + 'ID ' + filters.venue;
+        }
+        function toggleVenues(open) {
+            byId('venue-menu').hidden = !open;
+            byId('venue-button').setAttribute('aria-expanded', String(open));
+            if (open) {
+                byId('venue-search').value = '';
+                renderVenues();
+                byId('venue-search').focus();
+            }
+        }
+        function renderVenues() {
+            const keyword = byId('venue-search').value.trim().toLocaleLowerCase();
+            const list = byId('venue-options');
+            list.replaceChildren();
+            const entries = [{id:'', venue_name:'全部场地'}, ...venues];
+            for (const venue of entries) {
+                const id = String(venue.id);
+                const name = String(venue.venue_name || '');
+                if (!name.toLocaleLowerCase().includes(keyword) && !id.includes(keyword)) continue;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = id ? name + ' · ID ' + id : name;
+                button.setAttribute('aria-pressed', String(id === filters.venue));
+                button.onclick = () => {
+                    filters.venue = id;
+                    toggleVenues(false);
+                    byId('venue-button').focus();
+                    loadWithdrawalRecords();
+                };
+                list.appendChild(button);
+            }
+            if (!list.children.length) {
+                const empty = document.createElement('p');
+                empty.textContent = '没有匹配的场地';
+                list.appendChild(empty);
+            }
+        }
+        byId('venue-button').onclick = () => toggleVenues(byId('venue-menu').hidden);
+        byId('venue-search').oninput = renderVenues;
+        document.addEventListener('click', event => {
+            if (!byId('venue-picker').contains(event.target)) toggleVenues(false);
+        });
+        byId('venue-picker').addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                toggleVenues(false);
+                byId('venue-button').focus();
+            }
+            if (event.key === 'ArrowDown' && event.target === byId('venue-search')) {
+                event.preventDefault();
+                byId('venue-options').querySelector('button')?.focus();
+            }
+        });
+
+        function syncScope() {
+            const label = venueLabel();
+            byId('venue-button').textContent = label;
+            byId('activity-scope').textContent = label + ' · ' +
+                (filters.start ? filters.start + ' 至 ' + filters.end : '全部时间');
+            byId('live-section').hidden = Boolean(filters.start);
+            byId('player-balance-card').hidden = Boolean(filters.venue || filters.start);
+            byId('withdrawal-summary-title').textContent = filters.venue ? '场地实时资金汇总' : '全部加盟商资金汇总';
+            const link = byId('admin-locked-orders-card');
+            const params = new URLSearchParams(filters.venue ? {venue_id:filters.venue, from:'approval'} : {scope:'all'});
+            if (pageParams.get('embed')) params.set('embed', pageParams.get('embed'));
+            link.href = 'withdrawal_locked_orders.html?' + params;
+            link.querySelector('.summary-card-note').textContent = '查看' + label + '锁定明细 →';
+            link.setAttribute('aria-label', '查看' + label + '锁定订单');
         }
 
         function formatSummaryMoney(value) {
@@ -654,7 +886,10 @@ textarea {
         function displayWithdrawalSummary(summary) {
             const values = summary || {};
             const scopeElement = document.getElementById('summary-scope');
-            if (Number.isFinite(Number(values.venue_count))) {
+            scopeElement.textContent = '';
+            if (filters.venue) {
+                scopeElement.textContent = venueLabel();
+            } else if (Number.isFinite(Number(values.venue_count))) {
                 scopeElement.textContent = `全部 ${Number(values.venue_count).toLocaleString('zh-CN')} 个场地的加盟商实时汇总`;
             }
             if (values.fee_calculation_error) {
@@ -678,53 +913,60 @@ textarea {
             });
         }
 
-        // 获取提现记录
-        function loadWithdrawalRecords() {
-            const url = '/api/pay/getpaylist.php'; 
-            fetch(url)
-               .then(response => response.json()) 
-               .then(data => {
-                    if (data.code === 0) {
-                        displayWithdrawalSummary(data.summary);
-                    }
-                    if (data.code  === 0 && data.data  && data.data.length  > 0) {
-                        displayWithdrawalRecords(data.data); 
-                    } else {
-                        document.getElementById('withdrawal-records').innerHTML  = '<p style="text-align:center;">暂无提现记录</p>';
-                    }
-                })
-               .catch(error => {
-                    console.error('   提现记录加载失败:', error);
-                    displayWithdrawalSummary({ frozen_amount_available: false });
-                });
+        function showFilterError(message) {
+            byId('filter-status').hidden = !message;
+            byId('filter-status').textContent = message;
+        }
+        function displayActivity(activity) {
+            document.querySelectorAll('[data-activity]').forEach(element => {
+                const key = element.dataset.activity;
+                element.textContent = activity[key] == null ? '—' :
+                    formatSummaryValue(activity[key], key.endsWith('_count') ? 'count' : 'money');
+            });
+        }
+        async function loadWithdrawalRecords() {
+            if (activeRequest) activeRequest.abort();
+            const controller = new AbortController();
+            activeRequest = controller;
+            const params = new URLSearchParams();
+            if (filters.venue) params.set('venue_id', filters.venue);
+            if (filters.start) {
+                params.set('start_date', filters.start);
+                params.set('end_date', filters.end);
+            }
+            syncScope();
+            loadPlayerBalance();
+            showFilterError('');
+            displayWithdrawalSummary(null);
+            displayActivity({});
+            recordsForExport = [];
+            byId('export-records').disabled = true;
+            const list = byId('withdrawal-records');
+            list.textContent = '正在查询…';
+            try {
+                const response = await fetch('/api/pay/getpaylist.php?' + params, {cache:'no-store', signal:controller.signal});
+                const data = await response.json();
+                if (controller !== activeRequest) return;
+                if (!response.ok || data.code !== 0) throw new Error(data.msg || '提现申请查询失败');
+                venues = data.venues;
+                syncScope();
+                if (!byId('venue-menu').hidden) renderVenues();
+                if (!filters.start) displayWithdrawalSummary(data.summary);
+                displayActivity(data.activity);
+                if ([...document.querySelectorAll('[data-activity]')].some(el => data.activity[el.dataset.activity] == null) || (!filters.start && !data.summary)) {
+                    showFilterError('部分资金汇总暂时无法读取，请重新查询。');
+                }
+                recordsForExport = data.data;
+                if (recordsForExport.length) displayWithdrawalRecords(recordsForExport);
+                else list.innerHTML = '<p style="text-align:center">当前筛选范围内暂无待处理的提现申请</p>';
+                byId('export-records').disabled = !recordsForExport.length;
+            } catch (error) {
+                if (controller !== activeRequest) return;
+                list.textContent = '';
+                showFilterError(error.message || '读取失败，请重新查询');
+            }
         }
 
-        // 显示提现记录列表
-        // function displayWithdrawalRecords(records) {
-        //     const container = document.getElementById('withdrawal-records'); 
-        //     container.innerHTML  = '';
-        //     records.forEach(record  => {
-        //         const item = document.createElement('div'); 
-        //         item.classList.add('record-item'); 
-        //         item.innerHTML  = `
-        //             <span class="record-title">提现编号：${record.id}</span> 
-        //             <span>账户姓名：${record.account_name}</span> 
-        //             <span>场地名称：${record.venue_name}(ID:${record.venue_id})</span> 
-        //             <span>账户类型：${record.account_type}</span> 
-        //             <span style="color: #007BFF; font-weight: 700; text-shadow: 0 0 2px rgba(0,123,255,0.3);">实际打款：${record.actual_amount}  元</span>
-        //             <span>提现账号 ：${record.withdrawal_account}</span> 
-        //             <span>提现金额：${record.withdrawal_amount}  元</span>
-        //             <span>技术服务费：${record.technical_service_fee}  元</span>
-        //             <span>提现手续费：${record.withdrawal_fee}  元</span>
-        //             <span>申请时间：${record.application_time}</span> 
-        //             <span>申请状态：${record.application_status  == 0 ? '待处理' : (record.application_status  == 1 ? '已处理' : (record.application_status  == 2 ? '已打款' : '拒绝'))}</span>
-        //             <span>打款状态：${record.payout_status  == 0 ? '未打款' : '已打款'}</span>
-        //             <button class="action-button" onclick="modifyApplicationStatus(${record.id},  ${record.application_status})">   修改申请状态</button>
-        //             <button class="action-button" onclick="modifyPayoutStatus(${record.id},  ${record.payout_status})">   修改打款状态</button>
-        //         `;
-        //         container.appendChild(item); 
-        //     });
-        // }
 function formatAccountGroups(account) {
     const value = String(account ?? '').trim();
     const digits = value.replace(/\s+/g, '');
@@ -894,85 +1136,72 @@ function displayWithdrawalRecords(records) {
 
         // 导出到 Excel
         function exportToExcel() {
-            const url = '/api/pay/getpaylist.php';  
-            fetch(url)
-              .then(response => response.json())  
-              .then(data => {
-                    if (data.code === 0 && data.data && data.data.length > 0) {
-                        const records = data.data;  
-                           // ✅ 按账户姓名排序（支持中文）
-                        records.sort((a, b) => {
-                            const nameA = a.account_name || '';
-                            const nameB = b.account_name || '';
-                            return nameA.localeCompare(nameB, 'zh-Hans-CN');
-                        });
-                        // 计算"实际打款"的总计值
-                        const totalActualAmount = records.reduce((sum, record) => sum + parseFloat(record.actual_amount), 0).toFixed(2);
+            if (!recordsForExport.length) return;
+            try {
+                const records = recordsForExport;
+                // 计算"实际打款"的总计值
+                const totalActualAmount = records.reduce((sum, record) => sum + parseFloat(record.actual_amount), 0).toFixed(2);
 
-                        const wsData = records.map(record => ({
-                            '提现编号': record.id,  
-                            '账户姓名': record.account_name,  
-                            '场地名称': `${record.venue_name}(ID:${record.venue_id})`,  
-                            '账户类型': record.account_type,  
-                            '实际打款': `${record.actual_amount}`, 
-                            '提现账号': record.withdrawal_account,  
-                            '提现总额': `${record.display_withdrawal_amount ?? record.withdrawal_amount}`,
-                            '图传费用扣减': `${record.image_fee_amount ?? 0}`,
-                            '参与结算金额': `${record.settlement_amount ?? record.withdrawal_amount}`,
-                            '退款扣减': `${record.refund_deduct_amount ?? 0}`,
-                            '账户扣减总额': `${record.total_debit_amount ?? record.withdrawal_amount}`,
-                            '技术服务费': `${record.technical_service_fee}`, 
-                            '提现手续费': `${record.withdrawal_fee}`, 
-                            '申请时间': record.application_time,  
-                            '申请状态': record.application_status == 0 ? '待处理' : (record.application_status == 1 ? '已处理' : (record.application_status == 2 ? '已打款' : '拒绝')),
-                            '打款状态': record.payout_status == 0 ? '未打款' : '已打款'
-                        }));
+                const wsData = records.map(record => ({
+                    '提现编号': record.id,  
+                    '账户姓名': record.account_name,  
+                    '场地名称': `${record.venue_name}(ID:${record.venue_id})`,  
+                    '账户类型': record.account_type,  
+                    '实际打款': `${record.actual_amount}`, 
+                    '提现账号': record.withdrawal_account,  
+                    '提现总额': `${record.display_withdrawal_amount ?? record.withdrawal_amount}`,
+                    '图传费用扣减': `${record.image_fee_amount ?? 0}`,
+                    '参与结算金额': `${record.settlement_amount ?? record.withdrawal_amount}`,
+                    '退款扣减': `${record.refund_deduct_amount ?? 0}`,
+                    '账户扣减总额': `${record.total_debit_amount ?? record.withdrawal_amount}`,
+                    '技术服务费': `${record.technical_service_fee}`, 
+                    '提现手续费': `${record.withdrawal_fee}`, 
+                    '申请时间': record.application_time,  
+                    '申请状态': record.application_status == 0 ? '待处理' : (record.application_status == 1 ? '已处理' : (record.application_status == 2 ? '已打款' : '拒绝')),
+                    '打款状态': record.payout_status == 0 ? '未打款' : '已打款'
+                }));
 
-                        // 添加"实际打款"总计行
-                        wsData.push({
-                            '提现编号': '',
-                            '账户姓名': '',
-                            '场地名称': '',
-                            '账户类型': '',
-                            '实际打款': `${totalActualAmount}`,
-                            '提现账号': '',
-                            '提现总额': '',
-                            '图传费用扣减': '',
-                            '参与结算金额': '',
-                            '退款扣减': '',
-                            '账户扣减总额': '',
-                            '技术服务费': '',
-                            '提现手续费': '',
-                            '申请时间': '',
-                            '申请状态': '',
-                            '打款状态': ''
-                        });
-
-                        const ws = XLSX.utils.json_to_sheet(wsData);
-                        const wb = XLSX.utils.book_new();  
-                        XLSX.utils.book_append_sheet(wb, ws, '提现记录');
-
-                        // 获取当前时间戳
-                        const timestamp = new Date().toISOString().replace(/[:.-]/g, '');
-
-                        // 生成带有时间戳的文件名
-                        const fileName = `提现记录_${timestamp}.xlsx`;
-
-                        XLSX.writeFile(wb, fileName);
-                    } else {
-                        alert('暂无提现记录，无法导出');
-                    }
-                })
-              .catch(error => {
-                    console.error('  导出失败:', error);
-                    alert('导出失败，请重试');
+                // 添加"实际打款"总计行
+                wsData.push({
+                    '提现编号': '',
+                    '账户姓名': '',
+                    '场地名称': '',
+                    '账户类型': '',
+                    '实际打款': `${totalActualAmount}`,
+                    '提现账号': '',
+                    '提现总额': '',
+                    '图传费用扣减': '',
+                    '参与结算金额': '',
+                    '退款扣减': '',
+                    '账户扣减总额': '',
+                    '技术服务费': '',
+                    '提现手续费': '',
+                    '申请时间': '',
+                    '申请状态': '',
+                    '打款状态': ''
                 });
+
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                const wb = XLSX.utils.book_new();  
+                XLSX.utils.book_append_sheet(wb, ws, '提现记录');
+
+                // 获取当前时间戳
+                const timestamp = new Date().toISOString().replace(/[:.-]/g, '');
+
+                // 生成带有时间戳的文件名
+                const fileName = `提现记录_${timestamp}.xlsx`;
+
+                XLSX.writeFile(wb, fileName);
+            } catch (error) {
+                console.error('导出失败', error);
+                alert('导出失败，请重试');
+            }
         }
 
         // 独立刷新玩家余额，避免定时刷新打断提现审批操作。
         let playerBalanceLoading = false;
         async function loadPlayerBalance() {
-            if (playerBalanceLoading || document.hidden) return;
+            if (playerBalanceLoading || document.hidden || filters.venue || filters.start) return;
             playerBalanceLoading = true;
             const card = document.getElementById('player-balance-card');
             const value = card.querySelector('.summary-card-value');
@@ -1000,7 +1229,6 @@ function displayWithdrawalRecords(records) {
                 playerBalanceLoading = false;
             }
         }
-        loadPlayerBalance();
         setInterval(loadPlayerBalance, 15000);
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) loadPlayerBalance();

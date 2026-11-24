@@ -469,19 +469,22 @@
     card.className = "venue-card";
     card.innerHTML = `
       <div class="venue-info">
-        <span class="venue-name">场地描述：${item.venue_description}</span>
+        <span class="venue-name">场地描述：<span data-description></span></span>
         <span>场地ID: ${item.venue_id}</span>
         <span>提交时间: ${time}</span>
       </div>
       <div class="venue-actions">
-        <button class="edit-btn" onclick="approveDesc(${item.venue_id})">通过</button>
+        <button class="edit-btn" data-approve>通过</button>
         <button class="edit-btn danger" onclick="toggleRejectDesc(${item.venue_id})">拒绝</button>
       </div>
       <div class="textarea-box" id="reject-desc-box-${item.venue_id}" style="display:none;">
         <textarea id="reason-desc-${item.venue_id}" rows="2" placeholder="请输入拒绝理由">内容不适宜</textarea>
-        <button class="danger" onclick="rejectDesc(${item.venue_id})" style="margin-top:8px;">确认拒绝</button>
+        <button class="danger" data-reject style="margin-top:8px;">确认拒绝</button>
       </div>
     `;
+    card.querySelector('[data-description]').textContent = item.venue_description || '（清空描述）';
+    card.querySelector('[data-approve]').onclick = () => reviewDesc(item, 'approve');
+    card.querySelector('[data-reject]').onclick = () => reviewDesc(item, 'reject');
     container.appendChild(card);
   });
 
@@ -544,27 +547,21 @@
       box.style.display = box.style.display === "none" ? "block" : "none";
     }
 
-    async function approveDesc(id) {
-      await fetch("/api/venue/review_venue_description.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venue_id: id, action: "approve" })
-      });
-      alert("描述审核通过");
-      loadDescList();
-    }
-
-    async function rejectDesc(id) {
-      const reason = document.getElementById(`reason-desc-${id}`).value.trim();
-      if (!reason) return alert("请输入拒绝理由");
-
-      await fetch("/api/venue/review_venue_description.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venue_id: id, action: "reject", reason })
-      });
-      alert("描述已拒绝");
-      loadDescList();
+    async function reviewDesc(item, action) {
+      const reason = action === 'reject' ? document.getElementById('reason-desc-' + item.venue_id).value.trim() : '';
+      if (action === 'reject' && !reason) return alert('请输入拒绝理由');
+      try {
+        const res = await fetch('/api/venue/review_venue_description.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({venue_id: item.venue_id, action, reason, expected_description: item.venue_description})
+        });
+        const result = await res.json();
+        alert(result.msg || (result.code === 0 ? '审核完成' : '审核失败'));
+        await loadDescList();
+      } catch (error) {
+        alert('请求失败，请刷新审核列表确认状态');
+      }
     }
 
     function toggleRejectDesc(id) {

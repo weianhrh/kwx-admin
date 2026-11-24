@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首页弹窗</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:clamp(12px,3vw,32px);background:#f4f7f8;color:#19292f;font:15px/1.55 "Microsoft YaHei",system-ui,sans-serif}
+main{max-width:980px;margin:auto;background:white;border:1px solid #dbe6e8;border-radius:10px}
+header{padding:16px 22px;border-bottom:1px solid #dfebec}h1{font-size:20px;margin:0}fieldset{border:0;margin:0;padding:20px 22px;min-width:0}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px}label,h2{display:block;font-size:14px;font-weight:650;margin:0 0 6px}
+textarea,select,button,input{font:inherit}textarea,select{width:100%;padding:9px;border:1px solid #c7d6da;border-radius:6px}textarea{resize:vertical;min-height:120px}select{margin-bottom:6px}
+.field{margin-bottom:18px}.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}button{cursor:pointer;border:1px solid #b8ccce;border-radius:6px;background:white;padding:7px 14px;color:#244c51}button:disabled{cursor:default;opacity:.55}
+.primary{border-color:#087e7d;background:#087e7d;color:white}small{display:block;color:#54686d;margin:4px 0}
+.preview{background:#f6f9fa;border:1px solid #dbe6e8;border-radius:8px;padding:12px}.preview img{display:block;max-width:100%;max-height:320px;object-fit:contain;margin:auto}.preview p{white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 0}.preview p:first-child,.preview img[hidden]+p{margin-top:0}
+[hidden]{display:none!important}#message{margin:0;padding:0 22px 16px;color:#086c65}#message.error{color:#ab3631}input[type=file]{width:100%}
+@media(max-width:650px){.grid{grid-template-columns:1fr;gap:8px}.actions{margin-top:12px}}
+</style></head>
+<body><main><header><h1>首页弹窗</h1></header>
+<form id="form"><fieldset id="fields" disabled><div class="grid"><div>
+<div class="field"><label for="announcement">公告文字</label><textarea id="announcement" rows="4"></textarea></div>
+<div class="field"><label for="picture">弹窗图片</label><input type="file" id="picture" accept="image/jpeg,image/png,image/webp"><small id="size">选择图片后自动压缩，保存时上传。</small>
+<div class="actions"><button type="button" id="undo" hidden>撤销换图</button><button type="button" id="remove">移除图片</button></div></div>
+<div class="field"><label for="display">弹出设置</label><select id="display"><option value="0">弹出</option><option value="1">隐藏</option></select><small>修改公告文字并保存后，会自动切换为弹出。</small></div></div>
+<section><h2>弹窗预览</h2><div class="preview"><img id="preview" alt="弹窗图片" hidden><p id="copy"></p></div></section></div>
+<button type="submit" id="save" class="primary">保存设置</button></fieldset></form>
+<p id="message" role="status" aria-live="polite">正在读取配置…</p></main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const api = '/api/operat/event_notice.php';
+const upload = 'https://app.kwxapp.cn/app/img/userimg/upload_profile.php';
+let saved, imageUrl = '', localPreview = '', compressed = null;
+let selection = 0, processing = false, invalidFile = false, saving = false, displayChoice = 0;
+
+function message(text, error = false) {
+  $('message').textContent = text;
+  $('message').classList.toggle('error', error);
+}
+function render() {
+  const changedText = $('announcement').value.trim() !== saved.announcement;
+  $('copy').textContent = $('announcement').value;
+  const source = localPreview || imageUrl;
+  if (source && $('preview').getAttribute('src') !== source) $('preview').src = source;
+  if (!source) $('preview').removeAttribute('src');
+  $('preview').hidden = !source;
+  $('display').value = changedText ? '0' : String(displayChoice);
+  $('display').disabled = changedText;
+  $('fields').disabled = saving;
+  $('save').disabled = processing || invalidFile || saving;
+  $('undo').hidden = !processing && !invalidFile && !compressed && imageUrl === saved.announcement_image;
+  $('remove').hidden = !source;
+}
+function resetImage(url) {
+  selection++;
+  if (localPreview) URL.revokeObjectURL(localPreview);
+  localPreview = '';
+  compressed = null;
+  imageUrl = url;
+  invalidFile = processing = false;
+  $('picture').value = '';
+  $('size').textContent = '选择图片后自动压缩，保存时上传。';
+}
+function showSaved(data) {
+  saved = data;
+  $('announcement').value = saved.announcement;
+  displayChoice = saved.is_display;
+  resetImage(saved.announcement_image);
+  render();
+}
+async function compact(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  try {
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('图片无法读取，请选择 JPG、PNG 或 WebP 图片'));
+      img.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    const longest = Math.max(img.naturalWidth, img.naturalHeight);
+    let edge = Math.min(longest, 1600);
+    const maxBytes = 500 * 1024;
+    while (edge >= 1) {
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * edge / longest));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * edge / longest));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.84, 0.72, 0.60]) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+        if (!blob || blob.type !== 'image/jpeg') throw new Error('图片压缩失败，请重新选择');
+        if (blob.size <= maxBytes) {
+          if (file.type === 'image/jpeg' && longest <= 1600 && file.size < blob.size) return file;
+          return blob;
+        }
+      }
+      edge = Math.floor(edge * 0.75);
+    }
+    throw new Error('无法将此图片压缩到 500 KB 以内，请重新选择');
+  } finally { URL.revokeObjectURL(url); }
+}
+function sizeLabel(n) { return (n / 1024).toFixed(1) + ' KB'; }
+$('picture').onchange = async () => {
+  const file = $('picture').files[0];
+  if (!file) return;
+  const token = ++selection;
+  processing = true;
+  invalidFile = false;
+  $('size').textContent = '正在压缩图片…';
+  message('');
+  render();
+  try {
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('请选择 JPG、PNG 或 WebP 图片');
+    const blob = await compact(file);
+    if (token !== selection) return;
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    compressed = blob;
+    localPreview = URL.createObjectURL(blob);
+    imageUrl = '';
+    $('size').textContent = '原图 ' + sizeLabel(file.size) + ' → 待上传 ' + sizeLabel(blob.size);
+  } catch (error) {
+    if (token !== selection) return;
+    invalidFile = true;
+    $('size').textContent = '请重新选择图片，或撤销换图。';
+    message(error.message, true);
+  } finally {
+    if (token === selection) { processing = false; render(); }
+  }
+};
+$('undo').onclick = () => { resetImage(saved.announcement_image); message(''); render(); };
+$('remove').onclick = () => { resetImage(''); message(''); render(); };
+$('announcement').oninput = render;
+$('display').onchange = () => { displayChoice = Number($('display').value); render(); };
+
+$('form').onsubmit = async event => {
+  event.preventDefault();
+  if (!saved || saving || processing || invalidFile) return;
+  const text = $('announcement').value.trim();
+  const display = Number($('display').value);
+  if (!text && !imageUrl && !compressed && display === 0) return message('请填写公告文字或选择图片', true);
+  saving = true;
+  render();
+  try {
+    if (compressed && !imageUrl) {
+      message('正在上传压缩后的图片…');
+      const body = new FormData();
+      body.append('file', compressed, 'notice.jpg');
+      const response = await fetch(upload, {method:'POST', body});
+      const result = await response.json();
+      if (!response.ok || result.code !== 0 || !result.url) throw new Error(result.msg || '图片上传失败');
+      imageUrl = result.url;
+    }
+    message('正在保存…');
+    const response = await fetch(api, {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({announcement:text, announcement_image:imageUrl, is_display:display, notice_version:saved.notice_version})});
+    const result = await response.json();
+    if (!response.ok || result.code !== 0) throw new Error(result.msg || '保存失败');
+    showSaved(result.data);
+    message(result.msg);
+  } catch (error) { message(error.message || '保存失败，请重试', true); }
+  finally { saving = false; render(); }
+};
+(async () => {
+  try {
+    const response = await fetch(api, {cache:'no-store'});
+    const result = await response.json();
+    if (!response.ok || result.code !== 0) throw new Error(result.msg || '读取失败');
+    showSaved(result.data);
+    message('');
+  } catch (error) { message(error.message || '读取失败，请刷新页面', true); }
+})();
+</script></body></html>

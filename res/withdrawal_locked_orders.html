@@ -148,8 +148,9 @@
       if (embed) query.set('embed', embed);
       const search = query.toString();
       const backLink = document.getElementById('back-link');
-      backLink.href = (isAllVenues ? 'paylist.html' : 'PaymentDisbursement_optimized.html') + (search ? '?' + search : '');
-      backLink.textContent = isAllVenues ? '‹ 返回提现审批' : '‹ 返回提现申请';
+      const fromApproval = isAllVenues || params.get('from') === 'approval';
+      backLink.href = (fromApproval ? 'paylist.html' : 'PaymentDisbursement_optimized.html') + (search ? '?' + search : '');
+      backLink.textContent = fromApproval ? '‹ 返回提现审批' : '‹ 返回提现申请';
     }
     function updateControls() {
       ['search-button','reset-button','refresh-button'].forEach(id => document.getElementById(id).disabled = state.loading);

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 require_once __DIR__ . '/../lib/withdrawal_display.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 function getAllVenueFrozenAmounts(array $venueIds): array
 {
@@ -27,11 +28,14 @@ function getAllVenueFrozenAmounts(array $venueIds): array
         $redis->connect();
         $redis->selectDb(1);
 
+        $pattern = count($venueIds) === 1 ? 'venue:' . (int)$venueIds[0] . ':frozen:*' : 'venue:*:frozen:*';
+        // 稀疏匹配可能出现空扫描页，继续到游标结束。
+        $redis->getNative()->setOption(Redis::OPT_SCAN, Redis::SCAN_RETRY);
         $keys = method_exists($redis, 'scan')
-            ? $redis->scan('venue:*:frozen:*', 500)
-            : $redis->getAllKeys('venue:*:frozen:*');
+            ? $redis->scan($pattern, 500)
+            : $redis->getAllKeys($pattern);
 
-        foreach ($keys as $key) {
+        foreach (array_unique($keys) as $key) {
             if (!preg_match('/^venue:(\d+):frozen:/', (string)$key, $matches)) {
                 continue;
             }
@@ -82,6 +86,64 @@ if (!in_array((int)$user['role_id'], [1, 2], true)) {
     exit;
 }
 
+function paylistError($code, $message)
+{
+    echo json_encode(['code' => $code, 'msg' => $message, 'data' => []], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function paylistDate($key)
+{
+    $value = $_GET[$key] ?? '';
+    if ($value === '') return null;
+    if (!is_string($value) || !preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $value)) {
+        paylistError(1002, '日期格式应为 YYYY-MM-DD');
+    }
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value, new DateTimeZone('Asia/Shanghai'));
+    if (!$date || $date->format('Y-m-d') !== $value || (int)$date->format('Y') < 1000) {
+        paylistError(1002, '日期无效');
+    }
+    return $date;
+}
+
+// 金额按各自业务时间归属，结束日整天计入。
+function paylistRange($alias, $timeColumn, $venueId, $start, $end)
+{
+    $where = '';
+    $params = [];
+    if ($venueId) {
+        $where .= " AND {$alias}.venue_id = ?";
+        $params[] = $venueId;
+    }
+    if ($start) {
+        $where .= " AND {$alias}.{$timeColumn} >= ?";
+        $params[] = $start->format('Y-m-d 00:00:00');
+        if ($end->format('Y-m-d') !== '9999-12-31') {
+            $where .= " AND {$alias}.{$timeColumn} < ?";
+            $params[] = $end->modify('+1 day')->format('Y-m-d 00:00:00');
+        }
+    }
+    return [$where, $params];
+}
+
+$start = paylistDate('start_date');
+$end = paylistDate('end_date');
+if (($start === null) !== ($end === null) || ($start && $start > $end)) {
+    paylistError(1002, '请选择完整、有效的起止日期');
+}
+
+$rawVenue = $_GET['venue_id'] ?? '';
+$selectedVenue = $rawVenue === '' ? 0 : filter_var($rawVenue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if ($selectedVenue === false) paylistError(1002, '场地参数无效');
+$venues = $database->query('SELECT id, venue_name FROM venues ORDER BY venue_name, id');
+if (!is_array($venues)) paylistError(500, '场地列表读取失败');
+if ($selectedVenue && !in_array($selectedVenue, array_map('intval', array_column($venues, 'id')), true)) {
+    paylistError(1002, '所选场地不存在');
+}
+
+[$requestWhere, $requestParams] = paylistRange('wr', 'application_time', $selectedVenue, $start, $end);
+[$fundWhere, $fundParams] = paylistRange('fc', 'change_date', $selectedVenue, $start, $end);
+
 // 查询未打款且仍可处理的申请列表，并关联 venue_funds 表获取 withdrawal_account，关联 venues 表获取 venue_name
 $query = "SELECT
     wr.*,
@@ -99,7 +161,7 @@ WHERE
     wr.payout_status = 0
     AND wr.application_status IN (0, 1)";
 
-$result = $database->query($query);
+$result = $database->query($query . $requestWhere, $requestParams);
 
 if ($result === false) {
     echo json_encode(['code' => 500, 'msg' => '查询提现申请列表失败', 'data' => []]);
@@ -113,10 +175,29 @@ foreach ($result as &$row) {
 }
 unset($row);
 
+$withdrawTotals = $database->query(
+    "SELECT COUNT(*) AS request_count,
+            COALESCE(SUM(CASE WHEN wr.application_status IN (0, 1, 2) THEN wr.withdrawal_amount END), 0) AS requested_settlement,
+            COALESCE(SUM(CASE WHEN wr.payout_status = 0 AND wr.application_status IN (0, 1) THEN wr.actual_amount END), 0) AS pending_amount,
+            COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.actual_amount END), 0) AS paid_amount,
+            COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.technical_service_fee END), 0) AS paid_platform_fee,
+            COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.withdrawal_fee END), 0) AS paid_withdrawal_fee
+     FROM withdrawal_requests wr WHERE 1=1" . $requestWhere, $requestParams
+);
+$fundTotals = $database->query(
+    "SELECT COALESCE(SUM(CASE WHEN fc.change_type = 'revenue' THEN fc.change_amount END), 0) AS inflow,
+            COALESCE(SUM(CASE WHEN fc.change_type = 'withdrawal' THEN fc.change_amount END), 0) AS outflow
+     FROM fund_changes fc WHERE 1=1" . $fundWhere, $fundParams
+);
+$activity = array_merge($withdrawTotals[0] ?? [], $fundTotals[0] ?? []);
+
+// 有日期时使用历史流水和申请记录，避免用实时余额代替历史数据。
 // 全部加盟商资金汇总，完整沿用提现申请页 CalculateSettlements.php 的口径。
 // 先扣除各场地冻结、退款、锁定和图传费用，再按免重复扣费台账分摊结算金额。
 // 推广收益和已分账日收益已在账户余额中，不能在汇总时再次加减。
-$summaryRows = $database->query(
+$venueWhere = $selectedVenue ? ' WHERE v.id = ?' : '';
+$venueParams = $selectedVenue ? [$selectedVenue] : [];
+$summaryRows = $start ? null : $database->query(
     "SELECT
         v.id AS venue_id,
         COALESCE(f.account_balance, 0) AS account_balance,
@@ -167,7 +248,7 @@ $summaryRows = $database->query(
          WHERE is_checked = 0
          GROUP BY venue_id
      ) d ON d.venue_id = v.id
-     ORDER BY v.id ASC"
+     {$venueWhere} ORDER BY v.id ASC", $venueParams
 );
 
 $summary = null;
@@ -182,7 +263,7 @@ if (is_array($summaryRows)) {
         // 一次读取所有场地的台账净额，包含入账、提现扣减及退回记录。
         $feeExemptRows = $summaryRows ? $database->query(
             'SELECT venue_id, COALESCE(SUM(amount), 0) AS amount
-             FROM kwx_8899_fee_exempt_ledger GROUP BY venue_id'
+             FROM kwx_8899_fee_exempt_ledger' . ($selectedVenue ? ' WHERE venue_id = ?' : '') . ' GROUP BY venue_id', $venueParams
         ) : [];
         if (!is_array($feeExemptRows)) {
             throw new RuntimeException('读取免重复扣费余额失败');
@@ -274,6 +355,8 @@ echo json_encode([
     'code' => 0,
     'msg' => '查询提现申请列表成功',
     'data' => $result,
+    'venues' => $venues,
+    'activity' => $activity,
     'summary' => $summary
 ], JSON_UNESCAPED_UNICODE);
 

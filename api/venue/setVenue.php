@@ -5,6 +5,7 @@ require_once '../Database.php';
 require_once '../lib/venue_scope.php';
 require_once '../RedisHelper.php';
 require_once './_venue_locks.php';
+require_once __DIR__ . '/_description_review.php';
 
 $locks    = new VenueLocks();
 $database = new Database();
@@ -73,6 +74,7 @@ $role_id      = (int)$user[0]['role_id'];
 $venue_id     = $data['id'] ?? $user[0]['venue_id'];
 $operator_uid = (int)$user[0]['uid'];
 
+$venue_id = filter_var($venue_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 if (!$venue_id) {
     echo json_encode(['code' => 1002, 'msg' => '缺少场地ID', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
@@ -80,6 +82,13 @@ if (!$venue_id) {
 if (!venue_scope_can_access($database, $user[0], (int)$venue_id)) {
     echo json_encode(['code' => 1003, 'msg' => '权限不足，无法修改该场地', 'data' => []], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+if (array_key_exists('venue_description', $data)) {
+    if (!in_array($role_id, [1, 2, 3, 4], true) || !is_string($data['venue_description'])) {
+        descReviewReply(1003, '无权修改描述或描述格式无效');
+    }
+    lockVenueDescription($database, (int)$venue_id);
 }
 
 // ========== 获取原始信息 ==========
@@ -239,49 +248,6 @@ if (array_key_exists('venue_name', $data)) {
     }
 }
 
-
-// ===== 描述审核（仅当传了 venue_description 且与旧值不同）=====
-if (array_key_exists('venue_description', $data)) {
-    $new_desc = trim((string)$data['venue_description']);
-    if ($new_desc !== $old_desc && in_array($role_id, [1, 2], true)) {
-        // 管理员直接更新；普通账号仍走原审核流程。
-        $updateRes = $database->query(
-            'UPDATE venues SET venue_description = ? WHERE id = ?',
-            [$new_desc, $venue_id],
-            true
-        );
-        if ($updateRes === false) {
-            echo json_encode(['code' => 1, 'msg' => '场地描述保存失败'], JSON_UNESCAPED_UNICODE);
-            $database->close();
-            exit;
-        }
-        // 清理旧审核项，避免旧的待审核描述之后覆盖管理员的新描述。
-        $descKey = "venue_description_audit:$venue_id";
-        $redis->delete($descKey);
-        $redis->getNative()->sRem('venue_description_audit_pool', $descKey);
-    } elseif ($new_desc !== $old_desc) {
-        $check = containsSensitiveWords($new_desc, $words);
-        $is_sensitive = $is_sensitive || !$check['pass'];
-        // ✅ 新增：标记“进入审核：描述”
-        $pending_review = true;
-        if (!in_array('描述', $pending_fields, true)) $pending_fields[] = '描述';
-        
-        $descKey  = "venue_description_audit:$venue_id";
-        $descData = [
-            'venue_id'          => (int)$venue_id,
-            'venue_description' => $new_desc,
-            'status'            => 'pending',
-            'reason'            => '',
-            'timestamp'         => time()
-        ];
-        $existing     = $redis->get($descKey);
-        $existingData = $existing ? json_decode($existing, true) : null;
-        if (!$existingData || $existingData['venue_description'] !== $new_desc || $existingData['status'] !== 'pending') {
-            $redis->save($descKey, json_encode($descData, JSON_UNESCAPED_UNICODE), 86400);
-            $redis->getNative()->sAdd('venue_description_audit_pool', $descKey);
-        }
-    }
-}
 
 // ========== 组装“非敏感字段”动态更新 ==========
 $allowed_status = ['营业中','休息中','建设中'];
@@ -682,6 +648,50 @@ if (in_array($role_id, [1, 2], true)&& isset($data['unlock_income_30d']) && (int
     ];
 }
 
+
+// ===== 描述审核（仅当传了 venue_description 且与旧值不同）=====
+if (array_key_exists('venue_description', $data)) {
+    $new_desc = trim((string)$data['venue_description']);
+    if ($new_desc !== $old_desc && in_array($role_id, [1, 2], true)) {
+        // 管理员直接更新；普通账号仍走原审核流程。
+        $updateRes = $database->query(
+            'UPDATE venues SET venue_description = ? WHERE id = ?',
+            [$new_desc, $venue_id],
+            true
+        );
+        if ($updateRes === false) {
+            echo json_encode(['code' => 1, 'msg' => '场地描述保存失败'], JSON_UNESCAPED_UNICODE);
+            $database->close();
+            exit;
+        }
+        // 清理旧审核项，避免旧的待审核描述之后覆盖管理员的新描述。
+        clearVenueDescriptionAudit($redis, (int)$venue_id);
+    } elseif ($new_desc !== $old_desc && in_array($role_id, [3, 4], true)) {
+        $check = containsSensitiveWords($new_desc, $words);
+        $is_sensitive = $is_sensitive || !$check['pass'];
+        // ✅ 新增：标记“进入审核：描述”
+        $pending_review = true;
+        if (!in_array('描述', $pending_fields, true)) $pending_fields[] = '描述';
+        
+        $descKey  = "venue_description_audit:$venue_id";
+        $descData = [
+            'venue_id'          => (int)$venue_id,
+            'venue_description' => $new_desc,
+            'status'            => 'pending',
+            'reason'            => '',
+            'timestamp'         => time()
+        ];
+        $existing     = $redis->get($descKey);
+        $existingData = $existing ? json_decode($existing, true) : null;
+        if (!$existingData || $existingData['venue_description'] !== $new_desc || $existingData['status'] !== 'pending') {
+            $tx = $redis->getNative()->multi();
+            $tx->setEx($descKey, 86400, json_encode($descData, JSON_UNESCAPED_UNICODE));
+            $tx->sAdd('venue_description_audit_pool', $descKey);
+            $result = $tx->exec();
+            if (!$result || in_array(false, $result, true)) descReviewReply(500, '描述提交审核失败，请重试');
+        }
+    }
+}
 
 // ========== 统一返回 ==========
 if ($role_id === 1 || $role_id === 2) {

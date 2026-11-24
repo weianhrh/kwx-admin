@@ -19,7 +19,7 @@ $database = new Database();
 
 // 获取 session_token
 $session_token = $_COOKIE['session_token'] ?? null;
-logMessage("Session token: " . ($session_token ?? 'null'));
+
 
 if (!$session_token) {
     logMessage("未提供 session_token，返回登录错误");
@@ -28,7 +28,7 @@ if (!$session_token) {
 }
 
 // 查询用户权限和绑定场地
-$sql = "SELECT role_id, venue_id FROM admin_users WHERE session_token = ?";
+$sql = "SELECT id, role_id, venue_id FROM admin_users WHERE session_token = ?";
 $user = $database->query($sql, [$session_token]);
 
 if (!$user) {
@@ -52,7 +52,7 @@ $params = [];
 $venueFields = "id, venue_name, venue_subtitle, venue_unique_subtitle, image_url, venue_description, venue_tags, venue_type, event_id, start_time, queue_length, live_stream_url, show_live_stream, venue_status, income_30d_lock, zego_appid";
 $where = [];
 
-if ($role_id == 1 || $role_id == 2 ||  $role_id == 3) {
+if (venue_scope_is_platform_admin($current_user)) {
     if (!empty($get_venue_id) && is_numeric($get_venue_id)) {
         // 管理员传了有效 id，就查指定场地
         $where[] = "id = ?";
@@ -65,6 +65,9 @@ if ($role_id == 1 || $role_id == 2 ||  $role_id == 3) {
 } else {
     // 加盟商可查看自己名下多个场地；场地管理员仍然只看自己的场地
     $requestedVenueId = venue_scope_requested_id(['venue_id' => $get_venue_id]);
+    if (!$requestedVenueId && (int)$role_id === 3) {
+        $requestedVenueId = venue_scope_resolve_single_id($database, $current_user);
+    }
     $scopeParams = [];
     $scopeSql = venue_scope_apply_filter($database, $current_user, 'id', $scopeParams, $requestedVenueId);
     if ($scopeSql !== '') {

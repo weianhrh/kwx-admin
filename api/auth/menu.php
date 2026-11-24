@@ -103,6 +103,7 @@ function menu_admin_tree(): array
         menu_leaf(31, 9006, 'ranking', '业绩排行', '/iframe/link/top', '', 1),
         menu_leaf(80, 9006, 'energygift', '赠送能量', '/iframe/link/energygift', '', 2),
         menu_leaf(67, 9006, 'MessageMgmt', '公告通知', '/iframe/link/MessageMgmt', '', 1),
+        menu_leaf(90062, 9006, 'event-notice', '首页弹窗', '/iframe/link/event_notice', '', 2),
         menu_leaf(68, 9006, 'redis_notification', '飘瓶消息', '/iframe/link/redis_notification', '', 2),
         menu_leaf(49, 9006, 'global_config_api', '全局配置', '/iframe/link/global_config_api', 'layui-icon-set-fill', 3),
         menu_leaf(79, 9006, 'send_notify', '手机通知', '/iframe/link/send_notify', '', 3),
