@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信商户月统计</title>
+    <style>
+:root {
+    color-scheme: light;
+    --line: #dfe8eb;
+    --muted: #5b6e75;
+    --accent: #08706e;
+    --tint: #e6f6f5;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    padding: 24px 28px;
+    background: #f4f7f8;
+    color: #172126;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+.card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 34px rgba(30, 55, 66, .08);
+}
+.report-header, .report-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 18px;
+}
+.report-header {
+    border-bottom: 1px solid var(--line);
+}
+h1 {
+    margin: 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 20px;
+    line-height: 1.4;
+}
+h1::before {
+    content: "";
+    width: 8px;
+    height: 20px;
+    border-radius: 4px;
+    background: #0f8f8c;
+}
+.report-controls select, .report-controls input, .report-controls button {
+    padding: 8px 12px;
+    border-radius: 7px;
+    font: inherit;
+}
+.report-controls select, .report-controls input { max-width: 100%; color: inherit; background: #fff; border: 1px solid #c9d8dd; }
+.report-controls button {
+    color: var(--accent);
+    background: var(--tint);
+    border: 1px solid #addbd9;
+    font-weight: 700;
+    cursor: pointer;
+}
+.report-controls button:hover { background: #d9f0ef; }
+.merchant-card { margin-bottom: 18px; }
+#wechat-form[hidden] { display: none; }
+#wechat-activate {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+#wechat-activate:hover:enabled { background: #075c5a; }
+#wechat-activate:disabled { opacity: .55; cursor: default; }
+#wechat-message { padding: 12px 18px; color: var(--muted); }
+#wechat-message:empty { display: none; }
+#wechat-message.success { color: #08705b; background: #e8f6ef; }
+#wechat-message.error { color: #ac342d; background: #fff1ef; }
+
+.report-wrap { padding: 0 18px 16px; overflow-x: auto; }
+.report-table { width: 100%; border-collapse: collapse; }
+.report-table th, .report-table td {
+    padding: 11px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+}
+.report-table tr > :first-child { text-align: left; }
+.report-table thead { color: var(--muted); background: #f7fafa; }
+.report-table tbody th { font-weight: 500; }
+.report-table tfoot { color: var(--accent); font-weight: 700; background: var(--tint); }
+.report-status { margin: 0 18px 16px; color: var(--muted); }
+.report-status.error { color: #b93631; }
+.report-note {
+    margin: 0;
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    background: #fbfcfd;
+    font-size: 13px;
+}
+@media (max-width: 600px) {
+    body { padding: 12px; }
+    .report-header, .report-controls { padding: 14px; }
+    .report-wrap { padding: 0 10px 14px; }
+    .report-table th, .report-table td { padding: 10px 6px; font-size: 13px; }
+}
+    </style>
+</head>
+<body>
+<main>
+    <section class="card merchant-card" aria-label="支付商户切换">
+        <form class="report-controls" id="wechat-form" hidden>
+            <label for="wechat-merchant">收款商户号</label>
+            <select id="wechat-merchant"></select>
+            <button type="submit" id="wechat-activate" disabled>设为收款商户</button>
+        </form>
+        <div id="wechat-message" class="message" role="status" aria-live="polite">正在读取收款商户…</div>
+    </section>
+    <section class="card" aria-labelledby="report-title">
+        <header class="report-header">
+            <h1 id="report-title">微信商户月统计</h1>
+        </header>
+        <form class="report-controls" id="report-form">
+            <label for="report-month">统计月份</label>
+            <input type="month" id="report-month" required>
+            <button type="submit" class="ghost-btn">刷新统计</button>
+        </form>
+        <p id="report-status" class="report-status" role="status" aria-live="polite">正在读取统计…</p>
+        <div class="report-wrap" id="report-results" hidden>
+            <table class="report-table" aria-labelledby="report-title" aria-describedby="report-note">
+                <thead>
+                    <tr><th scope="col">商户号</th><th scope="col">成功笔数</th><th scope="col">实付金额（元）</th></tr>
+                </thead>
+                <tbody id="report-merchants"></tbody>
+                <tfoot>
+                    <tr><th scope="row">合计</th><td id="report-count"></td><td id="report-amount"></td></tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="report-note" id="report-note">按北京时间的支付成功月份统计普通充值和套餐。</p>
+    </section>
+</main>
+<script>
+    (() => {
+        const endpoint = '/api/config/wechat_app_pay_config_api.php';
+        const find = id => document.getElementById('wechat-' + id);
+        const form = find('form');
+        const select = find('merchant');
+        const activate = find('activate');
+        let activeId = '';
+
+        function status(message, type) {
+            const box = find('message');
+            box.className = 'message ' + type;
+            box.textContent = message;
+        }
+
+        function updateButton() {
+            const option = select.selectedOptions[0];
+            activate.disabled = select.disabled || !option || option.disabled || select.value === activeId;
+        }
+
+        function render(data) {
+            activeId = data.active_merchant_id;
+            select.replaceChildren(...data.merchants.map(merchant => {
+                const id = merchant.merchant_id;
+                const option = new Option(id === activeId ? id + '（当前收款）' : id, id);
+                if (!merchant.key_configured && id !== activeId) {
+                    option.textContent = id + '（暂不可用）';
+                    option.disabled = true;
+                }
+                return option;
+            }));
+            select.value = activeId;
+            updateButton();
+            form.hidden = false;
+        }
+
+        async function request(merchantId) {
+            const options = {credentials: 'same-origin', cache: 'no-store'};
+            if (merchantId) {
+                options.method = 'POST';
+                options.headers = {'Content-Type': 'application/json', 'X-KWX-Payment-Config': '1'};
+                options.body = JSON.stringify({action: 'activate', merchant_id: merchantId});
+            }
+            const response = await fetch(endpoint, options);
+            const result = await response.json();
+            if (result.code !== 200) throw new Error(result.msg || '收款商户请求失败');
+            return result;
+        }
+
+        select.addEventListener('change', () => {
+            status('', '');
+            updateButton();
+        });
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (activate.disabled) return;
+            select.disabled = activate.disabled = true;
+            try {
+                const result = await request(select.value);
+                render(result.data);
+                status(result.msg, 'success');
+            } catch (error) {
+                status(error.message, 'error');
+            } finally {
+                select.disabled = false;
+                updateButton();
+            }
+        });
+
+        request().then(result => {
+            render(result.data);
+            status('', '');
+        }).catch(error => {
+            status(error.message, 'error');
+        });
+    })();
+
+    (() => {
+        const form = document.getElementById('report-form');
+        const month = document.getElementById('report-month');
+        const results = document.getElementById('report-results');
+        const status = document.getElementById('report-status');
+        const rows = document.getElementById('report-merchants');
+        let requestNumber = 0;
+
+        function showStatus(message, failed = false) {
+            status.textContent = message;
+            status.classList.toggle('error', failed);
+            status.hidden = false;
+            results.hidden = true;
+        }
+
+        async function load() {
+            const number = ++requestNumber;
+            const selectedMonth = month.value;
+            if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+                showStatus('请选择统计月份。');
+                return;
+            }
+            showStatus('正在读取统计…');
+            try {
+                const url = '/api/config/wechat_merchant_monthly.php?month=' + encodeURIComponent(selectedMonth);
+                const response = await fetch(url, {credentials: 'same-origin', cache: 'no-store'});
+                const result = await response.json();
+                if (number !== requestNumber) return;
+                if (result.code !== 200) throw new Error(result.msg || '读取收款统计失败');
+                const data = result.data;
+                if (data.month !== selectedMonth) throw new Error('返回的月份与所选月份不一致，请刷新统计。');
+                rows.replaceChildren(...data.merchants.map(merchant => {
+                    const row = document.createElement('tr');
+                    const name = document.createElement('th');
+                    name.scope = 'row';
+                    name.textContent = merchant.merchant_id;
+                    row.appendChild(name);
+                    row.insertCell().textContent = merchant.order_count;
+                    row.insertCell().textContent = merchant.amount;
+                    return row;
+                }));
+                document.getElementById('report-count').textContent = data.total.order_count;
+                document.getElementById('report-amount').textContent = data.total.amount;
+                status.hidden = true;
+                results.hidden = false;
+            } catch (error) {
+                if (number === requestNumber) showStatus(error.message, true);
+            }
+        }
+
+        // UTC+8，跨月时也按北京时间打开当月统计。
+        month.value = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 7);
+        month.addEventListener('change', load);
+        form.addEventListener('submit', event => { event.preventDefault(); load(); });
+        load();
+    })();
+</script>
+</body>
+</html>

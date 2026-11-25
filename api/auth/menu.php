@@ -48,7 +48,7 @@ function menu_group(int $id, string $name, string $title, string $icon, array $c
  * 管理员菜单：role_id = 1 / 2 使用。
  * 后续临时改菜单，只改这里的数组即可。
  */
-function menu_admin_tree(): array
+function menu_admin_tree(int $roleId): array
 {
     $baseMenu = [
         menu_leaf(9000, 0, 'dashboard', '工作台', '', 'home', 0),
@@ -87,9 +87,12 @@ function menu_admin_tree(): array
         menu_leaf(87, 9005, 'venue_funds', '账户管理', '/iframe/link/venue_funds', '', 1),
         menu_leaf(61, 9005, 'CommodityTariff', '充值套餐', '/iframe/link/CommodityTariff', '', 2),
         menu_leaf(77, 9005, 'payment_global_config_manage', '支付管理', '/iframe/link/payment_global_config_manage', '', 3),
-        menu_leaf(90051, 9005, 'venue-withdraw-config', '提现配置', '/iframe/link/venue_withdraw_config', '', 5),
-        menu_leaf(59, 9005, 'withdraw', '提现审批', '/iframe/link/paylist', '', 6),
     ];
+    if (in_array($roleId, [1, 2], true)) {
+        $financeMenus[] = menu_leaf(90053, 9005, 'wechat_merchant_monthly', '商户月汇', '/iframe/link/wechat_merchant_monthly', '', 4);
+    }
+    $financeMenus[] = menu_leaf(90051, 9005, 'venue-withdraw-config', '提现配置', '/iframe/link/venue_withdraw_config', '', 5);
+    $financeMenus[] = menu_leaf(59, 9005, 'withdraw', '提现审批', '/iframe/link/paylist', '', 6);
     if (KWX_8899_PROMOTION_UI_VISIBLE) {
         $financeMenus[] = menu_leaf(90052, 9005, 'promotion-reward-settlement', '推广收益结算', '/iframe/link/Promotion_Reward_Settlement_Admin', 'finance', 7);
     }
@@ -194,7 +197,7 @@ function getMenuByRoleId(int $roleId, bool $showVenueSearch = false, bool $showP
     }
 
     // role_id = 1 / 2，以及其它后台角色，暂时都走管理员菜单。
-    return menu_admin_tree();
+    return menu_admin_tree($roleId);
 }
 
 $token = (string)($_COOKIE[AUTH_COOKIE] ?? '');
