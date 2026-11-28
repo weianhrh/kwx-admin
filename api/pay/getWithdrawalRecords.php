@@ -97,9 +97,11 @@ $sql = "SELECT
             wr.updated_at,
             wr.remarks,
             wr.withdrawal_type,
+            vc.fee_amount AS voice_room_fee_amount,
             v.venue_name
         FROM withdrawal_requests wr
         LEFT JOIN venues v ON v.id = wr.venue_id
+        LEFT JOIN kwx_voice_room_fee_charges vc ON vc.withdrawal_request_id = wr.id
         WHERE 1=1";
 
 $params = [];

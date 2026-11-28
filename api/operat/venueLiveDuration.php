@@ -1,6 +1,7 @@
 <?php
 // /api/operat/venueLiveDuration.php
 require_once '../Database.php';
+require_once __DIR__ . '/../lib/voice_room_fee.php';
 
 header('Content-Type: application/json; charset=utf-8');
 date_default_timezone_set('Asia/Shanghai');
@@ -66,89 +67,45 @@ $now = date('Y-m-d H:i:s');
 $rangeEnd = $now < $todayEnd ? $now : $todayEnd;
 
 $whereVenueOpen = '';
-$params = [$rangeEnd, $todayStart];
+$params = [$rangeEnd, $rangeEnd];
 
 if ($venueId !== '' && $venueId !== '0') {
     $whereVenueOpen = ' AND o.venue_id = ? ';
     $params[] = intval($venueId);
 }
+$params[] = $todayStart;
 
 try {
-    /*
-     * 统计逻辑：
-     * 1. action=1 或 new_is_live=1 视为开播
-     * 2. action=0 或 new_is_live=0 或 remark='系统关播' 视为关播
-     * 3. 找每条开播后面第一条关播
-     * 4. 如果没有关播，结束时间按当前时间算
-     * 5. 只统计今天 00:00:00 到当前时间的交集
-     */
-
+    $openState = kwxVoiceRoomStateSql('o');
+    $previousState = kwxVoiceRoomStateSql('p');
+    $closeState = kwxVoiceRoomStateSql('c');
+    // Use the same effective state as billing. Break ties by ID: a close and
+    // a later reopen in the same second must still be separate transitions.
     $sql = "
-        SELECT
-            o.id AS open_log_id,
-            o.venue_id,
-            IFNULL(v.venue_name, '') AS venue_name,
-            o.created_at AS open_time,
-            (
-                SELECT MIN(c.created_at)
-                FROM venue_live_status_logs c
-                WHERE c.venue_id = o.venue_id
-                  AND (
-                        c.action = 0
-                        OR c.new_is_live = 0
-                        OR c.remark = '系统关播'
-                  )
-                  AND c.created_at > o.created_at
-            ) AS close_time
-        FROM venue_live_status_logs o
-        LEFT JOIN venues v ON v.id = o.venue_id
-        WHERE (
-                o.action = 1
-                OR o.new_is_live = 1
-        )
-          AND IFNULL((
-                SELECT
-                    CASE
-                        WHEN (p.action = 1 OR p.new_is_live = 1) THEN 1
-                        ELSE 0
-                    END
-                FROM venue_live_status_logs p
-                WHERE p.venue_id = o.venue_id
-                  AND (
-                        p.created_at < o.created_at
-                        OR (p.created_at = o.created_at AND p.id < o.id)
-                  )
-                ORDER BY p.created_at DESC, p.id DESC
-                LIMIT 1
-          ), 0) = 0
-          AND o.created_at <= ?
-          AND (
-                (
-                    SELECT MIN(c2.created_at)
-                    FROM venue_live_status_logs c2
-                    WHERE c2.venue_id = o.venue_id
-                      AND (
-                            c2.action = 0
-                            OR c2.new_is_live = 0
-                            OR c2.remark = '系统关播'
-                      )
-                      AND c2.created_at > o.created_at
-                ) IS NULL
-                OR
-                (
-                    SELECT MIN(c3.created_at)
-                    FROM venue_live_status_logs c3
-                    WHERE c3.venue_id = o.venue_id
-                      AND (
-                            c3.action = 0
-                            OR c3.new_is_live = 0
-                            OR c3.remark = '系统关播'
-                      )
-                      AND c3.created_at > o.created_at
-                ) >= ?
-          )
-          $whereVenueOpen
-        ORDER BY o.venue_id ASC, o.created_at ASC
+        SELECT segments.* FROM (
+            SELECT o.id AS open_log_id, o.venue_id,
+                   IFNULL(v.venue_name, '') AS venue_name, o.created_at AS open_time,
+                   (
+                       SELECT c.created_at FROM venue_live_status_logs c
+                       WHERE c.venue_id = o.venue_id AND c.created_at <= ?
+                         AND c.created_at >= o.created_at
+                         AND (c.created_at > o.created_at OR c.id > o.id)
+                         AND ($closeState) = 0
+                       ORDER BY c.created_at, c.id LIMIT 1
+                   ) AS close_time
+            FROM venue_live_status_logs o
+            LEFT JOIN venues v ON v.id = o.venue_id
+            WHERE o.created_at <= ? AND ($openState) = 1 $whereVenueOpen
+              AND COALESCE((
+                  SELECT $previousState FROM venue_live_status_logs p
+                  WHERE p.venue_id = o.venue_id AND p.created_at <= o.created_at
+                    AND (p.created_at < o.created_at OR p.id < o.id)
+                    AND ($previousState) IS NOT NULL
+                  ORDER BY p.created_at DESC, p.id DESC LIMIT 1
+              ), 0) = 0
+        ) segments
+        WHERE segments.close_time IS NULL OR segments.close_time > ?
+        ORDER BY segments.venue_id, segments.open_time, segments.open_log_id
     ";
 
     $rows = $database->query($sql, $params);

@@ -581,6 +581,7 @@ textarea {
                     ['提现类型', isGift ? '礼物提现' : '普通提现'],
                     ['申请时间', record.application_time],
                     ['提现金额', `${record.withdrawal_amount} 元`],
+                    ...(!isGift ? [['申请时语音房费', record.voice_room_fee_amount == null ? '—' : `${Number(record.voice_room_fee_amount).toFixed(2)} 元`]] : []),
                     ['技术服务费', `${record.technical_service_fee} 元`],
                     ['提现手续费', `${record.withdrawal_fee} 元`],
                     ['实际打款', `${record.actual_amount} 元`],

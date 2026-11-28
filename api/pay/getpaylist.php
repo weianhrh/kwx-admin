@@ -3,6 +3,7 @@ require_once '../Database.php';
 require_once '../RedisHelper.php';
 require_once __DIR__ . '/../lib/kwx_8899_policy.php';
 require_once __DIR__ . '/../lib/withdrawal_display.php';
+require_once __DIR__ . '/../lib/voice_room_fee.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -135,6 +136,13 @@ if (($start === null) !== ($end === null) || ($start && $start > $end)) {
 $rawVenue = $_GET['venue_id'] ?? '';
 $selectedVenue = $rawVenue === '' ? 0 : filter_var($rawVenue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 if ($selectedVenue === false) paylistError(1002, '场地参数无效');
+// 提现会在同一事务内同时变更余额和语音房扣费记录，两者必须取自同一个读取快照。
+try {
+    kwxVoiceRoomBeginRead($database);
+} catch (Throwable $e) {
+    error_log('提现审批读取快照失败: ' . $e->getMessage());
+    paylistError(500, '读取提现汇总失败，请重新查询');
+}
 $venues = $database->query('SELECT id, venue_name FROM venues ORDER BY venue_name, id');
 if (!is_array($venues)) paylistError(500, '场地列表读取失败');
 if ($selectedVenue && !in_array($selectedVenue, array_map('intval', array_column($venues, 'id')), true)) {
@@ -147,6 +155,7 @@ if ($selectedVenue && !in_array($selectedVenue, array_map('intval', array_column
 // 查询未打款且仍可处理的申请列表，并关联 venue_funds 表获取 withdrawal_account，关联 venues 表获取 venue_name
 $query = "SELECT
     wr.*,
+    vc.fee_amount AS voice_room_fee_amount,
     vf.withdrawal_account,
     vf.bank_name,
     vf.bank_number, 
@@ -157,6 +166,7 @@ JOIN
     venue_funds vf ON wr.venue_id  = vf.venue_id 
 JOIN
     venues v ON vf.venue_id  = v.id 
+LEFT JOIN kwx_voice_room_fee_charges vc ON vc.withdrawal_request_id = wr.id
 WHERE
     wr.payout_status = 0
     AND wr.application_status IN (0, 1)";
@@ -181,8 +191,11 @@ $withdrawTotals = $database->query(
             COALESCE(SUM(CASE WHEN wr.payout_status = 0 AND wr.application_status IN (0, 1) THEN wr.actual_amount END), 0) AS pending_amount,
             COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.actual_amount END), 0) AS paid_amount,
             COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.technical_service_fee END), 0) AS paid_platform_fee,
-            COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.withdrawal_fee END), 0) AS paid_withdrawal_fee
-     FROM withdrawal_requests wr WHERE 1=1" . $requestWhere, $requestParams
+            COALESCE(SUM(CASE WHEN wr.payout_status = 1 THEN wr.withdrawal_fee END), 0) AS paid_withdrawal_fee,
+            COALESCE(SUM(CASE WHEN wr.application_status IN (0, 1, 2) AND vc.released_at IS NULL THEN vc.fee_amount END), 0) AS voice_fees_charged
+     FROM withdrawal_requests wr
+     LEFT JOIN kwx_voice_room_fee_charges vc ON vc.withdrawal_request_id = wr.id
+     WHERE 1=1" . $requestWhere, $requestParams
 );
 $fundTotals = $database->query(
     "SELECT COALESCE(SUM(CASE WHEN fc.change_type = 'revenue' THEN fc.change_amount END), 0) AS inflow,
@@ -190,10 +203,23 @@ $fundTotals = $database->query(
      FROM fund_changes fc WHERE 1=1" . $fundWhere, $fundParams
 );
 $activity = array_merge($withdrawTotals[0] ?? [], $fundTotals[0] ?? []);
+$venueIds = $selectedVenue ? [$selectedVenue] : array_map('intval', array_column($venues, 'id'));
+if ($start) {
+    // 总费用按实际直播时间归属；已扣费用则跟随提现申请的申请时间。
+    $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Shanghai'));
+    $rangeEnd = $end >= $now->setTime(0, 0) ? $now : $end->modify('+1 day');
+    try {
+        $periodFees = kwxVoiceRoomRangeFees($database, $venueIds, $start->format('Y-m-d H:i:s'), $rangeEnd->format('Y-m-d H:i:s'));
+        $activity['voice_fees_accrued'] = round(array_sum($periodFees), 2);
+    } catch (Throwable $e) {
+        error_log('提现审批时段语音房费用读取失败: ' . $e->getMessage());
+        $activity['voice_fees_accrued'] = null;
+    }
+}
 
 // 有日期时使用历史流水和申请记录，避免用实时余额代替历史数据。
 // 全部加盟商资金汇总，完整沿用提现申请页 CalculateSettlements.php 的口径。
-// 先扣除各场地冻结、退款、锁定和图传费用，再按免重复扣费台账分摊结算金额。
+// 先扣除各场地冻结、退款、锁定及两项未结算费用，再按免重复扣费台账分摊结算金额。
 // 推广收益和已分账日收益已在账户余额中，不能在汇总时再次加减。
 $venueWhere = $selectedVenue ? ' WHERE v.id = ?' : '';
 $venueParams = $selectedVenue ? [$selectedVenue] : [];
@@ -253,10 +279,13 @@ $summaryRows = $start ? null : $database->query(
 
 $summary = null;
 if (is_array($summaryRows)) {
-    $venueIds = array_map(static function ($row) {
-        return (int)($row['venue_id'] ?? 0);
-    }, $summaryRows);
     $frozenSummary = getAllVenueFrozenAmounts($venueIds);
+    $voiceFees = null;
+    try {
+        $voiceFees = kwxVoiceRoomFees($database, $venueIds);
+    } catch (Throwable $e) {
+        error_log('提现审批实时语音房费读取失败: ' . $e->getMessage());
+    }
     $feeExemptBalances = [];
     $feeCalculationError = '';
     try {
@@ -276,14 +305,16 @@ if (is_array($summaryRows)) {
         $feeCalculationError = '免重复扣费金额暂时读取失败，请稍后刷新';
     }
     $feeCalculationAvailable = $feeCalculationError === '';
+    $deductionsAvailable = $frozenSummary['available'] && $voiceFees !== null;
+    $quoteAvailable = $deductionsAvailable && $feeCalculationAvailable;
 
     $summary = [
         'venue_count' => count($summaryRows),
         'total_balance' => 0.0,
-        'available_balance' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
-        'platform_deduction_amount' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
-        'withdrawal_fee_amount' => $frozenSummary['available'] && $feeCalculationAvailable ? 0.0 : null,
-        'settlement_balance' => $frozenSummary['available'] ? 0.0 : null,
+        'available_balance' => $quoteAvailable ? 0.0 : null,
+        'platform_deduction_amount' => $quoteAvailable ? 0.0 : null,
+        'withdrawal_fee_amount' => $quoteAvailable ? 0.0 : null,
+        'settlement_balance' => $deductionsAvailable ? 0.0 : null,
         'frozen_amount' => $frozenSummary['available'] ? 0.0 : null,
         'frozen_amount_available' => $frozenSummary['available'],
         'lock_order_count' => 0,
@@ -291,6 +322,8 @@ if (is_array($summaryRows)) {
         'not_checked_amount' => 0.0,
         'refund_amount' => 0.0,
         'unsettled_image_amount' => 0.0,
+        'total_voice_room_fee' => $voiceFees === null ? null : array_sum(array_column($voiceFees, 'total_fee')),
+        'unsettled_voice_room_fee' => $voiceFees === null ? null : array_sum(array_column($voiceFees, 'unsettled_fee')),
     ];
 
     foreach ($summaryRows as $summaryRow) {
@@ -309,20 +342,23 @@ if (is_array($summaryRows)) {
 
         if ($frozenSummary['available']) {
             $frozenAmount = (float)($frozenSummary['amounts'][$venueId] ?? 0);
+            $summary['frozen_amount'] += $frozenAmount;
+            if ($voiceFees === null) continue;
+            $voiceAmount = $voiceFees[$venueId]['unsettled_fee'];
+            $deductions = $frozenAmount + $refundAmount + $lockAmount + $imageAmount + $voiceAmount;
             $settlementBalance = max(
                 0.0,
-                $accountBalance - $frozenAmount - $refundAmount - $lockAmount - $imageAmount
+                round($accountBalance - $deductions, 2)
             );
             $platformRate = max(0.0, min(1.0, (float)($summaryRow['withdraw_ratio'] ?? 20.00) / 100));
             $withdrawalFeeRate = max(0.0, min(1.0, (float)($summaryRow['withdrawal_fee_rate'] ?? 0.00) / 100));
 
-            $summary['frozen_amount'] += $frozenAmount;
             $summary['settlement_balance'] += $settlementBalance;
             if ($feeCalculationAvailable) {
                 try {
                     $quote = kwx8899Allocation(
                         $accountBalance, $feeExemptBalances[$venueId] ?? 0.0,
-                        $frozenAmount + $refundAmount + $lockAmount + $imageAmount,
+                        $deductions,
                         $settlementBalance, 0, $platformRate, $withdrawalFeeRate
                     );
                     $summary['platform_deduction_amount'] += $quote['technical_fee'];
@@ -340,8 +376,8 @@ if (is_array($summaryRows)) {
             }
         }
     }
-    $summary['fee_calculation_available'] = $feeCalculationAvailable;
-    $summary['fee_calculation_error'] = $feeCalculationError;
+    $summary['fee_calculation_available'] = $feeCalculationAvailable && $voiceFees !== null;
+    $summary['fee_calculation_error'] = $voiceFees === null ? '语音房费用读取失败，请重新查询' : $feeCalculationError;
 
     foreach ($summary as $key => $value) {
         if (is_float($value)) {
@@ -350,7 +386,7 @@ if (is_array($summaryRows)) {
     }
 }
 
-// 返回成功信息
+$database->commit();
 echo json_encode([
     'code' => 0,
     'msg' => '查询提现申请列表成功',

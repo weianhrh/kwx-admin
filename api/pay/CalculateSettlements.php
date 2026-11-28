@@ -2,6 +2,7 @@
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
 require_once '../lib/kwx_8899_policy.php';
+require_once __DIR__ . '/../lib/voice_room_fee.php';
 require_once '../RedisHelper.php';   // ★ 新增
 
 // api/pay/CalculateSettlements.php
@@ -49,6 +50,15 @@ if ($venue_id <= 0) {
 }
 $withdraw_type = $_GET['withdraw_type'] ?? $_POST['withdraw_type'] ?? 'account';
 $withdraw_type = ($withdraw_type === 'gift') ? 'gift' : 'account';
+if ($withdraw_type === 'account') {
+    try {
+        kwxVoiceRoomBeginRead($database);
+    } catch (Throwable $e) {
+        error_log('提现申请读取快照失败: ' . $e->getMessage());
+        echo json_encode(['code' => 500, 'msg' => '暂时无法核对场地余额，请稍后重试。'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
 // 业务金额
 $checkedNotSettledSql = "SELECT SUM(total_revenue) AS total_amount FROM DailyVenueRevenue WHERE venue_id=? AND is_checked=1 AND is_settled=0";
 $checkedNotSettledAmount = (float)($database->query($checkedNotSettledSql, [$venue_id])[0]['total_amount'] ?? 0);
@@ -194,15 +204,21 @@ $lockRow = $database->query($lockSql, [$venue_id]);
 $lockAmount = (float)($lockRow[0]['total_lock_amount'] ?? 0);
 $lockOrderCount = (int)($lockRow[0]['lock_order_count'] ?? 0);
 
-// $available_balance = max(0.0, $account_balance - $frozen_amount - $totalRefund - $lockAmount);
-$settlement_balance = max(
-    0.0,
-    $account_balance - $frozen_amount - $totalRefund - $lockAmount - $unsettledImageTransmissionFee
-);
+try {
+    $voiceFees = kwxVoiceRoomFees($database, [$venue_id]);
+    $voiceFee = $voiceFees[$venue_id];
+} catch (Throwable $e) {
+    $database->rollBack();
+    error_log('提现申请读取语音房费用失败: ' . $e->getMessage());
+    echo json_encode(['code' => 500, 'msg' => '暂时无法核对语音房费用，请稍后重试。'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$deductions = $frozen_amount + $totalRefund + $lockAmount + $unsettledImageTransmissionFee + $voiceFee['unsettled_fee'];
+$settlement_balance = max(0.0, round($account_balance - $deductions, 2));
 $feeExemptBalance = kwx8899ExemptBalance($database, $venue_id);
 $quote = kwx8899Allocation(
     $account_balance, $feeExemptBalance,
-    $frozen_amount + $totalRefund + $lockAmount + $unsettledImageTransmissionFee,
+    $deductions,
     $settlement_balance, 0, $platformDeductionRate, $withdrawalFeeRate
 );
 $platform_deduction_amount = $quote['technical_fee'];
@@ -303,6 +319,8 @@ $response = [
   'venue_id' => $venue_id,
   'unsettled_image_transmission_fee' => $unsettledImageTransmissionFee,
   'unsettled_image_ids' => $unsettledImageIds,
+  'voice_room_total_fee' => $voiceFee['total_fee'],
+  'unsettled_voice_room_fee' => $voiceFee['unsettled_fee'],
   'account_number' => $masked_account,
   'account_pay' => $funds[0]['account_type'],
   'checkedNotSettledAmount' => $checkedNotSettledAmount,
@@ -329,5 +347,6 @@ $response = [
 if ($promotion8899 !== null) {
     $response['promotion_8899'] = $promotion8899;
 }
+$database->commit();
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 $database->close();

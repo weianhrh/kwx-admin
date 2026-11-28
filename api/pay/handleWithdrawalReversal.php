@@ -2,6 +2,7 @@
 require_once '../Database.php';
 require_once '../lib/venue_scope.php';
 require_once '../lib/kwx_8899_policy.php';
+require_once __DIR__ . '/../lib/voice_room_fee.php';
 
 header('Content-Type: application/json; charset=utf-8');
 date_default_timezone_set('Asia/Shanghai');
@@ -166,6 +167,7 @@ try {
     $returnedAmount = 0.00;
     $imageIds = [];
     $refundIds = [];
+    $releasedVoiceFee = 0.00;
 
     if ($withdrawalType === 'gift') {
         $returnedAmount = round((float)$record['withdrawal_amount'], 2);
@@ -202,6 +204,13 @@ try {
         );
         if (empty($fundRows)) {
             throw new RuntimeException('场地资金账户不存在');
+        }
+
+        // 余额扣减快照已包含语音房费。撤销只释放本次申请的收费记录，不重复加钱。
+        $releasedVoiceFee = kwxVoiceRoomReleaseCharge($database, $venueId, $requestId);
+        $voiceFeeInRemarks = remark_amount($remarks, ['语音房费用扣减']);
+        if ((int)round($releasedVoiceFee * 100) !== (int)round($voiceFeeInRemarks * 100)) {
+            throw new RuntimeException('提现语音房费用与原扣费记录不一致，已停止退款');
         }
 
         $affected = $database->query(
@@ -345,6 +354,7 @@ try {
         'venue_id' => $venueId,
         'withdrawal_type' => $withdrawalType,
         'returned_amount' => $returnedAmount,
+        'released_voice_room_fee' => $releasedVoiceFee,
         'restored_image_ids' => $imageIds,
         'restored_refund_ids' => $refundIds
     ]);

@@ -39,7 +39,7 @@ if ($status !== '0' && $status !== '1') {
 }
 
 // 准备 SQL 查询语句
-$query = "UPDATE withdrawal_requests SET auditor = ? ,payout_status = ? WHERE id = ?";
+$query = "UPDATE withdrawal_requests SET auditor = ? ,payout_status = ? WHERE id = ? AND application_status <> 3";
 $stmt = $database->getConnection()->prepare($query);
 
 if (!$stmt) {

@@ -218,6 +218,26 @@
       white-space: nowrap;
     }
 
+    .voice-duration-card {
+      position: relative;
+    }
+
+    .voice-duration-card a::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+    }
+
+    .voice-duration-card a:focus-visible::after {
+      outline: 3px solid var(--primary);
+    }
+
+    .voice-duration-card .help-dot {
+      position: relative;
+      z-index: 1;
+    }
+
     .amount-item:nth-child(3n),
     .amount-item:nth-child(2n),
     .amount-item:nth-last-child(-n + 3),
@@ -272,6 +292,12 @@
       color: var(--muted);
       font-size: 13px;
       font-weight: 800;
+    }
+
+    .amount-caption {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
     }
 
     .amount-item.is-primary {
@@ -1136,6 +1162,7 @@
               <th style="width: 170px;">申请时间</th>
               <th style="width: 120px;">提现金额</th>
               <th style="width: 120px;">图传扣减</th>
+              <th style="width: 120px;">语音房扣减</th>
               <th style="width: 130px;">实际到账金额</th>
               <th style="width: 90px;">操作</th>
             </tr>
@@ -1183,13 +1210,14 @@
       return 'paybind.html' + (query ? '?' + query : '');
     }
 
-    function lockedOrdersUrl(venueId) {
+    function withdrawalDetailUrl(page, venueId, from) {
       const params = new URLSearchParams();
       if (venueId) params.set('venue_id', venueId);
+      if (from) params.set('from', from);
       const embed = new URLSearchParams(window.location.search).get('embed');
       if (embed) params.set('embed', embed);
       const query = params.toString();
-      return 'withdrawal_locked_orders.html' + (query ? '?' + query : '');
+      return page + (query ? '?' + query : '');
     }
 
     let accountCache = {};
@@ -1327,7 +1355,7 @@ const feeHelp = `
   <div class="amount-icon">↔</div>
   <div class="amount-content"><div class="amount-label">冻结中:</div><div class="amount-value">${formatAmount(data.frozen_amount)}</div></div>
 </div>
-<a class="amount-item is-muted amount-link" id="locked-orders-card" href="${esc(lockedOrdersUrl(data.venue_id || pageVenueId))}" aria-label="查看锁定订单明细">
+<a class="amount-item is-muted amount-link" id="locked-orders-card" href="${esc(withdrawalDetailUrl('withdrawal_locked_orders.html', data.venue_id || pageVenueId))}" aria-label="查看锁定订单明细">
   <div class="amount-icon">◷</div>
   <div class="amount-content"><div class="amount-label">锁定订单:<span class="amount-link-hint">查看明细 ›</span></div><div class="amount-value">${esc(data.lock_order_count || 0)} <small>笔</small></div></div>
 </a>
@@ -1350,11 +1378,28 @@ const feeHelp = `
     <div class="amount-value">${formatAmount(unsettledFee)}</div>
   </div>
 </div>
+<div class="amount-item is-warning voice-duration-card">
+  <div class="amount-icon">♫</div>
+  <div class="amount-content">
+    <div class="amount-label">未结算语音房费
+      <button type="button" class="help-dot" id="voice-fee-explanation" aria-label="查看语音房费计算说明">?</button>
+      <a class="amount-link amount-link-hint" id="venue-voice-duration-link" href="${esc(withdrawalDetailUrl('voice_room_duration.html', data.venue_id || pageVenueId, 'application'))}" aria-label="查看本场地开关播时长">时长明细 →</a>
+    </div>
+    <div class="amount-value">${formatAmount(data.unsettled_voice_room_fee)}</div>
+    <div class="amount-caption">本场地累计 ${money(data.voice_room_total_fee)} 元</div>
+  </div>
+</div>
       `;
-
+      document.getElementById('voice-fee-explanation').onclick = () => showCustomModal(
+        '本场地语音房费',
+        `自 2026 年 11 月 1 日起，累计 ${money(data.voice_room_total_fee)} 元，当前未结算 ${money(data.unsettled_voice_room_fee)} 元。\n\n按实际开播秒数折算，每分钟 0.03 元。普通提现时扣除本场地尚未结算的费用。`
+      );
     }
 
     function loadAccountInfo() {
+      accountCache = {};
+      document.getElementById('available-balance').value = '0';
+      updateWithdrawButtonState();
       fetch(withVenueParam(API_ACCOUNT))
         .then(response => response.json())
         .then(data => {
@@ -1372,7 +1417,7 @@ const feeHelp = `
               window.history.back();
             }
           } else {
-            showCustomModal('加载失败', '加载账户信息失败，请稍后再试。');
+            showCustomModal('加载失败', data.msg || '加载账户信息失败，请稍后再试。');
           }
         })
         .catch(error => {
@@ -1398,7 +1443,9 @@ const feeHelp = `
         return;
       }
 
-      if (!confirm(`确认提交实际到账 ${money(withdrawAmount)} 元的提现申请吗？\n提交后，在平台处理前可以从提现记录中取消。`)) {
+      const voiceFee = Number(accountCache.unsettled_voice_room_fee || 0);
+      const voiceFeeNote = voiceFee > 0 ? `\n本场地当前待扣语音房费 ${money(voiceFee)} 元，提交时按最新开播时长结算。` : '';
+      if (!confirm(`确认提交实际到账 ${money(withdrawAmount)} 元的提现申请吗？${voiceFeeNote}\n提交后，在平台处理前可以从提现记录中取消。`)) {
         return;
       }
 
@@ -1450,9 +1497,9 @@ const feeHelp = `
           } else if (data.code === 1008) {
             showCustomModal(
               '超过可提现额度',
-              `账户余额：${data.data.account_balance} 元\n冻结金额：${data.data.frozen_amount} 元\n退款金额：${data.data.total_refund || 0} 元\n待复核订单：${data.data.lock_amount || 0} 电池\n可提现：${data.data.available_balance} 元`
+              `额度已更新，请核对最新余额后重新提交。\n账户余额：${money(data.data.account_balance)} 元\n可提现：${money(data.data.available_balance)} 元`
             );
-            updateWithdrawButtonState();
+            loadAccountInfo();
           } else {
             showCustomModal('提现失败', data.msg || '提现申请失败，请稍后重试。');
             updateWithdrawButtonState();
@@ -1563,6 +1610,7 @@ function listStatusBadgeClass(record) {
             <td>${esc(record.application_time || '-')}</td>
             <td class="amount-cell">${money(displayWithdrawalAmount)} 元</td>
             <td class="amount-cell">${money(imageFeeAmount)} 元</td>
+            <td class="amount-cell">${record.voice_room_fee_amount == null ? '—' : money(record.voice_room_fee_amount) + ' 元'}</td>
             <td class="amount-cell">${money(receivedAmount)} 元</td>
             <td>
               <div class="record-actions">
@@ -1673,6 +1721,7 @@ function listStatusBadgeClass(record) {
 
           <div class="detail-row"><div class="detail-label">提现金额:</div><div class="detail-value">${money(displayWithdrawalAmount)} 元</div></div>
           ${imageFeeRow}
+          ${record.voice_room_fee_amount == null ? '' : `<div class="detail-row"><div class="detail-label">语音房费用扣减</div><div class="detail-value">${money(record.voice_room_fee_amount)} 元</div></div>`}
           <div class="detail-row"><div class="detail-label">结算金额:</div><div class="detail-value">${money(settlementAmount)} 元</div></div>
 
           <div class="detail-row"><div class="detail-label">技术服务费:</div><div class="detail-value">${money(record.technical_service_fee)} 元</div></div>
@@ -1687,7 +1736,7 @@ function listStatusBadgeClass(record) {
           ${reversalRow}
         </div>
         <div class="detail-note">
-          说明：提现金额为本次从场地余额发起的提现总额；图传费用会先从提现金额中扣减，剩余结算金额再计算技术服务费和提现手续费。
+          普通提现先扣除本次图传费和语音房费，再按剩余结算金额计算技术服务费和提现手续费。
         </div>
       `;
 

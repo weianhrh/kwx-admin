@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>语音房开关播时长明细 · 酷玩星后台</title>
+  <style>
+    :root { color-scheme:light; --ink:#172c30; --muted:#586d71; --teal:#097d79; --line:#d9e5e7; --surface:#fff; }
+    * { box-sizing:border-box; }
+    [hidden] { display:none !important; }
+    body { margin:0; color:var(--ink); background:#f1f6f6; font:14px/1.55 Arial,"Microsoft YaHei",sans-serif; }
+    main { max-width:1390px; padding:28px 28px 40px; margin:auto; }
+    header, .section-title, .pager, .field-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    h1,h2,p { margin:0; }
+    h1 { font-size:24px; } h2 { font-size:16px; }
+    header { margin-bottom:18px; }
+    #return-withdrawal { display:inline-block; margin-bottom:8px; color:var(--teal); text-decoration:none; }
+    #return-withdrawal:hover, #return-withdrawal:focus-visible { text-decoration:underline; }
+    .meta,.caption { color:var(--muted); font-size:13px; }
+    .panel, .metric { background:var(--surface); border:1px solid var(--line); border-radius:10px; }
+    .panel { margin:14px 0; }
+    .filters { display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px; padding:16px 18px; }
+    .field { display:flex; flex-direction:column; gap:4px; min-width:0; }
+    .field label,.field-label { color:var(--muted); font-size:13px; }
+    button,input { color:inherit; font:inherit; }
+    button { cursor:pointer; }
+    input, .button { min-height:38px; border:1px solid #c9d9da; background:#fff; border-radius:6px; padding:6px 10px; }
+    .button:hover:not(:disabled) { color:var(--teal); border-color:var(--teal); }
+    .button.primary { background:var(--teal); border-color:var(--teal); color:#fff; padding:6px 17px; }
+    .button.primary:hover:not(:disabled) { color:#fff; background:#086b68; }
+    button:disabled { cursor:default; opacity:.45; }
+    button:focus-visible, input:focus-visible, [tabindex="0"]:focus-visible { outline:3px solid #84cfc9; outline-offset:2px; }
+    #venue-picker { position:relative; width:235px; max-width:100%; }
+    #venue-button { display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:left; width:100%; }
+    #venue-button::after { content:"▾"; color:var(--muted); }
+    #venue-menu { position:absolute; top:calc(100% + 4px); left:0; width:100%; padding:7px; background:white; border:1px solid var(--line); border-radius:8px; box-shadow:0 7px 26px #20353724; z-index:5; }
+    #venue-search { width:100%; }
+    #venue-options { max-height:240px; overflow-y:auto; margin-top:4px; }
+    #venue-options button { display:block; width:100%; text-align:left; border:0; border-radius:4px; background:white; padding:7px; }
+    #venue-options button:hover, #venue-options button[aria-pressed="true"] { color:var(--teal); background:#e6f5f2; }
+    .fixed-field { min-height:38px; display:flex; align-items:center; font-weight:600; }
+    .metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:14px 0; }
+    .metric { padding:15px 19px; }
+    .metric:first-child { background:#eff9f7; border-color:#c4e4df; }
+    .metric-label { color:var(--muted); font-size:13px; }
+    .value { margin:4px 0; font-size:clamp(20px,2.5vw,29px); font-weight:700; font-variant-numeric:tabular-nums; }
+    .metric:first-child .value { color:var(--teal); }
+    .section-title,.pager { padding:13px 18px; }
+    .table-wrap { overflow:auto; border-top:1px solid var(--line); border-radius:0 0 10px 10px; }
+    #venue-summary .table-wrap { max-height:285px; }
+    table { border-collapse:separate; border-spacing:0; width:100%; text-align:left; font-size:13px; }
+    th { color:var(--muted); background:#f6f9f9; font-weight:600; position:sticky; top:0; white-space:nowrap; }
+    th,td { padding:9px 15px; border-bottom:1px solid #e7eeee; }
+    tbody tr:last-child td { border-bottom:0; }
+    td { white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .venue-link { border:0; padding:0; background:none; color:var(--teal); text-decoration:underline; text-underline-offset:3px; }
+    .state { color:var(--muted); }
+    .live { color:var(--teal); font-weight:600; }
+    .empty { padding:26px; text-align:center; color:var(--muted); }
+    .pager { border-top:1px solid var(--line); }
+    .pager button { min-height:33px; }
+    .buttons { display:flex; gap:8px; }
+    #notice { margin:10px 0; color:var(--muted); }
+    #notice.error { color:#a73835; }
+    @media (max-width:720px) {
+      main { padding:16px 10px 24px; } h1 { font-size:20px; }
+      .filters,.section-title,.pager { padding:12px; } .filters { gap:10px; }
+      #venue-picker,#fixed-venue { width:100%; }
+      .field input[type=date] { width:100%; min-width:0; }
+      .date-field { flex:1 1 122px; }
+      .metrics { gap:7px; } .metric { padding:9px; }
+      .value { font-size:17px; } .metric-label,.caption,.meta { font-size:12px; }
+      th,td { padding:8px 9px; } .table-wrap { -webkit-overflow-scrolling:touch; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <a id="return-withdrawal" hidden></a>
+  <header><h1>语音房开关播时长明细</h1><p class="meta" id="as-of"></p></header>
+  <form id="filter-form" class="filters panel">
+    <div class="field" id="venue-picker" hidden>
+      <span class="field-label">场地</span>
+      <button type="button" class="button" id="venue-button" aria-expanded="false" aria-controls="venue-menu" aria-label="选择场地">全部场地</button>
+      <div id="venue-menu" hidden>
+        <input type="search" id="venue-search" placeholder="搜索场地名称或 ID" aria-label="搜索场地名称或 ID" autocomplete="off">
+        <div id="venue-options" role="group" aria-label="匹配场地"></div>
+      </div>
+    </div>
+    <div class="field" id="fixed-venue" hidden><span class="field-label">当前场地</span><span class="fixed-field" id="fixed-name"></span></div>
+    <div class="field date-field"><label for="date-start">开始日期</label><input id="date-start" type="date" required></div>
+    <div class="field date-field"><label for="date-end">结束日期</label><input id="date-end" type="date" required></div>
+    <button type="submit" class="button primary">查询</button>
+  </form>
+  <p id="notice" role="status" aria-live="polite">正在读取开关播明细…</p>
+  <div id="report" hidden>
+    <section class="metrics" aria-label="所选范围统计">
+      <div class="metric"><div class="metric-label">开播总时长</div><div class="value" id="total-duration"></div><div class="caption">小时 / 分 / 秒</div></div>
+      <div class="metric"><div class="metric-label">语音房费用</div><div class="value" id="total-fee"></div><div class="caption">2026-11-01 起，0.03 元 / 分钟</div></div>
+      <div class="metric"><div class="metric-label">开播段数</div><div class="value" id="segments-count"></div><div class="caption" id="range-note"></div></div>
+    </section>
+    <section id="venue-summary" class="panel" hidden>
+      <div class="section-title"><h2>场地汇总</h2><span id="venue-count" class="caption"></span></div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="场地汇总">
+        <table><thead><tr><th scope="col">场地</th><th scope="col">开播时长</th><th scope="col">段数</th><th scope="col">语音房费用</th></tr></thead><tbody id="venue-body"></tbody></table>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-title"><h2>开关播记录</h2><span class="caption">北京时间</span></div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="开关播记录">
+        <table>
+          <thead><tr><th scope="col">场地</th><th scope="col">开播时间</th><th scope="col">关播时间</th><th scope="col">本次统计起止</th><th scope="col">计入时长</th><th scope="col">状态</th></tr></thead>
+          <tbody id="segment-body"></tbody>
+        </table>
+      </div>
+      <div class="pager"><span class="caption" id="page-info"></span><div class="buttons"><button class="button" type="button" id="prev-page">上一页</button><button class="button" type="button" id="next-page">下一页</button></div></div>
+    </section>
+  </div>
+</main>
+<script>
+'use strict';
+const el = id => document.getElementById(id);
+const initial = new URLSearchParams(location.search);
+const source = initial.get('from');
+if (source === 'approval' || source === 'application') {
+  const approval = source === 'approval';
+  const backUrl = new URL(approval ? 'paylist.html' : 'PaymentDisbursement_optimized.html', location.href);
+  const keys = approval ? ['embed','venue_id','start_date','end_date','period'] : ['embed','venue_id'];
+  for (const key of keys) {
+    if (initial.get(key)) backUrl.searchParams.set(key, initial.get(key));
+  }
+  const link = el('return-withdrawal');
+  link.href = backUrl.href;
+  link.textContent = approval ? '← 返回提现审批' : '← 返回提现申请';
+  link.hidden = false;
+}
+const today = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Shanghai'}).format(new Date());
+const filters = {venue:initial.get('venue_id') || '', start:initial.get('start_date') || '2026-11-01', end:initial.get('end_date') || today};
+el('date-start').value = filters.start;
+el('date-end').value = filters.end;
+let data = null;
+let request = null;
+const venueLabel = (id, name) => String(name || '未命名场地') + ' · ' + id;
+const money = amount => '¥' + Number(amount).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+function duration(value) {
+  const seconds = Number(value);
+  return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(n => String(n).padStart(2, '0')).join(':');
+}
+
+function closeMenu(focusButton) {
+  el('venue-menu').hidden = true;
+  el('venue-button').setAttribute('aria-expanded', 'false');
+  if (focusButton) el('venue-button').focus();
+}
+function selectVenue(id) {
+  filters.venue = String(id || '');
+  closeMenu(true);
+  load(1);
+}
+function renderOptions() {
+  const keyword = el('venue-search').value.trim().toLocaleLowerCase();
+  const entries = [{id:0, venue_name:'全部场地'}, ...data.venues];
+  const options = el('venue-options');
+  options.replaceChildren();
+  for (const venue of entries) {
+    const label = venue.id ? venueLabel(venue.id, venue.venue_name) : venue.venue_name;
+    if (!label.toLocaleLowerCase().includes(keyword)) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.setAttribute('aria-pressed', String(Number(venue.id) === Number(data.selected_venue_id)));
+    button.onclick = () => selectVenue(venue.id);
+    options.append(button);
+  }
+  if (!options.children.length) options.textContent = '没有匹配的场地';
+}
+el('venue-button').onclick = () => {
+  if (!el('venue-menu').hidden) return closeMenu(true);
+  el('venue-menu').hidden = false;
+  el('venue-button').setAttribute('aria-expanded','true');
+  el('venue-search').value = '';
+  renderOptions();
+  el('venue-search').focus();
+};
+el('venue-search').oninput = renderOptions;
+el('venue-picker').addEventListener('keydown', event => {
+  if (event.isComposing || el('venue-menu').hidden) return;
+  const options = [...el('venue-options').querySelectorAll('button')];
+  const active = options.indexOf(document.activeElement);
+  if (event.key === 'Escape') { event.preventDefault(); closeMenu(true); }
+  else if (event.key === 'Enter' && document.activeElement === el('venue-search')) {
+    event.preventDefault();
+    if (options[0]) options[0].click();
+  } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length) {
+    event.preventDefault();
+    const next = event.key === 'ArrowDown' ? Math.min(active + 1, options.length - 1) : (active < 0 ? options.length - 1 : Math.max(active - 1, 0));
+    options[next].focus();
+  }
+});
+document.addEventListener('click', event => { if (!el('venue-picker').contains(event.target)) closeMenu(false); });
+el('venue-picker').addEventListener('focusout', event => {
+  if (!el('venue-picker').contains(event.relatedTarget)) closeMenu(false);
+});
+
+function row(body) { return body.insertRow(); }
+function cell(tr, text, cls) {
+  const td = tr.insertCell();
+  td.textContent = text;
+  if (cls) td.className = cls;
+  return td;
+}
+function emptyRow(body, columns, message) {
+  cell(row(body), message, 'empty').colSpan = columns;
+}
+function render(report) {
+  data = report;
+  const selected = report.venues.find(v => String(v.id) === String(report.selected_venue_id));
+  const scope = selected ? venueLabel(selected.id, selected.venue_name) : '全部场地';
+  el('venue-picker').hidden = !report.can_select_venue;
+  el('fixed-venue').hidden = report.can_select_venue;
+  el('venue-button').textContent = scope;
+  el('fixed-name').textContent = selected ? scope : '当前场地';
+  el('as-of').textContent = '查询时间 ' + report.as_of;
+  el('total-duration').textContent = duration(report.total_seconds);
+  el('total-fee').textContent = money(report.total_fee);
+  el('segments-count').textContent = String(report.segment_count);
+  el('range-note').textContent = report.start_date + ' 至 ' + report.end_date;
+
+  const venueBody = el('venue-body');
+  venueBody.replaceChildren();
+  el('venue-summary').hidden = !report.can_select_venue || Number(report.selected_venue_id) !== 0;
+  if (!el('venue-summary').hidden) {
+    el('venue-count').textContent = report.venue_totals.length + ' 个场地';
+    for (const venue of report.venue_totals) {
+      const tr = row(venueBody);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'venue-link';
+      btn.textContent = venueLabel(venue.venue_id, venue.venue_name);
+      btn.onclick = () => selectVenue(venue.venue_id);
+      cell(tr, '').append(btn);
+      cell(tr, duration(venue.total_seconds));
+      cell(tr, String(venue.segment_count));
+      cell(tr, money(venue.total_fee));
+    }
+    if (!report.venue_totals.length) emptyRow(venueBody, 4, '没有可查看的场地');
+  }
+
+  const body = el('segment-body');
+  body.replaceChildren();
+  for (const seg of report.segments) {
+    const tr = row(body);
+    cell(tr, venueLabel(seg.venue_id, seg.venue_name));
+    cell(tr, seg.open_time);
+    cell(tr, seg.close_time || '—');
+    const period = cell(tr, seg.calc_start);
+    period.append(document.createElement('br'), document.createTextNode(seg.calc_end));
+    cell(tr, duration(seg.duration_seconds));
+    const ongoing = Number(seg.is_living) === 1;
+    cell(tr, ongoing ? (report.end_date < today ? '截止时仍在播' : '直播中') : '已关播', ongoing ? 'live' : 'state');
+  }
+  if (!report.segments.length) emptyRow(body, 6, '所选范围没有开播记录');
+  el('page-info').textContent = report.segment_count ? '共 ' + report.segment_count + ' 段 · 第 ' + report.page + ' / ' + report.total_pages + ' 页' : '共 0 段';
+  el('prev-page').disabled = report.page <= 1;
+  el('next-page').disabled = report.page >= report.total_pages;
+  el('report').hidden = false;
+}
+
+async function load(page, asOf) {
+  if (request) request.abort();
+  const current = new AbortController();
+  request = current;
+  const query = new URLSearchParams({start_date:filters.start, end_date:filters.end, page:String(page), page_size:'30'});
+  if (filters.venue) query.set('venue_id', filters.venue);
+  if (asOf) query.set('as_of', asOf);
+  el('report').hidden = true;
+  el('as-of').textContent = '';
+  el('notice').className = '';
+  el('notice').textContent = '正在读取开关播明细…';
+  el('notice').hidden = false;
+  try {
+    const res = await fetch('/api/pay/voice_room_duration_details.php?' + query, {cache:'no-store', signal:current.signal});
+    if (!res.ok) throw new Error('读取失败，请重试。');
+    const result = await res.json();
+    if (current !== request) return;
+    if (result.code !== 0) throw new Error(result.msg || '无法读取开关播明细');
+    const report = result.data;
+    filters.venue = report.selected_venue_id ? String(report.selected_venue_id) : '';
+    filters.start = report.start_date;
+    filters.end = report.end_date;
+    el('date-start').value = filters.start;
+    el('date-end').value = filters.end;
+    render(report);
+    el('notice').hidden = true;
+  } catch (error) {
+    if (current !== request || error.name === 'AbortError') return;
+    el('notice').className = 'error';
+    el('notice').textContent = error.message;
+  }
+}
+
+el('filter-form').addEventListener('submit', event => {
+  event.preventDefault();
+  if (el('date-start').value > el('date-end').value) {
+    el('date-end').setCustomValidity('结束日期不能早于开始日期');
+    el('date-end').reportValidity();
+    return;
+  }
+  filters.start = el('date-start').value;
+  filters.end = el('date-end').value;
+  load(1);
+});
+el('filter-form').addEventListener('input', () => el('date-end').setCustomValidity(''));
+el('prev-page').onclick = () => load(Math.max(1, data.page - 1), data.as_of);
+el('next-page').onclick = () => load(data.page + 1, data.as_of);
+load(1);
+</script>
+</body>
+</html>

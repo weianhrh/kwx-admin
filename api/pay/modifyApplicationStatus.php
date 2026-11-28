@@ -45,7 +45,7 @@ if ($currentStatus === '0') {
 }
 
 // 更新数据库中的申请状态
-$query = "UPDATE withdrawal_requests SET payout_person= ?, application_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+$query = "UPDATE withdrawal_requests SET payout_person= ?, application_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND application_status <> 3";
 $stmt = $database->prepare($query);
 if (!$stmt) {
     echo json_encode(['code' => 500, 'msg' => '预处理 SQL 语句失败', 'data' => []]);
